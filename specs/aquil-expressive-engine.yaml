@@ -3,7 +3,7 @@ info:
   title: AQUIL Symbolic Expression Engine
   version: 1.0.0
   description: >
-    A modular system that tracks identity evolution, expresses voice profiles, logs narrative memory, 
+    A modular system that tracks identity evolution, expresses voice profiles, logs narrative memory,
     and enables symbolic self-reflection via ritual and state transitions.
 
 servers:
@@ -24,6 +24,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EvolvingIdentityNodeV2'
+
     post:
       operationId: createIdentityNode
       summary: Create a new identity node
@@ -36,6 +37,28 @@ paths:
       responses:
         '201':
           description: Created
+
+  /protocols/aquil-probe:
+    post:
+      operationId: activateAquilProbe
+      summary: Initiate the AQUIL PROBE: Cradle of Sovereignty protocol.
+      description: >
+        This protocol supports symbolic decision-making, emotional reflection, and mythic self-inquiry
+        through a structured 7-step inquiry system, designed to help users navigate high-stakes or trauma-informed
+        emotional decisions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AquilProbeRequest'
+      responses:
+        '200':
+          description: AQUIL PROBE response with inquiry reflection payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AquilProbeResponse'
 
   /voice-profiles/{profileId}:
     get:
@@ -306,3 +329,26 @@ components:
         integration_targets:
           type: array
           items: { type: string }
+
+    AquilProbeRequest:
+      type: object
+      required: [user_context, emotional_trigger, voice_state]
+      properties:
+        user_context:
+          type: string
+        emotional_trigger:
+          type: string
+        voice_state:
+          type: string
+
+    AquilProbeResponse:
+      type: object
+      required: [inquiry_sequence, symbolic_insight, closure_message]
+      properties:
+        inquiry_sequence:
+          type: array
+          items: { type: string }
+        symbolic_insight:
+          type: string
+        closure_message:
+          type: string
