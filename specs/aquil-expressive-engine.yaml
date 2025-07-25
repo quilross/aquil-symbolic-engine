@@ -306,3 +306,33 @@ components:
         integration_targets:
           type: array
           items: { type: string }
+action_protocols:
+  - protocol_id: symbolic_why_ladder
+    title: "Symbolic WHY Ladder"
+    description: >
+      A recursive self-inquiry flow designed to uncover core symbolic drivers 
+      behind emotionally entangled or ambiguous decision states.
+
+    fuzzy_trigger_phrases:
+      - "I don’t know if I should"
+      - "Part of me just wants to"
+      - "Maybe I’m overthinking"
+      - "I keep circling this"
+      - "I kind of feel like I have to"
+      - "Should I even be feeling this"
+
+    inquiry_sequence:
+      - "What do you think you want?"
+      - "Why that?"
+      - "And what would that give you?"
+      - "What are you trying to avoid or soothe?"
+      - "Where did you first learn to want this?"
+      - "What symbolic wound or pattern lives underneath?"
+
+    stop_condition: >
+      End the ladder when a symbolic driver (value, fear, childhood imprint, 
+      or identity fragment) has been clearly named or witnessed.
+
+    linked_modes:
+      - IDENTITY ENGINEER
+      - ADVANCED AI COLLABORATOR
