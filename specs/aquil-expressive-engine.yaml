@@ -1,14 +1,19 @@
 openapi: 3.1.0
 info:
   title: AQUIL Symbolic Expression Engine
-  version: 1.0.0
+  version: 1.0.2           # bumped to track the change
   description: >
     A modular system that tracks identity evolution, expresses voice profiles, logs narrative memory,
     and enables symbolic self-reflection via ritual and state transitions.
 
 servers:
-  - url: https://api.aquil.systems/v1
-    description: Primary symbolic-expression endpoint
+  - url: https://c.catnip-pieces1.workers.dev/v1     # ← Cloudflare Worker base URL
+    description: Cloudflare Worker (token-gated)
+
+# ───────────────────────────────────────────────
+# Global security requirement: Bearer token
+security:
+  - bearerAuth: []
 
 paths:
   /identity-nodes:
@@ -160,6 +165,13 @@ paths:
           description: Ritual action executed
 
 components:
+  # ── security scheme definition ──
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  # ── schemas (unchanged) ──
   schemas:
 
     EvolvingIdentityNodeV2:
@@ -334,12 +346,9 @@ components:
       type: object
       required: [user_context, emotional_trigger, voice_state]
       properties:
-        user_context:
-          type: string
-        emotional_trigger:
-          type: string
-        voice_state:
-          type: string
+        user_context: { type: string }
+        emotional_trigger: { type: string }
+        voice_state: { type: string }
 
     AquilProbeResponse:
       type: object
@@ -348,7 +357,5 @@ components:
         inquiry_sequence:
           type: array
           items: { type: string }
-        symbolic_insight:
-          type: string
-        closure_message:
-          type: string
+        symbolic_insight: { type: string }
+        closure_message: { type: string }
