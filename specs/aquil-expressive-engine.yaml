@@ -9,7 +9,7 @@ info:
 servers:
   - url: https://c.catnip-pieces1.workers.dev/v1     # ← Cloudflare Worker base URL
     description: Cloudflare Worker (token-gated)
-
+#
 # ───────────────────────────────────────────────
 # Global security requirement: Bearer token
 security:
