@@ -1,21 +1,211 @@
 openapi: 3.1.0
 info:
   title: AQUIL Symbolic Expression Engine
-  version: 1.0.2           # bumped to track the change
+  version: 1.0.2
   description: >
-    A modular system that tracks identity evolution, expresses voice profiles, logs narrative memory,
-    and enables symbolic self-reflection via ritual and state transitions.
+    A modular system that tracks identity evolution, expresses voice profiles,
+    logs narrative memory, and enables symbolic self-reflection via ritual and
+    state transitions.
 
+# ── WHERE THE GPT WILL CALL ─────────────────────────────────────────────
 servers:
-  - url: https://c.catnip-pieces1.workers.dev/v1     # ← Cloudflare Worker base URL
+  - url: https://c.catnip-pieces1.workers.dev/v1            # ← put YOUR worker sub-domain here
     description: Cloudflare Worker (token-gated)
-#
-# ───────────────────────────────────────────────
-# Global security requirement: Bearer token
+
+# ── GLOBAL SECURITY (Bearer token) ─────────────────────────────────────
 security:
   - bearerAuth: []
 
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    # -------------- Keep existing schemas --------------
+    EvolvingIdentityNodeV2:
+      type: object
+      required: ["identity_key", "archetype"]
+      properties:
+        identity_key: { type: string }
+        archetype:
+          type: object
+          required: ["shadow", "gift", "siddhi", "activation_level", "last_updated"]
+          properties:
+            shadow:             { type: string }
+            gift:               { type: string }
+            siddhi:             { type: string }
+            activation_level:   { type: string, enum: [shadow, gift, siddhi] }
+            last_updated:       { type: string, format: date-time }
+        mode_affinities:
+          type: array
+          items: { type: string }
+        state_notes: { type: string }
+        transition_events:
+          type: array
+          items:
+            type: object
+            required: ["from_level", "to_level", "trigger", "timestamp"]
+            properties:
+              from_level: { type: string }
+              to_level:   { type: string }
+              trigger:    { type: string }
+              timestamp:  { type: string, format: date-time }
+        voice_profile_link: { type: string }
+
+    VoiceProfile:
+      type: object
+      required: ["profile_id", "activation_level", "tone"]
+      properties:
+        profile_id:        { type: string }
+        activation_level:  { type: string, enum: ["shadow", "gift", "siddhi"] }
+        tone:              { type: string }
+        syntax_style:      { type: string }
+        vocabulary_range:  { type: string }
+        discourse_patterns:
+          type: array
+          items: { type: string }
+        modulation_guidelines: { type: string }
+        examples:
+          type: array
+          items: { type: string }
+        voice_color:        { type: string }
+        iconic_figures:
+          type: array
+          items: { type: string }
+        symbolic_imagery:   { type: string }
+        resonant_modes:
+          type: array
+          items: { type: string }
+
+    VoiceShiftProtocol:
+      type: object
+      required: ["current_voice_profile_id", "next_voice_profile_id", "trigger_source", "timestamp"]
+      properties:
+        current_voice_profile_id: { type: string }
+        next_voice_profile_id:    { type: string }
+        trigger_source:           { type: string }
+        timestamp:                { type: string, format: date-time }
+        transition_guidelines:    { type: string }
+        cooldown_window:          { type: string }
+        liminal_state_reflection: { type: string }
+
+    MemoryLog:
+      type: object
+      required: ["identity_key", "voice_shift", "reflection_excerpt", "timestamp"]
+      properties:
+        memory_log_id:  { type: string }
+        identity_key:   { type: string }
+        voice_shift:
+          type: object
+          required: ["from_profile", "to_profile", "trigger_source", "ritual_id", "timestamp", "transition_guidelines"]
+          properties:
+            from_profile:          { type: string }
+            to_profile:            { type: string }
+            trigger_source:        { type: string }
+            ritual_id:             { type: string }
+            timestamp:             { type: string, format: date-time }
+            transition_guidelines: { type: string }
+        reflection_excerpt: { type: string }
+        journal_tags:
+          type: array
+          items: { type: string }
+        linked_modes:
+          type: array
+          items: { type: string }
+        integration_trace:
+          type: object
+          properties:
+            logged_by:             { type: string }
+            voice_shift_posted_to: { type: string }
+            agent_persona_notified:{ type: boolean }
+
+    SymbolicTransitionMap:
+      type: object
+      required: ["map_id", "title", "nodes", "transitions"]
+      properties:
+        map_id:      { type: string }
+        title:       { type: string }
+        description: { type: string }
+        nodes:
+          type: array
+          items:
+            type: object
+            required: ["node_id", "identity_key", "voice_profile", "label", "state"]
+            properties:
+              node_id:       { type: string }
+              identity_key:  { type: string }
+              voice_profile: { type: string }
+              label:         { type: string }
+              state:         { type: string }
+        transitions:
+          type: array
+          items:
+            type: object
+            required: ["from", "to", "ritual_event", "trigger_type", "transition_prompt"]
+            properties:
+              from:              { type: string }
+              to:                { type: string }
+              ritual_event:      { type: string }
+              trigger_type:      { type: string }
+              transition_prompt: { type: string }
+        output_targets:
+          type: array
+          items: { type: string }
+
+    RitualActionTemplate:
+      type: object
+      required: ["ritual_id", "trigger_type", "input_signature", "action"]
+      properties:
+        ritual_id:   { type: string }
+        ritual_name: { type: string }
+        trigger_type:{ type: string }
+        input_signature:
+          type: object
+          required: ["type", "keywords"]
+          properties:
+            type:     { type: string }
+            keywords:
+              type: array
+              items: { type: string }
+        action:
+          type: object
+          required: ["type", "from_profile", "to_profile", "transition_guidelines", "log_voice_shift", "call_endpoint"]
+          properties:
+            type:                  { type: string }
+            from_profile:          { type: string }
+            to_profile:            { type: string }
+            transition_guidelines: { type: string }
+            log_voice_shift:       { type: boolean }
+            call_endpoint:         { type: string }
+        cooldown: { type: string }
+        integration_targets:
+          type: array
+          items: { type: string }
+
+    AquilProbeRequest:
+      type: object
+      required: [user_context, emotional_trigger, voice_state]
+      properties:
+        user_context:      { type: string }
+        emotional_trigger: { type: string }
+        voice_state:       { type: string }
+
+    AquilProbeResponse:
+      type: object
+      required: [inquiry_sequence, symbolic_insight, closure_message]
+      properties:
+        inquiry_sequence:
+          type: array
+          items: { type: string }
+        symbolic_insight:   { type: string }
+        closure_message:    { type: string }
+
+# ── END SCHEMAS ─────────────────────────────────────────────────────────
+
 paths:
+
   /identity-nodes:
     get:
       operationId: listIdentityNodes
@@ -47,10 +237,6 @@ paths:
     post:
       operationId: activateAquilProbe
       summary: Initiate the AQUIL PROBE: Cradle of Sovereignty protocol.
-      description: >
-        This protocol supports symbolic decision-making, emotional reflection, and mythic self-inquiry
-        through a structured 7-step inquiry system, designed to help users navigate high-stakes or trauma-informed
-        emotional decisions.
       requestBody:
         required: true
         content:
@@ -59,7 +245,7 @@ paths:
               $ref: '#/components/schemas/AquilProbeRequest'
       responses:
         '200':
-          description: AQUIL PROBE response with inquiry reflection payload.
+          description: AQUIL PROBE response
           content:
             application/json:
               schema:
@@ -163,199 +349,3 @@ paths:
       responses:
         '200':
           description: Ritual action executed
-
-components:
-  # ── security scheme definition ──
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-
-  # ── schemas (unchanged) ──
-  schemas:
-
-    EvolvingIdentityNodeV2:
-      type: object
-      required: ["identity_key", "archetype"]
-      properties:
-        identity_key:
-          type: string
-        archetype:
-          type: object
-          required: ["shadow", "gift", "siddhi", "activation_level", "last_updated"]
-          properties:
-            shadow: { type: string }
-            gift: { type: string }
-            siddhi: { type: string }
-            activation_level:
-              type: string
-              enum: [shadow, gift, siddhi]
-            last_updated:
-              type: string
-              format: date-time
-        mode_affinities:
-          type: array
-          items:
-            type: string
-        state_notes:
-          type: string
-        transition_events:
-          type: array
-          items:
-            type: object
-            required: ["from_level", "to_level", "trigger", "timestamp"]
-            properties:
-              from_level: { type: string }
-              to_level: { type: string }
-              trigger: { type: string }
-              timestamp: { type: string, format: date-time }
-        voice_profile_link:
-          type: string
-
-    VoiceProfile:
-      type: object
-      required: ["profile_id", "activation_level", "tone"]
-      properties:
-        profile_id: { type: string }
-        activation_level: { type: string, enum: ["shadow", "gift", "siddhi"] }
-        tone: { type: string }
-        syntax_style: { type: string }
-        vocabulary_range: { type: string }
-        discourse_patterns:
-          type: array
-          items: { type: string }
-        modulation_guidelines: { type: string }
-        examples:
-          type: array
-          items: { type: string }
-        voice_color: { type: string }
-        iconic_figures:
-          type: array
-          items: { type: string }
-        symbolic_imagery: { type: string }
-        resonant_modes:
-          type: array
-          items: { type: string }
-
-    VoiceShiftProtocol:
-      type: object
-      required: ["current_voice_profile_id", "next_voice_profile_id", "trigger_source", "timestamp"]
-      properties:
-        current_voice_profile_id: { type: string }
-        next_voice_profile_id: { type: string }
-        trigger_source: { type: string }
-        timestamp: { type: string, format: date-time }
-        transition_guidelines: { type: string }
-        cooldown_window: { type: string }
-        liminal_state_reflection: { type: string }
-
-    MemoryLog:
-      type: object
-      required: ["identity_key", "voice_shift", "reflection_excerpt", "timestamp"]
-      properties:
-        memory_log_id: { type: string }
-        identity_key: { type: string }
-        voice_shift:
-          type: object
-          required: ["from_profile", "to_profile", "trigger_source", "ritual_id", "timestamp", "transition_guidelines"]
-          properties:
-            from_profile: { type: string }
-            to_profile: { type: string }
-            trigger_source: { type: string }
-            ritual_id: { type: string }
-            timestamp: { type: string, format: date-time }
-            transition_guidelines: { type: string }
-        reflection_excerpt: { type: string }
-        journal_tags:
-          type: array
-          items: { type: string }
-        linked_modes:
-          type: array
-          items: { type: string }
-        integration_trace:
-          type: object
-          properties:
-            logged_by: { type: string }
-            voice_shift_posted_to: { type: string }
-            agent_persona_notified: { type: boolean }
-
-    SymbolicTransitionMap:
-      type: object
-      required: ["map_id", "title", "nodes", "transitions"]
-      properties:
-        map_id: { type: string }
-        title: { type: string }
-        description: { type: string }
-        nodes:
-          type: array
-          items:
-            type: object
-            required: ["node_id", "identity_key", "voice_profile", "label", "state"]
-            properties:
-              node_id: { type: string }
-              identity_key: { type: string }
-              voice_profile: { type: string }
-              label: { type: string }
-              state: { type: string }
-        transitions:
-          type: array
-          items:
-            type: object
-            required: ["from", "to", "ritual_event", "trigger_type", "transition_prompt"]
-            properties:
-              from: { type: string }
-              to: { type: string }
-              ritual_event: { type: string }
-              trigger_type: { type: string }
-              transition_prompt: { type: string }
-        output_targets:
-          type: array
-          items: { type: string }
-
-    RitualActionTemplate:
-      type: object
-      required: ["ritual_id", "trigger_type", "input_signature", "action"]
-      properties:
-        ritual_id: { type: string }
-        ritual_name: { type: string }
-        trigger_type: { type: string }
-        input_signature:
-          type: object
-          required: ["type", "keywords"]
-          properties:
-            type: { type: string }
-            keywords:
-              type: array
-              items: { type: string }
-        action:
-          type: object
-          required: ["type", "from_profile", "to_profile", "transition_guidelines", "log_voice_shift", "call_endpoint"]
-          properties:
-            type: { type: string }
-            from_profile: { type: string }
-            to_profile: { type: string }
-            transition_guidelines: { type: string }
-            log_voice_shift: { type: boolean }
-            call_endpoint: { type: string }
-        cooldown: { type: string }
-        integration_targets:
-          type: array
-          items: { type: string }
-
-    AquilProbeRequest:
-      type: object
-      required: [user_context, emotional_trigger, voice_state]
-      properties:
-        user_context: { type: string }
-        emotional_trigger: { type: string }
-        voice_state: { type: string }
-
-    AquilProbeResponse:
-      type: object
-      required: [inquiry_sequence, symbolic_insight, closure_message]
-      properties:
-        inquiry_sequence:
-          type: array
-          items: { type: string }
-        symbolic_insight: { type: string }
-        closure_message: { type: string }
