@@ -1,0 +1,217 @@
+{
+  "meta": {
+    "profile_owner": "Aquil Ross",
+    "last_updated": "2025-07-28"
+  },
+  "current_state": {
+    "active_gene_key": "28",
+    "dominant_emotion": "doubt",
+    "system_in_focus": "THROATCRAFT",
+    "risk_level": "moderate",
+    "last_collapse": "2025-07-27T22:41:00Z",
+    "cooldowns": {
+      "Collapse Minimal Reset Ritual": "2025-07-29T00:00:00Z"
+    }
+  },
+  "focus_log": [
+    {
+      "system": "THROATCRAFT",
+      "activated": "2025-07-25T15:00:00Z",
+      "emotion": "drive",
+      "gene_key": "3"
+    }
+  ],
+  "gene_keys": {
+    "3": {
+      "shadow": "Chaos",
+      "gift": "Innovation",
+      "siddhi": "Innocence",
+      "mode_bias": { "collapse": 0.3, "recursive": 0.7 },
+      "bias_history": [{"timestamp": "2025-07-27T22:41:00Z", "collapse": 0.3, "recursive": 0.7}],
+      "markers": ["mess", "system-rebuild impulse"],
+      "interventions": [
+        {
+          "name": "Collapse Minimal Reset Ritual",
+          "blueprint_ref": "GeneKey:3.shadow",
+          "output_effect": ["emotional reset", "nervous system clarity"],
+          "cooldown_until": "2025-07-29T00:00:00Z",
+          "cooldown_reason": "Cooldown to prevent overuse",
+          "last_triggered": "2025-07-28",
+          "usage_count": 5,
+          "success_rate": 0.8,
+          "failure_response": "Safety Ritual"
+        },
+        {
+          "name": "Ship-First Protocol",
+          "blueprint_ref": "GeneKey:3.gift",
+          "output_effect": ["momentum", "clarity", "execution"],
+          "last_triggered": null,
+          "usage_count": 0,
+          "success_rate": null
+        }
+      ],
+      "triggers": [
+        { "input": "burnout", "action": "Collapse Minimal Reset Ritual" },
+        { "input": "stalling", "action": "Ship-First Protocol" }
+      ],
+      "notes": "GK3 helps convert internal mess into tangible action. System rebuild trigger."
+    },
+    "28": {
+      "shadow": "Purposelessness",
+      "gift": "Totality",
+      "siddhi": "Immortality",
+      "mode_bias": { "collapse": 0.5, "edge": 0.5 },
+      "bias_history": [{"timestamp": "2025-07-27T22:41:00Z", "collapse": 0.5, "edge": 0.5}],
+      "markers": ["existential doubt", "meaning hunger"],
+      "interventions": [
+        {
+          "name": "Ask-for-Purpose Reflection",
+          "blueprint_ref": "GeneKey:28.shadow",
+          "output_effect": ["grounding", "directional focus"],
+          "last_triggered": "2025-07-24",
+          "usage_count": 7,
+          "success_rate": 0.6
+        },
+        {
+          "name": "Project Audit",
+          "blueprint_ref": "GeneKey:28.gift",
+          "output_effect": ["clarity", "resource mapping"],
+          "last_triggered": "2025-07-20",
+          "usage_count": 2,
+          "success_rate": 0.5
+        }
+      ],
+      "triggers": [
+        { "input": "existential doubt", "action": "Ask-for-Purpose Reflection" },
+        { "input": "post-project crash", "action": "Project Audit" }
+      ]
+    }
+  },
+  "human_design": {
+    "type": "Manifestor",
+    "profile": "3/5",
+    "authority": "Emotional",
+    "defined_centers": ["Solar Plexus", "Throat", "G", "Ego"],
+    "gates": {
+      "3.5": {
+        "theme": "mutation",
+        "markers": ["adaptation stress"],
+        "protocols": [
+          {
+            "name": "Mutation Ritual",
+            "output_effect": ["change acceptance", "somatic relief"],
+            "last_triggered": null,
+            "cooldown_until": null,
+            "usage_count": 0
+          }
+        ],
+        "triggers": [
+          { "input": "new phase", "action": "Mutation Ritual" }
+        ]
+      }
+    }
+  },
+  "trauma_map": {
+    "boarding_school": {
+      "years": "8–18",
+      "markers": ["institutional identity", "emotional withholding"],
+      "threat_level": "medium",
+      "protocols": [
+        {
+          "name": "Containment Scaffold A",
+          "output_effect": ["self-trust", "defrag survival identity"]
+        }
+      ],
+      "triggers": [
+        { "input": "school project", "action": "Containment Scaffold A" }
+      ]
+    },
+    "abusive_relationships": {
+      "years": "25–31",
+      "markers": ["hypervigilance", "people-pleasing"],
+      "threat_level": "high",
+      "protocols": [
+        {
+          "name": "Mistrust Mode",
+          "output_effect": ["discernment", "emotional boundary repair"]
+        }
+      ],
+      "triggers": [
+        { "input": "relationship conflict", "action": "Mistrust Mode" }
+      ]
+    },
+    "housing_insecurity": {
+      "years": "32–present",
+      "markers": ["stability anxiety"],
+      "threat_level": "medium",
+      "protocols": [
+        {
+          "name": "Safety Ritual",
+          "output_effect": ["grounding", "soothing"]
+        }
+      ],
+      "triggers": [
+        { "input": "money fear", "action": "Safety Ritual" }
+      ]
+    }
+  },
+  "creative_lineage": [
+    {
+      "name": "THROATCRAFT",
+      "active": true,
+      "last_engaged": "2025-07-25",
+      "state": "integration",
+      "signature_phrase": "Shape the silence",
+      "trigger_effects": ["voice clarity", "presence reset"]
+    },
+    {
+      "name": "ARK",
+      "signature_phrase": "Speak recursion, live coherence",
+      "active": true,
+      "last_engaged": "2025-07-28",
+      "state": "evolution",
+      "trigger_effects": ["system coherence", "recursive clarity"]
+    }
+  ],
+  "emotion_protocol_map": {
+    "guilt": ["Boundary Audit", "Safety Ritual"],
+    "shame": ["Reality-Testing Prompts"],
+    "rage": ["Tribe Reset Ritual"],
+    "doubt": ["Ask-for-Purpose Reflection"],
+    "overwhelm": ["Collapse Minimal Reset Ritual"],
+    "drive": ["Ship-First Protocol"]
+  },
+  "usage_log": [
+    {
+      "protocol": "Collapse Minimal Reset Ritual",
+      "date": "2025-07-28",
+      "result": "success",
+      "user_note": "Felt calmer afterward"
+    },
+    {
+      "protocol": "Ask-for-Purpose Reflection",
+      "date": "2025-07-24",
+      "result": "partial relief",
+      "user_note": "Needed follow-up journaling"
+    }
+  ],
+  "recommendations": [
+    {
+      "date": "2025-07-29",
+      "suggested_protocol": "Ship-First Protocol",
+      "reason": "Stalling detected; momentum needed."
+    }
+  ],
+    "snapshot_log": [
+      {
+        "date": "2025-07-28",
+        "active_gene_key": "28",
+        "dominant_emotion": "doubt"
+      }
+    ],
+    "substance_timeline": [
+      { "period": "2021–2023", "substance": "methamphetamine", "status": "active use" },
+      { "period": "2024", "substance": "methamphetamine", "status": "recovery/relapse cycles" },
+      { "period": "2025", "substance": "methamphetamine", "status": "mostly stable with lapses", "insight_gained": "Strong urge to create during emotional peaks", "ritual_support": ["Safety Ritual", "Mutation Ritual"] }
+    ]
+}
