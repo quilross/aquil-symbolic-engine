@@ -1,0 +1,21 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Signalhaven Transcendence Agent",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/identity-nodes": {
+      "get": {"summary": "list identity nodes"},
+      "post": {"summary": "create identity node"}
+    },
+    "/protocols/aquil-probe": {"post": {"summary": "activate aquil probe"}},
+    "/voice-shifts": {"post": {"summary": "record voice shift"}},
+    "/identity-memories": {"post": {"summary": "log memory"}},
+    "/narratives/generate": {"post": {"summary": "generate narrative"}},
+    "/transition-maps/{id}": {"get": {"summary": "get symbolic map"}},
+    "/ritual-actions/trigger": {"post": {"summary": "trigger ritual"}},
+    "/logs": {"get": {"summary": "fetch logs"}},
+    "/reset": {"post": {"summary": "reset user"}}
+  }
+}
