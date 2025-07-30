@@ -65,6 +65,8 @@ export class UserState {
 
   // Persist a new identity node to KV
   async createIdentityNode(node) {
+    node.version = 1;
+    node.timestamp = new Date().toISOString();
     const key = `identity:${node.identity_key}`;
     await this.env.SIGNAL_KV.put(key, JSON.stringify(node));
     await this.inc('writes');
@@ -80,6 +82,8 @@ export class UserState {
 
   // Record a voice shift event in KV
   async recordVoiceShift(shift) {
+    shift.version = 1;
+    shift.timestamp = new Date().toISOString();
     const key = `voice:${Date.now()}`;
     await this.env.SIGNAL_KV.put(key, JSON.stringify(shift));
     await this.inc('writes');
