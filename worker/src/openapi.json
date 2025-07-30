@@ -4,6 +4,7 @@
     "title": "Signalhaven Transcendence Agent",
     "version": "0.1.0"
   },
+
   "components": {
     "securitySchemes": {
       "bearerAuth": {
@@ -14,6 +15,7 @@
     }
   },
   "security": [{ "bearerAuth": [] }],
+
   "paths": {
     "/identity-nodes": {
       "get": {"summary": "list identity nodes"},
@@ -37,4 +39,3 @@
     "/reset": {"post": {"summary": "reset user"}}
   }
 }
-
