@@ -1,0 +1,40 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Signalhaven Transcendence Agent",
+    "version": "0.1.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/identity-nodes": {
+      "get": {"summary": "list identity nodes"},
+      "post": {"summary": "create identity node"}
+    },
+    "/protocols/aquil-probe": {"post": {"summary": "activate aquil probe"}},
+    "/voice-shifts": {"post": {"summary": "record voice shift"}},
+    "/identity-memories": {"post": {"summary": "log memory"}},
+    "/narratives/generate": {"post": {"summary": "generate narrative"}},
+    "/transition-maps/{id}": {"get": {"summary": "get symbolic map"}},
+    "/ritual-actions/trigger": {"post": {"summary": "trigger ritual"}},
+    "/friction-ratings": {"post": {"summary": "record friction rating"}},
+    "/play-protocols": {
+      "get": {"summary": "list play protocols"},
+      "post": {"summary": "create play protocol"}
+    },
+    "/media-engagements": {"post": {"summary": "log media engagement"}},
+    "/feedback": {"post": {"summary": "log feedback"}},
+    "/export-logs": {"get": {"summary": "export logs"}},
+    "/logs": {"get": {"summary": "fetch logs"}},
+    "/reset": {"post": {"summary": "reset user"}}
+  }
+}
+
