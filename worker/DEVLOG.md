@@ -13,3 +13,10 @@
 - Added friction rating, play protocol, media engagement and feedback endpoints
 - Added admin log export with simple base64 encoding
 - Updated OpenAPI document and README
+
+
+## 2025-08-02
+- Added version/timestamp to identity nodes and voice shifts
+- Documented bearerAuth security in OpenAPI
+- Updated README to reflect security and timestamp changes
+
