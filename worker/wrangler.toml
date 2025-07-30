@@ -1,0 +1,11 @@
+name = "signalhaven-worker"
+main = "src/index.js"
+compatibility_date = "2024-04-10"
+
+[[kv_namespaces]]
+binding = "SIGNAL_KV"
+id = ""
+
+[[durable_objects.bindings]]
+name = "USERSTATE"
+class_name = "UserState"
