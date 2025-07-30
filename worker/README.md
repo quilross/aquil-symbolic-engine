@@ -5,12 +5,13 @@ This Cloudflare Worker implements the Signalhaven Transcendence Agent described 
 ## Features
 
 - Bearer token authentication (`API_TOKEN` env variable)
+- Admin token authentication (`API_TOKEN_ADMIN` env variable) for resets and log export
 - Daily free-tier usage counters with graceful degradation
-- KV storage of memories and protocol logs with timestamps and versioning
+- KV storage of memories and protocol logs with timestamps and versioning (identity nodes and voice shifts now include version/timestamp)
 - Admin reset endpoint (`/reset`) protected by `API_TOKEN_ADMIN`
 - Friction rating capture and leadership rotation
 - Play protocol creation and listing
 - Media engagement and feedback logging
 - Admin log export with simple encryption
-- Minimal OpenAPI 3.1 document at `src/openapi.json`
-
+- Minimal OpenAPI 3.1 document at `src/openapi.json` (authenticated access only)
+- All API endpoints require bearer authentication and store versioned, timestamped records
