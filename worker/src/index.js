@@ -87,14 +87,17 @@ export class UserState {
 
   // List all stored identity nodes from KV
   async listIdentityNodes() {
-    const list = await this.env.SIGNAL_KV.list({ prefix: 'identity:' });
+    const list = await this.kvList({ prefix: 'identity:' });
     const nodes = [];
     for (const { name } of list.keys) {
-      const value = await this.env.SIGNAL_KV.get(name, 'json');
+      const value = await this.kvGet(name, 'json');
       if (value) nodes.push(value);
     }
     await this.inc('reads');
-    return this.respond({ nodes });
+    return this.respond({ 
+      nodes,
+      storageType: this.hasKV() ? 'kv' : 'fallback'
+    });
   }
 
   // Persist a new identity node to KV
@@ -102,9 +105,13 @@ export class UserState {
     node.version = 1;
     node.timestamp = new Date().toISOString();
     const key = `identity:${node.identity_key}`;
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(node));
+    
+    await this.kvPut(key, node);
     await this.inc('writes');
-    return this.respond({ created: true });
+    return this.respond({ 
+      created: true,
+      storageType: this.hasKV() ? 'kv' : 'fallback'
+    });
   }
 
   // Start the AQUIL Probe protocol with a friction notice
@@ -265,7 +272,54 @@ export class UserState {
     return new Response(JSON.stringify(obj), { headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Helpers for free-tier degradation counters
+  // Helper to check KV availability and provide fallback
+  hasKV() {
+    return !!this.env.SIGNAL_KV;
+  }
+
+  // KV operation with fallback to Durable Object storage
+  async kvGet(key, type = 'text') {
+    if (this.env.SIGNAL_KV) {
+      return await this.env.SIGNAL_KV.get(key, type);
+    }
+    // Fallback to Durable Object storage
+    const value = await this.state.storage.get(key);
+    if (type === 'json' && value && typeof value === 'string') {
+      return JSON.parse(value);
+    }
+    return value;
+  }
+
+  async kvPut(key, value) {
+    if (this.env.SIGNAL_KV) {
+      const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+      return await this.env.SIGNAL_KV.put(key, stringValue);
+    }
+    // Fallback to Durable Object storage
+    return await this.state.storage.put(key, value);
+  }
+
+  async kvList(options) {
+    if (this.env.SIGNAL_KV) {
+      return await this.env.SIGNAL_KV.list(options);
+    }
+    // Fallback to Durable Object storage
+    const allKeys = await this.state.storage.list();
+    const filteredKeys = [];
+    for (const [key] of allKeys) {
+      if (!options.prefix || key.startsWith(options.prefix)) {
+        filteredKeys.push({ name: key });
+      }
+    }
+    return { keys: filteredKeys };
+  }
+
+  async kvDelete(key) {
+    if (this.env.SIGNAL_KV) {
+      return await this.env.SIGNAL_KV.delete(key);
+    }
+    return await this.state.storage.delete(key);
+  }
   async rotateDay() {
     const now = new Date().toISOString().slice(0, 10);
     const current = (await this.state.storage.get('day')) || { day: now, writes: 0, reads: 0 };
@@ -938,27 +992,42 @@ export class UserState {
   }
 
   async getSystemHealth() {
+    const kvConfigured = this.hasKV();
+    const overall = kvConfigured ? "healthy" : "warning";
+    
     return Response.json({
-      overall: "healthy",
+      overall,
       api: {
         status: "operational",
         responseTime: 45,
         endpoints: 25
       },
       storage: {
-        status: "ready",
-        usage: "minimal"
+        status: kvConfigured ? "ready" : "fallback",
+        usage: "minimal",
+        kvConfigured,
+        fallbackMode: !kvConfigured
       },
       deployment: {
         status: "ready",
         lastUpdate: "pending_first_deploy",
         size: "31.02 KiB"
       },
-      recommendations: [
-        "Ready for first deployment",
-        "Consider setting up monitoring after deploy",
-        "All security tokens updated"
+      recommendations: kvConfigured ? [
+        "Ready for production deployment",
+        "All storage systems operational",
+        "Security tokens configured"
+      ] : [
+        "⚠️ KV namespace not configured - using fallback storage",
+        "Add KV namespace to wrangler.toml for production",
+        "Current setup works for testing but has limitations"
       ],
+      kvSetupInstructions: kvConfigured ? null : {
+        step1: "Create KV namespace: npx wrangler kv:namespace create SIGNAL_KV",
+        step2: "Add namespace ID to wrangler.toml [[kv_namespaces]] section", 
+        step3: "Uncomment KV configuration in wrangler.toml",
+        step4: "Redeploy worker"
+      },
       timestamp: new Date().toISOString()
     });
   }
