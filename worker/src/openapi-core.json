@@ -1,0 +1,526 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Signal Q - Core Transcendence Agent",
+    "version": "2.0.0",
+    "description": "Essential Signal Q autonomous agent endpoints for CustomGPT integration. Core functionality across 4 creative lineages (THROATCRAFT, ARK, LUNACRAFT, Somatic) with AI-enhanced decision making."
+  },
+  "servers": [
+    {
+      "url": "https://signal_q.catnip-pieces1.workers.dev",
+      "description": "Production Cloudflare Worker"
+    }
+  ],
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token authentication"
+      }
+    }
+  },
+  "paths": {
+    "/system/health": {
+      "get": {
+        "operationId": "getSystemHealth",
+        "summary": "System health check",
+        "responses": {
+          "200": { "description": "System health status" }
+        }
+      }
+    },
+    "/agent-suggestions": {
+      "get": {
+        "operationId": "getAgentSuggestions",
+        "summary": "AI autonomous suggestions based on patterns",
+        "responses": {
+          "200": { "description": "Agent suggestions" }
+        }
+      }
+    },
+    "/protocols/aquil-probe": {
+      "post": {
+        "operationId": "activateAquilProbe",
+        "summary": "Activate AQUIL Probe with AI decision making",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": { "type": "string" },
+                  "readiness": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Probe activation result" }
+        }
+      }
+    },
+    "/gene-key-guidance": {
+      "get": {
+        "operationId": "getGeneKeyGuidance",
+        "summary": "Gene Key guidance for current state",
+        "responses": {
+          "200": { "description": "Gene Key guidance" }
+        }
+      }
+    },
+    "/emotional-wave-tracker": {
+      "post": {
+        "operationId": "trackEmotionalWave",
+        "summary": "Track emotional authority wave",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "intensity": { "type": "number" },
+                  "clarity": { "type": "boolean" }
+                },
+                "required": ["intensity"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Emotional wave analysis" }
+        }
+      }
+    },
+    "/manifestor-initiation": {
+      "post": {
+        "operationId": "manifestorInitiation",
+        "summary": "Manifestor initiation support",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "initiationUrge": { "type": "string" },
+                  "impactLevel": { "type": "string", "enum": ["low", "medium", "high"] }
+                },
+                "required": ["initiationUrge"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Manifestor guidance" }
+        }
+      }
+    },
+    "/effectiveness-dashboard": {
+      "get": {
+        "operationId": "getEffectivenessDashboard",
+        "summary": "Comprehensive effectiveness analysis",
+        "responses": {
+          "200": { "description": "Effectiveness dashboard" }
+        }
+      }
+    },
+    "/recovery-support": {
+      "get": {
+        "operationId": "getRecoverySupport",
+        "summary": "Harm reduction recovery support",
+        "responses": {
+          "200": { "description": "Recovery support guidance" }
+        }
+      }
+    },
+    "/throatcraft-session": {
+      "post": {
+        "operationId": "activateThroatcraft",
+        "summary": "THROATCRAFT voice emergence with AI guidance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "intention": { "type": "string" },
+                  "currentVoiceState": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "THROATCRAFT activation result" }
+        }
+      }
+    },
+    "/ark-coherence-check": {
+      "get": {
+        "operationId": "checkArkCoherence",
+        "summary": "ARK coherence and recursive clarity",
+        "responses": {
+          "200": { "description": "ARK coherence status" }
+        }
+      }
+    },
+    "/trauma-informed-response": {
+      "post": {
+        "operationId": "getTraumaInformedResponse",
+        "summary": "Trauma-informed response adaptation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": { "type": "string" },
+                  "triggerLevel": { "type": "string", "enum": ["low", "medium", "high"] }
+                },
+                "required": ["context"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Trauma-informed response" }
+        }
+      }
+    },
+    "/philadelphia-context": {
+      "get": {
+        "operationId": "getPhiladelphiaContext",
+        "summary": "Philadelphia cultural intelligence",
+        "responses": {
+          "200": { "description": "Philadelphia context" }
+        }
+      }
+    },
+    "/live-philadelphia-events": {
+      "get": {
+        "operationId": "getLivePhiladelphiaEvents",
+        "summary": "Real-time Philadelphia events",
+        "responses": {
+          "200": { "description": "Live Philadelphia events" }
+        }
+      }
+    },
+    "/multi-identity-orchestration": {
+      "post": {
+        "operationId": "orchestrateIdentities",
+        "summary": "Multi-identity orchestration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": { "type": "string" }
+                },
+                "required": ["context"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Identity orchestration result" }
+        }
+      }
+    },
+    "/predictive-protocol": {
+      "get": {
+        "operationId": "getPredictiveProtocol",
+        "summary": "Predictive crisis prevention protocol",
+        "responses": {
+          "200": { "description": "Predictive protocol analysis" }
+        }
+      }
+    },
+    "/identity/voice-switch": {
+      "post": {
+        "operationId": "contextVoiceSwitch",
+        "summary": "Context-aware voice switching",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "taskType": { "type": "string", "enum": ["creative", "analytical", "healing", "manifestor", "social"] },
+                  "context": { "type": "string" },
+                  "energyLevel": { "type": "string" }
+                },
+                "required": ["taskType"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Voice switch result" }
+        }
+      }
+    },
+    "/identity/orchestration": {
+      "get": {
+        "operationId": "getIdentityOrchestration",
+        "summary": "Identity aspect orchestration status",
+        "responses": {
+          "200": { "description": "Identity orchestration status" }
+        }
+      }
+    },
+    "/recovery/creative-emergence": {
+      "get": {
+        "operationId": "getCreativeEmergence",
+        "summary": "Creative emergence in recovery",
+        "responses": {
+          "200": { "description": "Creative emergence analysis" }
+        }
+      }
+    },
+    "/recovery/nervous-system": {
+      "post": {
+        "operationId": "getNervousSystemGuidance",
+        "summary": "Nervous system regulation guidance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentState": { "type": "string", "enum": ["activated", "dysregulated", "calm", "shutdown"] },
+                  "safetyLevel": { "type": "number", "minimum": 1, "maximum": 10 }
+                },
+                "required": ["currentState", "safetyLevel"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Nervous system guidance" }
+        }
+      }
+    },
+    "/philadelphia/neighborhood-energy": {
+      "post": {
+        "operationId": "getNeighborhoodEnergy",
+        "summary": "Philadelphia neighborhood energy mapping",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentMood": { "type": "string" },
+                  "creativeEnergy": { "type": "string", "enum": ["low", "building", "flowing", "peak"] },
+                  "socialCapacity": { "type": "string", "enum": ["solitude", "small_group", "community", "crowd"] }
+                },
+                "required": ["creativeEnergy", "socialCapacity"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Neighborhood energy recommendations" }
+        }
+      }
+    },
+    "/philadelphia/synchronicity": {
+      "get": {
+        "operationId": "getSynchronicityTracking",
+        "summary": "Philadelphia synchronicity tracking",
+        "responses": {
+          "200": { "description": "Synchronicity analysis" }
+        }
+      }
+    },
+    "/throatcraft/voice-emergence": {
+      "post": {
+        "operationId": "getVoiceEmergenceProtocol",
+        "summary": "THROATCRAFT voice emergence protocol",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentVoiceState": { "type": "string", "enum": ["silent", "emerging", "finding", "expressing", "mastered"] },
+                  "practiceType": { "type": "string" },
+                  "resistanceLevel": { "type": "number", "minimum": 1, "maximum": 10 }
+                },
+                "required": ["currentVoiceState"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Voice emergence protocol" }
+        }
+      }
+    },
+    "/throatcraft/silence-mapping": {
+      "get": {
+        "operationId": "getSilenceMapping",
+        "summary": "THROATCRAFT silence to voice mapping",
+        "responses": {
+          "200": { "description": "Silence mapping analysis" }
+        }
+      }
+    },
+    "/lunacraft/cattle-dog-guidance": {
+      "post": {
+        "operationId": "getCattleDogGuidance",
+        "summary": "LUNACRAFT cattle dog companionship guidance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "situation": { "type": "string" },
+                  "energyLevel": { "type": "string", "enum": ["high_energy", "moderate_energy", "low_energy"] },
+                  "behaviorConcern": { "type": "string" },
+                  "environmentalContext": { "type": "string", "enum": ["urban", "suburban", "rural", "indoor"] }
+                },
+                "required": ["energyLevel"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cattle dog guidance" }
+        }
+      }
+    },
+    "/lunacraft/alpha-presence": {
+      "get": {
+        "operationId": "getAlphaPresenceGuidance",
+        "summary": "LUNACRAFT alpha presence guidance",
+        "responses": {
+          "200": { "description": "Alpha presence guidance" }
+        }
+      }
+    },
+    "/lunacraft/companion-bonding": {
+      "post": {
+        "operationId": "getCompanionBondingAdvice",
+        "summary": "LUNACRAFT companion bonding advice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentChallenge": { "type": "string" },
+                  "bondingGoal": { "type": "string", "enum": ["trust_building", "communication_improvement", "adventure_partnership", "calm_companionship"] },
+                  "timeAvailable": { "type": "string", "enum": ["15min", "30min", "1hour", "2hours+"] }
+                },
+                "required": ["bondingGoal"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Companion bonding advice" }
+        }
+      }
+    },
+    "/somatic/body-awareness": {
+      "post": {
+        "operationId": "getSomaticAwareness",
+        "summary": "Somatic body awareness integration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentBodyState": { "type": "string" },
+                  "tensionAreas": { "type": "array", "items": { "type": "string" } },
+                  "breathingPattern": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Somatic awareness guidance" }
+        }
+      }
+    },
+    "/somatic/nervous-system-regulation": {
+      "post": {
+        "operationId": "getSomaticRegulation",
+        "summary": "Somatic nervous system regulation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dysregulationType": { "type": "string", "enum": ["hyperactivation", "hypoactivation", "mixed_states", "emotional_overwhelm"] },
+                  "currentCapacity": { "type": "number", "minimum": 1, "maximum": 10 },
+                  "timeAvailable": { "type": "string", "enum": ["2min", "5min", "10min", "20min"] }
+                },
+                "required": ["dysregulationType"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Nervous system regulation protocol" }
+        }
+      }
+    },
+    "/somatic/trauma-release": {
+      "post": {
+        "operationId": "getSomaticTraumaRelease",
+        "summary": "Somatic trauma release (trauma-informed)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "readiness": { "type": "boolean" },
+                  "bodyMemories": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Trauma release guidance" }
+        }
+      }
+    },
+    "/ai-enhance": {
+      "post": {
+        "operationId": "aiEnhancedResponse",
+        "summary": "AI-enhanced responses using Cloudflare Workers AI",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt": { "type": "string" },
+                  "context": { "type": "string" },
+                  "enhancementType": { "type": "string" }
+                },
+                "required": ["prompt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "AI-enhanced response" }
+        }
+      }
+    }
+  }
+}
