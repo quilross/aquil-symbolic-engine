@@ -4,6 +4,18 @@
 
 export default {
   async fetch(request, env) {
+    // Handle CORS preflight requests FIRST, before auth
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+        }
+      });
+    }
+
     // Simple bearer token auth. Token configured in wrangler.toml as API_TOKEN
     const auth = request.headers.get('Authorization') || '';
     const [, token] = auth.split(' ');
