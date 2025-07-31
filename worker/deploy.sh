@@ -22,10 +22,10 @@ wrangler deploy
 
 echo ""
 echo "✅ Deployment complete!"
-echo "🔗 Your API is available at: https://signal_q.workers.dev"
+echo "🔗 Your API is available at: https://signal_q.catnip-pieces1.workers.dev"
 echo ""
 echo "🔧 Next steps:"
 echo "  1. Update KV namespace ID in wrangler.toml"
 echo "  2. Change API tokens from 'changeme' to secure values"
-echo "  3. Test endpoints at https://signal_q.workers.dev"
+echo "  3. Test endpoints at https://signal_q.catnip-pieces1.workers.dev"
 echo ""
