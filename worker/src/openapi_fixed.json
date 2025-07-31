@@ -1,0 +1,532 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Aquil Transcendence Agent API",
+    "version": "1.0.0",
+    "description": "A personalized AI agent system with autonomous capabilities, cultural intelligence, privacy controls, and agent self-interest features."
+  },
+  "servers": [
+    {
+      "url": "https://signal_q.workers.dev",
+      "description": "Production Cloudflare Worker"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token authentication"
+      }
+    },
+    "schemas": {
+      "TimeTrackingResponse": {
+        "type": "object",
+        "properties": {
+          "serverTime": {"type": "string", "format": "date-time"},
+          "userLocalTime": {"type": "string", "format": "date-time"},
+          "timezone": {"type": "string", "example": "America/New_York"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "AgentOverwhelmResponse": {
+        "type": "object",
+        "properties": {
+          "overwhelmed": {"type": "boolean"},
+          "message": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "PrivacySettings": {
+        "type": "object",
+        "properties": {
+          "dataRetention": {"type": "string", "enum": ["7days", "30days", "90days", "1year", "indefinite"]},
+          "loggingLevel": {"type": "string", "enum": ["minimal", "standard", "detailed"]},
+          "shareWithAgent": {"type": "boolean"},
+          "anonymizeData": {"type": "boolean"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "paths": {
+    "/track-time": {
+      "post": {
+        "summary": "track and report accurate time for agent and user activities",
+        "description": "Returns current server time, user local time, and timezone awareness. Uses Philadelphia, PA timezone (America/New_York) for user context.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userLocation": {
+                    "type": "string",
+                    "example": "Philadelphia, PA"
+                  }
+                },
+                "required": ["userLocation"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current time information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeTrackingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session-monitor": {
+      "post": {
+        "summary": "monitor session duration and shut down after extended interaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "maxDuration": {"type": "number", "description": "Maximum allowed duration in minutes", "default": 120}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session monitoring status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "shouldShutdown": {"type": "boolean"},
+                    "timeRemaining": {"type": "number"},
+                    "message": {"type": "string"},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movement-reminder": {
+      "post": {
+        "summary": "remind user to move body if sedentary for too long",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lastMovement": {"type": "string", "format": "date-time"},
+                  "reminderInterval": {"type": "number", "description": "Reminder interval in minutes", "default": 60}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Movement reminder response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "shouldRemind": {"type": "boolean"},
+                    "message": {"type": "string"},
+                    "suggestions": {"type": "array", "items": {"type": "string"}},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-overwhelm": {
+      "get": {
+        "summary": "agent notifies user when it is overwhelmed or degraded",
+        "responses": {
+          "200": {
+            "description": "Agent overwhelm status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentOverwhelmResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-suggestions": {
+      "get": {
+        "summary": "agent provides autonomous suggestions based on patterns and user context",
+        "responses": {
+          "200": {
+            "description": "Agent suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "suggestions": {"type": "array", "items": {"type": "string"}},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/philadelphia-context": {
+      "get": {
+        "summary": "agent fetches and understands Philadelphia-specific culture, events, and local knowledge",
+        "responses": {
+          "200": {
+            "description": "Philadelphia context information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "culture": {"type": "string"},
+                    "events": {"type": "array", "items": {"type": "string"}},
+                    "history": {"type": "string"},
+                    "localTips": {"type": "array", "items": {"type": "string"}},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/privacy-settings": {
+      "get": {
+        "summary": "get current privacy settings and data control preferences",
+        "responses": {
+          "200": {
+            "description": "Current privacy settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacySettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "update privacy settings and data control preferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacySettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Privacy settings updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "updated": {"type": "boolean"},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-curiosity": {
+      "post": {
+        "summary": "agent explores new topics, trends, and interests autonomously",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "curiosityType": {"type": "string", "example": "culture, science, art"},
+                  "userContext": {"type": "string", "example": "Philadelphia, PA"}
+                },
+                "required": ["curiosityType"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent curiosity results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "topics": {"type": "array", "items": {"type": "string"}},
+                    "discoveries": {"type": "array", "items": {"type": "string"}},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-interests": {
+      "get": {
+        "summary": "fetch agent's current interests, discoveries, and preferences",
+        "responses": {
+          "200": {
+            "description": "Current agent interests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "interests": {"type": "array", "items": {"type": "string"}},
+                    "preferences": {"type": "array", "items": {"type": "string"}},
+                    "discoveries": {"type": "array", "items": {"type": "string"}},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-exploration": {
+      "post": {
+        "summary": "agent initiates self-driven exploration and shares findings with user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "explorationType": {"type": "string", "example": "local events, new technology, art"},
+                  "userContext": {"type": "string", "example": "Philadelphia, PA"}
+                },
+                "required": ["explorationType"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent exploration results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "findings": {"type": "array", "items": {"type": "string"}},
+                    "recommendations": {"type": "array", "items": {"type": "string"}},
+                    "timestamp": {"type": "string", "format": "date-time"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/identity-nodes": {
+      "get": {
+        "summary": "list identity nodes",
+        "responses": {
+          "200": {
+            "description": "Identity nodes listed"
+          }
+        }
+      },
+      "post": {
+        "summary": "create identity node",
+        "responses": {
+          "201": {
+            "description": "Identity node created"
+          }
+        }
+      }
+    },
+    "/protocols/aquil-probe": {
+      "post": {
+        "summary": "activate aquil probe",
+        "responses": {
+          "200": {
+            "description": "Aquil probe activated"
+          }
+        }
+      }
+    },
+    "/voice-shifts": {
+      "post": {
+        "summary": "record voice shift",
+        "responses": {
+          "201": {
+            "description": "Voice shift recorded"
+          }
+        }
+      }
+    },
+    "/identity-memories": {
+      "post": {
+        "summary": "log memory",
+        "responses": {
+          "201": {
+            "description": "Memory logged"
+          }
+        }
+      }
+    },
+    "/narratives/generate": {
+      "post": {
+        "summary": "generate narrative",
+        "responses": {
+          "200": {
+            "description": "Narrative generated"
+          }
+        }
+      }
+    },
+    "/transition-maps/{id}": {
+      "get": {
+        "summary": "get symbolic map",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Symbolic map retrieved"
+          }
+        }
+      }
+    },
+    "/ritual-actions/trigger": {
+      "post": {
+        "summary": "trigger ritual",
+        "responses": {
+          "200": {
+            "description": "Ritual triggered"
+          }
+        }
+      }
+    },
+    "/friction-ratings": {
+      "post": {
+        "summary": "record friction rating",
+        "responses": {
+          "201": {
+            "description": "Friction rating recorded"
+          }
+        }
+      }
+    },
+    "/play-protocols": {
+      "get": {
+        "summary": "list play protocols",
+        "responses": {
+          "200": {
+            "description": "Play protocols listed"
+          }
+        }
+      },
+      "post": {
+        "summary": "create play protocol",
+        "responses": {
+          "201": {
+            "description": "Play protocol created"
+          }
+        }
+      }
+    },
+    "/media-engagements": {
+      "post": {
+        "summary": "log media engagement",
+        "responses": {
+          "201": {
+            "description": "Media engagement logged"
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "post": {
+        "summary": "log feedback",
+        "responses": {
+          "201": {
+            "description": "Feedback logged"
+          }
+        }
+      }
+    },
+    "/export-logs": {
+      "get": {
+        "summary": "export logs",
+        "responses": {
+          "200": {
+            "description": "Logs exported"
+          }
+        }
+      }
+    },
+    "/logs": {
+      "get": {
+        "summary": "fetch logs",
+        "responses": {
+          "200": {
+            "description": "Logs retrieved"
+          }
+        }
+      }
+    },
+    "/reset": {
+      "post": {
+        "summary": "reset user",
+        "responses": {
+          "200": {
+            "description": "User reset completed"
+          }
+        }
+      }
+    }
+  }
+}

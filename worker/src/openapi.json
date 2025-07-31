@@ -28,28 +28,70 @@
       "TimeTrackingResponse": {
         "type": "object",
         "properties": {
-          "serverTime": {"type": "string", "format": "date-time"},
-          "userLocalTime": {"type": "string", "format": "date-time"},
-          "timezone": {"type": "string", "example": "America/New_York"},
-          "timestamp": {"type": "string", "format": "date-time"}
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userLocalTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "America/New_York"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "AgentOverwhelmResponse": {
         "type": "object",
         "properties": {
-          "overwhelmed": {"type": "boolean"},
-          "message": {"type": "string"},
-          "timestamp": {"type": "string", "format": "date-time"}
+          "overwhelmed": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "PrivacySettings": {
         "type": "object",
         "properties": {
-          "dataRetention": {"type": "string", "enum": ["7days", "30days", "90days", "1year", "indefinite"]},
-          "loggingLevel": {"type": "string", "enum": ["minimal", "standard", "detailed"]},
-          "shareWithAgent": {"type": "boolean"},
-          "anonymizeData": {"type": "boolean"},
-          "timestamp": {"type": "string", "format": "date-time"}
+          "dataRetention": {
+            "type": "string",
+            "enum": [
+              "7days",
+              "30days",
+              "90days",
+              "1year",
+              "indefinite"
+            ]
+          },
+          "loggingLevel": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "standard",
+              "detailed"
+            ]
+          },
+          "shareWithAgent": {
+            "type": "boolean"
+          },
+          "anonymizeData": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       }
     }
@@ -57,6 +99,7 @@
   "paths": {
     "/track-time": {
       "post": {
+        "operationId": "trackTime",
         "summary": "track and report accurate time for agent and user activities",
         "description": "Returns current server time, user local time, and timezone awareness. Uses Philadelphia, PA timezone (America/New_York) for user context.",
         "requestBody": {
@@ -70,7 +113,9 @@
                     "example": "Philadelphia, PA"
                   }
                 },
-                "required": ["userLocation"]
+                "required": [
+                  "userLocation"
+                ]
               }
             }
           }
@@ -91,6 +136,7 @@
     },
     "/session-monitor": {
       "post": {
+        "operationId": "sessionMonitor",
         "summary": "monitor session duration and shut down after extended interaction",
         "requestBody": {
           "content": {
@@ -98,7 +144,11 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "maxDuration": {"type": "number", "description": "Maximum allowed duration in minutes", "default": 120}
+                  "maxDuration": {
+                    "type": "number",
+                    "description": "Maximum allowed duration in minutes",
+                    "default": 120
+                  }
                 }
               }
             }
@@ -112,10 +162,19 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "shouldShutdown": {"type": "boolean"},
-                    "timeRemaining": {"type": "number"},
-                    "message": {"type": "string"},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "shouldShutdown": {
+                      "type": "boolean"
+                    },
+                    "timeRemaining": {
+                      "type": "number"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -126,6 +185,7 @@
     },
     "/movement-reminder": {
       "post": {
+        "operationId": "movementReminder",
         "summary": "remind user to move body if sedentary for too long",
         "requestBody": {
           "content": {
@@ -133,8 +193,15 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "lastMovement": {"type": "string", "format": "date-time"},
-                  "reminderInterval": {"type": "number", "description": "Reminder interval in minutes", "default": 60}
+                  "lastMovement": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "reminderInterval": {
+                    "type": "number",
+                    "description": "Reminder interval in minutes",
+                    "default": 60
+                  }
                 }
               }
             }
@@ -148,10 +215,22 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "shouldRemind": {"type": "boolean"},
-                    "message": {"type": "string"},
-                    "suggestions": {"type": "array", "items": {"type": "string"}},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "shouldRemind": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "suggestions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -162,6 +241,7 @@
     },
     "/agent-overwhelm": {
       "get": {
+        "operationId": "getAgentOverwhelm",
         "summary": "agent notifies user when it is overwhelmed or degraded",
         "responses": {
           "200": {
@@ -179,6 +259,7 @@
     },
     "/agent-suggestions": {
       "get": {
+        "operationId": "getAgentSuggestions",
         "summary": "agent provides autonomous suggestions based on patterns and user context",
         "responses": {
           "200": {
@@ -188,8 +269,16 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "suggestions": {"type": "array", "items": {"type": "string"}},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "suggestions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -200,6 +289,7 @@
     },
     "/philadelphia-context": {
       "get": {
+        "operationId": "getPhiladelphiaContext",
         "summary": "agent fetches and understands Philadelphia-specific culture, events, and local knowledge",
         "responses": {
           "200": {
@@ -209,11 +299,28 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "culture": {"type": "string"},
-                    "events": {"type": "array", "items": {"type": "string"}},
-                    "history": {"type": "string"},
-                    "localTips": {"type": "array", "items": {"type": "string"}},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "culture": {
+                      "type": "string"
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "history": {
+                      "type": "string"
+                    },
+                    "localTips": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -224,6 +331,7 @@
     },
     "/privacy-settings": {
       "get": {
+        "operationId": "getPrivacySettings",
         "summary": "get current privacy settings and data control preferences",
         "responses": {
           "200": {
@@ -257,18 +365,25 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "updated": {"type": "boolean"},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "updated": {
+                      "type": "boolean"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
             }
           }
-        }
+        },
+        "operationId": "updatePrivacySettings"
       }
     },
     "/agent-curiosity": {
       "post": {
+        "operationId": "agentCuriosity",
         "summary": "agent explores new topics, trends, and interests autonomously",
         "requestBody": {
           "content": {
@@ -276,10 +391,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "curiosityType": {"type": "string", "example": "culture, science, art"},
-                  "userContext": {"type": "string", "example": "Philadelphia, PA"}
+                  "curiosityType": {
+                    "type": "string",
+                    "example": "culture, science, art"
+                  },
+                  "userContext": {
+                    "type": "string",
+                    "example": "Philadelphia, PA"
+                  }
                 },
-                "required": ["curiosityType"]
+                "required": [
+                  "curiosityType"
+                ]
               }
             }
           }
@@ -292,9 +415,22 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "topics": {"type": "array", "items": {"type": "string"}},
-                    "discoveries": {"type": "array", "items": {"type": "string"}},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "topics": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "discoveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -305,6 +441,7 @@
     },
     "/agent-interests": {
       "get": {
+        "operationId": "getAgentInterests",
         "summary": "fetch agent's current interests, discoveries, and preferences",
         "responses": {
           "200": {
@@ -314,10 +451,28 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "interests": {"type": "array", "items": {"type": "string"}},
-                    "preferences": {"type": "array", "items": {"type": "string"}},
-                    "discoveries": {"type": "array", "items": {"type": "string"}},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "interests": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "preferences": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "discoveries": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -328,6 +483,7 @@
     },
     "/agent-exploration": {
       "post": {
+        "operationId": "agentExploration",
         "summary": "agent initiates self-driven exploration and shares findings with user",
         "requestBody": {
           "content": {
@@ -335,10 +491,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "explorationType": {"type": "string", "example": "local events, new technology, art"},
-                  "userContext": {"type": "string", "example": "Philadelphia, PA"}
+                  "explorationType": {
+                    "type": "string",
+                    "example": "local events, new technology, art"
+                  },
+                  "userContext": {
+                    "type": "string",
+                    "example": "Philadelphia, PA"
+                  }
                 },
-                "required": ["explorationType"]
+                "required": [
+                  "explorationType"
+                ]
               }
             }
           }
@@ -351,9 +515,22 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "findings": {"type": "array", "items": {"type": "string"}},
-                    "recommendations": {"type": "array", "items": {"type": "string"}},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "findings": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "recommendations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -369,7 +546,8 @@
           "200": {
             "description": "Identity nodes listed"
           }
-        }
+        },
+        "operationId": "listIdentityNodes"
       },
       "post": {
         "summary": "create identity node",
@@ -377,7 +555,8 @@
           "201": {
             "description": "Identity node created"
           }
-        }
+        },
+        "operationId": "createIdentityNode"
       }
     },
     "/protocols/aquil-probe": {
@@ -387,7 +566,8 @@
           "200": {
             "description": "Aquil probe activated"
           }
-        }
+        },
+        "operationId": "activateAquilProbe"
       }
     },
     "/voice-shifts": {
@@ -397,7 +577,8 @@
           "201": {
             "description": "Voice shift recorded"
           }
-        }
+        },
+        "operationId": "recordVoiceShift"
       }
     },
     "/identity-memories": {
@@ -407,7 +588,8 @@
           "201": {
             "description": "Memory logged"
           }
-        }
+        },
+        "operationId": "logMemory"
       }
     },
     "/narratives/generate": {
@@ -417,7 +599,8 @@
           "200": {
             "description": "Narrative generated"
           }
-        }
+        },
+        "operationId": "generateNarrative"
       }
     },
     "/transition-maps/{id}": {
@@ -437,7 +620,8 @@
           "200": {
             "description": "Symbolic map retrieved"
           }
-        }
+        },
+        "operationId": "getSymbolicMap"
       }
     },
     "/ritual-actions/trigger": {
@@ -447,7 +631,8 @@
           "200": {
             "description": "Ritual triggered"
           }
-        }
+        },
+        "operationId": "triggerRitualAction"
       }
     },
     "/friction-ratings": {
@@ -457,7 +642,8 @@
           "201": {
             "description": "Friction rating recorded"
           }
-        }
+        },
+        "operationId": "recordFrictionRating"
       }
     },
     "/play-protocols": {
@@ -467,7 +653,8 @@
           "200": {
             "description": "Play protocols listed"
           }
-        }
+        },
+        "operationId": "listPlayProtocols"
       },
       "post": {
         "summary": "create play protocol",
@@ -475,7 +662,8 @@
           "201": {
             "description": "Play protocol created"
           }
-        }
+        },
+        "operationId": "createPlayProtocol"
       }
     },
     "/media-engagements": {
@@ -485,7 +673,8 @@
           "201": {
             "description": "Media engagement logged"
           }
-        }
+        },
+        "operationId": "logMediaEngagement"
       }
     },
     "/feedback": {
@@ -495,7 +684,8 @@
           "201": {
             "description": "Feedback logged"
           }
-        }
+        },
+        "operationId": "logFeedback"
       }
     },
     "/export-logs": {
@@ -505,7 +695,8 @@
           "200": {
             "description": "Logs exported"
           }
-        }
+        },
+        "operationId": "exportLogs"
       }
     },
     "/logs": {
@@ -515,7 +706,8 @@
           "200": {
             "description": "Logs retrieved"
           }
-        }
+        },
+        "operationId": "getLogs"
       }
     },
     "/reset": {
@@ -525,11 +717,13 @@
           "200": {
             "description": "User reset completed"
           }
-        }
+        },
+        "operationId": "reset"
       }
     },
     "/deploy/request": {
       "post": {
+        "operationId": "requestDeployment",
         "summary": "request deployment assistance from CustomGPT",
         "description": "CustomGPT can use this to offer deployment help when you're ready",
         "requestBody": {
@@ -538,11 +732,27 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "deploymentType": {"type": "string", "enum": ["quick", "full", "check-status"]},
-                  "userPermission": {"type": "boolean", "description": "User grants permission for deployment"},
-                  "message": {"type": "string", "description": "User's deployment request or instructions"}
+                  "deploymentType": {
+                    "type": "string",
+                    "enum": [
+                      "quick",
+                      "full",
+                      "check-status"
+                    ]
+                  },
+                  "userPermission": {
+                    "type": "boolean",
+                    "description": "User grants permission for deployment"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "User's deployment request or instructions"
+                  }
                 },
-                "required": ["deploymentType", "userPermission"]
+                "required": [
+                  "deploymentType",
+                  "userPermission"
+                ]
               }
             }
           }
@@ -555,11 +765,25 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "canDeploy": {"type": "boolean"},
-                    "nextSteps": {"type": "array", "items": {"type": "string"}},
-                    "deployCommand": {"type": "string"},
-                    "status": {"type": "string"},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "canDeploy": {
+                      "type": "boolean"
+                    },
+                    "nextSteps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "deployCommand": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -570,6 +794,7 @@
     },
     "/deploy/status": {
       "get": {
+        "operationId": "getDeploymentStatus",
         "summary": "check deployment status and readiness",
         "description": "CustomGPT can check if everything is ready for deployment",
         "responses": {
@@ -580,12 +805,34 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ready": {"type": "boolean"},
-                    "lastDeployment": {"type": "string", "format": "date-time"},
-                    "pendingChanges": {"type": "array", "items": {"type": "string"}},
-                    "healthCheck": {"type": "string", "enum": ["healthy", "needs-attention", "error"]},
-                    "deployCommand": {"type": "string"},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "ready": {
+                      "type": "boolean"
+                    },
+                    "lastDeployment": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "pendingChanges": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "healthCheck": {
+                      "type": "string",
+                      "enum": [
+                        "healthy",
+                        "needs-attention",
+                        "error"
+                      ]
+                    },
+                    "deployCommand": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -596,6 +843,7 @@
     },
     "/system/health": {
       "get": {
+        "operationId": "getSystemHealth",
         "summary": "comprehensive system health check for CustomGPT monitoring",
         "description": "CustomGPT can monitor system health and suggest maintenance",
         "responses": {
@@ -606,12 +854,57 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "overall": {"type": "string", "enum": ["healthy", "warning", "critical"]},
-                    "api": {"type": "object", "properties": {"status": {"type": "string"}, "responseTime": {"type": "number"}}},
-                    "storage": {"type": "object", "properties": {"status": {"type": "string"}, "usage": {"type": "string"}}},
-                    "deployment": {"type": "object", "properties": {"status": {"type": "string"}, "lastUpdate": {"type": "string"}}},
-                    "recommendations": {"type": "array", "items": {"type": "string"}},
-                    "timestamp": {"type": "string", "format": "date-time"}
+                    "overall": {
+                      "type": "string",
+                      "enum": [
+                        "healthy",
+                        "warning",
+                        "critical"
+                      ]
+                    },
+                    "api": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        },
+                        "responseTime": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "storage": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        },
+                        "usage": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "deployment": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string"
+                        },
+                        "lastUpdate": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "recommendations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
@@ -622,6 +915,7 @@
     },
     "/identity/voice-switch": {
       "post": {
+        "operationId": "contextVoiceSwitch",
         "summary": "Context-aware voice switching",
         "description": "Automatically adapt response style based on current context",
         "requestBody": {
@@ -631,9 +925,29 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "context": {"type": "string", "description": "Current working context"},
-                  "taskType": {"type": "string", "enum": ["creative", "analytical", "healing", "manifestor", "social"]},
-                  "energyLevel": {"type": "string", "enum": ["low", "medium", "high", "peak"]}
+                  "context": {
+                    "type": "string",
+                    "description": "Current working context"
+                  },
+                  "taskType": {
+                    "type": "string",
+                    "enum": [
+                      "creative",
+                      "analytical",
+                      "healing",
+                      "manifestor",
+                      "social"
+                    ]
+                  },
+                  "energyLevel": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high",
+                      "peak"
+                    ]
+                  }
                 }
               }
             }
@@ -648,6 +962,7 @@
     },
     "/identity/orchestration": {
       "get": {
+        "operationId": "getIdentityOrchestration",
         "summary": "Identity orchestration dashboard",
         "description": "Visual overview of active identity aspects and their current weights",
         "responses": {
@@ -659,6 +974,7 @@
     },
     "/recovery/creative-emergence": {
       "get": {
+        "operationId": "getCreativeEmergence",
         "summary": "Track creative emergence patterns",
         "description": "Monitor how creative output correlates with recovery phases",
         "responses": {
@@ -670,6 +986,7 @@
     },
     "/recovery/nervous-system": {
       "post": {
+        "operationId": "getNervousSystemGuidance",
         "summary": "Nervous system regulation guidance",
         "description": "Real-time suggestions based on detected patterns",
         "requestBody": {
@@ -679,9 +996,23 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentState": {"type": "string", "enum": ["activated", "dysregulated", "calm", "shutdown"]},
-                  "triggerContext": {"type": "string"},
-                  "safetyLevel": {"type": "number", "minimum": 1, "maximum": 10}
+                  "currentState": {
+                    "type": "string",
+                    "enum": [
+                      "activated",
+                      "dysregulated",
+                      "calm",
+                      "shutdown"
+                    ]
+                  },
+                  "triggerContext": {
+                    "type": "string"
+                  },
+                  "safetyLevel": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10
+                  }
                 }
               }
             }
@@ -696,6 +1027,7 @@
     },
     "/philadelphia/neighborhood-energy": {
       "post": {
+        "operationId": "getNeighborhoodEnergy",
         "summary": "Philadelphia neighborhood energy mapping",
         "description": "Which Philly areas align with your current emotional/creative state",
         "requestBody": {
@@ -705,9 +1037,27 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentMood": {"type": "string"},
-                  "creativeEnergy": {"type": "string", "enum": ["low", "building", "flowing", "peak"]},
-                  "socialCapacity": {"type": "string", "enum": ["solitude", "small_group", "community", "crowd"]}
+                  "currentMood": {
+                    "type": "string"
+                  },
+                  "creativeEnergy": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "building",
+                      "flowing",
+                      "peak"
+                    ]
+                  },
+                  "socialCapacity": {
+                    "type": "string",
+                    "enum": [
+                      "solitude",
+                      "small_group",
+                      "community",
+                      "crowd"
+                    ]
+                  }
                 }
               }
             }
@@ -722,6 +1072,7 @@
     },
     "/philadelphia/synchronicity": {
       "get": {
+        "operationId": "getSynchronicityTracking",
         "summary": "Local synchronicity tracking",
         "description": "Notice when suggested activities align with actual local events",
         "responses": {
@@ -733,6 +1084,7 @@
     },
     "/throatcraft/voice-emergence": {
       "post": {
+        "operationId": "getVoiceEmergenceProtocol",
         "summary": "Voice emergence protocols",
         "description": "Structured practices for developing authentic voice",
         "requestBody": {
@@ -742,9 +1094,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentVoiceState": {"type": "string", "enum": ["silent", "emerging", "finding", "expressing", "mastered"]},
-                  "practiceType": {"type": "string", "enum": ["daily", "project", "performance", "exploration"]},
-                  "resistanceLevel": {"type": "number", "minimum": 1, "maximum": 10}
+                  "currentVoiceState": {
+                    "type": "string",
+                    "enum": [
+                      "silent",
+                      "emerging",
+                      "finding",
+                      "expressing",
+                      "mastered"
+                    ]
+                  },
+                  "practiceType": {
+                    "type": "string",
+                    "enum": [
+                      "daily",
+                      "project",
+                      "performance",
+                      "exploration"
+                    ]
+                  },
+                  "resistanceLevel": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10
+                  }
                 }
               }
             }
@@ -759,6 +1132,7 @@
     },
     "/throatcraft/silence-mapping": {
       "get": {
+        "operationId": "getSilenceMapping",
         "summary": "Silence-to-sound journey tracking",
         "description": "Track your journey from silence to authentic expression",
         "responses": {
@@ -770,6 +1144,7 @@
     },
     "/mobile/ios-sync": {
       "post": {
+        "operationId": "syncIOSDevice",
         "summary": "iPhone integration sync",
         "description": "Sync data and notifications with iOS devices",
         "requestBody": {
@@ -779,9 +1154,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "deviceId": {"type": "string"},
-                  "notificationPrefs": {"type": "object"},
-                  "syncScope": {"type": "array", "items": {"type": "string"}}
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "notificationPrefs": {
+                    "type": "object"
+                  },
+                  "syncScope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -796,6 +1180,7 @@
     },
     "/mobile/shortcuts": {
       "get": {
+        "operationId": "getIOSShortcuts",
         "summary": "iOS Shortcuts integration",
         "description": "Get available shortcuts for iPhone Shortcuts app integration",
         "responses": {

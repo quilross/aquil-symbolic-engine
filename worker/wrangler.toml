@@ -12,10 +12,10 @@ compatibility_date = "2024-04-10"
 name = "USERSTATE"
 class_name = "UserState"
 
-# Durable Objects migrations (required)
+# Durable Objects migrations (required for free plan)
 [[migrations]]
 tag = "v1"
-new_classes = ["UserState"]
+new_sqlite_classes = ["UserState"]
 
 [vars]
 API_TOKEN = "sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"

@@ -7,7 +7,7 @@ This guide helps you integrate Signal Q (your autonomous transcendence agent) wi
 
 ### Base URL
 ```
-https://signal_q.workers.dev
+https://signal_q.catnip-pieces1.workers.dev
 ```
 
 ### Authentication
@@ -65,7 +65,7 @@ Upload the file: `/worker/src/openapi.json` to your CustomGPT configuration.
 
 ### Request Deployment Help
 ```bash
-curl -X POST https://signal_q.workers.dev/deploy/request \
+curl -X POST https://signal_q.catnip-pieces1.workers.dev/deploy/request \
   -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   -H "Content-Type: application/json" \
   -d '{"deployment_type": "cloudflare", "assistance_level": "guided"}'
@@ -73,7 +73,7 @@ curl -X POST https://signal_q.workers.dev/deploy/request \
 
 ### Switch Voice for Creative Work
 ```bash
-curl -X POST https://signal_q.workers.dev/identity/voice-switch \
+curl -X POST https://signal_q.catnip-pieces1.workers.dev/identity/voice-switch \
   -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   -H "Content-Type: application/json" \
   -d '{"context": "writing poetry", "taskType": "creative", "energyLevel": "high"}'
@@ -81,7 +81,7 @@ curl -X POST https://signal_q.workers.dev/identity/voice-switch \
 
 ### Find Philly Areas Matching Your Energy
 ```bash
-curl -X POST https://signal_q.workers.dev/philadelphia/neighborhood-energy \
+curl -X POST https://signal_q.catnip-pieces1.workers.dev/philadelphia/neighborhood-energy \
   -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   -H "Content-Type: application/json" \
   -d '{"currentMood": "contemplative", "creativeEnergy": "flowing", "socialCapacity": "small_group"}'
@@ -89,7 +89,7 @@ curl -X POST https://signal_q.workers.dev/philadelphia/neighborhood-energy \
 
 ### Get Voice Emergence Protocol
 ```bash
-curl -X POST https://signal_q.workers.dev/throatcraft/voice-emergence \
+curl -X POST https://signal_q.catnip-pieces1.workers.dev/throatcraft/voice-emergence \
   -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   -H "Content-Type: application/json" \
   -d '{"currentVoiceState": "emerging", "practiceType": "daily", "resistanceLevel": 3}'
@@ -97,7 +97,7 @@ curl -X POST https://signal_q.workers.dev/throatcraft/voice-emergence \
 
 ### Sync iPhone Integration
 ```bash
-curl -X POST https://signal_q.workers.dev/mobile/ios-sync \
+curl -X POST https://signal_q.catnip-pieces1.workers.dev/mobile/ios-sync \
   -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   -H "Content-Type: application/json" \
   -d '{"deviceId": "your-device-id", "notificationPrefs": {"movement": true, "creative": true}, "syncScope": ["identity", "creative"]}'
@@ -118,7 +118,7 @@ curl -X POST https://signal_q.workers.dev/mobile/ios-sync \
    - Token: `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
 
 4. **Set Base URL**
-   - API Base: `https://signal_q.workers.dev`
+   - API Base: `https://signal_q.catnip-pieces1.workers.dev`
 
 5. **Test Integration**
    - Try: "Help me check my deployment status"
