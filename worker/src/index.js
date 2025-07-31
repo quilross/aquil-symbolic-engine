@@ -1,4 +1,4 @@
-// Signalhaven Transcendence Agent Worker
+ // Signalhaven Transcendence Agent Worker
 // Provides basic REST endpoints with persistent memory using KV and Durable Objects.
 // Designed for the free Cloudflare Workers plan.
 
@@ -15,13 +15,40 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
     if (path === '/system/health') {
+      const endpointCount = 70; // Update this when adding endpoints
+      const memoryUsage = typeof performance !== 'undefined' && performance.memory ? 
+        Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 'unknown';
+      
       return new Response(JSON.stringify({
         overall: "healthy",
-        api: { status: "operational", responseTime: 45, endpoints: 35 },
-        storage: { status: "ready", usage: "minimal" },
-        deployment: { status: "live", lastUpdate: new Date().toISOString() },
+        api: { 
+          status: "operational", 
+          responseTime: 45, 
+          endpoints: endpointCount,
+          version: "2.0.0"
+        },
+        storage: { 
+          status: "ready", 
+          usage: "minimal",
+          durableObjects: "configured"
+        },
+        deployment: { 
+          status: "live", 
+          lastUpdate: new Date().toISOString(),
+          worker: "signal_q",
+          memory: `${memoryUsage}MB`
+        },
+        ai: {
+          binding: "enabled",
+          model: "@cf/meta/llama-3.1-8b-instruct"
+        },
+        authentication: {
+          bearerToken: "required",
+          adminAccess: "configured"
+        },
         recommendations: ["Signal Q is live and operational"],
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime ? `${Math.round(process.uptime())}s` : 'unknown'
       }), { headers: { 'Content-Type': 'application/json' } });
     }
 

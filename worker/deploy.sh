@@ -9,8 +9,21 @@ if ! wrangler whoami > /dev/null 2>&1; then
     exit 1
 fi
 
+# Run sync validation
+echo "🔍 Validating OpenAPI-Worker sync..."
+if command -v node > /dev/null && [ -f "validate-sync.js" ]; then
+    if ! node validate-sync.js; then
+        echo "❌ OpenAPI-Worker sync validation failed"
+        echo "⚠️  Continuing with deployment, but consider fixing sync issues"
+    else
+        echo "✅ OpenAPI-Worker sync validated"
+    fi
+else
+    echo "ℹ️  Skipping sync validation (Node.js or validate-sync.js not found)"
+fi
+
 # Validate configuration
-echo "📋 Validating configuration..."
+echo "📋 Validating wrangler configuration..."
 if ! wrangler deploy --dry-run; then
     echo "❌ Configuration validation failed"
     exit 1
