@@ -3,16 +3,13 @@ main = "src/index.js"
 compatibility_date = "2024-04-10"
 
 [[kv_namespaces]]
-binding = "SINGAL_HEAVEN"
+binding = "SIGNAL_KV"
 id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 
 [[durable_objects.bindings]]
 name = "USERSTATE"
-class_name = "signal_q_Userstate"
-
-[ai]
-binding = "AI"
+class_name = "UserState"
 
 [vars]
-API_TOKEN = "sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
-API_TOKEN_ADMIN = "sq_admin_1x3y5z7w9v2u4s6q8p0"
+API_TOKEN = "sk_aquil_0f83e6c91d5045bf9470c4b74d8e1af29cd4ea36ad7b6a2e986015e493b7ce128"
+API_TOKEN_ADMIN = "sk_aquil_0f83e6c91d5045bf9470c4b74d8e1af29cd4ea36ad7b6a2e986015e493b7ce128"
