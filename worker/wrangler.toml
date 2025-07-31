@@ -1,15 +1,22 @@
-name = "signalhaven-worker"
+name = "signal_q"
 main = "src/index.js"
 compatibility_date = "2024-04-10"
 
-[[kv_namespaces]]
-binding = "SIGNAL_KV"
-id = ""
+# KV namespace - uncomment and add your ID when ready
+# [[kv_namespaces]]
+# binding = "SIGNAL_KV"
+# id = "your-kv-namespace-id-here"
 
+# Durable Objects configuration
 [[durable_objects.bindings]]
 name = "USERSTATE"
 class_name = "UserState"
 
+# Durable Objects migrations (required)
+[[migrations]]
+tag = "v1"
+new_classes = ["UserState"]
+
 [vars]
-API_TOKEN = "changeme"
-API_TOKEN_ADMIN = "adminchangeme"
+API_TOKEN = "sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+API_TOKEN_ADMIN = "sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o"
