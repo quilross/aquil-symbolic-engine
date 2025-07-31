@@ -28,7 +28,18 @@ export default {
     const userId = request.headers.get('X-User-Id') || 'anonymous';
     const id = env.USERSTATE.idFromName(userId);
     const obj = env.USERSTATE.get(id);
-    return obj.fetch(request, token);
+    
+    // Create a new request with the token in headers for the Durable Object
+    const newRequest = new Request(request.url, {
+      method: request.method,
+      headers: {
+        ...Object.fromEntries(request.headers.entries()),
+        'X-Token': token
+      },
+      body: request.body
+    });
+    
+    return obj.fetch(newRequest);
   }
 };
 
@@ -39,7 +50,8 @@ export class UserState {
   }
 
   // Route all API requests
-  async fetch(request, token) {
+  async fetch(request) {
+    const token = request.headers.get('X-Token');
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
     const method = request.method.toUpperCase();
@@ -121,10 +133,9 @@ export class UserState {
 
   // List all stored identity nodes from KV
   async listIdentityNodes() {
-    const list = await this.env.SIGNAL_KV.list({ prefix: 'identity:' });
+    const storage = await this.state.storage.list({ prefix: 'identity:' });
     const nodes = [];
-    for (const { name } of list.keys) {
-      const value = await this.env.SIGNAL_KV.get(name, 'json');
+    for (const [key, value] of storage) {
       if (value) nodes.push(value);
     }
     await this.inc('reads');
@@ -136,7 +147,7 @@ export class UserState {
     node.version = 1;
     node.timestamp = new Date().toISOString();
     const key = `identity:${node.identity_key}`;
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(node));
+    await this.state.storage.put(key, node);
     await this.inc('writes');
     return this.respond({ created: true });
   }
@@ -153,7 +164,7 @@ export class UserState {
     shift.version = 1;
     shift.timestamp = new Date().toISOString();
     const key = `voice:${Date.now()}`;
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(shift));
+    await this.state.storage.put(key, shift);
     await this.inc('writes');
     return this.respond({ recorded: true });
   }
@@ -163,7 +174,7 @@ export class UserState {
     const key = `u:${this.state.id}:memory:${Date.now()}`;
     log.version = 1;
     log.timestamp = new Date().toISOString();
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(log));
+    await this.state.storage.put(key, log);
     await this.inc('writes');
     return this.respond({ logged: true, friction: ['Reflect on how this entry serves you'] });
   }
@@ -177,7 +188,7 @@ export class UserState {
 
   // Fetch a symbolic transition map from KV
   async getSymbolicMap(mapId) {
-    const map = await this.env.SIGNAL_KV.get(`map:${mapId}`, 'json');
+    const map = await this.state.storage.get(`map:${mapId}`);
     if (!map) return new Response('not found', { status: 404 });
     await this.inc('reads');
     return this.respond(map);
@@ -199,18 +210,17 @@ export class UserState {
       friction_type: data.friction_type,
       rating: data.rating
     };
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(entry));
+    await this.state.storage.put(key, entry);
     await this.inc('writes');
     return this.respond({ stored: true });
   }
 
   // List play protocols
   async listPlayProtocols() {
-    const list = await this.env.SIGNAL_KV.list({ prefix: 'play:' });
+    const list = await this.state.storage.list({ prefix: 'play:' });
     const plays = [];
-    for (const { name } of list.keys) {
-      const v = await this.env.SIGNAL_KV.get(name, 'json');
-      if (v) plays.push(v);
+    for (const [key, value] of list) {
+      if (value) plays.push(value);
     }
     await this.inc('reads');
     return this.respond({ plays });
@@ -221,7 +231,7 @@ export class UserState {
     play.version = 1;
     play.timestamp = new Date().toISOString();
     const key = `play:${Date.now()}`;
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(play));
+    await this.state.storage.put(key, play);
     await this.inc('writes');
     return this.respond({ created: true });
   }
@@ -231,7 +241,7 @@ export class UserState {
     media.version = 1;
     media.timestamp = new Date().toISOString();
     const key = `u:${this.state.id}:media:${Date.now()}`;
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(media));
+    await this.state.storage.put(key, media);
     await this.inc('writes');
     return this.respond({ logged: true });
   }
@@ -245,7 +255,7 @@ export class UserState {
     const next = leader === 'agent' ? 'user' : 'agent';
     await this.state.storage.put('leader', next);
     feedback.leader = leader;
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(feedback));
+    await this.state.storage.put(key, feedback);
     await this.inc('writes');
     return this.respond({ logged: true, next_leader: next });
   }
@@ -255,11 +265,10 @@ export class UserState {
     if (token !== this.env.API_TOKEN_ADMIN) {
       return new Response('forbidden', { status: 403 });
     }
-    const list = await this.env.SIGNAL_KV.list({ prefix: `u:${this.state.id}:` });
+    const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
-    for (const { name } of list.keys) {
-      const v = await this.env.SIGNAL_KV.get(name);
-      if (v) logs.push({ name, value: v });
+    for (const [name, value] of list) {
+      if (value) logs.push({ name, value });
     }
     await this.inc('reads');
     const payload = btoa(JSON.stringify(logs));
@@ -268,11 +277,10 @@ export class UserState {
 
   // Return list of all logs for this user (simplified)
   async getLogs() {
-    const list = await this.env.SIGNAL_KV.list({ prefix: `u:${this.state.id}:` });
+    const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
-    for (const { name } of list.keys) {
-      const v = await this.env.SIGNAL_KV.get(name, 'json');
-      if (v) logs.push(v);
+    for (const [name, value] of list) {
+      if (value) logs.push(value);
     }
     await this.inc('reads');
     return this.respond({ logs });
@@ -283,9 +291,9 @@ export class UserState {
     if (token !== this.env.API_TOKEN_ADMIN) {
       return new Response('forbidden', { status: 403 });
     }
-    const list = await this.env.SIGNAL_KV.list({ prefix: `u:${this.state.id}:` });
-    for (const { name } of list.keys) {
-      await this.env.SIGNAL_KV.delete(name);
+    const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
+    for (const [name, value] of list) {
+      await this.state.storage.delete(name);
     }
     await this.state.storage.deleteAll();
     await this.inc('writes');
@@ -402,7 +410,7 @@ export class UserState {
 
   async getAgentSuggestions() {
     // Simple suggestion logic based on user patterns
-    const logs = await this.env.SIGNAL_KV.list({ prefix: `u:${this.state.id}:` });
+    const logs = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const recentActivity = logs.keys.length;
     
     const suggestions = [];
@@ -582,7 +590,7 @@ export class UserState {
     };
     
     const key = `u:${this.state.id}:emotional-wave:${Date.now()}`;
-    await this.env.SIGNAL_KV.put(key, JSON.stringify(waveEntry));
+    await this.state.storage.put(key, waveEntry);
     
     // Determine wave position and decision readiness for Emotional Authority
     const wavePosition = data.intensity > 7 ? 'peak' : data.intensity < 4 ? 'low' : 'rising';
@@ -621,16 +629,15 @@ export class UserState {
 
   async getEffectivenessDashboard() {
     // Comprehensive effectiveness analysis
-    const logs = await this.env.SIGNAL_KV.list({ prefix: `u:${this.state.id}:` });
+    const logs = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const protocolUsage = {};
     const geneKeyHistory = [];
     
     // Analyze protocol effectiveness from usage logs
-    for (const { name } of logs.keys) {
+    for (const [name, value] of logs) {
       if (name.includes('protocol') || name.includes('ritual')) {
-        const data = await this.env.SIGNAL_KV.get(name, 'json');
-        if (data && data.protocol) {
-          protocolUsage[data.protocol] = (protocolUsage[data.protocol] || 0) + 1;
+        if (value && value.protocol) {
+          protocolUsage[value.protocol] = (protocolUsage[value.protocol] || 0) + 1;
         }
       }
     }
@@ -838,7 +845,7 @@ export class UserState {
 
   async analyzeRecentPatterns() {
     // Analyze recent interaction patterns for predictive insights
-    const logs = await this.env.SIGNAL_KV.list({ prefix: `u:${this.state.id}:`, limit: 50 });
+    const logs = await this.state.storage.list({ prefix: `u:${this.state.id}:`, limit: 50 });
     return {
       activityLevel: logs.keys.length,
       emotionalState: 'variable',
