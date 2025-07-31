@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Aquil Transcendence Agent API",
-    "version": "1.0.0",
-    "description": "A personalized AI agent system with autonomous capabilities, cultural intelligence, privacy controls, and agent self-interest features."
+    "title": "Signal Q - AI-Enhanced Transcendence Agent",
+    "version": "2.0.0",
+    "description": "An autonomous AI agent system with intelligent pattern recognition, adaptive protocol selection, and real-time emergence prediction. Features Cloudflare Workers AI integration for autonomous decision-making, cross-domain analysis, and contextual wisdom generation. Includes 4 creative lineages (THROATCRAFT, ARK, LUNACRAFT, Somatic), comprehensive wellness monitoring, and Philadelphia cultural intelligence."
   },
   "servers": [
     {
@@ -490,6 +490,304 @@
         "summary": "Reset user",
         "responses": {
           "200": { "description": "User reset completed" }
+        }
+      }
+    },
+    "/patterns/cross-domain": {
+      "get": {
+        "operationId": "getCrossDomainPatterns",
+        "summary": "AI-powered analysis of patterns across emotional, creative, recovery, and social domains",
+        "description": "Uses AI to analyze cross-domain patterns and generate intelligent insights about correlations, emerging patterns, and adaptive recommendations.",
+        "responses": {
+          "200": {
+            "description": "Cross-domain pattern analysis with AI insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "correlations": { "type": "object", "description": "Statistical correlations between domains" },
+                    "emergingPatterns": { "type": "array", "items": { "type": "string" }, "description": "AI-detected emerging patterns" },
+                    "predictiveSignals": { "type": "object", "description": "Early warning signals for different outcomes" },
+                    "aiGeneratedInsights": { "type": "string", "description": "AI-generated deep insights" },
+                    "adaptiveRecommendations": { "type": "array", "items": { "type": "string" } },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/learning/adaptive-protocols": {
+      "post": {
+        "operationId": "getAdaptiveProtocols",
+        "summary": "AI-powered protocol selection based on current context and goals",
+        "description": "Uses AI to analyze context and recommend optimal protocols with customized steps and reasoning.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentContext": { "type": "string", "description": "Description of current situation" },
+                  "energyLevel": { "type": "string", "enum": ["very_low", "low", "medium", "high", "peak"] },
+                  "timeAvailable": { "type": "string", "description": "Available time for protocol" },
+                  "primaryGoal": { "type": "string", "description": "Main objective or goal" }
+                },
+                "required": ["currentContext", "energyLevel"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI-selected adaptive protocol with reasoning",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "selectedProtocol": { "type": "string" },
+                    "adaptationReason": { "type": "string", "description": "AI reasoning for selection" },
+                    "steps": { "type": "array", "items": { "type": "string" } },
+                    "estimatedDuration": { "type": "string" },
+                    "energyRequirement": { "type": "string" },
+                    "expectedOutcomes": { "type": "array", "items": { "type": "string" } },
+                    "fallbackOptions": { "type": "array", "items": { "type": "string" } },
+                    "aiEnhanced": { "type": "boolean" },
+                    "contextualWisdom": { "type": "string" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/insights/emergence-prediction": {
+      "get": {
+        "operationId": "getEmergencePrediction",
+        "summary": "AI-powered prediction of creative emergence and breakthrough moments",
+        "description": "Uses AI to analyze patterns and predict optimal timing for breakthroughs, creative emergence, and significant insights.",
+        "responses": {
+          "200": {
+            "description": "AI-enhanced emergence prediction with timeline and insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "creativeProbability": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "breakthroughWindow": { "type": "string" },
+                    "optimalConditions": { "type": "array", "items": { "type": "string" } },
+                    "preparationSuggestions": { "type": "array", "items": { "type": "string" } },
+                    "aiInsights": { "type": "string", "description": "AI-generated insights about emergence patterns" },
+                    "aiPredictions": { "type": "object", "description": "AI-specific predictions" },
+                    "timeline": {
+                      "type": "object",
+                      "properties": {
+                        "next_24_hours": { "type": "string" },
+                        "next_week": { "type": "string" },
+                        "next_month": { "type": "string" }
+                      }
+                    },
+                    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "factors": { "type": "array", "items": { "type": "string" } },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/energy/circadian-optimization": {
+      "get": {
+        "operationId": "getCircadianOptimization",
+        "summary": "Philadelphia timezone-aware circadian rhythm optimization",
+        "description": "Provides personalized circadian guidance based on current Philadelphia time and your chronotype.",
+        "responses": {
+          "200": {
+            "description": "Circadian optimization guidance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "currentPhase": { "type": "string" },
+                    "energyOptimization": { "type": "string" },
+                    "activityRecommendations": { "type": "array", "items": { "type": "string" } },
+                    "dailyRhythm": { "type": "object" },
+                    "currentAdvice": { "type": "string" },
+                    "nextTransition": { "type": "string" },
+                    "personalFactors": { "type": "object" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/energy/creative-peak-detection": {
+      "post": {
+        "operationId": "detectCreativePeaks",
+        "summary": "Real-time creative peak detection and flow state optimization",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentEnergy": { "type": "number", "minimum": 1, "maximum": 10 },
+                  "recentOutput": { "type": "object" },
+                  "environmentFactors": { "type": "array", "items": { "type": "string" } },
+                  "timeOfDay": { "type": "string" },
+                  "currentState": { "type": "string" }
+                },
+                "required": ["currentEnergy"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Creative peak analysis and optimization suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isPeakTime": { "type": "boolean" },
+                    "peakProbability": { "type": "number" },
+                    "indicators": { "type": "object" },
+                    "suggestions": { "type": "array", "items": { "type": "string" } },
+                    "optimalActions": { "type": "array", "items": { "type": "string" } },
+                    "sustainmentTips": { "type": "array", "items": { "type": "string" } },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/social/interaction-analysis": {
+      "post": {
+        "operationId": "analyzeSocialInteraction",
+        "summary": "Analyze social interactions for energy impact and boundary health",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "interactionType": { "type": "string" },
+                  "participants": { "type": "number" },
+                  "energy": { "type": "number", "minimum": 1, "maximum": 10 },
+                  "context": { "type": "string" },
+                  "outcome": { "type": "string" }
+                },
+                "required": ["interactionType", "participants", "energy", "context", "outcome"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Social interaction analysis with recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "energyImpact": { "type": "object" },
+                    "boundaryHealth": { "type": "object" },
+                    "relationshipDynamics": { "type": "object" },
+                    "adaptationSuggestions": { "type": "array", "items": { "type": "string" } },
+                    "patterns": { "type": "object" },
+                    "nextInteractionGuidance": { "type": "object" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/social/boundary-optimization": {
+      "get": {
+        "operationId": "getBoundaryOptimization",
+        "summary": "Comprehensive boundary health assessment and optimization strategies",
+        "description": "Analyzes boundary health across energy, emotional, creative, and recovery domains with practical strategies.",
+        "responses": {
+          "200": {
+            "description": "Boundary optimization guidance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "currentBoundaryHealth": { "type": "number" },
+                    "boundaryTypes": { "type": "object" },
+                    "practicalStrategies": { "type": "array", "items": { "type": "string" } },
+                    "communicationTemplates": { "type": "object" },
+                    "maintenancePractices": { "type": "array", "items": { "type": "string" } },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai-enhance": {
+      "post": {
+        "operationId": "aiEnhancedResponse",
+        "summary": "AI-enhanced responses using Cloudflare Workers AI",
+        "description": "Generates contextual, intelligent responses using AI binding for autonomous agent capabilities.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt": { "type": "string", "description": "The input prompt for AI enhancement" },
+                  "context": { "type": "string", "description": "Additional context for the AI" },
+                  "enhancementType": { "type": "string", "description": "Type of enhancement needed" }
+                },
+                "required": ["prompt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI-enhanced response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "aiEnhanced": { "type": "boolean" },
+                    "enhancementType": { "type": "string" },
+                    "response": { "type": "string", "description": "AI-generated response" },
+                    "model": { "type": "string" },
+                    "context": { "type": "string" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
