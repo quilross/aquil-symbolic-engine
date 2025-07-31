@@ -8,7 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const OPENAPI_PATH = './src/openapi.json';
+const OPENAPI_PATH = './src/openapi-core.json';
 const WORKER_PATH = './src/index.js';
 
 function extractOperationIds(openApiPath) {
@@ -82,7 +82,7 @@ function validateSync() {
   );
   
   // Report results
-  console.log('=' * 60);
+  console.log('='.repeat(60));
   
   if (missingMethods.length === 0) {
     console.log('✅ All OpenAPI operations have method implementations');
@@ -114,7 +114,7 @@ function validateSync() {
   
   const totalIssues = missingMethods.length + missingRoutes.length;
   
-  console.log('\n' + '=' * 60);
+  console.log('\n' + '='.repeat(60));
   console.log(`Sync Status: ${totalIssues === 0 ? '✅ PERFECT SYNC' : `❌ ${totalIssues} issues found`}`);
   
   return {

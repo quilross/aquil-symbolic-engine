@@ -42,7 +42,7 @@ const TEST_ENDPOINTS = [
   }
 ];
 
-async function testEndpoint(endpoint) {
+async function testEndpoint(endpoint, startTime) {
   try {
     const response = await fetch(`${WORKER_URL}${endpoint.path}`, {
       method: endpoint.method,
@@ -57,7 +57,8 @@ async function testEndpoint(endpoint) {
       return {
         path: endpoint.path,
         status: 'FAIL',
-        error: `HTTP ${response.status}: ${response.statusText}`
+        error: `HTTP ${response.status}: ${response.statusText}`,
+        responseTime: Date.now() - startTime
       };
     }
 
@@ -75,7 +76,8 @@ async function testEndpoint(endpoint) {
     return {
       path: endpoint.path,
       status: 'ERROR',
-      error: error.message
+      error: error.message,
+      responseTime: Date.now() - startTime
     };
   }
 }
@@ -84,7 +86,7 @@ async function runHealthCheck() {
   console.log('🏥 Signal Q Endpoint Health Check\n');
   console.log(`Testing: ${WORKER_URL}`);
   console.log(`Token: ${API_TOKEN.substring(0, 10)}...`);
-  console.log('=' * 50);
+  console.log('='.repeat(50));
 
   const results = [];
   let passed = 0;
@@ -92,7 +94,7 @@ async function runHealthCheck() {
 
   for (const endpoint of TEST_ENDPOINTS) {
     const startTime = Date.now();
-    const result = await testEndpoint(endpoint);
+    const result = await testEndpoint(endpoint, startTime);
     results.push(result);
 
     const status = result.status === 'PASS' ? '✅' : 
@@ -111,7 +113,7 @@ async function runHealthCheck() {
     else failed++;
   }
 
-  console.log('\n' + '=' * 50);
+  console.log('\n' + '='.repeat(50));
   console.log(`Results: ${passed} passed, ${failed} failed`);
   console.log(`Health Score: ${Math.round(passed / (passed + failed) * 100)}%`);
 
