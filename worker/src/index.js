@@ -135,7 +135,7 @@ export class UserState {
   async listIdentityNodes() {
     const storage = await this.state.storage.list({ prefix: 'identity:' });
     const nodes = [];
-    for (const [key, value] of storage) {
+    for (const [, value] of storage) {
       if (value) nodes.push(value);
     }
     await this.inc('reads');
@@ -219,7 +219,7 @@ export class UserState {
   async listPlayProtocols() {
     const list = await this.state.storage.list({ prefix: 'play:' });
     const plays = [];
-    for (const [key, value] of list) {
+    for (const [, value] of list) {
       if (value) plays.push(value);
     }
     await this.inc('reads');
@@ -279,7 +279,7 @@ export class UserState {
   async getLogs() {
     const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
-    for (const [name, value] of list) {
+    for (const [, value] of list) {
       if (value) logs.push(value);
     }
     await this.inc('reads');
@@ -292,7 +292,7 @@ export class UserState {
       return new Response('forbidden', { status: 403 });
     }
     const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
-    for (const [name, value] of list) {
+    for (const [name] of list) {
       await this.state.storage.delete(name);
     }
     await this.state.storage.deleteAll();
@@ -593,7 +593,14 @@ export class UserState {
     await this.state.storage.put(key, waveEntry);
     
     // Determine wave position and decision readiness for Emotional Authority
-    const wavePosition = data.intensity > 7 ? 'peak' : data.intensity < 4 ? 'low' : 'rising';
+    let wavePosition;
+    if (data.intensity > 7) {
+      wavePosition = 'peak';
+    } else if (data.intensity < 4) {
+      wavePosition = 'low';
+    } else {
+      wavePosition = 'rising';
+    }
     const decisionReadiness = data.clarity && (wavePosition === 'low' || wavePosition === 'peak');
     
     await this.inc('writes');
@@ -636,7 +643,7 @@ export class UserState {
     // Analyze protocol effectiveness from usage logs
     for (const [name, value] of logs) {
       if (name.includes('protocol') || name.includes('ritual')) {
-        if (value && value.protocol) {
+        if (value?.protocol) {
           protocolUsage[value.protocol] = (protocolUsage[value.protocol] || 0) + 1;
         }
       }
@@ -927,7 +934,7 @@ export class UserState {
 
   // Deployment assistance methods
   async requestDeployment(data) {
-    const { deploymentType, userPermission, message } = data;
+    const { deploymentType, userPermission } = data;
     
     if (!userPermission) {
       return Response.json({
@@ -1111,7 +1118,7 @@ export class UserState {
   }
 
   getOrchestrationRecommendations(activities) {
-    const dominant = Object.keys(activities).reduce((a, b) => activities[a] > activities[b] ? a : b);
+    const dominant = Object.keys(activities).reduce((a, b) => activities[a] > activities[b] ? a : b, Object.keys(activities)[0]);
     return [
       `${dominant} aspect is currently most active`,
       'Consider balancing with quieter aspects',
@@ -1198,7 +1205,14 @@ export class UserState {
     };
 
     const protocols = protocolMap[currentState] || protocolMap.calm;
-    const urgency = safetyLevel < 4 ? 'high' : safetyLevel < 7 ? 'medium' : 'low';
+    let urgency;
+    if (safetyLevel < 4) {
+      urgency = 'high';
+    } else if (safetyLevel < 7) {
+      urgency = 'medium';
+    } else {
+      urgency = 'low';
+    }
 
     await this.inc('writes');
     return this.respond({
