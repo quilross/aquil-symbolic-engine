@@ -1,0 +1,163 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Signal Q - Complete Autonomous Agent API",
+    "version": "1.0.0",
+    "description": "Complete Signal Q autonomous agent system with identity fluidity, Gene Keys wisdom, THROATCRAFT protocols, Philadelphia intelligence, recovery support, and advanced personal blueprint features."
+  },
+  "servers": [
+    {
+      "url": "https://signal_q.catnip-pieces1.workers.dev",
+      "description": "Production Cloudflare Worker"
+    }
+  ],
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token authentication"
+      }
+    },
+    "schemas": {
+      "BasicResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "degraded": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/track-time": {
+      "post": {
+        "operationId": "trackTime",
+        "summary": "Track and report accurate time for agent and user activities",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userLocation": { "type": "string", "example": "Philadelphia, PA" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current time information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/BasicResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "serverTime": { "type": "string", "format": "date-time" },
+                        "userLocalTime": { "type": "string", "format": "date-time" },
+                        "timezone": { "type": "string", "example": "America/New_York" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-overwhelm": {
+      "get": {
+        "operationId": "getAgentOverwhelm",
+        "summary": "Agent notifies user when it is overwhelmed or degraded",
+        "responses": {
+          "200": {
+            "description": "Agent overwhelm status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/BasicResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "overwhelmed": { "type": "boolean" },
+                        "message": { "type": "string" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gene-key-guidance": {
+      "get": {
+        "operationId": "getGeneKeyGuidance",
+        "summary": "Get personalized Gene Key guidance based on current state",
+        "responses": {
+          "200": {
+            "description": "Gene Key guidance and protocol recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/BasicResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "activeKey": { "type": "string", "example": "28" },
+                        "currentLevel": { "type": "string", "enum": ["shadow", "gift", "siddhi"] },
+                        "guidance": { "type": "string" },
+                        "suggestedProtocol": { "type": "string" },
+                        "emotionalContext": { "type": "string" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/philadelphia-context": {
+      "get": {
+        "operationId": "getPhiladelphiaContext",
+        "summary": "Get Philadelphia cultural intelligence and local knowledge",
+        "responses": {
+          "200": {
+            "description": "Philadelphia context information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/BasicResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "culture": { "type": "string" },
+                        "events": { "type": "array", "items": { "type": "string" } },
+                        "history": { "type": "string" },
+                        "localTips": { "type": "array", "items": { "type": "string" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
