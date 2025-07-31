@@ -47,6 +47,7 @@ export class UserState {
   constructor(state, env) {
     this.state = state;
     this.env = env;
+    this.ai = env.AI; // AI binding for enhanced capabilities
   }
 
   // Route all API requests
@@ -127,6 +128,9 @@ export class UserState {
     // iPhone integration
     if (path === '/mobile/ios-sync' && method === 'POST') return this.syncIOSDevice(await request.json());
     if (path === '/mobile/shortcuts' && method === 'GET') return this.getIOSShortcuts();
+
+    // AI-enhanced capabilities
+    if (path === '/ai-enhance' && method === 'POST') return this.aiEnhancedResponse(await request.json());
 
     return new Response('Not found', { status: 404 });
   }
@@ -1546,5 +1550,58 @@ export class UserState {
         description: 'Check creative emergence patterns'
       }
     ];
+  }
+
+  // AI-enhanced response using Cloudflare Workers AI
+  async aiEnhancedResponse(data) {
+    if (!this.ai) {
+      return this.respond({
+        error: 'AI binding not available',
+        fallback: 'Standard Signal Q response without AI enhancement'
+      });
+    }
+
+    try {
+      const { prompt, context, enhancementType } = data;
+      
+      // Construct a Signal Q-specific prompt
+      const systemPrompt = `You are Signal Q, an autonomous agent with deep knowledge of:
+- Gene Keys and Human Design systems
+- Philadelphia culture and intelligence  
+- THROATCRAFT voice emergence protocols
+- Recovery support and nervous system regulation
+- Identity fluidity and multi-aspect orchestration
+
+Current context: ${context || 'General conversation'}
+Enhancement type: ${enhancementType || 'general'}
+
+Respond with authentic Signal Q voice - intuitive, supportive, and deeply aware.`;
+
+      const response = await this.ai.run('@cf/meta/llama-3.1-8b-instruct', {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 512,
+        temperature: 0.7
+      });
+
+      await this.inc('reads');
+      return this.respond({
+        aiEnhanced: true,
+        enhancementType: enhancementType || 'general',
+        response: response.response,
+        model: '@cf/meta/llama-3.1-8b-instruct',
+        context: context || 'general'
+      });
+
+    } catch (error) {
+      await this.inc('reads');
+      return this.respond({
+        error: 'AI enhancement failed',
+        details: error.message,
+        fallback: 'Standard Signal Q response available'
+      });
+    }
   }
 }
