@@ -11,7 +11,7 @@ DEPLOYMENT COMMANDS:
   1. Guide them to: cd /workspaces/aquil-symbolic-engine/worker
   2. Run: ./deploy.sh
   3. If that fails, try: wrangler deploy
-  4. Check status at: https://signal_q.workers.dev
+  4. Check status at: https://signal_q.catnip-pieces1.workers.dev
 
 DEPLOYMENT TROUBLESHOOTING:
 - If browser login fails: "The browser timeout is known. Try: wrangler login --no-browser"
@@ -48,7 +48,7 @@ Want me to check if it's working after deployment?"
 
 **You say:** "Is my API working?"
 **CustomGPT responds:**
-"Let me check your Signal Q deployment at https://signal_q.workers.dev..."
+"Let me check your Signal Q deployment at https://signal_q.catnip-pieces1.workers.dev..."
 
 ### **4. Smart Deployment Reminders**
 
