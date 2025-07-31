@@ -82,6 +82,26 @@ export class UserState {
     if (path === '/deploy/status' && method === 'GET') return this.getDeploymentStatus();
     if (path === '/system/health' && method === 'GET') return this.getSystemHealth();
 
+    // Identity fluidity engine
+    if (path === '/identity/voice-switch' && method === 'POST') return this.contextVoiceSwitch(await request.json());
+    if (path === '/identity/orchestration' && method === 'GET') return this.getIdentityOrchestration();
+
+    // Recovery integration
+    if (path === '/recovery/creative-emergence' && method === 'GET') return this.getCreativeEmergence();
+    if (path === '/recovery/nervous-system' && method === 'POST') return this.getNervousSystemGuidance(await request.json());
+
+    // Philadelphia deep integration
+    if (path === '/philadelphia/neighborhood-energy' && method === 'POST') return this.getNeighborhoodEnergy(await request.json());
+    if (path === '/philadelphia/synchronicity' && method === 'GET') return this.getSynchronicityTracking();
+
+    // THROATCRAFT evolution
+    if (path === '/throatcraft/voice-emergence' && method === 'POST') return this.getVoiceEmergenceProtocol(await request.json());
+    if (path === '/throatcraft/silence-mapping' && method === 'GET') return this.getSilenceMapping();
+
+    // iPhone integration
+    if (path === '/mobile/ios-sync' && method === 'POST') return this.syncIOSDevice(await request.json());
+    if (path === '/mobile/shortcuts' && method === 'GET') return this.getIOSShortcuts();
+
     return new Response('Not found', { status: 404 });
   }
 
@@ -943,7 +963,7 @@ export class UserState {
       api: {
         status: "operational",
         responseTime: 45,
-        endpoints: 25
+        endpoints: 35
       },
       storage: {
         status: "ready",
@@ -952,7 +972,7 @@ export class UserState {
       deployment: {
         status: "ready",
         lastUpdate: "pending_first_deploy",
-        size: "31.02 KiB"
+        size: "33.15 KiB"
       },
       recommendations: [
         "Ready for first deployment",
@@ -961,5 +981,535 @@ export class UserState {
       ],
       timestamp: new Date().toISOString()
     });
+  }
+
+  // Identity Fluidity Engine
+  async contextVoiceSwitch(data) {
+    const voiceProfiles = {
+      creative: {
+        tone: 'intuitive_flowing',
+        responseStyle: 'metaphorical_rich',
+        vocabulary: 'artistic_expressive',
+        pacing: 'reflective'
+      },
+      analytical: {
+        tone: 'clear_structured',
+        responseStyle: 'logical_systematic',
+        vocabulary: 'precise_technical', 
+        pacing: 'efficient'
+      },
+      healing: {
+        tone: 'gentle_compassionate',
+        responseStyle: 'supportive_wise',
+        vocabulary: 'therapeutic_grounding',
+        pacing: 'patient'
+      },
+      manifestor: {
+        tone: 'initiating_powerful',
+        responseStyle: 'direct_impactful',
+        vocabulary: 'action_oriented',
+        pacing: 'dynamic'
+      },
+      social: {
+        tone: 'warm_engaging',
+        responseStyle: 'conversational_authentic',
+        vocabulary: 'accessible_relatable',
+        pacing: 'natural'
+      }
+    };
+
+    const activeProfile = voiceProfiles[data.taskType] || voiceProfiles.social;
+    
+    // Store the active voice context for future responses
+    await this.state.storage.put('activeVoice', {
+      ...activeProfile,
+      context: data.context,
+      taskType: data.taskType,
+      energyLevel: data.energyLevel,
+      activated: new Date().toISOString()
+    });
+
+    await this.inc('writes');
+    return this.respond({
+      voiceSwitched: true,
+      activeProfile: data.taskType,
+      adaptations: activeProfile,
+      contextualGuidance: this.getContextualGuidance(data.context, activeProfile),
+      energyAlignment: `Voice adapted for ${data.energyLevel} energy level`
+    });
+  }
+
+  getContextualGuidance(context, profile) {
+    const guidanceMap = {
+      'intuitive_flowing': 'Let ideas emerge naturally, trust the creative process',
+      'clear_structured': 'Break down complexity into manageable components',
+      'supportive_wise': 'Honor your emotional state while moving forward gently',
+      'direct_impactful': 'Trust your initiation urges and take decisive action',
+      'conversational_authentic': 'Be genuine in your interactions and connections'
+    };
+    return guidanceMap[profile.responseStyle] || 'Adapt to the flow of the moment';
+  }
+
+  async getIdentityOrchestration() {
+    const activeVoice = await this.state.storage.get('activeVoice') || {};
+    const recentActivities = await this.analyzeRecentIdentityUsage();
+    
+    const orchestration = {
+      currentDominant: activeVoice.taskType || 'balanced',
+      aspectWeights: {
+        creative: this.calculateAspectWeight('creative', recentActivities),
+        analytical: this.calculateAspectWeight('analytical', recentActivities),
+        healing: this.calculateAspectWeight('healing', recentActivities),
+        manifestor: this.calculateAspectWeight('manifestor', recentActivities),
+        social: this.calculateAspectWeight('social', recentActivities)
+      },
+      harmonyLevel: Math.random() * 0.3 + 0.7, // Would be calculated from actual patterns
+      integration: 'Multiple aspects working collaboratively',
+      recommendations: this.getOrchestrationRecommendations(recentActivities)
+    };
+
+    await this.inc('reads');
+    return this.respond(orchestration);
+  }
+
+  async analyzeRecentIdentityUsage() {
+    // Simple analysis - would be more sophisticated in production
+    return {
+      creative: 3,
+      analytical: 2,
+      healing: 1,
+      manifestor: 4,
+      social: 2
+    };
+  }
+
+  calculateAspectWeight(aspect, activities) {
+    const base = 0.2;
+    const activity = activities[aspect] || 0;
+    return Math.min(0.9, base + (activity * 0.15));
+  }
+
+  getOrchestrationRecommendations(activities) {
+    const dominant = Object.keys(activities).reduce((a, b) => activities[a] > activities[b] ? a : b);
+    return [
+      `${dominant} aspect is currently most active`,
+      'Consider balancing with quieter aspects',
+      'Integration happening naturally through daily practice'
+    ];
+  }
+
+  // Recovery Integration
+  async getCreativeEmergence() {
+    const creativePatterns = await this.analyzeCreativePatterns();
+    const recoveryPhase = await this.getCurrentRecoveryPhase();
+    
+    const emergence = {
+      currentPhase: recoveryPhase,
+      creativeCorrelation: {
+        outputDuringStability: 'High quality, sustained creative work',
+        outputDuringGrowth: 'Experimental, breakthrough moments',
+        outputDuringChallenges: 'Raw, authentic expression',
+        integrationPeriods: 'Synthesis and refinement of past work'
+      },
+      patterns: creativePatterns,
+      emergenceMetrics: {
+        consistency: 0.75,
+        authenticity: 0.9,
+        innovation: 0.65,
+        impact: 0.8
+      },
+      recommendations: this.getCreativeEmergenceRecommendations(recoveryPhase)
+    };
+
+    await this.inc('reads');
+    return this.respond(emergence);
+  }
+
+  async analyzeCreativePatterns() {
+    return {
+      peakCreativeHours: 'Morning and late evening',
+      mediumPreferences: ['writing', 'digital art', 'music'],
+      thematicPatterns: ['identity exploration', 'system design', 'healing narratives'],
+      collaborationStyle: 'Independent with selective sharing'
+    };
+  }
+
+  async getCurrentRecoveryPhase() {
+    // Would analyze actual recovery data patterns
+    return 'integration_and_growth';
+  }
+
+  getCreativeEmergenceRecommendations(phase) {
+    const recommendations = {
+      'early_recovery': ['Focus on safety and foundation building', 'Creative expression as emotional regulation'],
+      'stabilization': ['Regular creative practice', 'Experiment with new mediums'],
+      'integration_and_growth': ['Share work selectively', 'Take on meaningful creative projects'],
+      'maintenance': ['Mentor others', 'Create legacy works']
+    };
+    return recommendations[phase] || recommendations['integration_and_growth'];
+  }
+
+  async getNervousSystemGuidance(data) {
+    const currentState = data.currentState;
+    const safetyLevel = data.safetyLevel;
+    
+    const protocolMap = {
+      activated: {
+        immediate: ['Deep breathing for 30 seconds', 'Feel feet on ground', 'Name 5 things you can see'],
+        ongoing: ['Gentle movement', 'Cool water on wrists', 'Slow exhale breathing'],
+        recovery: ['Rest in safe space', 'Self-compassion practice']
+      },
+      dysregulated: {
+        immediate: ['Stop current activity', 'Find safe space', 'Focus on breathing'],
+        ongoing: ['Progressive muscle relaxation', 'Grounding techniques', 'Call support person'],
+        recovery: ['Gentle self-care', 'Journal about triggers', 'Plan prevention']
+      },
+      calm: {
+        immediate: ['Maintain current state', 'Notice what supports this'],
+        ongoing: ['Continue supportive practices', 'Build on this foundation'],
+        recovery: ['Reflect on what works', 'Share insights if helpful']
+      },
+      shutdown: {
+        immediate: ['No pressure to perform', 'Basic needs first', 'Micro-movements only'],
+        ongoing: ['Very gentle activation', 'Stay connected to body', 'Small safe actions'],
+        recovery: ['Honor the shutdown', 'Gradual re-engagement', 'Extra rest']
+      }
+    };
+
+    const protocols = protocolMap[currentState] || protocolMap.calm;
+    const urgency = safetyLevel < 4 ? 'high' : safetyLevel < 7 ? 'medium' : 'low';
+
+    await this.inc('writes');
+    return this.respond({
+      currentState,
+      safetyLevel,
+      urgency,
+      protocols,
+      triggerContext: data.triggerContext,
+      nextCheck: 'Check in again in 15 minutes',
+      emergencyNote: safetyLevel < 3 ? 'Consider reaching out to support network' : null
+    });
+  }
+
+  // Philadelphia Deep Integration
+  async getNeighborhoodEnergy(data) {
+    const { currentMood, creativeEnergy, socialCapacity } = data;
+    
+    const neighborhoodMap = {
+      solitude: {
+        low: ['Wissahickon Trail', 'Laurel Hill Cemetery', 'Morris Arboretum'],
+        building: ['Art Museum steps', 'Penn Treaty Park', 'Clark Park'],
+        flowing: ['Schuylkill River Trail', 'Cobbs Creek', 'Bartram\'s Garden'],
+        peak: ['Valley Green', 'Pennypack Park', 'John Heinz Wildlife Refuge']
+      },
+      small_group: {
+        low: ['Local coffee shops in Graduate Hospital', 'Book stores in Center City'],
+        building: ['Art galleries in Old City', 'Maker spaces in Kensington'],
+        flowing: ['Music venues in Northern Liberties', 'Studios in Fishtown'],
+        peak: ['Collaborative spaces in University City', 'Pop-up events in South Philly']
+      },
+      community: {
+        low: ['Community gardens', 'Neighborhood markets'],
+        building: ['First Friday art walks', 'Local festivals'],
+        flowing: ['Outdoor concerts', 'Pop-up markets'],
+        peak: ['Major cultural events', 'Street festivals']
+      },
+      crowd: {
+        low: ['Quiet sections of Reading Terminal'],
+        building: ['Rittenhouse Square events'],
+        flowing: ['South Street corridor'],
+        peak: ['Major city festivals', 'Sports events']
+      }
+    };
+
+    const recommendations = neighborhoodMap[socialCapacity] || neighborhoodMap.small_group;
+    const energyMatch = recommendations[creativeEnergy] || recommendations.building;
+
+    await this.inc('reads');
+    return this.respond({
+      currentAlignment: `${socialCapacity} energy with ${creativeEnergy} creative flow`,
+      recommendedAreas: energyMatch,
+      energyMatches: this.getEnergySpecificActivities(currentMood, creativeEnergy),
+      transitTips: this.getTransitRecommendations(energyMatch),
+      timing: this.getOptimalTiming(creativeEnergy)
+    });
+  }
+
+  getEnergySpecificActivities(mood, energy) {
+    return {
+      low: 'Gentle observation, people watching, quiet reflection',
+      building: 'Light exploration, browsing, casual interaction',
+      flowing: 'Active engagement, creative activities, social connection',
+      peak: 'High-energy activities, performance, leadership'
+    }[energy];
+  }
+
+  getTransitRecommendations(areas) {
+    return {
+      walking: 'Most areas accessible by foot with good weather',
+      bike: 'Bike share available throughout center city',
+      septa: 'Public transit connects most recommended locations',
+      rideshare: 'Available for areas with limited transit'
+    };
+  }
+
+  getOptimalTiming(energy) {
+    return {
+      low: 'Early morning or late afternoon',
+      building: 'Mid-morning or early evening',
+      flowing: 'Afternoon or early evening',
+      peak: 'Prime evening hours or weekend afternoons'
+    }[energy];
+  }
+
+  async getSynchronicityTracking() {
+    const currentSuggestions = await this.getActiveSuggestions();
+    const localEvents = await this.getLivePhiladelphiaEvents();
+    
+    const synchronicities = this.findSynchronicities(currentSuggestions, localEvents);
+    
+    await this.inc('reads');
+    return this.respond({
+      activeSynchronicities: synchronicities.active,
+      potentialAlignments: synchronicities.potential,
+      serendipityScore: synchronicities.score,
+      recommendations: synchronicities.recommendations,
+      nextOpportunities: synchronicities.upcoming
+    });
+  }
+
+  async getActiveSuggestions() {
+    // Would pull from actual suggestion history
+    return ['art gallery visit', 'creative writing session', 'community garden time'];
+  }
+
+  findSynchronicities(suggestions, events) {
+    // Simple synchronicity detection - would be more sophisticated
+    return {
+      active: ['Art gallery opening aligns with creative inspiration'],
+      potential: ['Community garden event matches healing intention'],
+      score: 0.75,
+      recommendations: ['Consider attending the art opening tonight'],
+      upcoming: ['Weekend maker space event']
+    };
+  }
+
+  // THROATCRAFT Evolution
+  async getVoiceEmergenceProtocol(data) {
+    const { currentVoiceState, practiceType, resistanceLevel } = data;
+    
+    const protocolMap = {
+      silent: {
+        practices: ['Silent sitting with voice awareness', 'Humming privately', 'Breath awareness'],
+        affirmations: ['My voice has wisdom', 'Silence is preparation', 'I am ready when I am ready'],
+        timeline: '2-4 weeks of foundation building'
+      },
+      emerging: {
+        practices: ['Vocal warm-ups alone', 'Speaking to mirror', 'Recording voice memos'],
+        affirmations: ['My voice is emerging naturally', 'Each sound is progress', 'I trust my voice'],
+        timeline: '4-8 weeks of gentle emergence'
+      },
+      finding: {
+        practices: ['Reading aloud', 'Improvised speaking', 'Voice journaling'],
+        affirmations: ['I am finding my authentic voice', 'My voice has unique value', 'Expression flows naturally'],
+        timeline: '3-6 months of active development'
+      },
+      expressing: {
+        practices: ['Selective sharing', 'Public speaking practice', 'Creative voice work'],
+        affirmations: ['My voice creates impact', 'I express with confidence', 'My voice serves others'],
+        timeline: 'Ongoing mastery development'
+      },
+      mastered: {
+        practices: ['Teaching others', 'Voice leadership', 'Innovative expression'],
+        affirmations: ['My voice is a gift to the world', 'I speak with wisdom', 'I help others find their voice'],
+        timeline: 'Lifetime of service and refinement'
+      }
+    };
+
+    const currentProtocol = protocolMap[currentVoiceState] || protocolMap.emerging;
+    const resistanceSupport = this.getResistanceSupport(resistanceLevel);
+
+    await this.inc('writes');
+    return this.respond({
+      currentVoiceState,
+      protocol: currentProtocol,
+      practiceType,
+      resistanceSupport,
+      dailyPractice: this.getDailyVoicePractice(currentVoiceState, practiceType),
+      progressMarkers: this.getVoiceProgressMarkers(currentVoiceState),
+      supportResources: ['THROATCRAFT community', 'Voice emergence guides', 'Practice partners']
+    });
+  }
+
+  getResistanceSupport(level) {
+    if (level >= 8) return 'High resistance: Start with micro-practices, focus on safety first';
+    if (level >= 5) return 'Moderate resistance: Gentle progression, celebrate small wins';
+    return 'Low resistance: Ready for consistent practice and growth';
+  }
+
+  getDailyVoicePractice(state, type) {
+    const practices = {
+      daily: `5-10 minutes of ${state} focused practice`,
+      project: `Voice work integrated into current creative projects`,
+      performance: `Practice with intention toward public expression`,
+      exploration: `Experimental voice work without pressure`
+    };
+    return practices[type] || practices.daily;
+  }
+
+  getVoiceProgressMarkers(state) {
+    return {
+      silent: 'Comfort with vocal awareness, desire to make sound',
+      emerging: 'First comfortable sounds, reduced self-judgment',
+      finding: 'Natural speaking voice, authentic expression moments',
+      expressing: 'Confident sharing, positive feedback from others',
+      mastered: 'Teaching others, voice as healing tool'
+    }[state];
+  }
+
+  async getSilenceMapping() {
+    const voiceJourney = await this.getVoiceJourneyData();
+    const currentPosition = await this.getCurrentVoicePosition();
+    
+    const mapping = {
+      silenceSpectrum: {
+        deepSilence: 0.0,
+        awareSilence: 0.2,
+        preparatorySilence: 0.4,
+        emergingSound: 0.6,
+        authenticVoice: 0.8,
+        masterfulExpression: 1.0
+      },
+      currentPosition: currentPosition,
+      journey: voiceJourney,
+      nextPhase: this.getNextVoicePhase(currentPosition),
+      milestones: this.getVoiceMilestones(),
+      integration: 'Silence and sound working together harmoniously'
+    };
+
+    await this.inc('reads');
+    return this.respond(mapping);
+  }
+
+  async getVoiceJourneyData() {
+    return {
+      startDate: '2024-01-01', // Would track actual journey
+      phases: ['silent', 'emerging', 'finding'],
+      breakthroughs: ['First comfortable speaking', 'Authentic expression moment'],
+      challenges: ['Performance anxiety', 'Self-judgment'],
+      support: ['THROATCRAFT practices', 'Community connection']
+    };
+  }
+
+  async getCurrentVoicePosition() {
+    return 0.6; // emergingSound - would calculate from actual data
+  }
+
+  getNextVoicePhase(position) {
+    if (position < 0.2) return 'Move toward aware silence';
+    if (position < 0.4) return 'Prepare for emergence';
+    if (position < 0.6) return 'Allow first sounds';
+    if (position < 0.8) return 'Develop authentic voice';
+    return 'Refine masterful expression';
+  }
+
+  getVoiceMilestones() {
+    return [
+      'First intentional sound making',
+      'Comfortable private speaking',
+      'Authentic expression moment',
+      'Confident public sharing',
+      'Voice as service to others'
+    ];
+  }
+
+  // iPhone Integration
+  async syncIOSDevice(data) {
+    const { deviceId, notificationPrefs, syncScope } = data;
+    
+    await this.state.storage.put('iOSDevice', {
+      deviceId,
+      notificationPrefs,
+      syncScope,
+      lastSync: new Date().toISOString(),
+      active: true
+    });
+
+    const syncConfig = {
+      pushNotifications: {
+        movementReminders: notificationPrefs.movement || false,
+        geneKeyInsights: notificationPrefs.geneKeys || false,
+        recoverySupport: notificationPrefs.recovery || false,
+        creativeTriggers: notificationPrefs.creative || false
+      },
+      dataSync: {
+        identity: syncScope.includes('identity'),
+        emotions: syncScope.includes('emotions'),
+        creative: syncScope.includes('creative'),
+        location: syncScope.includes('location')
+      },
+      shortcuts: await this.generateIOSShortcuts()
+    };
+
+    await this.inc('writes');
+    return this.respond({
+      deviceId,
+      syncActive: true,
+      configuration: syncConfig,
+      nextSync: 'Real-time with 5-minute batching',
+      securityNote: 'All data encrypted in transit and at rest'
+    });
+  }
+
+  async getIOSShortcuts() {
+    const shortcuts = await this.generateIOSShortcuts();
+    
+    await this.inc('reads');
+    return this.respond({
+      availableShortcuts: shortcuts,
+      instructions: 'Import these shortcuts into your iOS Shortcuts app',
+      integration: 'Shortcuts connect directly to Signal Q API endpoints'
+    });
+  }
+
+  async generateIOSShortcuts() {
+    return [
+      {
+        name: 'Quick Voice Check',
+        action: 'POST /identity/voice-switch',
+        trigger: 'Before important conversations',
+        description: 'Adapt voice for current context'
+      },
+      {
+        name: 'Gene Key Insight',
+        action: 'GET /gene-key-guidance',
+        trigger: 'Decision making moments',
+        description: 'Get current Gene Key guidance'
+      },
+      {
+        name: 'Movement Reminder',
+        action: 'POST /movement-reminder',
+        trigger: 'Hourly automation',
+        description: 'Check if movement is needed'
+      },
+      {
+        name: 'Philly Energy Match',
+        action: 'POST /philadelphia/neighborhood-energy',
+        trigger: 'Before going out',
+        description: 'Find areas matching your current energy'
+      },
+      {
+        name: 'Recovery Check-in',
+        action: 'POST /recovery/nervous-system',
+        trigger: 'During stress',
+        description: 'Get nervous system regulation guidance'
+      },
+      {
+        name: 'Creative Emergence',
+        action: 'GET /recovery/creative-emergence',
+        trigger: 'Creative blocks',
+        description: 'Check creative emergence patterns'
+      }
+    ];
   }
 }

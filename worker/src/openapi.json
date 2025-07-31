@@ -619,6 +619,191 @@
           }
         }
       }
+    },
+    "/identity/voice-switch": {
+      "post": {
+        "summary": "Context-aware voice switching",
+        "description": "Automatically adapt response style based on current context",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": {"type": "string", "description": "Current working context"},
+                  "taskType": {"type": "string", "enum": ["creative", "analytical", "healing", "manifestor", "social"]},
+                  "energyLevel": {"type": "string", "enum": ["low", "medium", "high", "peak"]}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Voice switching complete with adapted response style"
+          }
+        }
+      }
+    },
+    "/identity/orchestration": {
+      "get": {
+        "summary": "Identity orchestration dashboard",
+        "description": "Visual overview of active identity aspects and their current weights",
+        "responses": {
+          "200": {
+            "description": "Current identity orchestration state"
+          }
+        }
+      }
+    },
+    "/recovery/creative-emergence": {
+      "get": {
+        "summary": "Track creative emergence patterns",
+        "description": "Monitor how creative output correlates with recovery phases",
+        "responses": {
+          "200": {
+            "description": "Creative emergence timeline and patterns"
+          }
+        }
+      }
+    },
+    "/recovery/nervous-system": {
+      "post": {
+        "summary": "Nervous system regulation guidance",
+        "description": "Real-time suggestions based on detected patterns",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentState": {"type": "string", "enum": ["activated", "dysregulated", "calm", "shutdown"]},
+                  "triggerContext": {"type": "string"},
+                  "safetyLevel": {"type": "number", "minimum": 1, "maximum": 10}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Personalized regulation protocols"
+          }
+        }
+      }
+    },
+    "/philadelphia/neighborhood-energy": {
+      "post": {
+        "summary": "Philadelphia neighborhood energy mapping",
+        "description": "Which Philly areas align with your current emotional/creative state",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentMood": {"type": "string"},
+                  "creativeEnergy": {"type": "string", "enum": ["low", "building", "flowing", "peak"]},
+                  "socialCapacity": {"type": "string", "enum": ["solitude", "small_group", "community", "crowd"]}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recommended Philadelphia areas and activities"
+          }
+        }
+      }
+    },
+    "/philadelphia/synchronicity": {
+      "get": {
+        "summary": "Local synchronicity tracking",
+        "description": "Notice when suggested activities align with actual local events",
+        "responses": {
+          "200": {
+            "description": "Current synchronicity patterns and local alignment"
+          }
+        }
+      }
+    },
+    "/throatcraft/voice-emergence": {
+      "post": {
+        "summary": "Voice emergence protocols",
+        "description": "Structured practices for developing authentic voice",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentVoiceState": {"type": "string", "enum": ["silent", "emerging", "finding", "expressing", "mastered"]},
+                  "practiceType": {"type": "string", "enum": ["daily", "project", "performance", "exploration"]},
+                  "resistanceLevel": {"type": "number", "minimum": 1, "maximum": 10}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Personalized voice emergence protocol"
+          }
+        }
+      }
+    },
+    "/throatcraft/silence-mapping": {
+      "get": {
+        "summary": "Silence-to-sound journey tracking",
+        "description": "Track your journey from silence to authentic expression",
+        "responses": {
+          "200": {
+            "description": "Current position on silence-to-sound spectrum"
+          }
+        }
+      }
+    },
+    "/mobile/ios-sync": {
+      "post": {
+        "summary": "iPhone integration sync",
+        "description": "Sync data and notifications with iOS devices",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {"type": "string"},
+                  "notificationPrefs": {"type": "object"},
+                  "syncScope": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "iOS sync configuration complete"
+          }
+        }
+      }
+    },
+    "/mobile/shortcuts": {
+      "get": {
+        "summary": "iOS Shortcuts integration",
+        "description": "Get available shortcuts for iPhone Shortcuts app integration",
+        "responses": {
+          "200": {
+            "description": "Available iOS shortcuts and commands"
+          }
+        }
+      }
     }
   }
 }
