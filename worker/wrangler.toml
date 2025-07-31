@@ -1,14 +1,14 @@
-name = "signalhaven-agent"
+name = "signal_q"
 main = "src/index.js"
 compatibility_date = "2024-04-10"
 
 [[kv_namespaces]]
-binding = "SIGNAL_KV"
-id = "8f98c2b4a0f04485830b260df30db225"
+binding = "SINGAL_HEAVEN"
+id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 
 [[durable_objects.bindings]]
 name = "USERSTATE"
-class_name = "UserState"
+class_name = "signal_q_Userstate"
 
 [ai]
 binding = "AI"
