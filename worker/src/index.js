@@ -1,4 +1,4 @@
- // Signalhaven Transcendence Agent Worker
+// Signalhaven Transcendence Agent Worker
 // Provides basic REST endpoints with persistent memory using KV and Durable Objects.
 // Designed for the free Cloudflare Workers plan.
 
@@ -49,7 +49,14 @@ export default {
         recommendations: ["Signal Q is live and operational"],
         timestamp: new Date().toISOString(),
         uptime: process.uptime ? `${Math.round(process.uptime())}s` : 'unknown'
-      }), { headers: { 'Content-Type': 'application/json' } });
+      }), { 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+        } 
+      });
     }
 
     const userId = request.headers.get('X-User-Id') || 'anonymous';
@@ -79,11 +86,25 @@ export class UserState {
 
   // Route all API requests
   async fetch(request) {
-    const token = request.headers.get('X-Token');
-    const url = new URL(request.url);
-    const path = url.pathname.replace(/\/$/, '');
-    const method = request.method.toUpperCase();
-    await this.rotateDay();
+    try {
+      const token = request.headers.get('X-Token');
+      const url = new URL(request.url);
+      const path = url.pathname.replace(/\/$/, '');
+      const method = request.method.toUpperCase();
+
+      // Handle CORS preflight requests
+      if (method === 'OPTIONS') {
+        return new Response(null, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+          }
+        });
+      }
+
+      await this.rotateDay();
 
     // Core endpoints
     if (path === '/identity-nodes' && method === 'GET') return this.listIdentityNodes();
@@ -194,6 +215,22 @@ export class UserState {
     if (path === '/ai-enhance' && method === 'POST') return this.aiEnhancedResponse(await request.json());
 
     return new Response('Not found', { status: 404 });
+    } catch (error) {
+      // Return proper error response with CORS headers
+      return new Response(JSON.stringify({
+        error: 'Internal server error',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+        }
+      });
+    }
   }
 
   // List all stored identity nodes from KV
@@ -405,7 +442,14 @@ export class UserState {
   respond(obj) {
     obj.timestamp = new Date().toISOString();
     if (this.degraded) obj.degraded = true;
-    return new Response(JSON.stringify(obj), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify(obj), { 
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+      } 
+    });
   }
 
   // Helpers for free-tier degradation counters
