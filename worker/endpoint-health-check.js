@@ -97,8 +97,14 @@ async function runHealthCheck() {
     const result = await testEndpoint(endpoint, startTime);
     results.push(result);
 
-    const status = result.status === 'PASS' ? '✅' : 
-                  result.status === 'PARTIAL' ? '⚠️' : '❌';
+    let status;
+    if (result.status === 'PASS') {
+      status = '✅';
+    } else if (result.status === 'PARTIAL') {
+      status = '⚠️';
+    } else {
+      status = '❌';
+    }
     
     console.log(`${status} ${endpoint.path} (${result.responseTime || 'N/A'}ms)`);
     

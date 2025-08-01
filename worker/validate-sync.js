@@ -6,7 +6,6 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 
 const OPENAPI_PATH = './src/openapi-core.json';
 const WORKER_PATH = './src/index.js';
@@ -115,7 +114,8 @@ function validateSync() {
   const totalIssues = missingMethods.length + missingRoutes.length;
   
   console.log('\n' + '='.repeat(60));
-  console.log(`Sync Status: ${totalIssues === 0 ? '✅ PERFECT SYNC' : `❌ ${totalIssues} issues found`}`);
+  const syncStatus = totalIssues === 0 ? '✅ PERFECT SYNC' : `❌ ${totalIssues} issues found`;
+  console.log(`Sync Status: ${syncStatus}`);
   
   return {
     missingMethods,

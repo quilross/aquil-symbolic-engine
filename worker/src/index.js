@@ -27,7 +27,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
     if (path === '/system/health') {
-      const endpointCount = 70; // Update this when adding endpoints
+      const endpointCount = 76; // Updated endpoint count
       const memoryUsage = typeof performance !== 'undefined' && performance.memory ? 
         Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 'unknown';
       
@@ -37,7 +37,7 @@ export default {
           status: "operational", 
           responseTime: 45, 
           endpoints: endpointCount,
-          version: "2.0.0"
+          version: "2.1.0"
         },
         storage: { 
           status: "ready", 
@@ -60,7 +60,7 @@ export default {
         },
         recommendations: ["Signal Q is live and operational"],
         timestamp: new Date().toISOString(),
-        uptime: process.uptime ? `${Math.round(process.uptime())}s` : 'unknown'
+        uptime: 'unknown'
       }), { 
         headers: { 
           'Content-Type': 'application/json',
@@ -72,8 +72,8 @@ export default {
     }
 
     const userId = request.headers.get('X-User-Id') || 'anonymous';
-    const id = env.USERSTATE.idFromName(userId);
-    const obj = env.USERSTATE.get(id);
+    const id = env.USER_STATE.idFromName(userId);
+    const obj = env.USER_STATE.get(id);
     
     // Create a new request with the token in headers for the Durable Object
     const newRequest = new Request(request.url, {
@@ -106,143 +106,307 @@ export class UserState {
 
       // Handle CORS preflight requests
       if (method === 'OPTIONS') {
-        return new Response(null, {
-          status: 200,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-          }
-        });
+        return this.createCorsResponse();
       }
 
       await this.rotateDay();
 
+      // Route to appropriate handler based on path prefix
+      return await this.routeRequest(path, method, request, token);
+    } catch (error) {
+      return this.createErrorResponse(error);
+    }
+  }
+
+  // Create CORS response for OPTIONS requests
+  createCorsResponse() {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+      }
+    });
+  }
+
+  // Create error response with CORS headers
+  createErrorResponse(error) {
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+      }
+    });
+  }
+
+  // Route requests to appropriate handlers
+  async routeRequest(path, method, request, token) {
     // Core endpoints
-    if (path === '/identity-nodes' && method === 'GET') return this.listIdentityNodes();
-    if (path === '/identity-nodes' && method === 'POST') return this.createIdentityNode(await request.json());
-    if (path === '/protocols/aquil-probe' && method === 'POST') return this.activateAquilProbe(await request.json());
-    if (path === '/voice-shifts' && method === 'POST') return this.recordVoiceShift(await request.json());
-    if (path === '/identity-memories' && method === 'POST') return this.logMemory(await request.json());
-    if (path === '/narratives/generate' && method === 'POST') return this.generateNarrative(await request.json());
-    if (path.startsWith('/transition-maps/') && method === 'GET') return this.getSymbolicMap(path.split('/')[2]);
-    if (path === '/ritual-actions/trigger' && method === 'POST') return this.triggerRitualAction(await request.json());
-    if (path === '/friction-ratings' && method === 'POST') return this.recordFrictionRating(await request.json());
-    if (path === '/play-protocols' && method === 'GET') return this.listPlayProtocols();
-    if (path === '/play-protocols' && method === 'POST') return this.createPlayProtocol(await request.json());
-    if (path === '/media-engagements' && method === 'POST') return this.logMediaEngagement(await request.json());
-    if (path === '/feedback' && method === 'POST') return this.logFeedback(await request.json());
-    if (path === '/export-logs' && method === 'GET') return this.exportLogs(token);
-    if (path === '/logs' && method === 'GET') return this.getLogs();
-    if (path === '/reset' && method === 'POST') return this.reset(token);
+    const coreResponse = await this.handleCoreEndpoints(path, method, request, token);
+    if (coreResponse) return coreResponse;
 
-    // New autonomous agent endpoints
-    if (path === '/track-time' && method === 'POST') return this.trackTime(await request.json());
-    if (path === '/session-monitor' && method === 'POST') return this.sessionMonitor(await request.json());
-    if (path === '/movement-reminder' && method === 'POST') return this.movementReminder(await request.json());
-    if (path === '/agent-overwhelm' && method === 'GET') return this.getAgentOverwhelm();
-    if (path === '/agent-suggestions' && method === 'GET') return this.getAgentSuggestions();
-    if (path === '/philadelphia-context' && method === 'GET') return this.getPhiladelphiaContext();
-    if (path === '/privacy-settings' && method === 'GET') return this.getPrivacySettings();
-    if (path === '/privacy-settings' && method === 'POST') return this.updatePrivacySettings(await request.json());
-    if (path === '/agent-curiosity' && method === 'POST') return this.agentCuriosity(await request.json());
-    if (path === '/agent-interests' && method === 'GET') return this.getAgentInterests();
-    if (path === '/agent-exploration' && method === 'POST') return this.agentExploration(await request.json());
+    // Autonomous agent endpoints
+    const agentResponse = await this.handleAgentEndpoints(path, method, request);
+    if (agentResponse) return agentResponse;
 
-    // Advanced personal blueprint endpoints
-    if (path === '/gene-key-guidance' && method === 'GET') return this.getGeneKeyGuidance();
-    if (path === '/emotional-wave-tracker' && method === 'POST') return this.trackEmotionalWave(await request.json());
-    if (path === '/manifestor-initiation' && method === 'POST') return this.manifestorInitiation(await request.json());
-    if (path === '/effectiveness-dashboard' && method === 'GET') return this.getEffectivenessDashboard();
-    if (path === '/recovery-support' && method === 'GET') return this.getRecoverySupport();
-    if (path === '/throatcraft-session' && method === 'POST') return this.activateThroatcraft(await request.json());
-    if (path === '/ark-coherence-check' && method === 'GET') return this.checkArkCoherence();
-    if (path === '/trauma-informed-response' && method === 'POST') return this.getTraumaInformedResponse(await request.json());
-    if (path === '/live-philadelphia-events' && method === 'GET') return this.getLivePhiladelphiaEvents();
-    if (path === '/multi-identity-orchestration' && method === 'POST') return this.orchestrateIdentities(await request.json());
-    if (path === '/predictive-protocol' && method === 'GET') return this.getPredictiveProtocol();
-    if (path === '/data-sovereignty' && method === 'GET') return this.getDataSovereignty();
-    if (path === '/data-sovereignty' && method === 'POST') return this.executeDataSovereignty(await request.json());
+    // Personal blueprint endpoints
+    const blueprintResponse = await this.handleBlueprintEndpoints(path, method, request);
+    if (blueprintResponse) return blueprintResponse;
 
-    // Deployment assistance endpoints
+    // Deployment and system endpoints
+    const systemResponse = await this.handleSystemEndpoints(path, method, request);
+    if (systemResponse) return systemResponse;
+
+    // Identity and recovery endpoints
+    const identityResponse = await this.handleIdentityEndpoints(path, method, request);
+    if (identityResponse) return identityResponse;
+
+    // Philadelphia and location endpoints
+    const phillyResponse = await this.handlePhiladelphiaEndpoints(path, method, request);
+    if (phillyResponse) return phillyResponse;
+
+    // THROATCRAFT and LUNACRAFT endpoints
+    const craftResponse = await this.handleCraftEndpoints(path, method, request);
+    if (craftResponse) return craftResponse;
+
+    // Somatic and healing endpoints
+    const somaticResponse = await this.handleSomaticEndpoints(path, method, request);
+    if (somaticResponse) return somaticResponse;
+
+    // Microdose and recovery endpoints
+    const microdoseResponse = await this.handleMicrodoseEndpoints(path, method, request);
+    if (microdoseResponse) return microdoseResponse;
+
+    // Pattern recognition and learning endpoints
+    const patternResponse = await this.handlePatternEndpoints(path, method, request);
+    if (patternResponse) return patternResponse;
+
+    // Energy and social endpoints
+    const energyResponse = await this.handleEnergyEndpoints(path, method, request);
+    if (energyResponse) return energyResponse;
+
+    // Autonomous and mobile endpoints
+    const autonomousResponse = await this.handleAutonomousEndpoints(path, method, request);
+    if (autonomousResponse) return autonomousResponse;
+
+    // Token management endpoints
+    const tokenResponse = await this.handleTokenEndpoints(path, method, request);
+    if (tokenResponse) return tokenResponse;
+
+    // AI enhancement endpoints
+    const aiResponse = await this.handleAIEndpoints(path, method, request);
+    if (aiResponse) return aiResponse;
+
+    return new Response('Not found', { status: 404 });
+  }
+
+  // Handle core endpoints
+  async handleCoreEndpoints(path, method, request, token) {
+    const coreEndpoints = {
+      '/identity-nodes': {
+        'GET': () => this.listIdentityNodes(),
+        'POST': async () => this.createIdentityNode(await request.json())
+      },
+      '/protocols/aquil-probe': {
+        'POST': async () => this.activateAquilProbe(await request.json())
+      },
+      '/voice-shifts': {
+        'POST': async () => this.recordVoiceShift(await request.json())
+      },
+      '/identity-memories': {
+        'POST': async () => this.logMemory(await request.json())
+      },
+      '/narratives/generate': {
+        'POST': async () => this.generateNarrative(await request.json())
+      },
+      '/ritual-actions/trigger': {
+        'POST': async () => this.triggerRitualAction(await request.json())
+      },
+      '/friction-ratings': {
+        'POST': async () => this.recordFrictionRating(await request.json())
+      },
+      '/play-protocols': {
+        'GET': () => this.listPlayProtocols(),
+        'POST': async () => this.createPlayProtocol(await request.json())
+      },
+      '/media-engagements': {
+        'POST': async () => this.logMediaEngagement(await request.json())
+      },
+      '/feedback': {
+        'POST': async () => this.logFeedback(await request.json())
+      },
+      '/export-logs': {
+        'GET': () => this.exportLogs(token)
+      },
+      '/logs': {
+        'GET': () => this.getLogs()
+      },
+      '/reset': {
+        'POST': () => this.reset(token)
+      }
+    };
+
+    // Handle special case for transition maps
+    if (path.startsWith('/transition-maps/') && method === 'GET') {
+      return this.getSymbolicMap(path.split('/')[2]);
+    }
+
+    // Handle standard endpoints
+    const endpoint = coreEndpoints[path];
+    if (endpoint?.[method]) {
+      return endpoint[method]();
+    }
+
+    return null;
+  }
+
+  // Handle autonomous agent endpoints
+  async handleAgentEndpoints(path, method, request) {
+    const agentEndpoints = {
+      '/track-time': { 'POST': async () => this.trackTime(await request.json()) },
+      '/session-monitor': { 'POST': async () => this.sessionMonitor(await request.json()) },
+      '/movement-reminder': { 'POST': async () => this.movementReminder(await request.json()) },
+      '/agent-overwhelm': { 'GET': () => this.getAgentOverwhelm() },
+      '/agent-suggestions': { 'GET': () => this.getAgentSuggestions() },
+      '/philadelphia-context': { 'GET': () => this.getPhiladelphiaContext() },
+      '/privacy-settings': { 
+        'GET': () => this.getPrivacySettings(),
+        'POST': async () => this.updatePrivacySettings(await request.json())
+      },
+      '/agent-curiosity': { 'POST': async () => this.agentCuriosity(await request.json()) },
+      '/agent-interests': { 'GET': () => this.getAgentInterests() },
+      '/agent-exploration': { 'POST': async () => this.agentExploration(await request.json()) }
+    };
+
+    const endpoint = agentEndpoints[path];
+    return endpoint?.[method] ? endpoint[method]() : null;
+  }
+
+  // Handle personal blueprint endpoints
+  async handleBlueprintEndpoints(path, method, request) {
+    const blueprintEndpoints = {
+      '/gene-key-guidance': { 'GET': () => this.getGeneKeyGuidance() },
+      '/emotional-wave-tracker': { 'POST': async () => this.trackEmotionalWave(await request.json()) },
+      '/manifestor-initiation': { 'POST': async () => this.manifestorInitiation(await request.json()) },
+      '/effectiveness-dashboard': { 'GET': () => this.getEffectivenessDashboard() },
+      '/recovery-support': { 'GET': () => this.getRecoverySupport() },
+      '/throatcraft-session': { 'POST': async () => this.activateThroatcraft(await request.json()) },
+      '/ark-coherence-check': { 'GET': () => this.checkArkCoherence() },
+      '/trauma-informed-response': { 'POST': async () => this.getTraumaInformedResponse(await request.json()) },
+      '/live-philadelphia-events': { 'GET': () => this.getLivePhiladelphiaEvents() },
+      '/multi-identity-orchestration': { 'POST': async () => this.orchestrateIdentities(await request.json()) },
+      '/predictive-protocol': { 'GET': () => this.getPredictiveProtocol() },
+      '/data-sovereignty': { 
+        'GET': () => this.getDataSovereignty(),
+        'POST': async () => this.executeDataSovereignty(await request.json())
+      }
+    };
+
+    const endpoint = blueprintEndpoints[path];
+    return endpoint?.[method] ? endpoint[method]() : null;
+  }
+
+  // Handle deployment and system endpoints
+  async handleSystemEndpoints(path, method, request) {
     if (path === '/deploy/request' && method === 'POST') return this.requestDeployment(await request.json());
     if (path === '/deploy/status' && method === 'GET') return this.getDeploymentStatus();
     if (path === '/system/health' && method === 'GET') return this.getSystemHealth();
+    return null;
+  }
 
-    // Identity fluidity engine
+  // Handle identity and recovery endpoints
+  async handleIdentityEndpoints(path, method, request) {
     if (path === '/identity/voice-switch' && method === 'POST') return this.contextVoiceSwitch(await request.json());
     if (path === '/identity/orchestration' && method === 'GET') return this.getIdentityOrchestration();
-
-    // Recovery integration
     if (path === '/recovery/creative-emergence' && method === 'GET') return this.getCreativeEmergence();
     if (path === '/recovery/nervous-system' && method === 'POST') return this.getNervousSystemGuidance(await request.json());
+    return null;
+  }
 
-    // Philadelphia deep integration
+  // Handle Philadelphia-specific endpoints
+  async handlePhiladelphiaEndpoints(path, method, request) {
     if (path === '/philadelphia/neighborhood-energy' && method === 'POST') return this.getNeighborhoodEnergy(await request.json());
     if (path === '/philadelphia/synchronicity' && method === 'GET') return this.getSynchronicityTracking();
+    return null;
+  }
 
-    // THROATCRAFT evolution
+  // Handle THROATCRAFT and LUNACRAFT endpoints
+  async handleCraftEndpoints(path, method, request) {
     if (path === '/throatcraft/voice-emergence' && method === 'POST') return this.getVoiceEmergenceProtocol(await request.json());
     if (path === '/throatcraft/silence-mapping' && method === 'GET') return this.getSilenceMapping();
-
-    // LUNACRAFT companion dynamics  
     if (path === '/lunacraft/cattle-dog-guidance' && method === 'POST') return this.getCattleDogGuidance(await request.json());
     if (path === '/lunacraft/alpha-presence' && method === 'GET') return this.getAlphaPresenceGuidance();
     if (path === '/lunacraft/companion-bonding' && method === 'POST') return this.getCompanionBondingAdvice(await request.json());
+    return null;
+  }
 
-    // Somatic/Body Healing Integration
+  // Handle somatic and healing endpoints
+  async handleSomaticEndpoints(path, method, request) {
     if (path === '/somatic/body-awareness' && method === 'POST') return this.getSomaticAwareness(await request.json());
     if (path === '/somatic/nervous-system-regulation' && method === 'POST') return this.getSomaticRegulation(await request.json());
     if (path === '/somatic/trauma-release' && method === 'POST') return this.getSomaticTraumaRelease(await request.json());
+    return null;
+  }
 
-    // Microdose Harm Reduction & Monitoring
+  // Handle microdose and recovery endpoints
+  async handleMicrodoseEndpoints(path, method, request) {
     if (path === '/microdose/log-session' && method === 'POST') return this.logMicrodoseSession(await request.json());
     if (path === '/microdose/harm-reduction' && method === 'GET') return this.getMicrodoseHarmReduction();
     if (path === '/microdose/integration-support' && method === 'POST') return this.getMicrodoseIntegration(await request.json());
     if (path === '/microdose/sobriety-pathway' && method === 'GET') return this.getSobrietyPathway();
+    return null;
+  }
 
-    // Advanced Pattern Recognition & Learning
+  // Handle pattern recognition endpoints
+  async handlePatternEndpoints(path, method, request) {
     if (path === '/patterns/cross-domain' && method === 'GET') return this.getCrossDomainPatterns();
     if (path === '/learning/adaptive-protocols' && method === 'POST') return this.getAdaptiveProtocols(await request.json());
     if (path === '/insights/emergence-prediction' && method === 'GET') return this.getEmergencePrediction();
-    
-    // Energy & Biorhythm Integration
+    return null;
+  }
+
+  // Handle energy and social endpoints
+  async handleEnergyEndpoints(path, method, request) {
     if (path === '/energy/circadian-optimization' && method === 'GET') return this.getCircadianOptimization();
     if (path === '/energy/creative-peak-detection' && method === 'POST') return this.detectCreativePeaks(await request.json());
-    
-    // Social Context & Relationship Dynamics
     if (path === '/social/interaction-analysis' && method === 'POST') return this.analyzeSocialInteraction(await request.json());
     if (path === '/social/boundary-optimization' && method === 'GET') return this.getBoundaryOptimization();
+    return null;
+  }
 
-    // Autonomous Protocol Execution
+  // Handle autonomous and mobile endpoints
+  async handleAutonomousEndpoints(path, method, request) {
     if (path === '/autonomous/protocol-execution' && method === 'POST') return this.autonomousProtocolExecution(await request.json());
     if (path === '/autonomous/decision-engine' && method === 'POST') return this.autonomousDecisionEngine(await request.json());
     if (path === '/autonomous/intervention' && method === 'POST') return this.autonomousIntervention(await request.json());
-
-    // iPhone integration
     if (path === '/mobile/ios-sync' && method === 'POST') return this.syncIOSDevice(await request.json());
     if (path === '/mobile/shortcuts' && method === 'GET') return this.getIOSShortcuts();
+    return null;
+  }
 
-    // AI-enhanced capabilities
+  // Handle token management endpoints
+  async handleTokenEndpoints(path, method, request) {
+    if (path === '/tokens/generate' && method === 'POST') return this.generateCustomToken(await request.json());
+    if (path === '/tokens/list' && method === 'GET') return this.listCustomTokens();
+    if (path === '/tokens/revoke' && method === 'POST') return this.revokeCustomToken(await request.json());
+    if (path === '/tokens/validate' && method === 'POST') return this.validateCustomToken(await request.json());
+    if (path === '/tokens/settings' && method === 'GET') return this.getTokenSettings();
+    if (path === '/tokens/settings' && method === 'POST') return this.updateTokenSettings(await request.json());
+    return null;
+  }
+
+  // Handle AI enhancement endpoints
+  async handleAIEndpoints(path, method, request) {
     if (path === '/ai-enhance' && method === 'POST') return this.aiEnhancedResponse(await request.json());
-
-    return new Response('Not found', { status: 404 });
-    } catch (error) {
-      // Return proper error response with CORS headers
-      return new Response(JSON.stringify({
-        error: 'Internal server error',
-        message: error.message,
-        timestamp: new Date().toISOString()
-      }), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-        }
-      });
-    }
+    return null;
   }
 
   // List all stored identity nodes from KV
@@ -1118,11 +1282,11 @@ export class UserState {
     const { deploymentType, userPermission } = data;
     
     if (!userPermission) {
-      return Response.json({
+      await this.inc('reads');
+      return this.respond({
         canDeploy: false,
         nextSteps: ["User permission required", "Ask user: 'Can I help you deploy your Signal Q updates?'"],
-        status: "permission_denied",
-        timestamp: new Date().toISOString()
+        status: "permission_denied"
       });
     }
 
@@ -1132,7 +1296,8 @@ export class UserState {
       "check-status": "cd /workspaces/aquil-symbolic-engine/worker && wrangler deploy --dry-run"
     };
 
-    return Response.json({
+    await this.inc('reads');
+    return this.respond({
       canDeploy: true,
       nextSteps: [
         "I can guide you through the deployment",
@@ -1141,13 +1306,13 @@ export class UserState {
       ],
       deployCommand: deployCommands[deploymentType] || deployCommands.quick,
       status: "ready_to_assist",
-      message: "I'll help you deploy when you're ready!",
-      timestamp: new Date().toISOString()
+      message: "I'll help you deploy when you're ready!"
     });
   }
 
   async getDeploymentStatus() {
-    return Response.json({
+    await this.inc('reads');
+    return this.respond({
       ready: true,
       lastDeployment: null, // Would track actual deployments
       pendingChanges: [
@@ -1161,13 +1326,13 @@ export class UserState {
         "All files are ready for deployment",
         "Configuration validated successfully",
         "Secure tokens generated"
-      ],
-      timestamp: new Date().toISOString()
+      ]
     });
   }
 
   async getSystemHealth() {
-    return Response.json({
+    await this.inc('reads');
+    return this.respond({
       overall: "healthy",
       api: {
         status: "operational",
@@ -1187,8 +1352,7 @@ export class UserState {
         "Ready for first deployment",
         "Consider setting up monitoring after deploy",
         "All security tokens updated"
-      ],
-      timestamp: new Date().toISOString()
+      ]
     });
   }
 
@@ -3660,6 +3824,199 @@ As an autonomous agent, make the best decision and execute it immediately. No us
       severity,
       aiReasoning: interventionDecision.reasoning,
       message: 'AI determined no intervention needed at this time'
+    });
+  }
+
+  // Custom Token Management Implementation
+  async generateCustomToken(data) {
+    const { name, permissions, expiresIn } = data;
+    
+    // Generate a secure token
+    const tokenId = crypto.randomUUID();
+    const token = `ct_${tokenId.replace(/-/g, '').substring(0, 32)}`;
+    
+    const tokenData = {
+      id: tokenId,
+      token,
+      name: name || 'Unnamed Token',
+      permissions: permissions || ['read'],
+      createdAt: new Date().toISOString(),
+      expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000).toISOString() : null,
+      active: true,
+      lastUsed: null,
+      usageCount: 0
+    };
+    
+    // Store token data
+    const key = `customToken:${tokenId}`;
+    await this.state.storage.put(key, tokenData);
+    
+    // Also store in user's token list
+    const userTokens = await this.state.storage.get('userCustomTokens') || [];
+    userTokens.push({
+      id: tokenId,
+      name: tokenData.name,
+      createdAt: tokenData.createdAt,
+      permissions: tokenData.permissions,
+      active: tokenData.active
+    });
+    await this.state.storage.put('userCustomTokens', userTokens);
+    
+    await this.inc('writes');
+    return this.respond({
+      success: true,
+      token: {
+        id: tokenId,
+        token, // Only return the actual token on creation
+        name: tokenData.name,
+        permissions: tokenData.permissions,
+        createdAt: tokenData.createdAt,
+        expiresAt: tokenData.expiresAt
+      },
+      message: 'Custom token generated successfully'
+    });
+  }
+
+  async listCustomTokens() {
+    const userTokens = await this.state.storage.get('userCustomTokens') || [];
+    
+    await this.inc('reads');
+    return this.respond({
+      tokens: userTokens.map(token => ({
+        id: token.id,
+        name: token.name,
+        createdAt: token.createdAt,
+        permissions: token.permissions,
+        active: token.active,
+        // Don't include actual token value in list
+      })),
+      count: userTokens.length
+    });
+  }
+
+  async revokeCustomToken(data) {
+    const { tokenId } = data;
+    
+    if (!tokenId) {
+      return new Response('Token ID required', { status: 400 });
+    }
+    
+    // Get token data
+    const tokenKey = `customToken:${tokenId}`;
+    const tokenData = await this.state.storage.get(tokenKey);
+    
+    if (!tokenData) {
+      return new Response('Token not found', { status: 404 });
+    }
+    
+    // Mark as inactive
+    tokenData.active = false;
+    tokenData.revokedAt = new Date().toISOString();
+    await this.state.storage.put(tokenKey, tokenData);
+    
+    // Update user token list
+    const userTokens = await this.state.storage.get('userCustomTokens') || [];
+    const updatedTokens = userTokens.map(token => 
+      token.id === tokenId ? { ...token, active: false } : token
+    );
+    await this.state.storage.put('userCustomTokens', updatedTokens);
+    
+    await this.inc('writes');
+    return this.respond({
+      success: true,
+      message: 'Token revoked successfully',
+      tokenId
+    });
+  }
+
+  async validateCustomToken(data) {
+    const { token } = data;
+    
+    if (!token?.startsWith('ct_')) {
+      return this.respond({
+        valid: false,
+        message: 'Invalid token format'
+      });
+    }
+    
+    // Search for token in storage
+    const tokenList = await this.state.storage.list({ prefix: 'customToken:' });
+    let tokenData = null;
+    
+    for (const [, value] of tokenList) {
+      if (value && value.token === token) {
+        tokenData = value;
+        break;
+      }
+    }
+    
+    if (!tokenData) {
+      return this.respond({
+        valid: false,
+        message: 'Token not found'
+      });
+    }
+    
+    if (!tokenData.active) {
+      return this.respond({
+        valid: false,
+        message: 'Token has been revoked'
+      });
+    }
+    
+    if (tokenData.expiresAt && new Date() > new Date(tokenData.expiresAt)) {
+      return this.respond({
+        valid: false,
+        message: 'Token has expired'
+      });
+    }
+    
+    // Update usage stats
+    tokenData.lastUsed = new Date().toISOString();
+    tokenData.usageCount = (tokenData.usageCount || 0) + 1;
+    await this.state.storage.put(`customToken:${tokenData.id}`, tokenData);
+    
+    await this.inc('reads');
+    return this.respond({
+      valid: true,
+      tokenInfo: {
+        id: tokenData.id,
+        name: tokenData.name,
+        permissions: tokenData.permissions,
+        lastUsed: tokenData.lastUsed,
+        usageCount: tokenData.usageCount
+      }
+    });
+  }
+
+  async getTokenSettings() {
+    const settings = await this.state.storage.get('tokenSettings') || {
+      maxTokens: 10,
+      defaultExpiry: 86400, // 24 hours in seconds
+      allowedPermissions: ['read', 'write', 'admin'],
+      requireExpiry: false
+    };
+    
+    await this.inc('reads');
+    return this.respond(settings);
+  }
+
+  async updateTokenSettings(data) {
+    const currentSettings = await this.state.storage.get('tokenSettings') || {};
+    
+    const newSettings = {
+      ...currentSettings,
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+    
+    await this.state.storage.put('tokenSettings', newSettings);
+    await this.inc('writes');
+    
+    return this.respond({
+      success: true,
+      settings: newSettings,
+      message: 'Token settings updated successfully'
     });
   }
 }
