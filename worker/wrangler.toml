@@ -1,7 +1,7 @@
 name = "signal_q"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
-account_id = "b07412f2f2389e8b537051bc092f3376"
+# account_id is set via environment variable CLOUDFLARE_ACCOUNT_ID
 
 # Build configuration
 [build]
@@ -9,7 +9,8 @@ command = ""
 
 [[kv_namespaces]]
 binding = "SIGNAL_KV"
-id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
+id = "cb01f3bf664a4feb9a3ec29fd86cd43e"  # This will be overridden by --binding flag in CI
+preview_id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 
 [[durable_objects.bindings]]
 name = "USER_STATE"
@@ -25,6 +26,7 @@ new_sqlite_classes = ["UserState"]
 binding = "AI"
 
 # Environment variables
+# These will be overridden by --var flags in CI deployment
 [vars]
-API_TOKEN = "sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
-API_TOKEN_ADMIN = "sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2"
+API_TOKEN = "development_token_replace_in_production"
+API_TOKEN_ADMIN = "development_admin_token_replace_in_production"

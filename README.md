@@ -2,12 +2,15 @@
 
 ## 🎯 **For CustomGPT**
 - **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
-- **Auth**: Bearer `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
+- **Auth**: Bearer `[Your API Token]` (see GitHub Secrets configuration)
 - **Schema**: Upload `worker/src/openapi-core.json`
 
 ## 🔑 **Your API Tokens**
-- **User Token**: `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
-- **Admin Token**: `sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o`
+- **User Token**: `[Your User API Token]` (configured in GitHub Secrets)
+- **Admin Token**: `[Your Admin API Token]` (configured in GitHub Secrets)
+
+> ⚠️ **Security Note**: API tokens are now configured via GitHub Secrets for security. 
+> See `GITHUB_SECRETS_AND_VARIABLES.md` for setup instructions.
 
 ## 📁 **Essential Files**
 ```
@@ -25,6 +28,10 @@
 ## 🚀 Deployment Automation
 
 This repository includes comprehensive CI/CD automation for reliable deployment:
+
+### ⚠️ First-Time Setup Required
+Before deployment, you must configure GitHub Secrets and Variables:
+📖 **See [GITHUB_SECRETS_AND_VARIABLES.md](GITHUB_SECRETS_AND_VARIABLES.md) for complete setup instructions**
 
 ### Prerequisites
 - Node.js 18+
@@ -61,6 +68,8 @@ The GitHub Actions workflow automatically:
 - ✅ Tests deployment configuration
 - ✅ Runs OpenAPI sync validation
 - ✅ Performs comprehensive project validation
+- ✅ **Deploys to Cloudflare Workers** (on push to main)
+- ✅ **Runs health checks** after deployment
 
 ## 🛡️ Security & Validation
 - Automated security auditing with `npm audit`

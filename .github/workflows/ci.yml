@@ -136,3 +136,66 @@ jobs:
         npx wrangler deploy --dry-run --compatibility-date=2024-11-01 --outdir=./dist
         
         echo "✅ Deployment readiness validated"
+
+  # Deployment job (only on main branch with secrets)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build, deployment-validation]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Deploy to Cloudflare Workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        API_TOKEN_USER: ${{ secrets.API_TOKEN_USER }}
+        API_TOKEN_ADMIN: ${{ secrets.API_TOKEN_ADMIN }}
+        WORKER_NAME: ${{ vars.WORKER_NAME }}
+      run: |
+        cd worker
+        echo "🚀 Deploying Signal Q Worker..."
+        
+        # Create temporary wrangler.toml with secrets
+        cp wrangler.toml wrangler.toml.backup
+        
+        # Replace placeholders with actual values
+        sed -i "s/account_id = \".*\"/# account_id set via environment/" wrangler.toml
+        sed -i "s/id = \".*\"/id = \"${{ secrets.SIGNAL_KV_ID }}\"/" wrangler.toml
+        
+        # Deploy with environment variables
+        npx wrangler deploy \
+          --var API_TOKEN:"$API_TOKEN_USER" \
+          --var API_TOKEN_ADMIN:"$API_TOKEN_ADMIN"
+        
+        # Restore original file
+        mv wrangler.toml.backup wrangler.toml
+        
+        echo "✅ Deployment complete!"
+    
+    - name: Health Check
+      env:
+        BASE_URL: ${{ vars.BASE_URL }}
+        API_TOKEN_USER: ${{ secrets.API_TOKEN_USER }}
+        API_TOKEN_ADMIN: ${{ secrets.API_TOKEN_ADMIN }}
+      run: |
+        cd worker
+        echo "🏥 Running post-deployment health check..."
+        
+        # Wait for deployment to propagate
+        sleep 10
+        
+        # Run health tests
+        node health-test.js
+        
+        echo "✅ Health check passed!"
