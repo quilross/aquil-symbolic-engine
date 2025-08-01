@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Signal Q - Core Transcendence Agent",
-    "version": "2.0.0",
-    "description": "Essential Signal Q autonomous agent endpoints for CustomGPT integration. Core functionality across 4 creative lineages (THROATCRAFT, ARK, LUNACRAFT, Somatic) with AI-enhanced decision making."
+    "version": "2.1.0",
+    "description": "Complete Signal Q autonomous agent endpoints for CustomGPT integration. Core functionality across 4 creative lineages (THROATCRAFT, ARK, LUNACRAFT, Somatic) with AI-enhanced decision making. Now includes all implemented endpoints."
   },
   "servers": [
     {
@@ -12,7 +12,9 @@
     }
   ],
   "security": [
-    { "bearerAuth": [] }
+    {
+      "bearerAuth": []
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -25,12 +27,47 @@
     "schemas": {}
   },
   "paths": {
+    "/microdose/integration-support": {
+      "post": {
+        "operationId": "getMicrodoseIntegration",
+        "summary": "Get microdose integration support",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionType": { "type": "string" },
+                  "integrationGoals": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Integration support guidance" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/microdose/sobriety-pathway": {
+      "get": {
+        "operationId": "getSobrietyPathway",
+        "summary": "Get sobriety pathway guidance",
+        "responses": {
+          "200": { "description": "Sobriety pathway recommendations" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
     "/system/health": {
       "get": {
         "operationId": "getSystemHealth",
         "summary": "System health check",
         "responses": {
-          "200": { "description": "System health status" }
+          "200": {
+            "description": "System health status"
+          }
         }
       }
     },
@@ -39,7 +76,9 @@
         "operationId": "getAgentSuggestions",
         "summary": "AI autonomous suggestions based on patterns",
         "responses": {
-          "200": { "description": "Agent suggestions" }
+          "200": {
+            "description": "Agent suggestions"
+          }
         }
       }
     },
@@ -53,15 +92,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "context": { "type": "string" },
-                  "readiness": { "type": "number" }
+                  "context": {
+                    "type": "string"
+                  },
+                  "readiness": {
+                    "type": "number"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Probe activation result" }
+          "200": {
+            "description": "Probe activation result"
+          }
         }
       }
     },
@@ -70,7 +115,9 @@
         "operationId": "getGeneKeyGuidance",
         "summary": "Gene Key guidance for current state",
         "responses": {
-          "200": { "description": "Gene Key guidance" }
+          "200": {
+            "description": "Gene Key guidance"
+          }
         }
       }
     },
@@ -84,16 +131,24 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "intensity": { "type": "number" },
-                  "clarity": { "type": "boolean" }
+                  "intensity": {
+                    "type": "number"
+                  },
+                  "clarity": {
+                    "type": "boolean"
+                  }
                 },
-                "required": ["intensity"]
+                "required": [
+                  "intensity"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Emotional wave analysis" }
+          "200": {
+            "description": "Emotional wave analysis"
+          }
         }
       }
     },
@@ -107,16 +162,29 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "initiationUrge": { "type": "string" },
-                  "impactLevel": { "type": "string", "enum": ["low", "medium", "high"] }
+                  "initiationUrge": {
+                    "type": "string"
+                  },
+                  "impactLevel": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high"
+                    ]
+                  }
                 },
-                "required": ["initiationUrge"]
+                "required": [
+                  "initiationUrge"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Manifestor guidance" }
+          "200": {
+            "description": "Manifestor guidance"
+          }
         }
       }
     },
@@ -125,7 +193,9 @@
         "operationId": "getEffectivenessDashboard",
         "summary": "Comprehensive effectiveness analysis",
         "responses": {
-          "200": { "description": "Effectiveness dashboard" }
+          "200": {
+            "description": "Effectiveness dashboard"
+          }
         }
       }
     },
@@ -134,7 +204,9 @@
         "operationId": "getRecoverySupport",
         "summary": "Harm reduction recovery support",
         "responses": {
-          "200": { "description": "Recovery support guidance" }
+          "200": {
+            "description": "Recovery support guidance"
+          }
         }
       }
     },
@@ -148,15 +220,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "intention": { "type": "string" },
-                  "currentVoiceState": { "type": "string" }
+                  "intention": {
+                    "type": "string"
+                  },
+                  "currentVoiceState": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "THROATCRAFT activation result" }
+          "200": {
+            "description": "THROATCRAFT activation result"
+          }
         }
       }
     },
@@ -165,7 +243,9 @@
         "operationId": "checkArkCoherence",
         "summary": "ARK coherence and recursive clarity",
         "responses": {
-          "200": { "description": "ARK coherence status" }
+          "200": {
+            "description": "ARK coherence status"
+          }
         }
       }
     },
@@ -179,16 +259,29 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "context": { "type": "string" },
-                  "triggerLevel": { "type": "string", "enum": ["low", "medium", "high"] }
+                  "context": {
+                    "type": "string"
+                  },
+                  "triggerLevel": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high"
+                    ]
+                  }
                 },
-                "required": ["context"]
+                "required": [
+                  "context"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Trauma-informed response" }
+          "200": {
+            "description": "Trauma-informed response"
+          }
         }
       }
     },
@@ -197,7 +290,9 @@
         "operationId": "getPhiladelphiaContext",
         "summary": "Philadelphia cultural intelligence",
         "responses": {
-          "200": { "description": "Philadelphia context" }
+          "200": {
+            "description": "Philadelphia context"
+          }
         }
       }
     },
@@ -206,7 +301,9 @@
         "operationId": "getLivePhiladelphiaEvents",
         "summary": "Real-time Philadelphia events",
         "responses": {
-          "200": { "description": "Live Philadelphia events" }
+          "200": {
+            "description": "Live Philadelphia events"
+          }
         }
       }
     },
@@ -220,15 +317,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "context": { "type": "string" }
+                  "context": {
+                    "type": "string"
+                  }
                 },
-                "required": ["context"]
+                "required": [
+                  "context"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Identity orchestration result" }
+          "200": {
+            "description": "Identity orchestration result"
+          }
         }
       }
     },
@@ -237,7 +340,9 @@
         "operationId": "getPredictiveProtocol",
         "summary": "Predictive crisis prevention protocol",
         "responses": {
-          "200": { "description": "Predictive protocol analysis" }
+          "200": {
+            "description": "Predictive protocol analysis"
+          }
         }
       }
     },
@@ -251,17 +356,34 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "taskType": { "type": "string", "enum": ["creative", "analytical", "healing", "manifestor", "social"] },
-                  "context": { "type": "string" },
-                  "energyLevel": { "type": "string" }
+                  "taskType": {
+                    "type": "string",
+                    "enum": [
+                      "creative",
+                      "analytical",
+                      "healing",
+                      "manifestor",
+                      "social"
+                    ]
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "energyLevel": {
+                    "type": "string"
+                  }
                 },
-                "required": ["taskType"]
+                "required": [
+                  "taskType"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Voice switch result" }
+          "200": {
+            "description": "Voice switch result"
+          }
         }
       }
     },
@@ -270,7 +392,9 @@
         "operationId": "getIdentityOrchestration",
         "summary": "Identity aspect orchestration status",
         "responses": {
-          "200": { "description": "Identity orchestration status" }
+          "200": {
+            "description": "Identity orchestration status"
+          }
         }
       }
     },
@@ -279,7 +403,9 @@
         "operationId": "getCreativeEmergence",
         "summary": "Creative emergence in recovery",
         "responses": {
-          "200": { "description": "Creative emergence analysis" }
+          "200": {
+            "description": "Creative emergence analysis"
+          }
         }
       }
     },
@@ -293,16 +419,33 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentState": { "type": "string", "enum": ["activated", "dysregulated", "calm", "shutdown"] },
-                  "safetyLevel": { "type": "number", "minimum": 1, "maximum": 10 }
+                  "currentState": {
+                    "type": "string",
+                    "enum": [
+                      "activated",
+                      "dysregulated",
+                      "calm",
+                      "shutdown"
+                    ]
+                  },
+                  "safetyLevel": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10
+                  }
                 },
-                "required": ["currentState", "safetyLevel"]
+                "required": [
+                  "currentState",
+                  "safetyLevel"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Nervous system guidance" }
+          "200": {
+            "description": "Nervous system guidance"
+          }
         }
       }
     },
@@ -316,17 +459,40 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentMood": { "type": "string" },
-                  "creativeEnergy": { "type": "string", "enum": ["low", "building", "flowing", "peak"] },
-                  "socialCapacity": { "type": "string", "enum": ["solitude", "small_group", "community", "crowd"] }
+                  "currentMood": {
+                    "type": "string"
+                  },
+                  "creativeEnergy": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "building",
+                      "flowing",
+                      "peak"
+                    ]
+                  },
+                  "socialCapacity": {
+                    "type": "string",
+                    "enum": [
+                      "solitude",
+                      "small_group",
+                      "community",
+                      "crowd"
+                    ]
+                  }
                 },
-                "required": ["creativeEnergy", "socialCapacity"]
+                "required": [
+                  "creativeEnergy",
+                  "socialCapacity"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Neighborhood energy recommendations" }
+          "200": {
+            "description": "Neighborhood energy recommendations"
+          }
         }
       }
     },
@@ -335,7 +501,9 @@
         "operationId": "getSynchronicityTracking",
         "summary": "Philadelphia synchronicity tracking",
         "responses": {
-          "200": { "description": "Synchronicity analysis" }
+          "200": {
+            "description": "Synchronicity analysis"
+          }
         }
       }
     },
@@ -349,17 +517,36 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentVoiceState": { "type": "string", "enum": ["silent", "emerging", "finding", "expressing", "mastered"] },
-                  "practiceType": { "type": "string" },
-                  "resistanceLevel": { "type": "number", "minimum": 1, "maximum": 10 }
+                  "currentVoiceState": {
+                    "type": "string",
+                    "enum": [
+                      "silent",
+                      "emerging",
+                      "finding",
+                      "expressing",
+                      "mastered"
+                    ]
+                  },
+                  "practiceType": {
+                    "type": "string"
+                  },
+                  "resistanceLevel": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10
+                  }
                 },
-                "required": ["currentVoiceState"]
+                "required": [
+                  "currentVoiceState"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Voice emergence protocol" }
+          "200": {
+            "description": "Voice emergence protocol"
+          }
         }
       }
     },
@@ -368,7 +555,9 @@
         "operationId": "getSilenceMapping",
         "summary": "THROATCRAFT silence to voice mapping",
         "responses": {
-          "200": { "description": "Silence mapping analysis" }
+          "200": {
+            "description": "Silence mapping analysis"
+          }
         }
       }
     },
@@ -382,18 +571,41 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "situation": { "type": "string" },
-                  "energyLevel": { "type": "string", "enum": ["high_energy", "moderate_energy", "low_energy"] },
-                  "behaviorConcern": { "type": "string" },
-                  "environmentalContext": { "type": "string", "enum": ["urban", "suburban", "rural", "indoor"] }
+                  "situation": {
+                    "type": "string"
+                  },
+                  "energyLevel": {
+                    "type": "string",
+                    "enum": [
+                      "high_energy",
+                      "moderate_energy",
+                      "low_energy"
+                    ]
+                  },
+                  "behaviorConcern": {
+                    "type": "string"
+                  },
+                  "environmentalContext": {
+                    "type": "string",
+                    "enum": [
+                      "urban",
+                      "suburban",
+                      "rural",
+                      "indoor"
+                    ]
+                  }
                 },
-                "required": ["energyLevel"]
+                "required": [
+                  "energyLevel"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Cattle dog guidance" }
+          "200": {
+            "description": "Cattle dog guidance"
+          }
         }
       }
     },
@@ -402,7 +614,9 @@
         "operationId": "getAlphaPresenceGuidance",
         "summary": "LUNACRAFT alpha presence guidance",
         "responses": {
-          "200": { "description": "Alpha presence guidance" }
+          "200": {
+            "description": "Alpha presence guidance"
+          }
         }
       }
     },
@@ -416,17 +630,39 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentChallenge": { "type": "string" },
-                  "bondingGoal": { "type": "string", "enum": ["trust_building", "communication_improvement", "adventure_partnership", "calm_companionship"] },
-                  "timeAvailable": { "type": "string", "enum": ["15min", "30min", "1hour", "2hours+"] }
+                  "currentChallenge": {
+                    "type": "string"
+                  },
+                  "bondingGoal": {
+                    "type": "string",
+                    "enum": [
+                      "trust_building",
+                      "communication_improvement",
+                      "adventure_partnership",
+                      "calm_companionship"
+                    ]
+                  },
+                  "timeAvailable": {
+                    "type": "string",
+                    "enum": [
+                      "15min",
+                      "30min",
+                      "1hour",
+                      "2hours+"
+                    ]
+                  }
                 },
-                "required": ["bondingGoal"]
+                "required": [
+                  "bondingGoal"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Companion bonding advice" }
+          "200": {
+            "description": "Companion bonding advice"
+          }
         }
       }
     },
@@ -440,16 +676,27 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "currentBodyState": { "type": "string" },
-                  "tensionAreas": { "type": "array", "items": { "type": "string" } },
-                  "breathingPattern": { "type": "string" }
+                  "currentBodyState": {
+                    "type": "string"
+                  },
+                  "tensionAreas": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "breathingPattern": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Somatic awareness guidance" }
+          "200": {
+            "description": "Somatic awareness guidance"
+          }
         }
       }
     },
@@ -463,17 +710,41 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "dysregulationType": { "type": "string", "enum": ["hyperactivation", "hypoactivation", "mixed_states", "emotional_overwhelm"] },
-                  "currentCapacity": { "type": "number", "minimum": 1, "maximum": 10 },
-                  "timeAvailable": { "type": "string", "enum": ["2min", "5min", "10min", "20min"] }
+                  "dysregulationType": {
+                    "type": "string",
+                    "enum": [
+                      "hyperactivation",
+                      "hypoactivation",
+                      "mixed_states",
+                      "emotional_overwhelm"
+                    ]
+                  },
+                  "currentCapacity": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "timeAvailable": {
+                    "type": "string",
+                    "enum": [
+                      "2min",
+                      "5min",
+                      "10min",
+                      "20min"
+                    ]
+                  }
                 },
-                "required": ["dysregulationType"]
+                "required": [
+                  "dysregulationType"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Nervous system regulation protocol" }
+          "200": {
+            "description": "Nervous system regulation protocol"
+          }
         }
       }
     },
@@ -487,15 +758,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "readiness": { "type": "boolean" },
-                  "bodyMemories": { "type": "boolean" }
+                  "readiness": {
+                    "type": "boolean"
+                  },
+                  "bodyMemories": {
+                    "type": "boolean"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Trauma release guidance" }
+          "200": {
+            "description": "Trauma release guidance"
+          }
         }
       }
     },
@@ -509,18 +786,1469 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "prompt": { "type": "string" },
-                  "context": { "type": "string" },
-                  "enhancementType": { "type": "string" }
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "enhancementType": {
+                    "type": "string"
+                  }
                 },
-                "required": ["prompt"]
+                "required": [
+                  "prompt"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "AI-enhanced response" }
+          "200": {
+            "description": "AI-enhanced response"
+          }
         }
+      }
+    },
+    "/identity-nodes": {
+      "get": {
+        "operationId": "listIdentityNodes",
+        "summary": "List all stored identity nodes",
+        "responses": {
+          "200": {
+            "description": "List of identity nodes"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createIdentityNode",
+        "summary": "Create a new identity node",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identity_key": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "identity_key"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identity node created"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/voice-shifts": {
+      "post": {
+        "operationId": "recordVoiceShift",
+        "summary": "Record a voice shift event",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "from_voice": {
+                    "type": "string"
+                  },
+                  "to_voice": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "intensity": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "from_voice",
+                  "to_voice"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Voice shift recorded"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/identity-memories": {
+      "post": {
+        "operationId": "logMemory",
+        "summary": "Log a symbolic memory snapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "emotional_state": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memory logged"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/narratives/generate": {
+      "post": {
+        "operationId": "generateNarrative",
+        "summary": "Generate narrative from memory log",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "memory_log_id": {
+                    "type": "string"
+                  },
+                  "narrative_type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "memory_log_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated narrative"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/ritual-actions/trigger": {
+      "post": {
+        "operationId": "triggerRitualAction",
+        "summary": "Trigger a ritual action with AI autonomy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ritual_type": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "intention": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ritual_type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ritual action triggered"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/friction-ratings": {
+      "post": {
+        "operationId": "recordFrictionRating",
+        "summary": "Record user friction rating",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "friction_type": {
+                    "type": "string"
+                  },
+                  "rating": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10
+                  }
+                },
+                "required": [
+                  "friction_type",
+                  "rating"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Friction rating recorded"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/play-protocols": {
+      "get": {
+        "operationId": "listPlayProtocols",
+        "summary": "List available play protocols",
+        "responses": {
+          "200": {
+            "description": "List of play protocols"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createPlayProtocol",
+        "summary": "Create or log a new play protocol",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "activities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Play protocol created"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/media-engagements": {
+      "post": {
+        "operationId": "logMediaEngagement",
+        "summary": "Log media engagement with impact mapping",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "media_type": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "impact_rating": {
+                    "type": "number"
+                  },
+                  "emotional_response": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "media_type",
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Media engagement logged"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/feedback": {
+      "post": {
+        "operationId": "logFeedback",
+        "summary": "Log user feedback with leadership rotation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "feedback": {
+                    "type": "string"
+                  },
+                  "rating": {
+                    "type": "number"
+                  },
+                  "category": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "feedback"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback logged"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/logs": {
+      "get": {
+        "operationId": "getLogs",
+        "summary": "Get user logs",
+        "responses": {
+          "200": {
+            "description": "User logs"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/export-logs": {
+      "get": {
+        "operationId": "exportLogs",
+        "summary": "Export all logs (admin only)",
+        "responses": {
+          "200": {
+            "description": "Exported logs"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/reset": {
+      "post": {
+        "operationId": "resetUserData",
+        "summary": "Reset all user data (admin only)",
+        "responses": {
+          "200": {
+            "description": "Data reset complete"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/track-time": {
+      "post": {
+        "operationId": "trackTime",
+        "summary": "Track time and timezone information",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "activity": {
+                    "type": "string"
+                  },
+                  "duration": {
+                    "type": "number"
+                  },
+                  "timezone": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Time tracking information"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/session-monitor": {
+      "post": {
+        "operationId": "sessionMonitor",
+        "summary": "Monitor session duration and health",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "maxDuration": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session monitoring status"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/movement-reminder": {
+      "post": {
+        "operationId": "movementReminder",
+        "summary": "Check movement patterns and reminders",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lastMovement": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "reminderInterval": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Movement reminder status"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/agent-overwhelm": {
+      "get": {
+        "operationId": "getAgentOverwhelm",
+        "summary": "Check agent system load and overwhelm",
+        "responses": {
+          "200": {
+            "description": "Agent overwhelm status"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/privacy-settings": {
+      "get": {
+        "operationId": "getPrivacySettings",
+        "summary": "Get current privacy settings",
+        "responses": {
+          "200": {
+            "description": "Privacy settings"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "updatePrivacySettings",
+        "summary": "Update privacy settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dataRetention": {
+                    "type": "string"
+                  },
+                  "loggingLevel": {
+                    "type": "string"
+                  },
+                  "shareWithAgent": {
+                    "type": "boolean"
+                  },
+                  "anonymizeData": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Privacy settings updated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/autonomous/protocol-execution": {
+      "post": {
+        "operationId": "autonomousProtocolExecution",
+        "summary": "Execute protocols autonomously without user approval",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "protocolType": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "urgency": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high"
+                    ]
+                  }
+                },
+                "required": [
+                  "protocolType"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autonomous protocol execution result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/autonomous/decision-engine": {
+      "post": {
+        "operationId": "autonomousDecisionEngine",
+        "summary": "AI autonomous decision making and execution",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "situation": {
+                    "type": "string"
+                  },
+                  "availableActions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "constraints": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "situation"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autonomous decision result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/autonomous/intervention": {
+      "post": {
+        "operationId": "autonomousIntervention",
+        "summary": "Autonomous intervention system",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "triggerType": {
+                    "type": "string"
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high"
+                    ]
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "triggerType"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Intervention result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/agent-curiosity": {
+      "post": {
+        "operationId": "agentCuriosity",
+        "summary": "Agent curiosity exploration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "curiosityType": {
+                    "type": "string",
+                    "enum": [
+                      "culture",
+                      "science",
+                      "art"
+                    ]
+                  },
+                  "userContext": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "curiosityType"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent curiosity exploration results"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/agent-interests": {
+      "get": {
+        "operationId": "getAgentInterests",
+        "summary": "Get current agent interests and preferences",
+        "responses": {
+          "200": {
+            "description": "Agent interests and discoveries"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/agent-exploration": {
+      "post": {
+        "operationId": "agentExploration",
+        "summary": "Agent autonomous exploration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "explorationType": {
+                    "type": "string",
+                    "enum": [
+                      "local events",
+                      "new technology",
+                      "art"
+                    ]
+                  }
+                },
+                "required": [
+                  "explorationType"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Exploration findings and recommendations"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/data-sovereignty": {
+      "get": {
+        "operationId": "getDataSovereignty",
+        "summary": "Get data sovereignty options",
+        "responses": {
+          "200": {
+            "description": "Data sovereignty options"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "executeDataSovereignty",
+        "summary": "Execute data sovereignty action",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "export",
+                      "delete",
+                      "anonymize",
+                      "backup"
+                    ]
+                  },
+                  "scope": {
+                    "type": "string"
+                  },
+                  "confirmation": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "action",
+                  "confirmation"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Data sovereignty action result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/deploy/request": {
+      "post": {
+        "operationId": "requestDeployment",
+        "summary": "Request deployment assistance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deploymentType": {
+                    "type": "string",
+                    "enum": [
+                      "quick",
+                      "full",
+                      "check-status"
+                    ]
+                  },
+                  "userPermission": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "deploymentType"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deployment assistance"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/deploy/status": {
+      "get": {
+        "operationId": "getDeploymentStatus",
+        "summary": "Get deployment status",
+        "responses": {
+          "200": {
+            "description": "Deployment status information"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/microdose/log-session": {
+      "post": {
+        "operationId": "logMicrodoseSession",
+        "summary": "Log microdose session for harm reduction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "substance": {
+                    "type": "string"
+                  },
+                  "dose": {
+                    "type": "string"
+                  },
+                  "intention": {
+                    "type": "string"
+                  },
+                  "safetyProtocols": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "substance"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session logged with harm reduction guidance"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/microdose/harm-reduction": {
+      "get": {
+        "operationId": "getMicrodoseHarmReduction",
+        "summary": "Get harm reduction guidance",
+        "responses": {
+          "200": {
+            "description": "Harm reduction guidance"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/patterns/cross-domain": {
+      "get": {
+        "operationId": "getCrossDomainPatterns",
+        "summary": "AI-powered cross-domain pattern recognition",
+        "responses": {
+          "200": {
+            "description": "Cross-domain pattern analysis"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/learning/adaptive-protocols": {
+      "post": {
+        "operationId": "getAdaptiveProtocols",
+        "summary": "Get AI-selected adaptive protocols",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentContext": {
+                    "type": "string"
+                  },
+                  "energyLevel": {
+                    "type": "string"
+                  },
+                  "timeAvailable": {
+                    "type": "string"
+                  },
+                  "primaryGoal": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currentContext"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Adaptive protocol recommendation"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/insights/emergence-prediction": {
+      "get": {
+        "operationId": "getEmergencePrediction",
+        "summary": "AI-powered emergence and breakthrough prediction",
+        "responses": {
+          "200": {
+            "description": "Emergence prediction analysis"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/energy/circadian-optimization": {
+      "get": {
+        "operationId": "getCircadianOptimization",
+        "summary": "Circadian rhythm optimization guidance",
+        "responses": {
+          "200": {
+            "description": "Circadian optimization recommendations"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/energy/creative-peak-detection": {
+      "post": {
+        "operationId": "detectCreativePeaks",
+        "summary": "Detect optimal creative peak times",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentEnergy": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "recentOutput": {
+                    "type": "object"
+                  },
+                  "environmentFactors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "timeOfDay": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currentEnergy"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Creative peak detection analysis"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/social/interaction-analysis": {
+      "post": {
+        "operationId": "analyzeSocialInteraction",
+        "summary": "Analyze social interaction patterns",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "interactionType": {
+                    "type": "string"
+                  },
+                  "participants": {
+                    "type": "number"
+                  },
+                  "energy": {
+                    "type": "number"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "outcome": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "interactionType",
+                  "participants"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Social interaction analysis"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/social/boundary-optimization": {
+      "get": {
+        "operationId": "getBoundaryOptimization",
+        "summary": "Personal boundary optimization guidance",
+        "responses": {
+          "200": {
+            "description": "Boundary optimization recommendations"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/mobile/ios-sync": {
+      "post": {
+        "operationId": "syncIOSDevice",
+        "summary": "Sync with iOS device and shortcuts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {
+                    "type": "string"
+                  },
+                  "notificationPrefs": {
+                    "type": "object"
+                  },
+                  "syncScope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "deviceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "iOS sync configuration"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/mobile/shortcuts": {
+      "get": {
+        "operationId": "getIOSShortcuts",
+        "summary": "Get iOS shortcuts for Signal Q integration",
+        "responses": {
+          "200": {
+            "description": "iOS shortcuts configuration"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/tokens/generate": {
+      "post": {
+        "operationId": "generateCustomToken",
+        "summary": "Generate custom API token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "expiresIn": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated token"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/tokens/list": {
+      "get": {
+        "operationId": "listCustomTokens",
+        "summary": "List user custom tokens",
+        "responses": {
+          "200": {
+            "description": "List of custom tokens"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/tokens/revoke": {
+      "post": {
+        "operationId": "revokeCustomToken",
+        "summary": "Revoke custom token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tokenId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tokenId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token revoked"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/tokens/validate": {
+      "post": {
+        "operationId": "validateCustomToken",
+        "summary": "Validate custom token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token validation result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/tokens/settings": {
+      "get": {
+        "operationId": "getTokenSettings",
+        "summary": "Get token management settings",
+        "responses": {
+          "200": {
+            "description": "Token settings"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "updateTokenSettings",
+        "summary": "Update token management settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "maxTokens": {
+                    "type": "number"
+                  },
+                  "defaultExpiry": {
+                    "type": "number"
+                  },
+                  "requireExpiry": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token settings updated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     }
   }

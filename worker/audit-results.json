@@ -1,0 +1,933 @@
+{
+  "timestamp": "2025-08-01T04:28:10.891Z",
+  "summary": {
+    "totalEndpoints": 30,
+    "successfulTests": 0,
+    "failedTests": 30,
+    "endpointMismatches": 0,
+    "authenticationIssues": 0,
+    "serverErrors": 0
+  },
+  "endpoints": [
+    {
+      "path": "/system/health",
+      "method": "GET",
+      "operationId": "getSystemHealth",
+      "summary": "System health check",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/system/health",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/system/health",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/agent-suggestions",
+      "method": "GET",
+      "operationId": "getAgentSuggestions",
+      "summary": "AI autonomous suggestions based on patterns",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/agent-suggestions",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/agent-suggestions",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/protocols/aquil-probe",
+      "method": "POST",
+      "operationId": "activateAquilProbe",
+      "summary": "Activate AQUIL Probe with AI decision making",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/protocols/aquil-probe",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "context": "Testing AQUIL probe activation",
+            "readiness": 8
+          },
+          "endpoint": "/protocols/aquil-probe",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/protocols/aquil-probe",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/gene-key-guidance",
+      "method": "GET",
+      "operationId": "getGeneKeyGuidance",
+      "summary": "Gene Key guidance for current state",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/gene-key-guidance",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/gene-key-guidance",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/emotional-wave-tracker",
+      "method": "POST",
+      "operationId": "trackEmotionalWave",
+      "summary": "Track emotional authority wave",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/emotional-wave-tracker",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "intensity": 7,
+            "clarity": true
+          },
+          "endpoint": "/emotional-wave-tracker",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/emotional-wave-tracker",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/manifestor-initiation",
+      "method": "POST",
+      "operationId": "manifestorInitiation",
+      "summary": "Manifestor initiation support",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/manifestor-initiation",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "initiationUrge": "Testing manifestor initiation",
+            "impactLevel": "medium"
+          },
+          "endpoint": "/manifestor-initiation",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/manifestor-initiation",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/effectiveness-dashboard",
+      "method": "GET",
+      "operationId": "getEffectivenessDashboard",
+      "summary": "Comprehensive effectiveness analysis",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/effectiveness-dashboard",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/effectiveness-dashboard",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/recovery-support",
+      "method": "GET",
+      "operationId": "getRecoverySupport",
+      "summary": "Harm reduction recovery support",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/recovery-support",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/recovery-support",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/throatcraft-session",
+      "method": "POST",
+      "operationId": "activateThroatcraft",
+      "summary": "THROATCRAFT voice emergence with AI guidance",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/throatcraft-session",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "intention": "Testing THROATCRAFT activation",
+            "currentVoiceState": "seeking_clarity"
+          },
+          "endpoint": "/throatcraft-session",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/throatcraft-session",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/ark-coherence-check",
+      "method": "GET",
+      "operationId": "checkArkCoherence",
+      "summary": "ARK coherence and recursive clarity",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/ark-coherence-check",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/ark-coherence-check",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/trauma-informed-response",
+      "method": "POST",
+      "operationId": "getTraumaInformedResponse",
+      "summary": "Trauma-informed response adaptation",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/trauma-informed-response",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "context": "Testing trauma-informed response",
+            "triggerLevel": "low"
+          },
+          "endpoint": "/trauma-informed-response",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/trauma-informed-response",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/philadelphia-context",
+      "method": "GET",
+      "operationId": "getPhiladelphiaContext",
+      "summary": "Philadelphia cultural intelligence",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/philadelphia-context",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/philadelphia-context",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/live-philadelphia-events",
+      "method": "GET",
+      "operationId": "getLivePhiladelphiaEvents",
+      "summary": "Real-time Philadelphia events",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/live-philadelphia-events",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/live-philadelphia-events",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/multi-identity-orchestration",
+      "method": "POST",
+      "operationId": "orchestrateIdentities",
+      "summary": "Multi-identity orchestration",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/multi-identity-orchestration",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "context": "Testing identity orchestration"
+          },
+          "endpoint": "/multi-identity-orchestration",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/multi-identity-orchestration",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/predictive-protocol",
+      "method": "GET",
+      "operationId": "getPredictiveProtocol",
+      "summary": "Predictive crisis prevention protocol",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/predictive-protocol",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/predictive-protocol",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/identity/voice-switch",
+      "method": "POST",
+      "operationId": "contextVoiceSwitch",
+      "summary": "Context-aware voice switching",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/identity/voice-switch",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "taskType": "creative",
+            "context": "Testing voice switch",
+            "energyLevel": "medium"
+          },
+          "endpoint": "/identity/voice-switch",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/identity/voice-switch",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/identity/orchestration",
+      "method": "GET",
+      "operationId": "getIdentityOrchestration",
+      "summary": "Identity aspect orchestration status",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/identity/orchestration",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/identity/orchestration",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/recovery/creative-emergence",
+      "method": "GET",
+      "operationId": "getCreativeEmergence",
+      "summary": "Creative emergence in recovery",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/recovery/creative-emergence",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/recovery/creative-emergence",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/recovery/nervous-system",
+      "method": "POST",
+      "operationId": "getNervousSystemGuidance",
+      "summary": "Nervous system regulation guidance",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/recovery/nervous-system",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "currentState": "calm",
+            "safetyLevel": 8
+          },
+          "endpoint": "/recovery/nervous-system",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/recovery/nervous-system",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/philadelphia/neighborhood-energy",
+      "method": "POST",
+      "operationId": "getNeighborhoodEnergy",
+      "summary": "Philadelphia neighborhood energy mapping",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/philadelphia/neighborhood-energy",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "creativeEnergy": "flowing",
+            "socialCapacity": "small_group"
+          },
+          "endpoint": "/philadelphia/neighborhood-energy",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/philadelphia/neighborhood-energy",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/philadelphia/synchronicity",
+      "method": "GET",
+      "operationId": "getSynchronicityTracking",
+      "summary": "Philadelphia synchronicity tracking",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/philadelphia/synchronicity",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/philadelphia/synchronicity",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/throatcraft/voice-emergence",
+      "method": "POST",
+      "operationId": "getVoiceEmergenceProtocol",
+      "summary": "THROATCRAFT voice emergence protocol",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/throatcraft/voice-emergence",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "currentVoiceState": "emerging"
+          },
+          "endpoint": "/throatcraft/voice-emergence",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/throatcraft/voice-emergence",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/throatcraft/silence-mapping",
+      "method": "GET",
+      "operationId": "getSilenceMapping",
+      "summary": "THROATCRAFT silence to voice mapping",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/throatcraft/silence-mapping",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/throatcraft/silence-mapping",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/lunacraft/cattle-dog-guidance",
+      "method": "POST",
+      "operationId": "getCattleDogGuidance",
+      "summary": "LUNACRAFT cattle dog companionship guidance",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/lunacraft/cattle-dog-guidance",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "energyLevel": "moderate_energy"
+          },
+          "endpoint": "/lunacraft/cattle-dog-guidance",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/lunacraft/cattle-dog-guidance",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/lunacraft/alpha-presence",
+      "method": "GET",
+      "operationId": "getAlphaPresenceGuidance",
+      "summary": "LUNACRAFT alpha presence guidance",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/lunacraft/alpha-presence",
+          "method": "get",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/lunacraft/alpha-presence",
+        "method": "get",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/lunacraft/companion-bonding",
+      "method": "POST",
+      "operationId": "getCompanionBondingAdvice",
+      "summary": "LUNACRAFT companion bonding advice",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/lunacraft/companion-bonding",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "bondingGoal": "trust_building"
+          },
+          "endpoint": "/lunacraft/companion-bonding",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/lunacraft/companion-bonding",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/somatic/body-awareness",
+      "method": "POST",
+      "operationId": "getSomaticAwareness",
+      "summary": "Somatic body awareness integration",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/somatic/body-awareness",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "currentBodyState": "relaxed",
+            "tensionAreas": [
+              "shoulders"
+            ],
+            "breathingPattern": "deep"
+          },
+          "endpoint": "/somatic/body-awareness",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/somatic/body-awareness",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/somatic/nervous-system-regulation",
+      "method": "POST",
+      "operationId": "getSomaticRegulation",
+      "summary": "Somatic nervous system regulation",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/somatic/nervous-system-regulation",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "dysregulationType": "hyperactivation"
+          },
+          "endpoint": "/somatic/nervous-system-regulation",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/somatic/nervous-system-regulation",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/somatic/trauma-release",
+      "method": "POST",
+      "operationId": "getSomaticTraumaRelease",
+      "summary": "Somatic trauma release (trauma-informed)",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/somatic/trauma-release",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "readiness": true,
+            "bodyMemories": false
+          },
+          "endpoint": "/somatic/trauma-release",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/somatic/trauma-release",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    },
+    {
+      "path": "/ai-enhance",
+      "method": "POST",
+      "operationId": "aiEnhancedResponse",
+      "summary": "AI-enhanced responses using Cloudflare Workers AI",
+      "testResults": [
+        {
+          "testType": "no_auth",
+          "endpoint": "/ai-enhance",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        },
+        {
+          "testType": "with_body",
+          "requestBody": {
+            "prompt": "Test AI enhancement",
+            "context": "Testing AI-enhanced responses",
+            "enhancementType": "general"
+          },
+          "endpoint": "/ai-enhance",
+          "method": "post",
+          "status": null,
+          "error": "fetch failed",
+          "success": false
+        }
+      ],
+      "status": "ISSUE",
+      "finalResult": {
+        "endpoint": "/ai-enhance",
+        "method": "post",
+        "status": null,
+        "error": "fetch failed",
+        "success": false
+      }
+    }
+  ],
+  "mismatches": [],
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "issue": "Worker not deployed or inaccessible",
+      "solution": "Deploy the worker using: cd worker && wrangler deploy"
+    }
+  ]
+}

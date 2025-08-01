@@ -27,7 +27,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
     if (path === '/system/health') {
-      const endpointCount = 76; // Updated endpoint count
+      const endpointCount = 77; // Updated endpoint count
       const memoryUsage = typeof performance !== 'undefined' && performance.memory ? 
         Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 'unknown';
       
