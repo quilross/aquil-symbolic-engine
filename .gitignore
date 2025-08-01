@@ -38,3 +38,8 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Audit and test reports (generated during CI/CD)
+*-report.json
+*-audit-*.json
+*.report.json
