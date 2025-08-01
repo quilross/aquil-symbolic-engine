@@ -1,0 +1,24 @@
+{
+  "name": "signal-q-worker",
+  "version": "2.0.0",
+  "description": "Signal Q Cloudflare Worker for autonomous agent functionality",
+  "main": "worker/src/index.js",
+  "scripts": {
+    "deploy": "cd worker && wrangler deploy",
+    "dev": "cd worker && wrangler dev",
+    "test": "cd worker && node health-test.js",
+    "test:api": "cd worker && node test-api.js",
+    "audit:openapi": "cd worker && node openapi-audit.js",
+    "audit:implementation": "cd worker && node implementation-analysis.js",
+    "audit:final": "cd worker && node final-audit.js",
+    "audit:all": "npm run test && npm run audit:openapi && npm run audit:implementation && npm run audit:final"
+  },
+  "keywords": ["cloudflare", "worker", "signal-q", "ai", "autonomous-agent"],
+  "author": "Signal Q",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

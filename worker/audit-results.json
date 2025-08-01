@@ -1,0 +1,587 @@
+{
+  "timestamp": "2025-08-01T04:49:53.621Z",
+  "specFile": "src/openapi-core.json",
+  "baseUrl": "https://signal_q.catnip-pieces1.workers.dev",
+  "endpoints": {
+    "total": 30,
+    "tested": 30,
+    "working": 0,
+    "failing": 30,
+    "details": [
+      {
+        "path": "/system/health",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/system/health",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/agent-suggestions",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/agent-suggestions",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/protocols/aquil-probe",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/protocols/aquil-probe",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/gene-key-guidance",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/gene-key-guidance",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/emotional-wave-tracker",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/emotional-wave-tracker",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/manifestor-initiation",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/manifestor-initiation",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/effectiveness-dashboard",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/effectiveness-dashboard",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/recovery-support",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/recovery-support",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/throatcraft-session",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/throatcraft-session",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/ark-coherence-check",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/ark-coherence-check",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/trauma-informed-response",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/trauma-informed-response",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/philadelphia-context",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/philadelphia-context",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/live-philadelphia-events",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/live-philadelphia-events",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/multi-identity-orchestration",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/multi-identity-orchestration",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/predictive-protocol",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/predictive-protocol",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/identity/voice-switch",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/identity/voice-switch",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/identity/orchestration",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/identity/orchestration",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/recovery/creative-emergence",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/recovery/creative-emergence",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/recovery/nervous-system",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/recovery/nervous-system",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/philadelphia/neighborhood-energy",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/philadelphia/neighborhood-energy",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/philadelphia/synchronicity",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/philadelphia/synchronicity",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/throatcraft/voice-emergence",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/throatcraft/voice-emergence",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/throatcraft/silence-mapping",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/throatcraft/silence-mapping",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/lunacraft/cattle-dog-guidance",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/lunacraft/cattle-dog-guidance",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/lunacraft/alpha-presence",
+        "methods": [
+          {
+            "method": "GET",
+            "path": "/lunacraft/alpha-presence",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/lunacraft/companion-bonding",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/lunacraft/companion-bonding",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/somatic/body-awareness",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/somatic/body-awareness",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/somatic/nervous-system-regulation",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/somatic/nervous-system-regulation",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/somatic/trauma-release",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/somatic/trauma-release",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      },
+      {
+        "path": "/ai-enhance",
+        "methods": [
+          {
+            "method": "POST",
+            "path": "/ai-enhance",
+            "error": "fetch failed",
+            "success": false
+          }
+        ]
+      }
+    ]
+  },
+  "authentication": {
+    "scheme": "bearerAuth",
+    "tested": true,
+    "working": false
+  },
+  "compliance": {
+    "score": 0,
+    "issues": [
+      {
+        "type": "auth_network_error",
+        "message": "Valid User Token failed: fetch failed",
+        "severity": "high"
+      },
+      {
+        "type": "auth_network_error",
+        "message": "Valid Admin Token failed: fetch failed",
+        "severity": "high"
+      },
+      {
+        "type": "auth_network_error",
+        "message": "Invalid Token failed: fetch failed",
+        "severity": "high"
+      },
+      {
+        "type": "auth_network_error",
+        "message": "Missing Token failed: fetch failed",
+        "severity": "high"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /system/health failed: fetch failed",
+        "severity": "high",
+        "path": "/system/health",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /agent-suggestions failed: fetch failed",
+        "severity": "high",
+        "path": "/agent-suggestions",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /protocols/aquil-probe failed: fetch failed",
+        "severity": "high",
+        "path": "/protocols/aquil-probe",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /gene-key-guidance failed: fetch failed",
+        "severity": "high",
+        "path": "/gene-key-guidance",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /emotional-wave-tracker failed: fetch failed",
+        "severity": "high",
+        "path": "/emotional-wave-tracker",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /manifestor-initiation failed: fetch failed",
+        "severity": "high",
+        "path": "/manifestor-initiation",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /effectiveness-dashboard failed: fetch failed",
+        "severity": "high",
+        "path": "/effectiveness-dashboard",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /recovery-support failed: fetch failed",
+        "severity": "high",
+        "path": "/recovery-support",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /throatcraft-session failed: fetch failed",
+        "severity": "high",
+        "path": "/throatcraft-session",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /ark-coherence-check failed: fetch failed",
+        "severity": "high",
+        "path": "/ark-coherence-check",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /trauma-informed-response failed: fetch failed",
+        "severity": "high",
+        "path": "/trauma-informed-response",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /philadelphia-context failed: fetch failed",
+        "severity": "high",
+        "path": "/philadelphia-context",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /live-philadelphia-events failed: fetch failed",
+        "severity": "high",
+        "path": "/live-philadelphia-events",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /multi-identity-orchestration failed: fetch failed",
+        "severity": "high",
+        "path": "/multi-identity-orchestration",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /predictive-protocol failed: fetch failed",
+        "severity": "high",
+        "path": "/predictive-protocol",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /identity/voice-switch failed: fetch failed",
+        "severity": "high",
+        "path": "/identity/voice-switch",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /identity/orchestration failed: fetch failed",
+        "severity": "high",
+        "path": "/identity/orchestration",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /recovery/creative-emergence failed: fetch failed",
+        "severity": "high",
+        "path": "/recovery/creative-emergence",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /recovery/nervous-system failed: fetch failed",
+        "severity": "high",
+        "path": "/recovery/nervous-system",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /philadelphia/neighborhood-energy failed: fetch failed",
+        "severity": "high",
+        "path": "/philadelphia/neighborhood-energy",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /philadelphia/synchronicity failed: fetch failed",
+        "severity": "high",
+        "path": "/philadelphia/synchronicity",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /throatcraft/voice-emergence failed: fetch failed",
+        "severity": "high",
+        "path": "/throatcraft/voice-emergence",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /throatcraft/silence-mapping failed: fetch failed",
+        "severity": "high",
+        "path": "/throatcraft/silence-mapping",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /lunacraft/cattle-dog-guidance failed: fetch failed",
+        "severity": "high",
+        "path": "/lunacraft/cattle-dog-guidance",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "GET /lunacraft/alpha-presence failed: fetch failed",
+        "severity": "high",
+        "path": "/lunacraft/alpha-presence",
+        "method": "GET"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /lunacraft/companion-bonding failed: fetch failed",
+        "severity": "high",
+        "path": "/lunacraft/companion-bonding",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /somatic/body-awareness failed: fetch failed",
+        "severity": "high",
+        "path": "/somatic/body-awareness",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /somatic/nervous-system-regulation failed: fetch failed",
+        "severity": "high",
+        "path": "/somatic/nervous-system-regulation",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /somatic/trauma-release failed: fetch failed",
+        "severity": "high",
+        "path": "/somatic/trauma-release",
+        "method": "POST"
+      },
+      {
+        "type": "network_error",
+        "message": "POST /ai-enhance failed: fetch failed",
+        "severity": "high",
+        "path": "/ai-enhance",
+        "method": "POST"
+      }
+    ]
+  },
+  "recommendations": [
+    "Fix 30 failing endpoint(s) to improve compliance",
+    "Fix authentication implementation to match OpenAPI security scheme"
+  ]
+}
