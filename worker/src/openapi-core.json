@@ -21,7 +21,8 @@
         "scheme": "bearer",
         "description": "Bearer token authentication"
       }
-    }
+    },
+    "schemas": {}
   },
   "paths": {
     "/system/health": {

@@ -7,12 +7,10 @@ account_id = "b07412f2f2389e8b537051bc092f3376"
 [build]
 command = ""
 
-# KV namespace - uncomment and add your ID when ready
-# [[kv_namespaces]]
-# binding = "SIGNAL_KV"
-# id = "your-kv-namespace-id-here"
+[[kv_namespaces]]
+binding = "SIGNAL_KV"
+id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 
-# Durable Objects configuration
 [[durable_objects.bindings]]
 name = "USER_STATE"
 class_name = "UserState"
@@ -29,4 +27,4 @@ binding = "AI"
 # Environment variables
 [vars]
 API_TOKEN = "sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
-API_TOKEN_ADMIN = "sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o"
+API_TOKEN_ADMIN = "sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2"
