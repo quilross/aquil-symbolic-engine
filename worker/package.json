@@ -1,0 +1,42 @@
+{
+  "name": "signal-q-worker",
+  "version": "2.1.0",
+  "description": "Signal Q Cloudflare Worker - Core Transcendence Agent",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "test": "node health-test.js",
+    "test:api": "node test-api.js",
+    "audit:openapi": "node openapi-audit.js",
+    "audit:implementation": "node implementation-analysis.js",
+    "audit:final": "node final-audit.js",
+    "audit:all": "npm run audit:openapi && npm run audit:implementation && npm run audit:final",
+    "validate": "npm run test && npm run audit:all"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "signal-q",
+    "transcendence",
+    "api",
+    "autonomous-agent"
+  ],
+  "author": "Signal Q Team",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quilross/aquil-symbolic-engine.git",
+    "directory": "worker"
+  },
+  "bugs": {
+    "url": "https://github.com/quilross/aquil-symbolic-engine/issues"
+  },
+  "homepage": "https://signal_q.catnip-pieces1.workers.dev"
+}

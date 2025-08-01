@@ -1,0 +1,273 @@
+{
+  "timestamp": "2025-08-01T14:26:40.221Z",
+  "implementation": {
+    "total_lines": 4023,
+    "code_lines": 3375,
+    "routes_found": 41,
+    "route_list": [
+      "/system/health",
+      "/deploy/request",
+      "/deploy/status",
+      "/system/health",
+      "/identity/voice-switch",
+      "/identity/orchestration",
+      "/recovery/creative-emergence",
+      "/recovery/nervous-system",
+      "/philadelphia/neighborhood-energy",
+      "/philadelphia/synchronicity",
+      "/throatcraft/voice-emergence",
+      "/throatcraft/silence-mapping",
+      "/lunacraft/cattle-dog-guidance",
+      "/lunacraft/alpha-presence",
+      "/lunacraft/companion-bonding",
+      "/somatic/body-awareness",
+      "/somatic/nervous-system-regulation",
+      "/somatic/trauma-release",
+      "/microdose/log-session",
+      "/microdose/harm-reduction",
+      "/microdose/integration-support",
+      "/microdose/sobriety-pathway",
+      "/patterns/cross-domain",
+      "/learning/adaptive-protocols",
+      "/insights/emergence-prediction",
+      "/energy/circadian-optimization",
+      "/energy/creative-peak-detection",
+      "/social/interaction-analysis",
+      "/social/boundary-optimization",
+      "/autonomous/protocol-execution",
+      "/autonomous/decision-engine",
+      "/autonomous/intervention",
+      "/mobile/ios-sync",
+      "/mobile/shortcuts",
+      "/tokens/generate",
+      "/tokens/list",
+      "/tokens/revoke",
+      "/tokens/validate",
+      "/tokens/settings",
+      "/tokens/settings",
+      "/ai-enhance"
+    ],
+    "http_methods": [
+      "OPTIONS"
+    ],
+    "has_authentication": false,
+    "has_cors": true,
+    "has_error_handling": true
+  },
+  "coverage": {
+    "documented_paths": 30,
+    "documented_operations": 30,
+    "path_list": [
+      "/system/health",
+      "/agent-suggestions",
+      "/protocols/aquil-probe",
+      "/gene-key-guidance",
+      "/emotional-wave-tracker",
+      "/manifestor-initiation",
+      "/effectiveness-dashboard",
+      "/recovery-support",
+      "/throatcraft-session",
+      "/ark-coherence-check",
+      "/trauma-informed-response",
+      "/philadelphia-context",
+      "/live-philadelphia-events",
+      "/multi-identity-orchestration",
+      "/predictive-protocol",
+      "/identity/voice-switch",
+      "/identity/orchestration",
+      "/recovery/creative-emergence",
+      "/recovery/nervous-system",
+      "/philadelphia/neighborhood-energy",
+      "/philadelphia/synchronicity",
+      "/throatcraft/voice-emergence",
+      "/throatcraft/silence-mapping",
+      "/lunacraft/cattle-dog-guidance",
+      "/lunacraft/alpha-presence",
+      "/lunacraft/companion-bonding",
+      "/somatic/body-awareness",
+      "/somatic/nervous-system-regulation",
+      "/somatic/trauma-release",
+      "/ai-enhance"
+    ],
+    "operation_list": [
+      {
+        "path": "/system/health",
+        "method": "GET"
+      },
+      {
+        "path": "/agent-suggestions",
+        "method": "GET"
+      },
+      {
+        "path": "/protocols/aquil-probe",
+        "method": "POST"
+      },
+      {
+        "path": "/gene-key-guidance",
+        "method": "GET"
+      },
+      {
+        "path": "/emotional-wave-tracker",
+        "method": "POST"
+      },
+      {
+        "path": "/manifestor-initiation",
+        "method": "POST"
+      },
+      {
+        "path": "/effectiveness-dashboard",
+        "method": "GET"
+      },
+      {
+        "path": "/recovery-support",
+        "method": "GET"
+      },
+      {
+        "path": "/throatcraft-session",
+        "method": "POST"
+      },
+      {
+        "path": "/ark-coherence-check",
+        "method": "GET"
+      },
+      {
+        "path": "/trauma-informed-response",
+        "method": "POST"
+      },
+      {
+        "path": "/philadelphia-context",
+        "method": "GET"
+      },
+      {
+        "path": "/live-philadelphia-events",
+        "method": "GET"
+      },
+      {
+        "path": "/multi-identity-orchestration",
+        "method": "POST"
+      },
+      {
+        "path": "/predictive-protocol",
+        "method": "GET"
+      },
+      {
+        "path": "/identity/voice-switch",
+        "method": "POST"
+      },
+      {
+        "path": "/identity/orchestration",
+        "method": "GET"
+      },
+      {
+        "path": "/recovery/creative-emergence",
+        "method": "GET"
+      },
+      {
+        "path": "/recovery/nervous-system",
+        "method": "POST"
+      },
+      {
+        "path": "/philadelphia/neighborhood-energy",
+        "method": "POST"
+      },
+      {
+        "path": "/philadelphia/synchronicity",
+        "method": "GET"
+      },
+      {
+        "path": "/throatcraft/voice-emergence",
+        "method": "POST"
+      },
+      {
+        "path": "/throatcraft/silence-mapping",
+        "method": "GET"
+      },
+      {
+        "path": "/lunacraft/cattle-dog-guidance",
+        "method": "POST"
+      },
+      {
+        "path": "/lunacraft/alpha-presence",
+        "method": "GET"
+      },
+      {
+        "path": "/lunacraft/companion-bonding",
+        "method": "POST"
+      },
+      {
+        "path": "/somatic/body-awareness",
+        "method": "POST"
+      },
+      {
+        "path": "/somatic/nervous-system-regulation",
+        "method": "POST"
+      },
+      {
+        "path": "/somatic/trauma-release",
+        "method": "POST"
+      },
+      {
+        "path": "/ai-enhance",
+        "method": "POST"
+      }
+    ],
+    "has_security": true,
+    "has_components": true,
+    "openapi_version": "3.1.0"
+  },
+  "quality": {
+    "coverage_score": 53,
+    "implemented_routes": 41,
+    "documented_paths": 30,
+    "undocumented_routes": [
+      "/deploy/request",
+      "/deploy/status",
+      "/microdose/log-session",
+      "/microdose/harm-reduction",
+      "/microdose/integration-support",
+      "/microdose/sobriety-pathway",
+      "/patterns/cross-domain",
+      "/learning/adaptive-protocols",
+      "/insights/emergence-prediction",
+      "/energy/circadian-optimization",
+      "/energy/creative-peak-detection",
+      "/social/interaction-analysis",
+      "/social/boundary-optimization",
+      "/autonomous/protocol-execution",
+      "/autonomous/decision-engine",
+      "/autonomous/intervention",
+      "/mobile/ios-sync",
+      "/mobile/shortcuts",
+      "/tokens/generate",
+      "/tokens/list",
+      "/tokens/revoke",
+      "/tokens/validate",
+      "/tokens/settings",
+      "/tokens/settings"
+    ],
+    "unimplemented_paths": [
+      "/agent-suggestions",
+      "/protocols/aquil-probe",
+      "/gene-key-guidance",
+      "/emotional-wave-tracker",
+      "/manifestor-initiation",
+      "/effectiveness-dashboard",
+      "/recovery-support",
+      "/throatcraft-session",
+      "/ark-coherence-check",
+      "/trauma-informed-response",
+      "/philadelphia-context",
+      "/live-philadelphia-events",
+      "/multi-identity-orchestration",
+      "/predictive-protocol"
+    ],
+    "perfect_match": false
+  },
+  "recommendations": [
+    "Document 24 undocumented routes in OpenAPI spec",
+    "Implement 14 documented paths in worker",
+    "Implement proper authentication",
+    "Improve documentation coverage in OpenAPI spec"
+  ],
+  "score": 60
+}

@@ -1,0 +1,30 @@
+{
+  "name": "aquil-symbolic-engine",
+  "version": "1.0.0",
+  "description": "Aquil Symbolic Engine - Signal Q Worker Automation",
+  "private": true,
+  "workspaces": [
+    "worker"
+  ],
+  "scripts": {
+    "install:worker": "cd worker && npm install",
+    "deploy": "cd worker && npm run deploy",
+    "test": "cd worker && npm run validate",
+    "audit": "cd worker && npm run audit:all"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quilross/aquil-symbolic-engine.git"
+  },
+  "keywords": [
+    "signal-q",
+    "cloudflare-worker",
+    "automation",
+    "ci-cd"
+  ],
+  "author": "Signal Q Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

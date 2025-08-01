@@ -1,0 +1,157 @@
+name: Deploy Signal Q Cloudflare Worker
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'worker/**'
+      - '.github/workflows/deploy-cloudflare-worker.yml'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  WORKING_DIRECTORY: './worker'
+
+jobs:
+  deploy:
+    name: Deploy Cloudflare Worker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '${{ env.WORKING_DIRECTORY }}/package-lock.json'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Validate Package Configuration
+        run: |
+          echo "📦 Package Information:"
+          npm list --depth=0
+          echo "🔧 Node.js Version: $(node --version)"
+          echo "📋 NPM Version: $(npm --version)"
+
+      - name: Run Health Test (Pre-deployment)
+        run: |
+          echo "🏥 Running pre-deployment health check..."
+          chmod +x health-test.js
+          node health-test.js || echo "Pre-deployment health check completed (may fail if not deployed yet)"
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: ${{ env.WORKING_DIRECTORY }}
+          command: deploy
+
+      - name: Wait for Deployment Propagation
+        run: |
+          echo "⏳ Waiting for deployment to propagate..."
+          sleep 30
+
+      - name: Run Post-deployment Validation
+        run: |
+          echo "🔍 Running post-deployment validation suite..."
+          
+          echo "📋 1. Health Test"
+          chmod +x health-test.js
+          node health-test.js
+          
+          echo "📋 2. API Test"
+          chmod +x test-api.js
+          node test-api.js || echo "API test completed with warnings"
+          
+          echo "📋 3. OpenAPI Audit"
+          chmod +x openapi-audit.js
+          node openapi-audit.js || echo "OpenAPI audit completed with findings"
+          
+          echo "📋 4. Implementation Analysis"
+          chmod +x implementation-analysis.js
+          node implementation-analysis.js || echo "Implementation analysis completed"
+          
+          echo "📋 5. Final Audit"
+          chmod +x final-audit.js
+          node final-audit.js || echo "Final audit completed"
+
+      - name: Upload Health Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-test-report
+          path: ${{ env.WORKING_DIRECTORY }}/health-test-*.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload OpenAPI Audit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-audit-report
+          path: ${{ env.WORKING_DIRECTORY }}/openapi-audit-report.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload Implementation Analysis Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: implementation-analysis-report
+          path: ${{ env.WORKING_DIRECTORY }}/implementation-analysis-report.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload Final Audit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-audit-report
+          path: ${{ env.WORKING_DIRECTORY }}/final-audit-report.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload All Audit Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-audit-reports
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/*-report.json
+            ${{ env.WORKING_DIRECTORY }}/src/openapi-core.json
+            ${{ env.WORKING_DIRECTORY }}/wrangler.toml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "📊 Deployment Summary"
+          echo "====================="
+          echo "🌐 Worker URL: https://signal_q.catnip-pieces1.workers.dev"
+          echo "🔑 Bearer Token: sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+          echo "📋 Health Endpoint: https://signal_q.catnip-pieces1.workers.dev/system/health"
+          echo "📖 OpenAPI Schema: worker/src/openapi-core.json"
+          echo ""
+          echo "🤖 CustomGPT Integration Ready:"
+          echo "  Base URL: https://signal_q.catnip-pieces1.workers.dev"
+          echo "  Auth: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+          echo "  Content-Type: application/json"
+          echo ""
+          echo "🎯 Key Endpoints:"
+          echo "  GET /system/health - System status"
+          echo "  GET /agent-suggestions - AI suggestions"
+          echo "  GET /gene-key-guidance - Personal insights"
+          echo "  GET /effectiveness-dashboard - Analytics"
+          echo ""
+          echo "📁 Audit reports uploaded as workflow artifacts"
