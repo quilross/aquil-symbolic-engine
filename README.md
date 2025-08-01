@@ -13,16 +13,16 @@ wrangler login && wrangler deploy
 ## 🎯 **For CustomGPT**
  - **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
 - **Auth**: Bearer `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
-- **Schema**: Upload `worker/src/openapi.json`
+- **Schema**: Upload `worker/src/openapi-core.json`
 
 ## 📁 **Clean File Structure**
 ```
 /worker/
   ├── src/
-  │   ├── index.js      # Your backend code
-  │   └── openapi.json  # API schema for CustomGPT
-  ├── wrangler.toml     # Config with secure tokens
-  └── deploy.sh         # One-click deploy
+  │   ├── index.js           # Your backend code
+  │   └── openapi-core.json  # API schema for CustomGPT
+  ├── wrangler.toml          # Config with secure tokens
+  └── test-api.js            # Test your deployment
 ```
 
 **Everything else removed. No more overwhelm.** ✨
