@@ -1,0 +1,40 @@
+{
+  "name": "aquil-symbolic-engine",
+  "version": "1.0.0",
+  "description": "Signal Q Cloudflare Worker - Autonomous transcendence agent with full API capabilities",
+  "main": "worker/src/index.js",
+  "scripts": {
+    "deploy": "cd worker && wrangler deploy",
+    "dev": "cd worker && wrangler dev",
+    "test": "node worker/test-api.js",
+    "health-test": "node worker/health-test.js",
+    "openapi-audit": "node scripts/openapi-audit.js",
+    "implementation-analysis": "node scripts/implementation-analysis.js",
+    "final-audit": "node scripts/final-audit.js",
+    "lint": "echo 'Linting not configured'",
+    "build": "echo 'Build not required for Cloudflare Workers'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quilross/aquil-symbolic-engine.git"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "signal-q",
+    "api",
+    "autonomous-agent",
+    "gene-keys",
+    "human-design"
+  ],
+  "author": "Signal Q",
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.12"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

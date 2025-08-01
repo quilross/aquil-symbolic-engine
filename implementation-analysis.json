@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-08-01T05:58:14.045Z",
+  "codebase": {
+    "files": [
+      {
+        "path": "worker/src/index.js",
+        "size": 150039,
+        "lines": 4023,
+        "methods": 126
+      },
+      {
+        "path": "worker/wrangler.toml",
+        "size": 654,
+        "lines": 31,
+        "type": "configuration"
+      }
+    ],
+    "totalLines": 4023,
+    "totalMethods": 126,
+    "complexity": "high"
+  },
+  "architecture": {
+    "pattern": "cloudflare_workers_durable_objects",
+    "scalability": "high",
+    "maintainability": "good"
+  },
+  "features": {
+    "autonomous": true,
+    "aiEnhanced": true,
+    "multiEndpoint": true,
+    "authentication": true,
+    "cors": true,
+    "storage": "durable_objects"
+  },
+  "performance": {
+    "responseTimes": [],
+    "resourceUsage": "minimal",
+    "caching": "none"
+  },
+  "security": {
+    "authentication": "bearer_token",
+    "adminAccess": true,
+    "inputValidation": "basic",
+    "errorHandling": "comprehensive"
+  },
+  "recommendations": [
+    "Consider refactoring large worker file into modules",
+    "Consider modularizing the large codebase",
+    "High method count - consider organizing into classes or modules",
+    "Implementation follows Cloudflare Workers best practices",
+    "AI integration is well-implemented",
+    "Autonomous features provide good user experience"
+  ],
+  "issues": [
+    {
+      "type": "performance_test",
+      "message": "Performance test failed: fetch failed"
+    }
+  ],
+  "implementationScore": 80
+}

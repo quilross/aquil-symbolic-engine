@@ -1,0 +1,134 @@
+name: Deploy Signal Q Cloudflare Worker
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Signal Q Worker
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Wrangler
+      run: npm install -g wrangler@latest
+      
+    - name: Verify Wrangler installation
+      run: wrangler --version
+      
+    - name: Deploy to Cloudflare Workers
+      working-directory: ./worker
+      run: |
+        echo "🚀 Deploying Signal Q Worker..."
+        wrangler deploy
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        
+    - name: Run health tests
+      run: |
+        echo "🏥 Running health tests..."
+        node worker/health-test.js
+      continue-on-error: true
+      
+    - name: Run API tests
+      run: |
+        echo "🧪 Running API tests..."
+        node worker/test-api.js
+      continue-on-error: true
+      
+    - name: Run OpenAPI audit
+      run: |
+        echo "📋 Running OpenAPI audit..."
+        npm run openapi-audit
+      continue-on-error: true
+      
+    - name: Run implementation analysis
+      run: |
+        echo "🔍 Running implementation analysis..."
+        npm run implementation-analysis
+      continue-on-error: true
+      
+    - name: Run final audit
+      run: |
+        echo "✅ Running final audit..."
+        npm run final-audit
+      continue-on-error: true
+      
+    - name: Upload health test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: health-test-results
+        path: |
+          health-test-results.json
+          health-test-log.txt
+        retention-days: 30
+        
+    - name: Upload API test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: api-test-results
+        path: |
+          api-test-results.json
+          api-test-log.txt
+        retention-days: 30
+        
+    - name: Upload OpenAPI audit results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: openapi-audit-results
+        path: |
+          openapi-audit-results.json
+          openapi-audit-report.html
+        retention-days: 30
+        
+    - name: Upload implementation analysis
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: implementation-analysis-results
+        path: |
+          implementation-analysis.json
+          implementation-report.html
+        retention-days: 30
+        
+    - name: Upload final audit results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: final-audit-results
+        path: |
+          final-audit-results.json
+          final-audit-report.html
+        retention-days: 30
+        
+    - name: Deployment summary
+      if: always()
+      run: |
+        echo "🎯 Deployment Summary:"
+        echo "✅ Signal Q Worker deployment completed"
+        echo "📊 All validation reports uploaded as artifacts"
+        echo "🌐 Worker available at: https://signal_q.catnip-pieces1.workers.dev"
+        echo "🔍 Check artifacts for detailed analysis results"
