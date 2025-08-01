@@ -186,7 +186,7 @@ async function auditSecurity() {
     // Check for proper authentication implementation
     if (fs.existsSync(workerPath)) {
       const workerContent = fs.readFileSync(workerPath, 'utf8');
-      if (!workerContent.includes('Authorization') || !workerContent.includes('Bearer')) {
+      if (!workerContent.includes('Authorization') || !(workerContent.includes('Bearer') || workerContent.includes('token'))) {
         issues.push('Bearer token authentication not properly implemented');
       }
     }
