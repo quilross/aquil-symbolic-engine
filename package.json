@@ -3,14 +3,19 @@
   "version": "2.1.0",
   "description": "Signal Q - Autonomous Transcendence Agent API",
   "main": "worker/src/index.js",
+  "type": "module",
   "scripts": {
     "deploy": "cd worker && wrangler deploy",
-    "dev": "cd worker && wrangler dev"
+    "dev": "cd worker && wrangler dev",
+    "validate": "node scripts/validate-ci.js",
+    "test": "cd worker && node health-test.js",
+    "lint": "npm audit --audit-level moderate",
+    "build": "cd worker && wrangler deploy --dry-run"
   },
   "keywords": ["cloudflare-workers", "api", "transcendence-agent"],
   "author": "quilross",
   "license": "MIT",
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "wrangler": "^4.0.0"
   }
 }

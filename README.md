@@ -19,3 +19,51 @@
 ```
 
 **API is live at**: https://signal_q.catnip-pieces1.workers.dev ✨
+
+---
+
+## 🚀 Deployment Automation
+
+This repository includes comprehensive CI/CD automation for reliable deployment:
+
+### Prerequisites
+- Node.js 18+
+- npm
+
+### Quick Start
+```bash
+# Install dependencies
+npm install
+
+# Run validation checks
+npm run validate
+
+# Build and validate worker
+npm run build
+
+# Deploy to Cloudflare Workers
+npm run deploy
+```
+
+### Available Scripts
+- `npm run validate` - Run comprehensive validation checks
+- `npm run lint` - Security audit and linting
+- `npm run build` - Build validation (dry-run)
+- `npm run test` - Run health tests
+- `npm run deploy` - Deploy to Cloudflare Workers
+- `npm run dev` - Start development server
+
+### CI/CD Pipeline
+The GitHub Actions workflow automatically:
+- ✅ Validates npm dependencies and security
+- ✅ Checks worker configuration
+- ✅ Validates JavaScript syntax
+- ✅ Tests deployment configuration
+- ✅ Runs OpenAPI sync validation
+- ✅ Performs comprehensive project validation
+
+## 🛡️ Security & Validation
+- Automated security auditing with `npm audit`
+- Wrangler v4 for latest security updates
+- Comprehensive deployment validation
+- Zero-vulnerability dependency management
