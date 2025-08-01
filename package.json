@@ -1,0 +1,22 @@
+{
+  "name": "aquil-symbolic-engine",
+  "version": "1.0.0",
+  "description": "Signal Q - Symbolic reasoning engine with OpenAPI audit capabilities",
+  "main": "worker/src/index.js",
+  "scripts": {
+    "audit:openapi": "node openapi-audit.js",
+    "audit:final": "node final-audit.js",
+    "test": "node worker/test-api.js",
+    "health-check": "node worker/health-test.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "openapi-validator": "^0.14.0"
+  },
+  "devDependencies": {
+    "json-schema-validator": "^1.0.0"
+  },
+  "keywords": ["signal-q", "api", "symbolic-engine", "cloudflare-workers"],
+  "author": "Signal Q Team",
+  "license": "MIT"
+}

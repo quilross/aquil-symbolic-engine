@@ -38,3 +38,10 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Audit results and artifacts
+audit-results/
+.npm-audit.json
+
+# Package lock file
+package-lock.json
