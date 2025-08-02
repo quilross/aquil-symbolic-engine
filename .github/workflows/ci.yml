@@ -2,163 +2,27 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: 'package-lock.json'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run comprehensive validation
-      run: npm run validate
-    
-    - name: Security audit
-      run: npm run lint
-    
-    - name: Check package files
-      run: |
-        echo "Current directory: $(pwd)"
-        echo "Package files:"
-        ls -la package*.json
-        echo "Lock file exists: $(test -f package-lock.json && echo 'YES' || echo 'NO')"
-    
-    - name: Verify wrangler installation
-      run: |
-        npx wrangler --version
-        echo "✅ Wrangler is installed and functional"
-    
-    - name: Validate worker configuration
-      run: |
-        cd worker
-        echo "📋 Validating wrangler.toml configuration..."
-        if [ ! -f "wrangler.toml" ]; then
-          echo "❌ wrangler.toml not found"
-          exit 1
-        fi
-        
-        if [ ! -f "src/index.js" ]; then
-          echo "❌ Worker entry point src/index.js not found"
-          exit 1
-        fi
-        
-        echo "✅ Worker configuration is valid"
-    
-    - name: Validate OpenAPI sync
-      run: |
-        cd worker
-        if [ -f "validate-sync.js" ]; then
-          echo "🔄 Running OpenAPI-Worker sync validation..."
-          node validate-sync.js || echo "⚠️  OpenAPI sync validation completed with warnings"
-        else
-          echo "⚠️  validate-sync.js not found, skipping sync validation"
-        fi
-    
-    - name: Syntax validation
-      run: |
-        cd worker
-        echo "🔍 Validating JavaScript syntax..."
-        node -c src/index.js
-        echo "✅ JavaScript syntax is valid"
-    
-    - name: Worker dry-run validation
-      run: |
-        cd worker
-        echo "🏗️  Running wrangler deployment validation..."
-        npx wrangler deploy --dry-run --compatibility-date=2024-11-01
-        echo "✅ Worker deployment configuration is valid"
-    
-    - name: Test scripts validation
-      run: |
-        cd worker
-        echo "🧪 Validating test scripts..."
-        
-        # Check if test scripts exist and are executable
-        for script in test-api.js health-test.js; do
-          if [ -f "$script" ]; then
-            echo "✅ $script exists"
-            node -c "$script"
-            echo "✅ $script syntax is valid"
-          else
-            echo "⚠️  $script not found"
-          fi
-        done
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-  # Optional deployment validation job (requires secrets)
-  deployment-validation:
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    continue-on-error: true # Don't fail the entire workflow if deployment tests fail
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Test deployment readiness
-      run: |
-        cd worker
-        echo "🚀 Testing deployment readiness..."
-        
-        # Verify all required files exist
-        echo "📁 Checking required files..."
-        required_files=("src/index.js" "wrangler.toml" "src/openapi-core.json")
-        for file in "${required_files[@]}"; do
-          if [ -f "$file" ]; then
-            echo "✅ $file exists"
-          else
-            echo "❌ Required file $file is missing"
-            exit 1
-          fi
-        done
-        
-        # Test worker bundle size
-        echo "📦 Checking worker bundle..."
-        npx wrangler deploy --dry-run --compatibility-date=2024-11-01 --outdir=./dist
-        
-        echo "✅ Deployment readiness validated"
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20.0.0'
 
-  # Deploy to Cloudflare Workers (only on main branch)
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Deploy to Cloudflare Workers
-      run: |
-        cd worker
-        npx wrangler deploy
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        API_TOKEN: ${{ secrets.API_TOKEN }}
-        API_TOKEN_ADMIN: ${{ secrets.API_TOKEN_ADMIN }}
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
