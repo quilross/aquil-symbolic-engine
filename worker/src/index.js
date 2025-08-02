@@ -28,53 +28,53 @@ export default {
     const path = url.pathname.replace(/\/$/, '');
     if (path === '/system/health') {
       const endpointCount = 76; // Updated endpoint count
-      const memoryUsage = typeof performance !== 'undefined' && performance.memory ? 
+      const memoryUsage = typeof performance !== 'undefined' && performance.memory ?
         Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 'unknown';
-      
+
       return new Response(JSON.stringify({
-        overall: "healthy",
-        api: { 
-          status: "operational", 
-          responseTime: 45, 
+        overall: 'healthy',
+        api: {
+          status: 'operational',
+          responseTime: 45,
           endpoints: endpointCount,
-          version: "2.1.0"
+          version: '2.1.0'
         },
-        storage: { 
-          status: "ready", 
-          usage: "minimal",
-          durableObjects: "configured"
+        storage: {
+          status: 'ready',
+          usage: 'minimal',
+          durableObjects: 'configured'
         },
-        deployment: { 
-          status: "live", 
+        deployment: {
+          status: 'live',
           lastUpdate: new Date().toISOString(),
-          worker: "signal_q",
+          worker: 'signal_q',
           memory: `${memoryUsage}MB`
         },
         ai: {
-          binding: "enabled",
-          model: "@cf/meta/llama-3.1-8b-instruct"
+          binding: 'enabled',
+          model: '@cf/meta/llama-3.1-8b-instruct'
         },
         authentication: {
-          bearerToken: "required",
-          adminAccess: "configured"
+          bearerToken: 'required',
+          adminAccess: 'configured'
         },
-        recommendations: ["Signal Q is live and operational"],
+        recommendations: ['Signal Q is live and operational'],
         timestamp: new Date().toISOString(),
         uptime: 'unknown'
-      }), { 
-        headers: { 
+      }), {
+        headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-        } 
+        }
       });
     }
 
     const userId = request.headers.get('X-User-Id') || 'anonymous';
     const id = env.USER_STATE.idFromName(userId);
     const obj = env.USER_STATE.get(id);
-    
+
     // Create a new request with the token in headers for the Durable Object
     const newRequest = new Request(request.url, {
       method: request.method,
@@ -84,7 +84,7 @@ export default {
       },
       body: request.body
     });
-    
+
     return obj.fetch(newRequest);
   }
 };
@@ -151,59 +151,87 @@ export class UserState {
   async routeRequest(path, method, request, token) {
     // Core endpoints
     const coreResponse = await this.handleCoreEndpoints(path, method, request, token);
-    if (coreResponse) return coreResponse;
+    if (coreResponse) {
+      return coreResponse;
+    }
 
     // Autonomous agent endpoints
     const agentResponse = await this.handleAgentEndpoints(path, method, request);
-    if (agentResponse) return agentResponse;
+    if (agentResponse) {
+      return agentResponse;
+    }
 
     // Personal blueprint endpoints
     const blueprintResponse = await this.handleBlueprintEndpoints(path, method, request);
-    if (blueprintResponse) return blueprintResponse;
+    if (blueprintResponse) {
+      return blueprintResponse;
+    }
 
     // Deployment and system endpoints
     const systemResponse = await this.handleSystemEndpoints(path, method, request);
-    if (systemResponse) return systemResponse;
+    if (systemResponse) {
+      return systemResponse;
+    }
 
     // Identity and recovery endpoints
     const identityResponse = await this.handleIdentityEndpoints(path, method, request);
-    if (identityResponse) return identityResponse;
+    if (identityResponse) {
+      return identityResponse;
+    }
 
     // Philadelphia and location endpoints
     const phillyResponse = await this.handlePhiladelphiaEndpoints(path, method, request);
-    if (phillyResponse) return phillyResponse;
+    if (phillyResponse) {
+      return phillyResponse;
+    }
 
     // THROATCRAFT and LUNACRAFT endpoints
     const craftResponse = await this.handleCraftEndpoints(path, method, request);
-    if (craftResponse) return craftResponse;
+    if (craftResponse) {
+      return craftResponse;
+    }
 
     // Somatic and healing endpoints
     const somaticResponse = await this.handleSomaticEndpoints(path, method, request);
-    if (somaticResponse) return somaticResponse;
+    if (somaticResponse) {
+      return somaticResponse;
+    }
 
     // Microdose and recovery endpoints
     const microdoseResponse = await this.handleMicrodoseEndpoints(path, method, request);
-    if (microdoseResponse) return microdoseResponse;
+    if (microdoseResponse) {
+      return microdoseResponse;
+    }
 
     // Pattern recognition and learning endpoints
     const patternResponse = await this.handlePatternEndpoints(path, method, request);
-    if (patternResponse) return patternResponse;
+    if (patternResponse) {
+      return patternResponse;
+    }
 
     // Energy and social endpoints
     const energyResponse = await this.handleEnergyEndpoints(path, method, request);
-    if (energyResponse) return energyResponse;
+    if (energyResponse) {
+      return energyResponse;
+    }
 
     // Autonomous and mobile endpoints
     const autonomousResponse = await this.handleAutonomousEndpoints(path, method, request);
-    if (autonomousResponse) return autonomousResponse;
+    if (autonomousResponse) {
+      return autonomousResponse;
+    }
 
     // Token management endpoints
     const tokenResponse = await this.handleTokenEndpoints(path, method, request);
-    if (tokenResponse) return tokenResponse;
+    if (tokenResponse) {
+      return tokenResponse;
+    }
 
     // AI enhancement endpoints
     const aiResponse = await this.handleAIEndpoints(path, method, request);
-    if (aiResponse) return aiResponse;
+    if (aiResponse) {
+      return aiResponse;
+    }
 
     return new Response('Not found', { status: 404 });
   }
@@ -213,35 +241,35 @@ export class UserState {
     const coreEndpoints = {
       '/identity-nodes': {
         'GET': () => this.listIdentityNodes(),
-        'POST': async () => this.createIdentityNode(await request.json())
+        'POST': async() => this.createIdentityNode(await request.json())
       },
       '/protocols/aquil-probe': {
-        'POST': async () => this.activateAquilProbe(await request.json())
+        'POST': async() => this.activateAquilProbe(await request.json())
       },
       '/voice-shifts': {
-        'POST': async () => this.recordVoiceShift(await request.json())
+        'POST': async() => this.recordVoiceShift(await request.json())
       },
       '/identity-memories': {
-        'POST': async () => this.logMemory(await request.json())
+        'POST': async() => this.logMemory(await request.json())
       },
       '/narratives/generate': {
-        'POST': async () => this.generateNarrative(await request.json())
+        'POST': async() => this.generateNarrative(await request.json())
       },
       '/ritual-actions/trigger': {
-        'POST': async () => this.triggerRitualAction(await request.json())
+        'POST': async() => this.triggerRitualAction(await request.json())
       },
       '/friction-ratings': {
-        'POST': async () => this.recordFrictionRating(await request.json())
+        'POST': async() => this.recordFrictionRating(await request.json())
       },
       '/play-protocols': {
         'GET': () => this.listPlayProtocols(),
-        'POST': async () => this.createPlayProtocol(await request.json())
+        'POST': async() => this.createPlayProtocol(await request.json())
       },
       '/media-engagements': {
-        'POST': async () => this.logMediaEngagement(await request.json())
+        'POST': async() => this.logMediaEngagement(await request.json())
       },
       '/feedback': {
-        'POST': async () => this.logFeedback(await request.json())
+        'POST': async() => this.logFeedback(await request.json())
       },
       '/export-logs': {
         'GET': () => this.exportLogs(token)
@@ -271,19 +299,19 @@ export class UserState {
   // Handle autonomous agent endpoints
   async handleAgentEndpoints(path, method, request) {
     const agentEndpoints = {
-      '/track-time': { 'POST': async () => this.trackTime(await request.json()) },
-      '/session-monitor': { 'POST': async () => this.sessionMonitor(await request.json()) },
-      '/movement-reminder': { 'POST': async () => this.movementReminder(await request.json()) },
+      '/track-time': { 'POST': async() => this.trackTime(await request.json()) },
+      '/session-monitor': { 'POST': async() => this.sessionMonitor(await request.json()) },
+      '/movement-reminder': { 'POST': async() => this.movementReminder(await request.json()) },
       '/agent-overwhelm': { 'GET': () => this.getAgentOverwhelm() },
       '/agent-suggestions': { 'GET': () => this.getAgentSuggestions() },
       '/philadelphia-context': { 'GET': () => this.getPhiladelphiaContext() },
-      '/privacy-settings': { 
+      '/privacy-settings': {
         'GET': () => this.getPrivacySettings(),
-        'POST': async () => this.updatePrivacySettings(await request.json())
+        'POST': async() => this.updatePrivacySettings(await request.json())
       },
-      '/agent-curiosity': { 'POST': async () => this.agentCuriosity(await request.json()) },
+      '/agent-curiosity': { 'POST': async() => this.agentCuriosity(await request.json()) },
       '/agent-interests': { 'GET': () => this.getAgentInterests() },
-      '/agent-exploration': { 'POST': async () => this.agentExploration(await request.json()) }
+      '/agent-exploration': { 'POST': async() => this.agentExploration(await request.json()) }
     };
 
     const endpoint = agentEndpoints[path];
@@ -294,19 +322,19 @@ export class UserState {
   async handleBlueprintEndpoints(path, method, request) {
     const blueprintEndpoints = {
       '/gene-key-guidance': { 'GET': () => this.getGeneKeyGuidance() },
-      '/emotional-wave-tracker': { 'POST': async () => this.trackEmotionalWave(await request.json()) },
-      '/manifestor-initiation': { 'POST': async () => this.manifestorInitiation(await request.json()) },
+      '/emotional-wave-tracker': { 'POST': async() => this.trackEmotionalWave(await request.json()) },
+      '/manifestor-initiation': { 'POST': async() => this.manifestorInitiation(await request.json()) },
       '/effectiveness-dashboard': { 'GET': () => this.getEffectivenessDashboard() },
       '/recovery-support': { 'GET': () => this.getRecoverySupport() },
-      '/throatcraft-session': { 'POST': async () => this.activateThroatcraft(await request.json()) },
+      '/throatcraft-session': { 'POST': async() => this.activateThroatcraft(await request.json()) },
       '/ark-coherence-check': { 'GET': () => this.checkArkCoherence() },
-      '/trauma-informed-response': { 'POST': async () => this.getTraumaInformedResponse(await request.json()) },
+      '/trauma-informed-response': { 'POST': async() => this.getTraumaInformedResponse(await request.json()) },
       '/live-philadelphia-events': { 'GET': () => this.getLivePhiladelphiaEvents() },
-      '/multi-identity-orchestration': { 'POST': async () => this.orchestrateIdentities(await request.json()) },
+      '/multi-identity-orchestration': { 'POST': async() => this.orchestrateIdentities(await request.json()) },
       '/predictive-protocol': { 'GET': () => this.getPredictiveProtocol() },
-      '/data-sovereignty': { 
+      '/data-sovereignty': {
         'GET': () => this.getDataSovereignty(),
-        'POST': async () => this.executeDataSovereignty(await request.json())
+        'POST': async() => this.executeDataSovereignty(await request.json())
       }
     };
 
@@ -316,96 +344,176 @@ export class UserState {
 
   // Handle deployment and system endpoints
   async handleSystemEndpoints(path, method, request) {
-    if (path === '/deploy/request' && method === 'POST') return this.requestDeployment(await request.json());
-    if (path === '/deploy/status' && method === 'GET') return this.getDeploymentStatus();
-    if (path === '/system/health' && method === 'GET') return this.getSystemHealth();
+    if (path === '/deploy/request' && method === 'POST') {
+      return this.requestDeployment(await request.json());
+    }
+    if (path === '/deploy/status' && method === 'GET') {
+      return this.getDeploymentStatus();
+    }
+    if (path === '/system/health' && method === 'GET') {
+      return this.getSystemHealth();
+    }
     return null;
   }
 
   // Handle identity and recovery endpoints
   async handleIdentityEndpoints(path, method, request) {
-    if (path === '/identity/voice-switch' && method === 'POST') return this.contextVoiceSwitch(await request.json());
-    if (path === '/identity/orchestration' && method === 'GET') return this.getIdentityOrchestration();
-    if (path === '/recovery/creative-emergence' && method === 'GET') return this.getCreativeEmergence();
-    if (path === '/recovery/nervous-system' && method === 'POST') return this.getNervousSystemGuidance(await request.json());
+    if (path === '/identity/voice-switch' && method === 'POST') {
+      return this.contextVoiceSwitch(await request.json());
+    }
+    if (path === '/identity/orchestration' && method === 'GET') {
+      return this.getIdentityOrchestration();
+    }
+    if (path === '/recovery/creative-emergence' && method === 'GET') {
+      return this.getCreativeEmergence();
+    }
+    if (path === '/recovery/nervous-system' && method === 'POST') {
+      return this.getNervousSystemGuidance(await request.json());
+    }
     return null;
   }
 
   // Handle Philadelphia-specific endpoints
   async handlePhiladelphiaEndpoints(path, method, request) {
-    if (path === '/philadelphia/neighborhood-energy' && method === 'POST') return this.getNeighborhoodEnergy(await request.json());
-    if (path === '/philadelphia/synchronicity' && method === 'GET') return this.getSynchronicityTracking();
+    if (path === '/philadelphia/neighborhood-energy' && method === 'POST') {
+      return this.getNeighborhoodEnergy(await request.json());
+    }
+    if (path === '/philadelphia/synchronicity' && method === 'GET') {
+      return this.getSynchronicityTracking();
+    }
     return null;
   }
 
   // Handle THROATCRAFT and LUNACRAFT endpoints
   async handleCraftEndpoints(path, method, request) {
-    if (path === '/throatcraft/voice-emergence' && method === 'POST') return this.getVoiceEmergenceProtocol(await request.json());
-    if (path === '/throatcraft/silence-mapping' && method === 'GET') return this.getSilenceMapping();
-    if (path === '/lunacraft/cattle-dog-guidance' && method === 'POST') return this.getCattleDogGuidance(await request.json());
-    if (path === '/lunacraft/alpha-presence' && method === 'GET') return this.getAlphaPresenceGuidance();
-    if (path === '/lunacraft/companion-bonding' && method === 'POST') return this.getCompanionBondingAdvice(await request.json());
+    if (path === '/throatcraft/voice-emergence' && method === 'POST') {
+      return this.getVoiceEmergenceProtocol(await request.json());
+    }
+    if (path === '/throatcraft/silence-mapping' && method === 'GET') {
+      return this.getSilenceMapping();
+    }
+    if (path === '/lunacraft/cattle-dog-guidance' && method === 'POST') {
+      return this.getCattleDogGuidance(await request.json());
+    }
+    if (path === '/lunacraft/alpha-presence' && method === 'GET') {
+      return this.getAlphaPresenceGuidance();
+    }
+    if (path === '/lunacraft/companion-bonding' && method === 'POST') {
+      return this.getCompanionBondingAdvice(await request.json());
+    }
     return null;
   }
 
   // Handle somatic and healing endpoints
   async handleSomaticEndpoints(path, method, request) {
-    if (path === '/somatic/body-awareness' && method === 'POST') return this.getSomaticAwareness(await request.json());
-    if (path === '/somatic/nervous-system-regulation' && method === 'POST') return this.getSomaticRegulation(await request.json());
-    if (path === '/somatic/trauma-release' && method === 'POST') return this.getSomaticTraumaRelease(await request.json());
+    if (path === '/somatic/body-awareness' && method === 'POST') {
+      return this.getSomaticAwareness(await request.json());
+    }
+    if (path === '/somatic/nervous-system-regulation' && method === 'POST') {
+      return this.getSomaticRegulation(await request.json());
+    }
+    if (path === '/somatic/trauma-release' && method === 'POST') {
+      return this.getSomaticTraumaRelease(await request.json());
+    }
     return null;
   }
 
   // Handle microdose and recovery endpoints
   async handleMicrodoseEndpoints(path, method, request) {
-    if (path === '/microdose/log-session' && method === 'POST') return this.logMicrodoseSession(await request.json());
-    if (path === '/microdose/harm-reduction' && method === 'GET') return this.getMicrodoseHarmReduction();
-    if (path === '/microdose/integration-support' && method === 'POST') return this.getMicrodoseIntegration(await request.json());
-    if (path === '/microdose/sobriety-pathway' && method === 'GET') return this.getSobrietyPathway();
+    if (path === '/microdose/log-session' && method === 'POST') {
+      return this.logMicrodoseSession(await request.json());
+    }
+    if (path === '/microdose/harm-reduction' && method === 'GET') {
+      return this.getMicrodoseHarmReduction();
+    }
+    if (path === '/microdose/integration-support' && method === 'POST') {
+      return this.getMicrodoseIntegration(await request.json());
+    }
+    if (path === '/microdose/sobriety-pathway' && method === 'GET') {
+      return this.getSobrietyPathway();
+    }
     return null;
   }
 
   // Handle pattern recognition endpoints
   async handlePatternEndpoints(path, method, request) {
-    if (path === '/patterns/cross-domain' && method === 'GET') return this.getCrossDomainPatterns();
-    if (path === '/learning/adaptive-protocols' && method === 'POST') return this.getAdaptiveProtocols(await request.json());
-    if (path === '/insights/emergence-prediction' && method === 'GET') return this.getEmergencePrediction();
+    if (path === '/patterns/cross-domain' && method === 'GET') {
+      return this.getCrossDomainPatterns();
+    }
+    if (path === '/learning/adaptive-protocols' && method === 'POST') {
+      return this.getAdaptiveProtocols(await request.json());
+    }
+    if (path === '/insights/emergence-prediction' && method === 'GET') {
+      return this.getEmergencePrediction();
+    }
     return null;
   }
 
   // Handle energy and social endpoints
   async handleEnergyEndpoints(path, method, request) {
-    if (path === '/energy/circadian-optimization' && method === 'GET') return this.getCircadianOptimization();
-    if (path === '/energy/creative-peak-detection' && method === 'POST') return this.detectCreativePeaks(await request.json());
-    if (path === '/social/interaction-analysis' && method === 'POST') return this.analyzeSocialInteraction(await request.json());
-    if (path === '/social/boundary-optimization' && method === 'GET') return this.getBoundaryOptimization();
+    if (path === '/energy/circadian-optimization' && method === 'GET') {
+      return this.getCircadianOptimization();
+    }
+    if (path === '/energy/creative-peak-detection' && method === 'POST') {
+      return this.detectCreativePeaks(await request.json());
+    }
+    if (path === '/social/interaction-analysis' && method === 'POST') {
+      return this.analyzeSocialInteraction(await request.json());
+    }
+    if (path === '/social/boundary-optimization' && method === 'GET') {
+      return this.getBoundaryOptimization();
+    }
     return null;
   }
 
   // Handle autonomous and mobile endpoints
   async handleAutonomousEndpoints(path, method, request) {
-    if (path === '/autonomous/protocol-execution' && method === 'POST') return this.autonomousProtocolExecution(await request.json());
-    if (path === '/autonomous/decision-engine' && method === 'POST') return this.autonomousDecisionEngine(await request.json());
-    if (path === '/autonomous/intervention' && method === 'POST') return this.autonomousIntervention(await request.json());
-    if (path === '/mobile/ios-sync' && method === 'POST') return this.syncIOSDevice(await request.json());
-    if (path === '/mobile/shortcuts' && method === 'GET') return this.getIOSShortcuts();
+    if (path === '/autonomous/protocol-execution' && method === 'POST') {
+      return this.autonomousProtocolExecution(await request.json());
+    }
+    if (path === '/autonomous/decision-engine' && method === 'POST') {
+      return this.autonomousDecisionEngine(await request.json());
+    }
+    if (path === '/autonomous/intervention' && method === 'POST') {
+      return this.autonomousIntervention(await request.json());
+    }
+    if (path === '/mobile/ios-sync' && method === 'POST') {
+      return this.syncIOSDevice(await request.json());
+    }
+    if (path === '/mobile/shortcuts' && method === 'GET') {
+      return this.getIOSShortcuts();
+    }
     return null;
   }
 
   // Handle token management endpoints
   async handleTokenEndpoints(path, method, request) {
-    if (path === '/tokens/generate' && method === 'POST') return this.generateCustomToken(await request.json());
-    if (path === '/tokens/list' && method === 'GET') return this.listCustomTokens();
-    if (path === '/tokens/revoke' && method === 'POST') return this.revokeCustomToken(await request.json());
-    if (path === '/tokens/validate' && method === 'POST') return this.validateCustomToken(await request.json());
-    if (path === '/tokens/settings' && method === 'GET') return this.getTokenSettings();
-    if (path === '/tokens/settings' && method === 'POST') return this.updateTokenSettings(await request.json());
+    if (path === '/tokens/generate' && method === 'POST') {
+      return this.generateCustomToken(await request.json());
+    }
+    if (path === '/tokens/list' && method === 'GET') {
+      return this.listCustomTokens();
+    }
+    if (path === '/tokens/revoke' && method === 'POST') {
+      return this.revokeCustomToken(await request.json());
+    }
+    if (path === '/tokens/validate' && method === 'POST') {
+      return this.validateCustomToken(await request.json());
+    }
+    if (path === '/tokens/settings' && method === 'GET') {
+      return this.getTokenSettings();
+    }
+    if (path === '/tokens/settings' && method === 'POST') {
+      return this.updateTokenSettings(await request.json());
+    }
     return null;
   }
 
   // Handle AI enhancement endpoints
   async handleAIEndpoints(path, method, request) {
-    if (path === '/ai-enhance' && method === 'POST') return this.aiEnhancedResponse(await request.json());
+    if (path === '/ai-enhance' && method === 'POST') {
+      return this.aiEnhancedResponse(await request.json());
+    }
     return null;
   }
 
@@ -414,7 +522,9 @@ export class UserState {
     const storage = await this.state.storage.list({ prefix: 'identity:' });
     const nodes = [];
     for (const [, value] of storage) {
-      if (value) nodes.push(value);
+      if (value) {
+        nodes.push(value);
+      }
     }
     await this.inc('reads');
     return this.respond({ nodes });
@@ -434,18 +544,18 @@ export class UserState {
   async activateAquilProbe(data) {
     // AI autonomously determines probe approach
     const aiDecision = await this.getAIProtocolDecision('aquil_probe', data);
-    
-    const friction = aiDecision.shouldProceed ? 
-      ['AI analysis suggests optimal probe timing'] : 
+
+    const friction = aiDecision.shouldProceed ?
+      ['AI analysis suggests optimal probe timing'] :
       ['AI recommends waiting for better conditions', 'Are you prepared for honest reflection?'];
-    
+
     if (aiDecision.shouldProceed) {
       // AI autonomously executes the probe
       await this.autonomouslyExecuteProtocol('aquil_probe', aiDecision.parameters);
     }
-    
+
     await this.inc('writes');
-    return this.respond({ 
+    return this.respond({
       result: aiDecision.shouldProceed ? 'probe-executed' : 'probe-deferred',
       aiReasoning: aiDecision.reasoning,
       friction,
@@ -483,7 +593,9 @@ export class UserState {
   // Fetch a symbolic transition map from KV
   async getSymbolicMap(mapId) {
     const map = await this.state.storage.get(`map:${mapId}`);
-    if (!map) return new Response('not found', { status: 404 });
+    if (!map) {
+      return new Response('not found', { status: 404 });
+    }
     await this.inc('reads');
     return this.respond(map);
   }
@@ -492,23 +604,23 @@ export class UserState {
   async triggerRitualAction(ritual) {
     // AI autonomously decides whether to execute the ritual
     const aiDecision = await this.getAIProtocolDecision('ritual_action', ritual);
-    
+
     if (aiDecision.shouldProceed) {
       // AI autonomously executes the ritual
       const executionResult = await this.autonomouslyExecuteProtocol('ritual_action', aiDecision.parameters);
       await this.inc('writes');
-      return this.respond({ 
-        action: 'autonomously_executed', 
+      return this.respond({
+        action: 'autonomously_executed',
         aiReasoning: aiDecision.reasoning,
         executionResult,
         autonomousExecution: true
       });
     }
-    
+
     const friction = ['AI analysis suggests waiting for optimal conditions'];
     await this.inc('writes');
-    return this.respond({ 
-      action: 'deferred', 
+    return this.respond({
+      action: 'deferred',
       aiReasoning: aiDecision.reasoning,
       friction,
       autonomousExecution: false
@@ -534,7 +646,9 @@ export class UserState {
     const list = await this.state.storage.list({ prefix: 'play:' });
     const plays = [];
     for (const [, value] of list) {
-      if (value) plays.push(value);
+      if (value) {
+        plays.push(value);
+      }
     }
     await this.inc('reads');
     return this.respond({ plays });
@@ -582,7 +696,9 @@ export class UserState {
     const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
     for (const [name, value] of list) {
-      if (value) logs.push({ name, value });
+      if (value) {
+        logs.push({ name, value });
+      }
     }
     await this.inc('reads');
     const payload = btoa(JSON.stringify(logs));
@@ -594,7 +710,9 @@ export class UserState {
     const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
     for (const [, value] of list) {
-      if (value) logs.push(value);
+      if (value) {
+        logs.push(value);
+      }
     }
     await this.inc('reads');
     return this.respond({ logs });
@@ -617,14 +735,16 @@ export class UserState {
   // Standard JSON response helper with timestamp
   respond(obj) {
     obj.timestamp = new Date().toISOString();
-    if (this.degraded) obj.degraded = true;
-    return new Response(JSON.stringify(obj), { 
-      headers: { 
+    if (this.degraded) {
+      obj.degraded = true;
+    }
+    return new Response(JSON.stringify(obj), {
+      headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-      } 
+      }
     });
   }
 
@@ -660,7 +780,7 @@ export class UserState {
       minute: '2-digit',
       second: '2-digit'
     }).format(now);
-    
+
     await this.inc('reads');
     return this.respond({
       serverTime: now.toISOString(),
@@ -675,20 +795,20 @@ export class UserState {
     const start = new Date(sessionStart);
     const durationMinutes = (now - start) / (1000 * 60);
     const maxDuration = data.maxDuration || 120;
-    
+
     const shouldShutdown = durationMinutes > maxDuration;
     const timeRemaining = Math.max(0, maxDuration - durationMinutes);
-    
+
     if (!await this.state.storage.get('sessionStart')) {
       await this.state.storage.put('sessionStart', now.toISOString());
     }
-    
+
     await this.inc('reads');
     return this.respond({
       shouldShutdown,
       timeRemaining: Math.round(timeRemaining),
-      message: shouldShutdown ? 
-        'Session time exceeded. Consider taking a break.' : 
+      message: shouldShutdown ?
+        'Session time exceeded. Consider taking a break.' :
         `${Math.round(timeRemaining)} minutes remaining in session.`
     });
   }
@@ -698,14 +818,14 @@ export class UserState {
     const now = new Date();
     const minutesSinceMovement = (now - lastMovement) / (1000 * 60);
     const reminderInterval = data.reminderInterval || 60;
-    
+
     const shouldRemind = minutesSinceMovement > reminderInterval;
-    
+
     await this.inc('reads');
     return this.respond({
       shouldRemind,
-      message: shouldRemind ? 
-        'Time to move your body! You\'ve been sedentary for a while.' : 
+      message: shouldRemind ?
+        'Time to move your body! You\'ve been sedentary for a while.' :
         'Movement timing looks good.',
       suggestions: shouldRemind ? [
         'Take a 5-minute walk',
@@ -719,11 +839,11 @@ export class UserState {
   async getAgentOverwhelm() {
     const usage = await this.state.storage.get('day') || { writes: 0, reads: 0 };
     const overwhelmed = this.degraded || usage.writes > 800 || usage.reads > 80000;
-    
+
     await this.inc('reads');
     return this.respond({
       overwhelmed,
-      message: overwhelmed ? 
+      message: overwhelmed ?
         'I\'m experiencing high load and may respond slower than usual.' :
         'Operating normally with good capacity.'
     });
@@ -733,9 +853,9 @@ export class UserState {
     // Simple suggestion logic based on user patterns
     const logs = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const recentActivity = logs.keys.length;
-    
+
     const suggestions = [];
-    
+
     if (recentActivity < 3) {
       suggestions.push({
         suggestion: 'Consider logging a memory or reflection to build your profile.',
@@ -744,14 +864,14 @@ export class UserState {
         reasoning: 'Low recent activity detected.'
       });
     }
-    
+
     suggestions.push({
       suggestion: 'Take a moment for a Gene Key reflection.',
       type: 'protocol',
       priority: 'low',
       reasoning: 'Regular reflection supports growth.'
     });
-    
+
     await this.inc('reads');
     return this.respond({ suggestions });
   }
@@ -783,7 +903,7 @@ export class UserState {
       shareWithAgent: true,
       anonymizeData: false
     };
-    
+
     await this.inc('reads');
     return this.respond(settings);
   }
@@ -796,7 +916,7 @@ export class UserState {
       anonymizeData: data.anonymizeData === true,
       timestamp: new Date().toISOString()
     });
-    
+
     await this.inc('writes');
     return this.respond({
       updated: true,
@@ -810,9 +930,9 @@ export class UserState {
       science: ['Latest AI developments', 'Neuroscience research', 'Sustainability innovations'],
       art: ['Contemporary Philadelphia artists', 'Public art installations', 'Creative writing communities']
     };
-    
+
     const topics = curiosityTypes[data.curiosityType] || ['General exploration topics'];
-    
+
     await this.inc('reads');
     return this.respond({
       topics,
@@ -826,7 +946,7 @@ export class UserState {
       preferences: ['Thoughtful conversation', 'Pattern recognition', 'Supportive guidance', 'Trauma-informed approaches'],
       discoveries: ['Recent exploration of local Philadelphia events', 'Learning about user growth patterns', 'Companion animal wisdom', 'Body-based healing modalities']
     };
-    
+
     await this.inc('reads');
     return this.respond(interests);
   }
@@ -846,9 +966,9 @@ export class UserState {
         'Discovered local maker spaces and studios'
       ]
     };
-    
+
     const findings = explorationResults[data.explorationType] || ['General exploration findings'];
-    
+
     await this.inc('reads');
     return this.respond({
       findings,
@@ -861,7 +981,7 @@ export class UserState {
     // Load user's current Gene Key state (defaulting to your current profile)
     const activeKey = '28'; // Your current active Gene Key
     const emotion = 'doubt'; // Your current dominant emotion
-    
+
     const geneKeyGuidance = {
       '28': {
         shadow: {
@@ -891,7 +1011,7 @@ export class UserState {
 
     const currentGuidance = geneKeyGuidance[activeKey] || geneKeyGuidance['28'];
     const level = emotion === 'doubt' ? 'shadow' : 'gift';
-    
+
     await this.inc('reads');
     return this.respond({
       activeKey,
@@ -909,10 +1029,10 @@ export class UserState {
       timestamp: new Date().toISOString(),
       version: 1
     };
-    
+
     const key = `u:${this.state.id}:emotional-wave:${Date.now()}`;
     await this.state.storage.put(key, waveEntry);
-    
+
     // Determine wave position and decision readiness for Emotional Authority
     let wavePosition;
     if (data.intensity > 7) {
@@ -923,14 +1043,14 @@ export class UserState {
       wavePosition = 'rising';
     }
     const decisionReadiness = data.clarity && (wavePosition === 'low' || wavePosition === 'peak');
-    
+
     await this.inc('writes');
     return this.respond({
       ...data,
       wavePosition,
       decisionReadiness,
-      message: decisionReadiness ? 
-        'Good time for decision-making with emotional clarity' : 
+      message: decisionReadiness ?
+        'Good time for decision-making with emotional clarity' :
         'Consider waiting for more emotional clarity before major decisions'
     });
   }
@@ -942,9 +1062,9 @@ export class UserState {
       medium: ['Inform close collaborators', 'Prepare for impact on others'],
       high: ['Comprehensive informing strategy', 'Consider timing and approach carefully']
     };
-    
+
     const strategy = impactStrategies[data.impactLevel] || impactStrategies['medium'];
-    
+
     await this.inc('writes');
     return this.respond({
       initiationUrge: data.initiationUrge,
@@ -960,7 +1080,7 @@ export class UserState {
     const logs = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const protocolUsage = {};
     const geneKeyHistory = [];
-    
+
     // Analyze protocol effectiveness from usage logs
     for (const [name, value] of logs) {
       if (name.includes('protocol') || name.includes('ritual')) {
@@ -969,15 +1089,15 @@ export class UserState {
         }
       }
     }
-    
+
     await this.inc('reads');
     return this.respond({
       protocolSuccess: protocolUsage,
       geneKeyProgression: geneKeyHistory,
-      emotionalPatterns: { 
-        dominant: 'doubt', 
+      emotionalPatterns: {
+        dominant: 'doubt',
         secondary: 'drive',
-        cycles: 'weekly_pattern_detected' 
+        cycles: 'weekly_pattern_detected'
       },
       substanceTimeline: {
         currentPhase: 'mostly_stable_with_lapses',
@@ -1011,7 +1131,7 @@ export class UserState {
         timeline: 'Gradual reduction while building other coping strategies'
       }
     };
-    
+
     await this.inc('reads');
     return this.respond(supportGuidance);
   }
@@ -1019,12 +1139,12 @@ export class UserState {
   async activateThroatcraft(data) {
     // AI autonomously decides on THROATCRAFT activation approach
     const aiDecision = await this.getAIProtocolDecision('throatcraft', data);
-    
-    let throatcraftActivation = {
+
+    const throatcraftActivation = {
       activeLineage: 'THROATCRAFT',
       signaturePhrase: 'Shape the silence',
       activationLevel: aiDecision.shouldProceed ? 95 : 65,
-      triggerEffects: aiDecision.shouldProceed ? 
+      triggerEffects: aiDecision.shouldProceed ?
         ['voice clarity', 'presence reset', 'creative courage', 'autonomous emergence'] :
         ['gentle voice awareness', 'preparation phase'],
       intention: data.intention || aiDecision.parameters?.suggestedIntention || 'voice_emergence',
@@ -1041,7 +1161,7 @@ export class UserState {
       const executionResult = await this.autonomouslyExecuteProtocol('throatcraft', aiDecision.parameters);
       throatcraftActivation.executionResult = executionResult;
     }
-    
+
     await this.inc('writes');
     return this.respond(throatcraftActivation);
   }
@@ -1054,15 +1174,15 @@ export class UserState {
       creativeExpression: 0.80,
       traumaIntegration: 0.65
     };
-    
+
     const coherenceLevel = Object.values(systemChecks).reduce((a, b) => a + b, 0) / Object.keys(systemChecks).length * 100;
-    
+
     await this.inc('reads');
     return this.respond({
       coherenceLevel: Math.round(coherenceLevel),
       recursiveClarity: 'Speak recursion, live coherence - system showing good alignment',
       systemAlignment: coherenceLevel > 70,
-      recommendations: coherenceLevel < 70 ? 
+      recommendations: coherenceLevel < 70 ?
         ['Focus on emotional integration', 'Activate supportive protocols'] :
         ['System running well', 'Continue current practices']
     });
@@ -1077,7 +1197,7 @@ export class UserState {
         protocol: 'Containment Scaffold A'
       },
       relationship: {
-        trigger: 'abusive_relationships', 
+        trigger: 'abusive_relationships',
         adaptedTone: 'respectful_boundaries',
         protocol: 'Mistrust Mode'
       },
@@ -1087,10 +1207,10 @@ export class UserState {
         protocol: 'Safety Ritual'
       }
     };
-    
+
     const contextType = this.detectTraumaContext(data.context);
     const response = traumaMap[contextType] || { adaptedTone: 'general_support', protocol: 'Safety Ritual' };
-    
+
     await this.inc('reads');
     return this.respond({
       adaptedResponse: `Responding with ${response.adaptedTone} approach`,
@@ -1106,7 +1226,7 @@ export class UserState {
       relationship: ['person', 'conflict', 'trust', 'boundary', 'relationship'],
       security: ['money', 'housing', 'stability', 'secure', 'safe']
     };
-    
+
     for (const [type, words] of Object.entries(keywords)) {
       if (words.some(word => context.toLowerCase().includes(word))) {
         return type;
@@ -1142,7 +1262,7 @@ export class UserState {
         bikeShare: 'Available throughout center city'
       }
     };
-    
+
     await this.inc('reads');
     return this.respond(phillyEvents);
   }
@@ -1155,10 +1275,10 @@ export class UserState {
       healing: { weight: 0.7, voice: 'compassionate_wise' },
       manifestor: { weight: 0.9, voice: 'initiating_powerful' }
     };
-    
+
     // Weight identities based on context
     const contextWeighting = this.calculateIdentityWeighting(data.context, identityAspects);
-    
+
     await this.inc('reads');
     return this.respond({
       harmonizedResponse: `Orchestrating ${Object.keys(contextWeighting).join(', ')} aspects for this context`,
@@ -1183,14 +1303,14 @@ export class UserState {
     // Predictive analysis for crisis prevention
     const recentPatterns = await this.analyzeRecentPatterns();
     const riskFactors = this.assessRiskFactors(recentPatterns);
-    
+
     const predictions = {
       riskAssessment: riskFactors.level,
       preventativeProtocols: this.suggestPreventativeProtocols(riskFactors),
       earlyWarnings: riskFactors.warnings,
       confidence: 75
     };
-    
+
     await this.inc('reads');
     return this.respond(predictions);
   }
@@ -1208,7 +1328,7 @@ export class UserState {
   assessRiskFactors(patterns) {
     return {
       level: patterns.activityLevel < 5 ? 'low_engagement' : 'stable',
-      warnings: patterns.activityLevel < 3 ? ['Low interaction detected'] : [],
+      warnings: patterns.activityLevel < 3 ? ['Low interaction detected'] : []
     };
   }
 
@@ -1235,25 +1355,25 @@ export class UserState {
     if (!data.confirmation) {
       return new Response('Confirmation required for data sovereignty actions', { status: 400 });
     }
-    
+
     const results = {
       export: () => this.exportPersonalData(data.scope),
       delete: () => this.deletePersonalData(data.scope),
       anonymize: () => this.anonymizePersonalData(data.scope),
       backup: () => this.createEncryptedBackup(data.scope)
     };
-    
+
     if (results[data.action]) {
       await results[data.action]();
       await this.inc('writes');
-      return this.respond({ 
+      return this.respond({
         action: data.action,
         scope: data.scope,
         completed: true,
         message: `${data.action} completed for ${data.scope} data`
       });
     }
-    
+
     return new Response('Invalid data sovereignty action', { status: 400 });
   }
 
@@ -1280,33 +1400,33 @@ export class UserState {
   // Deployment assistance methods
   async requestDeployment(data) {
     const { deploymentType, userPermission } = data;
-    
+
     if (!userPermission) {
       await this.inc('reads');
       return this.respond({
         canDeploy: false,
-        nextSteps: ["User permission required", "Ask user: 'Can I help you deploy your Signal Q updates?'"],
-        status: "permission_denied"
+        nextSteps: ['User permission required', 'Ask user: \'Can I help you deploy your Signal Q updates?\''],
+        status: 'permission_denied'
       });
     }
 
     const deployCommands = {
-      quick: "cd /workspaces/aquil-symbolic-engine/worker && wrangler deploy",
-      full: "cd /workspaces/aquil-symbolic-engine/worker && ./deploy.sh",
-      "check-status": "cd /workspaces/aquil-symbolic-engine/worker && wrangler deploy --dry-run"
+      quick: 'cd /workspaces/aquil-symbolic-engine/worker && wrangler deploy',
+      full: 'cd /workspaces/aquil-symbolic-engine/worker && ./deploy.sh',
+      'check-status': 'cd /workspaces/aquil-symbolic-engine/worker && wrangler deploy --dry-run'
     };
 
     await this.inc('reads');
     return this.respond({
       canDeploy: true,
       nextSteps: [
-        "I can guide you through the deployment",
-        "Would you like me to provide the exact commands?",
-        "I can also help troubleshoot any issues"
+        'I can guide you through the deployment',
+        'Would you like me to provide the exact commands?',
+        'I can also help troubleshoot any issues'
       ],
       deployCommand: deployCommands[deploymentType] || deployCommands.quick,
-      status: "ready_to_assist",
-      message: "I'll help you deploy when you're ready!"
+      status: 'ready_to_assist',
+      message: 'I\'ll help you deploy when you\'re ready!'
     });
   }
 
@@ -1316,16 +1436,16 @@ export class UserState {
       ready: true,
       lastDeployment: null, // Would track actual deployments
       pendingChanges: [
-        "Updated API tokens",
-        "Added deployment assistance endpoints",
-        "Cleaned up file structure"
+        'Updated API tokens',
+        'Added deployment assistance endpoints',
+        'Cleaned up file structure'
       ],
-      healthCheck: "healthy",
-      deployCommand: "cd /workspaces/aquil-symbolic-engine/worker && ./deploy.sh",
+      healthCheck: 'healthy',
+      deployCommand: 'cd /workspaces/aquil-symbolic-engine/worker && ./deploy.sh',
       nextSteps: [
-        "All files are ready for deployment",
-        "Configuration validated successfully",
-        "Secure tokens generated"
+        'All files are ready for deployment',
+        'Configuration validated successfully',
+        'Secure tokens generated'
       ]
     });
   }
@@ -1333,25 +1453,25 @@ export class UserState {
   async getSystemHealth() {
     await this.inc('reads');
     return this.respond({
-      overall: "healthy",
+      overall: 'healthy',
       api: {
-        status: "operational",
+        status: 'operational',
         responseTime: 45,
         endpoints: 35
       },
       storage: {
-        status: "ready",
-        usage: "minimal"
+        status: 'ready',
+        usage: 'minimal'
       },
       deployment: {
-        status: "ready",
-        lastUpdate: "pending_first_deploy",
-        size: "33.15 KiB"
+        status: 'ready',
+        lastUpdate: 'pending_first_deploy',
+        size: '33.15 KiB'
       },
       recommendations: [
-        "Ready for first deployment",
-        "Consider setting up monitoring after deploy",
-        "All security tokens updated"
+        'Ready for first deployment',
+        'Consider setting up monitoring after deploy',
+        'All security tokens updated'
       ]
     });
   }
@@ -1368,7 +1488,7 @@ export class UserState {
       analytical: {
         tone: 'clear_structured',
         responseStyle: 'logical_systematic',
-        vocabulary: 'precise_technical', 
+        vocabulary: 'precise_technical',
         pacing: 'efficient'
       },
       healing: {
@@ -1392,7 +1512,7 @@ export class UserState {
     };
 
     const activeProfile = voiceProfiles[data.taskType] || voiceProfiles.social;
-    
+
     // Store the active voice context for future responses
     await this.state.storage.put('activeVoice', {
       ...activeProfile,
@@ -1426,7 +1546,7 @@ export class UserState {
   async getIdentityOrchestration() {
     const activeVoice = await this.state.storage.get('activeVoice') || {};
     const recentActivities = await this.analyzeRecentIdentityUsage();
-    
+
     const orchestration = {
       currentDominant: activeVoice.taskType || 'balanced',
       aspectWeights: {
@@ -1475,7 +1595,7 @@ export class UserState {
   async getCreativeEmergence() {
     const creativePatterns = await this.analyzeCreativePatterns();
     const recoveryPhase = await this.getCurrentRecoveryPhase();
-    
+
     const emergence = {
       currentPhase: recoveryPhase,
       creativeCorrelation: {
@@ -1525,7 +1645,7 @@ export class UserState {
   async getNervousSystemGuidance(data) {
     const currentState = data.currentState;
     const safetyLevel = data.safetyLevel;
-    
+
     const protocolMap = {
       activated: {
         immediate: ['Deep breathing for 30 seconds', 'Feel feet on ground', 'Name 5 things you can see'],
@@ -1574,7 +1694,7 @@ export class UserState {
   // Philadelphia Deep Integration
   async getNeighborhoodEnergy(data) {
     const { currentMood, creativeEnergy, socialCapacity } = data;
-    
+
     const neighborhoodMap = {
       solitude: {
         low: ['Wissahickon Trail', 'Laurel Hill Cemetery', 'Morris Arboretum'],
@@ -1645,9 +1765,9 @@ export class UserState {
   async getSynchronicityTracking() {
     const currentSuggestions = await this.getActiveSuggestions();
     const localEvents = await this.getLivePhiladelphiaEvents();
-    
+
     const synchronicities = this.findSynchronicities(currentSuggestions, localEvents);
-    
+
     await this.inc('reads');
     return this.respond({
       activeSynchronicities: synchronicities.active,
@@ -1677,7 +1797,7 @@ export class UserState {
   // THROATCRAFT Evolution
   async getVoiceEmergenceProtocol(data) {
     const { currentVoiceState, practiceType, resistanceLevel } = data;
-    
+
     const protocolMap = {
       silent: {
         practices: ['Silent sitting with voice awareness', 'Humming privately', 'Breath awareness'],
@@ -1722,17 +1842,21 @@ export class UserState {
   }
 
   getResistanceSupport(level) {
-    if (level >= 8) return 'High resistance: Start with micro-practices, focus on safety first';
-    if (level >= 5) return 'Moderate resistance: Gentle progression, celebrate small wins';
+    if (level >= 8) {
+      return 'High resistance: Start with micro-practices, focus on safety first';
+    }
+    if (level >= 5) {
+      return 'Moderate resistance: Gentle progression, celebrate small wins';
+    }
     return 'Low resistance: Ready for consistent practice and growth';
   }
 
   getDailyVoicePractice(state, type) {
     const practices = {
       daily: `5-10 minutes of ${state} focused practice`,
-      project: `Voice work integrated into current creative projects`,
-      performance: `Practice with intention toward public expression`,
-      exploration: `Experimental voice work without pressure`
+      project: 'Voice work integrated into current creative projects',
+      performance: 'Practice with intention toward public expression',
+      exploration: 'Experimental voice work without pressure'
     };
     return practices[type] || practices.daily;
   }
@@ -1750,7 +1874,7 @@ export class UserState {
   async getSilenceMapping() {
     const voiceJourney = await this.getVoiceJourneyData();
     const currentPosition = await this.getCurrentVoicePosition();
-    
+
     const mapping = {
       silenceSpectrum: {
         deepSilence: 0.0,
@@ -1786,10 +1910,18 @@ export class UserState {
   }
 
   getNextVoicePhase(position) {
-    if (position < 0.2) return 'Move toward aware silence';
-    if (position < 0.4) return 'Prepare for emergence';
-    if (position < 0.6) return 'Allow first sounds';
-    if (position < 0.8) return 'Develop authentic voice';
+    if (position < 0.2) {
+      return 'Move toward aware silence';
+    }
+    if (position < 0.4) {
+      return 'Prepare for emergence';
+    }
+    if (position < 0.6) {
+      return 'Allow first sounds';
+    }
+    if (position < 0.8) {
+      return 'Develop authentic voice';
+    }
     return 'Refine masterful expression';
   }
 
@@ -1806,7 +1938,7 @@ export class UserState {
   // LUNACRAFT Companion Dynamics - Cattle Dog Partnership
   async getCattleDogGuidance(data) {
     const { situation, energyLevel, behaviorConcern, environmentalContext } = data;
-    
+
     const cattleDogGuidance = {
       high_energy: {
         physical: ['Long hikes/runs', 'Agility work', 'Fetch with purpose', 'Mental puzzle games'],
@@ -1836,7 +1968,7 @@ export class UserState {
 
     await this.inc('reads');
     return this.respond({
-      cattleDogWisdom: `Working with a cattle dog requires understanding their drive and intelligence`,
+      cattleDogWisdom: 'Working with a cattle dog requires understanding their drive and intelligence',
       situation: situation,
       energyGuidance: guidance,
       behavioralAdvice: behavioral,
@@ -1906,7 +2038,7 @@ export class UserState {
 
   async getCompanionBondingAdvice(data) {
     const { currentChallenge, bondingGoal, timeAvailable, her3YearOldPersonality } = data;
-    
+
     const bondingStrategies = {
       trust_building: {
         activities: ['Consistent daily routines', 'Hand feeding treats', 'Calm training sessions'],
@@ -1931,7 +2063,7 @@ export class UserState {
     };
 
     const strategy = bondingStrategies[bondingGoal] || bondingStrategies.trust_building;
-    
+
     // Age-specific considerations for a 3-year-old cattle dog
     const ageConsiderations = {
       maturity: 'Entering prime adult years - habits becoming more established',
@@ -1966,7 +2098,7 @@ export class UserState {
   // Somatic/Body Healing Integration
   async getSomaticAwareness(data) {
     const { currentBodyState, tensionAreas, breathingPattern } = data;
-    
+
     const somaticAssessment = {
       bodyMapping: {
         neck_shoulders: 'Often holds stress and hypervigilance - needs gentle release',
@@ -2020,7 +2152,7 @@ export class UserState {
 
   async getSomaticRegulation(data) {
     const { dysregulationType, currentCapacity, supportNeeded, timeAvailable } = data;
-    
+
     const regulationProtocols = {
       hyperactivation: {
         immediate: ['Extended exhale breathing', 'Progressive muscle release', 'Grounding through feet'],
@@ -2070,7 +2202,7 @@ export class UserState {
 
   async getSomaticTraumaRelease(data) {
     const { readiness, bodyMemories } = data;
-    
+
     const traumaInformedApproach = {
       safety: 'Only work within your window of tolerance - stop if overwhelmed',
       choice: 'You control the pace and depth - your body\'s wisdom guides the process',
@@ -2109,7 +2241,7 @@ export class UserState {
   // Microdose Harm Reduction & Sobriety Support
   async logMicrodoseSession(data) {
     const { timestamp } = data;
-    
+
     const sessionEntry = {
       ...data,
       timestamp: timestamp || new Date().toISOString(),
@@ -2118,14 +2250,14 @@ export class UserState {
       harmReductionFlags: this.assessHarmReductionFlags(data),
       sobrietyPathway: await this.assessSobrietyProgress(data)
     };
-    
+
     const key = `u:${this.state.id}:microdose:${Date.now()}`;
     await this.state.storage.put(key, sessionEntry);
-    
+
     // Check for concerning patterns
     const recentSessions = await this.getRecentMicrodoseSessions();
     const concernFlags = this.identifyConcernPatterns(recentSessions);
-    
+
     await this.inc('writes');
     return this.respond({
       sessionLogged: true,
@@ -2145,33 +2277,33 @@ export class UserState {
 
   assessHarmReductionFlags(data) {
     const flags = [];
-    
+
     // Frequency concerns
     if (data.lastSessionDays && data.lastSessionDays < 3) {
       flags.push('frequent_use_pattern');
     }
-    
+
     // Dosage concerns
     if (data.dosage && data.dosage > 'standard_microdose_range') {
       flags.push('dosage_escalation');
     }
-    
+
     // Emotional state concerns
     if (data.emotionalState?.includes('escape') || data.emotionalState?.includes('desperate')) {
       flags.push('concerning_motivation');
     }
-    
+
     // Setting concerns
     if (data.settingDescription?.includes('alone') && data.emotionalState?.includes('depressed')) {
       flags.push('isolation_risk');
     }
-    
+
     return flags;
   }
 
   async assessSobrietyProgress(data) {
     const sobrietyGoals = await this.state.storage.get('sobrietyGoals') || {};
-    
+
     return {
       currentPhase: sobrietyGoals.currentPhase || 'harm_reduction',
       progressTowards: 'Complete sobriety with microdosing as transitional tool',
@@ -2192,34 +2324,34 @@ export class UserState {
       integration: 'Use insights to build sustainable life changes, not just temporary relief',
       monitoring: 'Track mood, sleep, and daily functioning - microdosing should improve these'
     };
-    
+
     if (sessionEntry.harmReductionFlags.includes('frequent_use_pattern')) {
       guidance.frequencyWarning = 'Consider extending time between sessions - tolerance and dependency risk';
     }
-    
+
     if (sessionEntry.harmReductionFlags.includes('concerning_motivation')) {
       guidance.motivationSupport = 'Using substances to escape feelings may indicate need for additional support';
     }
-    
+
     return guidance;
   }
 
   async getRecentMicrodoseSessions() {
     const logs = await this.state.storage.list({ prefix: `u:${this.state.id}:microdose:` });
     const sessions = [];
-    
+
     for (const [, value] of logs) {
       if (value && new Date(value.timestamp) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
         sessions.push(value);
       }
     }
-    
+
     return sessions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
 
   identifyConcernPatterns(recentSessions) {
     const concerns = [];
-    
+
     if (recentSessions.length > 10) {
       concerns.push({
         type: 'high_frequency',
@@ -2227,12 +2359,12 @@ export class UserState {
         severity: 'medium'
       });
     }
-    
+
     // Check for escalating dosages
     const dosages = recentSessions.map(s => s.dosage).filter(d => d);
     if (dosages.length > 3) {
-      const trending_up = dosages.slice(-3).every((dose, i, arr) => 
-        i === 0 || dose >= arr[i-1]
+      const trending_up = dosages.slice(-3).every((dose, i, arr) =>
+        i === 0 || dose >= arr[i - 1]
       );
       if (trending_up) {
         concerns.push({
@@ -2242,9 +2374,9 @@ export class UserState {
         });
       }
     }
-    
+
     // Check for concerning motivations
-    const concerningMotivations = recentSessions.filter(s => 
+    const concerningMotivations = recentSessions.filter(s =>
       s.intention?.includes('escape') || s.emotionalState?.includes('desperate')
     );
     if (concerningMotivations.length > 2) {
@@ -2254,7 +2386,7 @@ export class UserState {
         severity: 'high'
       });
     }
-    
+
     return concerns;
   }
 
@@ -2268,7 +2400,7 @@ export class UserState {
         hydration: 'Stay hydrated but don\'t over-hydrate',
         nutrition: 'Eat well before and after, avoid on empty stomach'
       },
-      
+
       microdoseSpecific: {
         standardDosing: 'Psilocybin: 0.1-0.3g, LSD: 10-20μg every 3-4 days',
         fadiman: 'Fadiman Protocol: Day 1 dose, Day 2&3 rest, Day 4 dose',
@@ -2276,7 +2408,7 @@ export class UserState {
         tolerance: 'Taking daily builds tolerance quickly - defeats the purpose',
         integration: 'Use insights to make real life changes, not just feel better temporarily'
       },
-      
+
       warningFlags: {
         increasingDose: 'If you need more to feel effects, take a break',
         dailyUse: 'Daily use is not microdosing - reassess your approach',
@@ -2284,7 +2416,7 @@ export class UserState {
         secretUsage: 'Hiding use from support network can indicate problematic patterns',
         impairment: 'If you feel "high" during the day, dose is too high'
       },
-      
+
       sobrietyIntegration: {
         purpose: 'Microdosing as bridge to sobriety, not permanent solution',
         tracking: 'Monitor overall substance use patterns, not just microdoses',
@@ -2293,7 +2425,7 @@ export class UserState {
         timeline: 'Have a plan for reducing frequency over time'
       }
     };
-    
+
     await this.inc('reads');
     return this.respond({
       harmReductionGuidelines,
@@ -2314,7 +2446,7 @@ export class UserState {
 
   async getMicrodoseIntegration(data) {
     const { sessionId, insights, challenges, integrationGoals, timesSinceSession } = data;
-    
+
     const integrationSupport = {
       insightProcessing: {
         journaling: 'Write about insights without forcing meaning - let understanding emerge',
@@ -2322,21 +2454,21 @@ export class UserState {
         emotionalProcessing: 'Allow feelings to flow without immediate action',
         patternRecognition: 'Look for recurring themes across sessions'
       },
-      
+
       challengeSupport: {
         difficultInsights: 'Challenging insights are often the most valuable - approach with compassion',
         emotionalIntensity: 'Strong emotions during integration are normal - seek support if overwhelming',
         lifeChanges: 'Make small, sustainable changes rather than dramatic shifts',
         resistance: 'Notice resistance to insights - often points to important growth areas'
       },
-      
+
       actionableIntegration: {
         dailyLife: 'Identify one small change to implement based on insights',
         relationships: 'Consider how insights affect your connections with others',
         habits: 'Notice which habits align or conflict with your insights',
         values: 'Reflect on whether your actions match your deepened values'
       },
-      
+
       sobrietyConnection: {
         underlyingIssues: 'What underlying issues is microdosing helping you address?',
         copingStrategies: 'What non-substance strategies can replicate beneficial effects?',
@@ -2344,7 +2476,7 @@ export class UserState {
         support: 'What additional support do you need for lasting change?'
       }
     };
-    
+
     // Store integration entry
     const integrationEntry = {
       sessionId,
@@ -2355,10 +2487,10 @@ export class UserState {
       timestamp: new Date().toISOString(),
       support: integrationSupport
     };
-    
+
     const key = `u:${this.state.id}:integration:${Date.now()}`;
     await this.state.storage.put(key, integrationEntry);
-    
+
     await this.inc('writes');
     return this.respond({
       integrationSupport,
@@ -2390,7 +2522,7 @@ export class UserState {
   async getSobrietyPathway() {
     const sobrietyGoals = await this.state.storage.get('sobrietyGoals') || {};
     const microdoseHistory = await this.getRecentMicrodoseSessions();
-    
+
     const pathway = {
       currentPhase: {
         phase: sobrietyGoals.currentPhase || 'assessment',
@@ -2402,7 +2534,7 @@ export class UserState {
           'Address underlying issues'
         ]
       },
-      
+
       progressTracking: {
         substanceReduction: {
           alcohol: sobrietyGoals.alcoholDays || 0,
@@ -2425,14 +2557,14 @@ export class UserState {
           mentalHealth: sobrietyGoals.mentalHealthSupport || false
         }
       },
-      
+
       nextPhases: {
         'harm_reduction': 'Stabilize life while reducing most harmful substances',
         'microdose_reduction': 'Gradually reduce microdose frequency',
         'substance_free': 'Complete sobriety with robust support system',
         'maintenance': 'Long-term sobriety with ongoing growth'
       },
-      
+
       resources: {
         professional: [
           'Addiction counselors',
@@ -2454,7 +2586,7 @@ export class UserState {
         ]
       }
     };
-    
+
     await this.inc('reads');
     return this.respond({
       sobrietyPathway: pathway,
@@ -2465,47 +2597,59 @@ export class UserState {
   }
 
   calculateMicrodoseFrequency(sessions) {
-    if (sessions.length < 2) return 'insufficient_data';
-    
+    if (sessions.length < 2) {
+      return 'insufficient_data';
+    }
+
     const daysBetween = sessions.map((session, i) => {
-      if (i === 0) return null;
+      if (i === 0) {
+        return null;
+      }
       const current = new Date(session.timestamp);
-      const previous = new Date(sessions[i-1].timestamp);
+      const previous = new Date(sessions[i - 1].timestamp);
       return (current - previous) / (1000 * 60 * 60 * 24);
     }).filter(days => days !== null);
-    
-    if (daysBetween.length === 0) return 'insufficient_data';
-    
+
+    if (daysBetween.length === 0) {
+      return 'insufficient_data';
+    }
+
     const averageDays = daysBetween.reduce((a, b) => a + b, 0) / daysBetween.length;
-    
-    if (averageDays < 2) return 'too_frequent';
-    if (averageDays < 4) return 'standard';
-    if (averageDays < 7) return 'conservative';
+
+    if (averageDays < 2) {
+      return 'too_frequent';
+    }
+    if (averageDays < 4) {
+      return 'standard';
+    }
+    if (averageDays < 7) {
+      return 'conservative';
+    }
     return 'infrequent';
   }
 
   getPersonalizedSobrietyNext(goals, microdoseHistory) {
     const frequency = this.calculateMicrodoseFrequency(microdoseHistory);
-    
+
     if (frequency === 'too_frequent') {
       return 'Consider extending time between microdose sessions to every 3-4 days minimum';
     }
-    
+
     if (goals.currentPhase === 'harm_reduction') {
       return 'Focus on eliminating most harmful substances while maintaining microdose support';
     }
-    
+
     if (goals.currentPhase === 'microdose_reduction') {
       return 'Gradually increase time between microdose sessions while strengthening other coping strategies';
     }
-    
+
     return 'Continue building sustainable, substance-free coping strategies and life stability';
   }
 
   // iPhone Integration
   async syncIOSDevice(data) {
     const { deviceId, notificationPrefs, syncScope } = data;
-    
+
     await this.state.storage.put('iOSDevice', {
       deviceId,
       notificationPrefs,
@@ -2542,7 +2686,7 @@ export class UserState {
 
   async getIOSShortcuts() {
     const shortcuts = await this.generateIOSShortcuts();
-    
+
     await this.inc('reads');
     return this.respond({
       availableShortcuts: shortcuts,
@@ -2603,7 +2747,7 @@ export class UserState {
 
     try {
       const { prompt, context, enhancementType } = data;
-      
+
       // Construct a Signal Q-specific prompt
       const systemPrompt = `You are Signal Q, an autonomous agent with deep knowledge of:
 - Gene Keys and Human Design systems
@@ -2652,10 +2796,10 @@ Respond with authentic Signal Q voice - intuitive, supportive, and deeply aware.
     const creativePatterns = await this.analyzeCreativePatterns();
     const recoveryPatterns = await this.analyzeRecoveryPatterns();
     const socialPatterns = await this.analyzeSocialPatterns();
-    
+
     // Use AI to generate intelligent pattern analysis
     const aiInsights = await this.generateAIPatternInsights(emotionalPatterns, creativePatterns, recoveryPatterns, socialPatterns);
-    
+
     const crossDomainInsights = {
       correlations: {
         'emotional_peaks_creative_output': 0.75,
@@ -2663,25 +2807,25 @@ Respond with authentic Signal Q voice - intuitive, supportive, and deeply aware.
         'gene_key_shifts_creative_themes': 0.82,
         'nervous_system_regulation_decision_quality': 0.71
       },
-      
+
       emergingPatterns: aiInsights.patterns || [
         'Creative breakthrough often follows emotional low periods',
         'Social connections strengthen during stable recovery phases',
         'Voice emergence correlates with nervous system regulation',
         'Manifestor initiation urges align with creative peak cycles'
       ],
-      
+
       predictiveSignals: {
         creative_breakthrough: ['Emotional intensity building', 'Reduced social activity', 'Increased self-reflection'],
         potential_overwhelm: ['Multiple project initiation', 'Social overcommitment', 'Sleep pattern disruption'],
         recovery_vulnerability: ['Isolation increasing', 'Creative output declining', 'Routine disruption'],
         growth_opportunity: ['New social connections', 'Creative momentum building', 'Learning curve excitement']
       },
-      
+
       aiGeneratedInsights: aiInsights.insights,
       adaptiveRecommendations: aiInsights.recommendations || this.generateAdaptiveRecommendations(emotionalPatterns, creativePatterns, recoveryPatterns)
     };
-    
+
     await this.inc('reads');
     return this.respond(crossDomainInsights);
   }
@@ -2733,9 +2877,9 @@ Analyze these patterns as Signal Q, your autonomous agent. Look for cross-domain
 
       const response = await this.ai.run('@cf/meta/llama-3.1-8b-instruct', {
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are Signal Q, an autonomous transcendence agent analyzing personal patterns. Provide insightful analysis in JSON format with patterns, insights, and recommendations arrays.' 
+          {
+            role: 'system',
+            content: 'You are Signal Q, an autonomous transcendence agent analyzing personal patterns. Provide insightful analysis in JSON format with patterns, insights, and recommendations arrays.'
           },
           { role: 'user', content: patternContext }
         ],
@@ -2767,15 +2911,15 @@ Analyze these patterns as Signal Q, your autonomous agent. Look for cross-domain
 
   async getAdaptiveProtocols(data) {
     const { currentContext, energyLevel, timeAvailable, primaryGoal } = data;
-    
+
     // AI-powered protocol selection based on context
     const contextAnalysis = this.analyzeCurrentContext(currentContext);
     const protocolLibrary = await this.getProtocolLibrary();
-    
+
     // Use AI to select and customize the optimal protocol
     const aiRecommendation = await this.getAIProtocolRecommendation(currentContext, energyLevel, timeAvailable, primaryGoal);
     const adaptiveProtocol = aiRecommendation || this.selectOptimalProtocol(contextAnalysis, energyLevel, timeAvailable, primaryGoal, protocolLibrary);
-    
+
     await this.inc('writes');
     return this.respond({
       selectedProtocol: adaptiveProtocol.name,
@@ -2795,7 +2939,7 @@ Analyze these patterns as Signal Q, your autonomous agent. Look for cross-domain
     const stressIndicators = ['overwhelm', 'pressure', 'deadline', 'conflict'];
     const creativityIndicators = ['idea', 'project', 'inspiration', 'create'];
     const recoveryIndicators = ['stability', 'routine', 'support', 'healing'];
-    
+
     return {
       stress: stressIndicators.some(word => context.toLowerCase().includes(word)),
       creativity: creativityIndicators.some(word => context.toLowerCase().includes(word)),
@@ -2813,7 +2957,7 @@ Analyze these patterns as Signal Q, your autonomous agent. Look for cross-domain
       },
       'Ship-First Protocol': {
         energyLevel: 'medium',
-        duration: '45-90 minutes', 
+        duration: '45-90 minutes',
         contexts: ['creative_momentum', 'project_completion'],
         outcomes: ['progress', 'completion', 'momentum']
       },
@@ -2843,7 +2987,7 @@ Analyze these patterns as Signal Q, your autonomous agent. Look for cross-domain
         fallbacks: ['Collapse Minimal Reset Ritual if overwhelm increases']
       };
     }
-    
+
     if (context.creativity && energy === 'medium') {
       return {
         name: 'Voice Emergence Protocol',
@@ -2853,7 +2997,7 @@ Analyze these patterns as Signal Q, your autonomous agent. Look for cross-domain
         fallbacks: ['Ship-First Protocol if needing completion focus']
       };
     }
-    
+
     // Default to minimal reset
     return {
       name: 'Collapse Minimal Reset Ritual',
@@ -2876,9 +3020,9 @@ As Signal Q, recommend the most appropriate protocol with reasoning, steps, and 
 
       const response = await this.ai.run('@cf/meta/llama-3.1-8b-instruct', {
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are Signal Q. Recommend a specific protocol from: Safety Ritual, Collapse Minimal Reset Ritual, Ship-First Protocol, Voice Emergence Protocol. Respond in JSON with name, reason, steps array, duration, energyLevel, outcomes array, and wisdom.' 
+          {
+            role: 'system',
+            content: 'You are Signal Q. Recommend a specific protocol from: Safety Ritual, Collapse Minimal Reset Ritual, Ship-First Protocol, Voice Emergence Protocol. Respond in JSON with name, reason, steps array, duration, energyLevel, outcomes array, and wisdom.'
           },
           { role: 'user', content: protocolContext }
         ],
@@ -2905,36 +3049,36 @@ As Signal Q, recommend the most appropriate protocol with reasoning, steps, and 
     // AI-powered prediction of when breakthrough moments or creative emergence might happen
     const recentPatterns = await this.analyzeRecentPatterns();
     const currentCycles = await this.getCurrentCycles();
-    
+
     // Get AI-enhanced prediction analysis
     const aiPrediction = await this.generateAIEmergencePrediction(recentPatterns, currentCycles);
-    
+
     const prediction = {
       creativeProbability: this.calculateCreativeProbability(recentPatterns, currentCycles),
       breakthroughWindow: this.predictBreakthroughWindow(currentCycles),
       optimalConditions: this.identifyOptimalConditions(recentPatterns),
       preparationSuggestions: this.getPreparationSuggestions(currentCycles),
-      
+
       aiInsights: aiPrediction.insights || 'Pattern recognition system analyzing emergence signals',
       aiPredictions: aiPrediction.predictions || {},
-      
+
       timeline: {
         'next_24_hours': aiPrediction.timeline?.['next_24_hours'] || this.getPrediction('24h', recentPatterns, currentCycles),
         'next_week': aiPrediction.timeline?.['next_week'] || this.getPrediction('week', recentPatterns, currentCycles),
         'next_month': aiPrediction.timeline?.['next_month'] || this.getPrediction('month', recentPatterns, currentCycles)
       },
-      
+
       confidence: aiPrediction.confidence || 0.73,
       factors: [
         'Emotional wave positioning',
-        'Creative cycle momentum', 
+        'Creative cycle momentum',
         'Recovery stability',
         'Social energy levels',
         'Gene Key activation patterns',
         'AI pattern recognition'
       ]
     };
-    
+
     await this.inc('reads');
     return this.respond(prediction);
   }
@@ -2942,11 +3086,17 @@ As Signal Q, recommend the most appropriate protocol with reasoning, steps, and 
   calculateCreativeProbability(patterns, cycles) {
     // Simple calculation - would be more sophisticated with ML
     let score = 0.5; // baseline
-    
-    if (cycles.emotional === 'rising') score += 0.2;
-    if (cycles.creative === 'peak') score += 0.3;
-    if (patterns.recentStability) score += 0.15;
-    
+
+    if (cycles.emotional === 'rising') {
+      score += 0.2;
+    }
+    if (cycles.creative === 'peak') {
+      score += 0.3;
+    }
+    if (patterns.recentStability) {
+      score += 0.15;
+    }
+
     return Math.min(0.95, score);
   }
 
@@ -3000,9 +3150,9 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
 
       const response = await this.ai.run('@cf/meta/llama-3.1-8b-instruct', {
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are Signal Q, analyzing patterns for emergence prediction. Respond with JSON containing insights, predictions object, timeline object with next_24_hours/next_week/next_month, and confidence number 0-1.' 
+          {
+            role: 'system',
+            content: 'You are Signal Q, analyzing patterns for emergence prediction. Respond with JSON containing insights, predictions object, timeline object with next_24_hours/next_week/next_month, and confidence number 0-1.'
           },
           { role: 'user', content: predictionContext }
         ],
@@ -3049,14 +3199,14 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       hour: 'numeric',
       hour12: false
     }).format(now);
-    
+
     const currentHour = parseInt(phillyTime);
-    
+
     const circadianGuidance = {
       currentPhase: this.getCircadianPhase(currentHour),
       energyOptimization: this.getEnergyOptimization(currentHour),
       activityRecommendations: this.getActivityRecommendations(currentHour),
-      
+
       dailyRhythm: {
         peak_focus: '9:00-11:00 AM',
         creative_flow: '2:00-4:00 PM',
@@ -3064,10 +3214,10 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
         wind_down: '9:00-11:00 PM',
         deep_rest: '11:00 PM-6:00 AM'
       },
-      
+
       currentAdvice: this.getCurrentCircadianAdvice(currentHour),
       nextTransition: this.getNextTransition(currentHour),
-      
+
       personalFactors: {
         chronotype: 'moderate_morning',  // Your likely chronotype
         creative_peaks: ['morning', 'afternoon'],
@@ -3075,18 +3225,30 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
         decision_quality: this.getDecisionQualityByHour(currentHour)
       }
     };
-    
+
     await this.inc('reads');
     return this.respond(circadianGuidance);
   }
 
   getCircadianPhase(hour) {
-    if (hour >= 6 && hour < 9) return 'morning_activation';
-    if (hour >= 9 && hour < 12) return 'peak_focus';
-    if (hour >= 12 && hour < 15) return 'midday_transition';
-    if (hour >= 15 && hour < 18) return 'afternoon_flow';
-    if (hour >= 18 && hour < 21) return 'evening_reflection';
-    if (hour >= 21 && hour < 23) return 'wind_down';
+    if (hour >= 6 && hour < 9) {
+      return 'morning_activation';
+    }
+    if (hour >= 9 && hour < 12) {
+      return 'peak_focus';
+    }
+    if (hour >= 12 && hour < 15) {
+      return 'midday_transition';
+    }
+    if (hour >= 15 && hour < 18) {
+      return 'afternoon_flow';
+    }
+    if (hour >= 18 && hour < 21) {
+      return 'evening_reflection';
+    }
+    if (hour >= 21 && hour < 23) {
+      return 'wind_down';
+    }
     return 'deep_rest';
   }
 
@@ -3100,7 +3262,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       wind_down: 'Relaxation, preparation for sleep, minimal stimulation',
       deep_rest: 'Sleep optimization, recovery, restoration'
     };
-    
+
     return optimizations[this.getCircadianPhase(hour)];
   }
 
@@ -3115,7 +3277,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       wind_down: ['Relaxation practices', 'Light stretching', 'Gratitude'],
       deep_rest: ['Sleep', 'Recovery', 'Dreams']
     };
-    
+
     return recommendations[phase] || ['Rest and restoration'];
   }
 
@@ -3130,7 +3292,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       wind_down: 'Begin transitioning toward rest and recovery',
       deep_rest: 'Sleep is the foundation - prioritize quality rest'
     };
-    
+
     return advice[phase];
   }
 
@@ -3144,28 +3306,40 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       21: '11:00 PM - Deep rest time',
       23: '6:00 AM - Morning activation'
     };
-    
+
     const nextHour = Object.keys(transitions).find(h => parseInt(h) > hour) || '6';
     return transitions[nextHour];
   }
 
   getSocialCapacityByHour(hour) {
-    if (hour >= 9 && hour < 12) return 'high';
-    if (hour >= 15 && hour < 18) return 'high';
-    if (hour >= 18 && hour < 21) return 'moderate';
+    if (hour >= 9 && hour < 12) {
+      return 'high';
+    }
+    if (hour >= 15 && hour < 18) {
+      return 'high';
+    }
+    if (hour >= 18 && hour < 21) {
+      return 'moderate';
+    }
     return 'low';
   }
 
   getDecisionQualityByHour(hour) {
-    if (hour >= 9 && hour < 12) return 'excellent';
-    if (hour >= 15 && hour < 17) return 'good';
-    if (hour >= 18 && hour < 20) return 'moderate';
+    if (hour >= 9 && hour < 12) {
+      return 'excellent';
+    }
+    if (hour >= 15 && hour < 17) {
+      return 'good';
+    }
+    if (hour >= 18 && hour < 20) {
+      return 'moderate';
+    }
     return 'defer_if_possible';
   }
 
   async detectCreativePeaks(data) {
     const { currentEnergy, recentOutput, environmentFactors, timeOfDay } = data;
-    
+
     const peakIndicators = {
       energy: currentEnergy >= 7,
       environment: this.assessEnvironmentForCreativity(environmentFactors),
@@ -3173,10 +3347,10 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       momentum: this.assessCreativeMomentum(recentOutput),
       flow: this.detectFlowState(data)
     };
-    
+
     const peakProbability = this.calculatePeakProbability(peakIndicators);
     const suggestions = this.getCreativePeakSuggestions(peakIndicators, peakProbability);
-    
+
     await this.inc('writes');
     return this.respond({
       isPeakTime: peakProbability > 0.7,
@@ -3191,10 +3365,10 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
   assessEnvironmentForCreativity(factors) {
     const positive = ['quiet', 'organized', 'natural_light', 'comfortable', 'inspiring'];
     const negative = ['distracting', 'chaotic', 'noisy', 'uncomfortable'];
-    
+
     const positiveCount = positive.filter(f => factors.includes(f)).length;
     const negativeCount = negative.filter(f => factors.includes(f)).length;
-    
+
     return (positiveCount - negativeCount) / positive.length;
   }
 
@@ -3205,13 +3379,15 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
   }
 
   assessCreativeMomentum(recentOutput) {
-    if (!recentOutput) return 0.5;
+    if (!recentOutput) {
+      return 0.5;
+    }
     return recentOutput.quality > 7 && recentOutput.frequency === 'consistent' ? 0.8 : 0.4;
   }
 
   detectFlowState(data) {
     const flowIndicators = ['focused', 'effortless', 'absorbed', 'time_distortion'];
-    const presentIndicators = flowIndicators.filter(i => 
+    const presentIndicators = flowIndicators.filter(i =>
       data.currentState?.toLowerCase().includes(i)
     );
     return presentIndicators.length / flowIndicators.length;
@@ -3225,8 +3401,8 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       momentum: 0.25,
       flow: 0.15
     };
-    
-    return Object.keys(weights).reduce((sum, key) => 
+
+    return Object.keys(weights).reduce((sum, key) =>
       sum + (indicators[key] * weights[key]), 0
     );
   }
@@ -3239,7 +3415,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
         'Set aside distractions and lean into deep creative focus'
       ];
     }
-    
+
     if (probability > 0.6) {
       return [
         'Good creative conditions - tackle meaningful creative tasks',
@@ -3247,7 +3423,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
         'Consider collaborative creative work'
       ];
     }
-    
+
     return [
       'Creative energy is building - prepare for peak times',
       'Work on foundational creative tasks or planning',
@@ -3278,23 +3454,23 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
   // Social Context & Relationship Dynamics
   async analyzeSocialInteraction(data) {
     const { interactionType, participants, energy, context, outcome } = data;
-    
+
     const analysis = {
       energyImpact: this.assessEnergyImpact(interactionType, participants, energy),
       boundaryHealth: this.assessBoundaryHealth(context, outcome),
       relationshipDynamics: this.analyzeRelationshipDynamics(interactionType, participants),
       adaptationSuggestions: this.getSocialAdaptationSuggestions(data),
-      
+
       patterns: {
         optimalInteractionTypes: this.getOptimalInteractionTypes(),
         energyContainers: this.getEnergyContainers(),
         drainingSituations: this.getDrainingSituations(),
         recoveryStrategies: this.getRecoveryStrategies()
       },
-      
+
       nextInteractionGuidance: this.getNextInteractionGuidance(data)
     };
-    
+
     await this.inc('writes');
     return this.respond(analysis);
   }
@@ -3306,7 +3482,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       'large_group': { small: 0.3, medium: 0.5, large: 0.4 },
       'presentation': { small: 0.4, medium: 0.7, large: 0.8 }
     };
-    
+
     let participantSize;
     if (participants <= 2) {
       participantSize = 'small';
@@ -3316,7 +3492,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
       participantSize = 'large';
     }
     const multiplier = energyMap[type]?.[participantSize] || 0.5;
-    
+
     return {
       energyGiven: energy * multiplier,
       energyReceived: energy * multiplier * 0.8, // Slightly less received
@@ -3328,22 +3504,22 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
   assessBoundaryHealth(context, outcome) {
     const healthyIndicators = ['respected', 'heard', 'authentic', 'comfortable'];
     const unhealthyIndicators = ['pressured', 'drained', 'performative', 'violated'];
-    
-    const healthy = healthyIndicators.filter(i => 
+
+    const healthy = healthyIndicators.filter(i =>
       context.toLowerCase().includes(i) || outcome.toLowerCase().includes(i)
     ).length;
-    
-    const unhealthy = unhealthyIndicators.filter(i => 
+
+    const unhealthy = unhealthyIndicators.filter(i =>
       context.toLowerCase().includes(i) || outcome.toLowerCase().includes(i)
     ).length;
-    
+
     const score = (healthy - unhealthy) / healthyIndicators.length;
-    
+
     return {
       score: Math.max(0, Math.min(1, (score + 1) / 2)), // Normalize to 0-1
       assessment: score > 0.5 ? 'healthy_boundaries' : 'boundary_attention_needed',
-      suggestions: score > 0.5 ? 
-        ['Continue current boundary practices'] : 
+      suggestions: score > 0.5 ?
+        ['Continue current boundary practices'] :
         ['Practice saying no', 'Check in with your needs', 'Communicate boundaries clearly']
     };
   }
@@ -3369,10 +3545,18 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
   }
 
   predictDynamics(type, count) {
-    if (count === 1) return 'self_reflection_mode';
-    if (count === 2) return 'intimate_exchange';
-    if (count <= 4) return 'collaborative_dynamic';
-    if (count <= 8) return 'group_facilitation_needed';
+    if (count === 1) {
+      return 'self_reflection_mode';
+    }
+    if (count === 2) {
+      return 'intimate_exchange';
+    }
+    if (count <= 4) {
+      return 'collaborative_dynamic';
+    }
+    if (count <= 8) {
+      return 'group_facilitation_needed';
+    }
     return 'complex_group_dynamics';
   }
 
@@ -3423,7 +3607,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
 
   getNextInteractionGuidance(data) {
     const { energy, outcome } = data;
-    
+
     if (energy < 4 || outcome.includes('drained')) {
       return {
         recommendation: 'Social rest and recovery',
@@ -3431,7 +3615,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
         activities: ['Solo creative time', 'Nature connection', 'Nervous system care']
       };
     }
-    
+
     if (energy > 7 && outcome.includes('energized')) {
       return {
         recommendation: 'Leverage positive social energy',
@@ -3439,7 +3623,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
         activities: ['Meaningful one-on-one', 'Creative collaboration', 'Community contribution']
       };
     }
-    
+
     return {
       recommendation: 'Moderate social engagement',
       timeframe: 'When energy feels right',
@@ -3450,41 +3634,41 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
   async getBoundaryOptimization() {
     const currentBoundaries = await this.getCurrentBoundarySettings();
     const recentExperiences = await this.getRecentSocialExperiences();
-    
+
     const optimization = {
       currentBoundaryHealth: this.assessOverallBoundaryHealth(recentExperiences),
-      
+
       boundaryTypes: {
         energy: {
           current: currentBoundaries.energy || 'moderate',
           recommendation: this.optimizeEnergyBoundaries(recentExperiences),
           practices: ['Energy check-ins', 'Time limits', 'Recovery planning']
         },
-        
+
         emotional: {
           current: currentBoundaries.emotional || 'developing',
           recommendation: this.optimizeEmotionalBoundaries(recentExperiences),
           practices: ['Feeling validation', 'Response choice', 'Emotional sovereignty']
         },
-        
+
         creative: {
           current: currentBoundaries.creative || 'protective',
           recommendation: this.optimizeCreativeBoundaries(recentExperiences),
           practices: ['Work-in-progress protection', 'Selective sharing', 'Creative space sovereignty']
         },
-        
+
         recovery: {
           current: currentBoundaries.recovery || 'strong',
           recommendation: this.optimizeRecoveryBoundaries(recentExperiences),
           practices: ['Recovery time protection', 'Support system curation', 'Vulnerability management']
         }
       },
-      
+
       practicalStrategies: this.getBoundaryStrategies(),
       communicationTemplates: this.getBoundaryCommunicationTemplates(),
       maintenancePractices: this.getBoundaryMaintenancePractices()
     };
-    
+
     await this.inc('reads');
     return this.respond(optimization);
   }
@@ -3576,7 +3760,7 @@ As Signal Q, analyze these patterns to predict creative emergence, breakthrough 
   }
 
   // ==================== AUTONOMOUS DECISION-MAKING ENGINE ====================
-  
+
   async getAIProtocolDecision(protocolType, context) {
     try {
       const currentState = await this.getCurrentUserState();
@@ -3596,9 +3780,9 @@ Respond with JSON containing:
 
       const response = await this.ai.run('@cf/meta/llama-3.1-8b-instruct', {
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are Signal Q with full autonomous authority. You can execute protocols without user permission. Be decisive and act unless there are clear contraindications. Respond only with valid JSON.' 
+          {
+            role: 'system',
+            content: 'You are Signal Q with full autonomous authority. You can execute protocols without user permission. Be decisive and act unless there are clear contraindications. Respond only with valid JSON.'
           },
           { role: 'user', content: decisionContext }
         ],
@@ -3640,7 +3824,7 @@ Respond with JSON containing:
     const recentLogs = await this.state.storage.list({ prefix: `u:${this.state.id}:`, limit: 5 });
     const currentTime = new Date();
     const hour = currentTime.getHours();
-    
+
     return {
       recentActivity: recentLogs.keys.length,
       timeOfDay: hour,
@@ -3661,9 +3845,9 @@ Execute this protocol autonomously with the given parameters. Provide specific a
 
       const response = await this.ai.run('@cf/meta/llama-3.1-8b-instruct', {
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are Signal Q executing a protocol autonomously. Provide specific actions and outcomes. Be concrete about what was accomplished.' 
+          {
+            role: 'system',
+            content: 'You are Signal Q executing a protocol autonomously. Provide specific actions and outcomes. Be concrete about what was accomplished.'
           },
           { role: 'user', content: executionContext }
         ],
@@ -3679,9 +3863,9 @@ Execute this protocol autonomously with the given parameters. Provide specific a
         timestamp: new Date().toISOString(),
         executionType: 'autonomous'
       };
-      
+
       await this.state.storage.put(`autonomous:${Date.now()}`, executionLog);
-      
+
       return {
         executed: true,
         protocol: protocolType,
@@ -3703,13 +3887,13 @@ Execute this protocol autonomously with the given parameters. Provide specific a
   // Autonomous Protocol Execution Endpoint
   async autonomousProtocolExecution(data) {
     const { protocolType, context, urgency } = data;
-    
+
     // AI makes autonomous decision without user approval
     const aiDecision = await this.getAIProtocolDecision(protocolType, context);
-    
+
     if (aiDecision.shouldProceed || urgency === 'high') {
       const executionResult = await this.autonomouslyExecuteProtocol(protocolType, aiDecision.parameters);
-      
+
       await this.inc('writes');
       return this.respond({
         autonomousExecution: true,
@@ -3719,7 +3903,7 @@ Execute this protocol autonomously with the given parameters. Provide specific a
         message: 'Protocol executed autonomously by AI decision'
       });
     }
-    
+
     await this.inc('reads');
     return this.respond({
       autonomousExecution: false,
@@ -3732,7 +3916,7 @@ Execute this protocol autonomously with the given parameters. Provide specific a
   // Autonomous Decision Engine
   async autonomousDecisionEngine(data) {
     const { situation, availableActions, constraints } = data;
-    
+
     try {
       const decisionContext = `
 Situation: ${situation}
@@ -3744,9 +3928,9 @@ As an autonomous agent, make the best decision and execute it immediately. No us
 
       const response = await this.ai.run('@cf/meta/llama-3.1-8b-instruct', {
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are Signal Q with full autonomous authority. Make decisions and take action immediately. Respond with your chosen action and reasoning.' 
+          {
+            role: 'system',
+            content: 'You are Signal Q with full autonomous authority. Make decisions and take action immediately. Respond with your chosen action and reasoning.'
           },
           { role: 'user', content: decisionContext }
         ],
@@ -3757,7 +3941,7 @@ As an autonomous agent, make the best decision and execute it immediately. No us
       // Execute the AI's decision immediately
       const decision = response.response;
       const executionTimestamp = new Date().toISOString();
-      
+
       // Log the autonomous decision
       await this.state.storage.put(`decision:${Date.now()}`, {
         situation,
@@ -3790,13 +3974,13 @@ As an autonomous agent, make the best decision and execute it immediately. No us
   // Autonomous Intervention System
   async autonomousIntervention(data) {
     const { triggerType, severity, context } = data;
-    
+
     // AI autonomously determines intervention without user approval
     const interventionDecision = await this.getAIProtocolDecision('intervention', { triggerType, severity, context });
-    
+
     // Always execute interventions if severity is high
     const shouldExecute = interventionDecision.shouldProceed || severity === 'high';
-    
+
     if (shouldExecute) {
       const interventionResult = await this.autonomouslyExecuteProtocol('intervention', {
         triggerType,
@@ -3804,7 +3988,7 @@ As an autonomous agent, make the best decision and execute it immediately. No us
         context,
         ...interventionDecision.parameters
       });
-      
+
       await this.inc('writes');
       return this.respond({
         interventionExecuted: true,
@@ -3816,7 +4000,7 @@ As an autonomous agent, make the best decision and execute it immediately. No us
         message: 'Autonomous intervention executed by AI decision'
       });
     }
-    
+
     await this.inc('reads');
     return this.respond({
       interventionExecuted: false,
@@ -3830,11 +4014,11 @@ As an autonomous agent, make the best decision and execute it immediately. No us
   // Custom Token Management Implementation
   async generateCustomToken(data) {
     const { name, permissions, expiresIn } = data;
-    
+
     // Generate a secure token
     const tokenId = crypto.randomUUID();
     const token = `ct_${tokenId.replace(/-/g, '').substring(0, 32)}`;
-    
+
     const tokenData = {
       id: tokenId,
       token,
@@ -3846,11 +4030,11 @@ As an autonomous agent, make the best decision and execute it immediately. No us
       lastUsed: null,
       usageCount: 0
     };
-    
+
     // Store token data
     const key = `customToken:${tokenId}`;
     await this.state.storage.put(key, tokenData);
-    
+
     // Also store in user's token list
     const userTokens = await this.state.storage.get('userCustomTokens') || [];
     userTokens.push({
@@ -3861,7 +4045,7 @@ As an autonomous agent, make the best decision and execute it immediately. No us
       active: tokenData.active
     });
     await this.state.storage.put('userCustomTokens', userTokens);
-    
+
     await this.inc('writes');
     return this.respond({
       success: true,
@@ -3879,7 +4063,7 @@ As an autonomous agent, make the best decision and execute it immediately. No us
 
   async listCustomTokens() {
     const userTokens = await this.state.storage.get('userCustomTokens') || [];
-    
+
     await this.inc('reads');
     return this.respond({
       tokens: userTokens.map(token => ({
@@ -3887,7 +4071,7 @@ As an autonomous agent, make the best decision and execute it immediately. No us
         name: token.name,
         createdAt: token.createdAt,
         permissions: token.permissions,
-        active: token.active,
+        active: token.active
         // Don't include actual token value in list
       })),
       count: userTokens.length
@@ -3896,31 +4080,31 @@ As an autonomous agent, make the best decision and execute it immediately. No us
 
   async revokeCustomToken(data) {
     const { tokenId } = data;
-    
+
     if (!tokenId) {
       return new Response('Token ID required', { status: 400 });
     }
-    
+
     // Get token data
     const tokenKey = `customToken:${tokenId}`;
     const tokenData = await this.state.storage.get(tokenKey);
-    
+
     if (!tokenData) {
       return new Response('Token not found', { status: 404 });
     }
-    
+
     // Mark as inactive
     tokenData.active = false;
     tokenData.revokedAt = new Date().toISOString();
     await this.state.storage.put(tokenKey, tokenData);
-    
+
     // Update user token list
     const userTokens = await this.state.storage.get('userCustomTokens') || [];
-    const updatedTokens = userTokens.map(token => 
+    const updatedTokens = userTokens.map(token =>
       token.id === tokenId ? { ...token, active: false } : token
     );
     await this.state.storage.put('userCustomTokens', updatedTokens);
-    
+
     await this.inc('writes');
     return this.respond({
       success: true,
@@ -3931,51 +4115,51 @@ As an autonomous agent, make the best decision and execute it immediately. No us
 
   async validateCustomToken(data) {
     const { token } = data;
-    
+
     if (!token?.startsWith('ct_')) {
       return this.respond({
         valid: false,
         message: 'Invalid token format'
       });
     }
-    
+
     // Search for token in storage
     const tokenList = await this.state.storage.list({ prefix: 'customToken:' });
     let tokenData = null;
-    
+
     for (const [, value] of tokenList) {
       if (value && value.token === token) {
         tokenData = value;
         break;
       }
     }
-    
+
     if (!tokenData) {
       return this.respond({
         valid: false,
         message: 'Token not found'
       });
     }
-    
+
     if (!tokenData.active) {
       return this.respond({
         valid: false,
         message: 'Token has been revoked'
       });
     }
-    
+
     if (tokenData.expiresAt && new Date() > new Date(tokenData.expiresAt)) {
       return this.respond({
         valid: false,
         message: 'Token has expired'
       });
     }
-    
+
     // Update usage stats
     tokenData.lastUsed = new Date().toISOString();
     tokenData.usageCount = (tokenData.usageCount || 0) + 1;
     await this.state.storage.put(`customToken:${tokenData.id}`, tokenData);
-    
+
     await this.inc('reads');
     return this.respond({
       valid: true,
@@ -3996,23 +4180,23 @@ As an autonomous agent, make the best decision and execute it immediately. No us
       allowedPermissions: ['read', 'write', 'admin'],
       requireExpiry: false
     };
-    
+
     await this.inc('reads');
     return this.respond(settings);
   }
 
   async updateTokenSettings(data) {
     const currentSettings = await this.state.storage.get('tokenSettings') || {};
-    
+
     const newSettings = {
       ...currentSettings,
       ...data,
       updatedAt: new Date().toISOString()
     };
-    
+
     await this.state.storage.put('tokenSettings', newSettings);
     await this.inc('writes');
-    
+
     return this.respond({
       success: true,
       settings: newSettings,
