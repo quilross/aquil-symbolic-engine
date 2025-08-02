@@ -27,7 +27,7 @@
 This repository includes comprehensive CI/CD automation for reliable deployment:
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+
 - npm
 
 ### Quick Start
