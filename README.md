@@ -30,6 +30,9 @@ This repository includes comprehensive CI/CD automation for reliable deployment:
 - Node.js 18+
 - npm
 
+### GitHub Codespaces
+This repository ships with a ready-to-use [dev container](.devcontainer/devcontainer.json). Open it in GitHub Codespaces to get a cloud-hosted Node.js 18 environment with dependencies installed automatically.
+
 ### Quick Start
 ```bash
 # Install dependencies
@@ -60,6 +63,7 @@ The GitHub Actions workflow automatically:
 - ✅ Validates JavaScript syntax
 - ✅ Tests deployment configuration
 - ✅ Runs OpenAPI sync validation
+- ✅ Validates OpenAPI schema for OpenAI custom actions
 - ✅ Performs comprehensive project validation
 
 ## 🛡️ Security & Validation

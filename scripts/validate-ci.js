@@ -7,6 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import SwaggerParser from '@apidevtools/swagger-parser';
 
 const WORKER_DIR = './worker';
 const REQUIRED_FILES = [
@@ -96,6 +97,15 @@ try {
   }
 } catch (err) {
   log('error', `Failed to read wrangler.toml: ${err.message}`);
+}
+
+// Validate OpenAPI schema
+console.log('\n📘 Validating OpenAPI specification...');
+try {
+  await SwaggerParser.validate(path.join(WORKER_DIR, 'src/openapi-core.json'));
+  log('info', 'OpenAPI schema is valid');
+} catch (err) {
+  log('error', `OpenAPI validation failed: ${err.message}`);
 }
 
 // Summary
