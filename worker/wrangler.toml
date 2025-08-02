@@ -3,7 +3,6 @@ main = "src/index.js"
 compatibility_date = "2024-11-01"
 account_id = "b07412f2f2389e8b537051bc092f3376"
 
-# Build configuration
 [build]
 command = ""
 
@@ -15,13 +14,9 @@ id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 name = "USER_STATE"
 class_name = "UserState"
 
-# Durable Objects migrations (required for free plan)
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["UserState"]
+new_classes = ["UserState"]
 
-# AI binding for enhanced agent capabilities
 [ai]
 binding = "AI"
-
-# Environment variables will be injected via GitHub Actions secrets during deployment
