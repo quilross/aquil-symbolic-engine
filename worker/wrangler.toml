@@ -24,7 +24,4 @@ new_sqlite_classes = ["UserState"]
 [ai]
 binding = "AI"
 
-# Environment variables
-[vars]
-API_TOKEN = "sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
-API_TOKEN_ADMIN = "sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2"
+# Environment variables will be injected via GitHub Actions secrets during deployment
