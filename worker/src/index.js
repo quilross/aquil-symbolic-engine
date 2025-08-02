@@ -1,66 +1,152 @@
-// index.js — ARK 4.3 SOLO MODE w/ Gift Trigger, KV Ready
-
-import { getSystemHealth, getAgentSuggestions, getGeneKeyGuidance, getEffectivenessDashboard, getRecoverySupport, checkArkCoherence, getPhiladelphiaContext, getLivePhiladelphiaEvents, getIdentityOrchestration, getCreativeEmergence, getAlphaPresenceGuidance, getSilenceMapping, getSynchronicityTracking, activateAquilProbe, trackEmotionalWave, manifestorInitiation, activateThroatcraft, getTraumaInformedResponse, orchestrateIdentities, getPredictiveProtocol, contextVoiceSwitch, getNervousSystemGuidance, getNeighborhoodEnergy, getCattleDogGuidance, getCompanionBondingAdvice, getSomaticAwareness, getSomaticRegulation, getSomaticTraumaRelease, aiEnhancedResponse, getVoiceEmergenceProtocol, giftInstinctTrigger } from "./routes.js";
-
 export default {
-  async fetch(request, env, ctx) {
-    // 🛡️ Safe JSON fallback
-    if (!Request.prototype._jsonSafe) {
-      const originalJson = Request.prototype.json;
-      Request.prototype.json = async function () {
-        try {
-          return await originalJson.call(this);
-        } catch (err) {
-          console.warn("⚠️ Safe JSON fallback triggered:", err.message, {
-            url: this.url,
-            method: this.method,
-          });
-          return {};
-        };
-      };
-      Request.prototype._jsonSafe = true;
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const method = request.method.toUpperCase();
+
+    // CORS preflight
+    if (method === "OPTIONS") {
+      return new Response(null, { status: 200, headers: corsHeaders() });
     }
 
-    const url = new URL(request.url);
-    const pathname = url.pathname;
-    console.log("🌐 Request received:", request.method, pathname);
+    // Health check
+    if (path === "/system/health" && method === "GET") {
+      return jsonResponse({
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        worker: "signal_q",
+        version: "v6.0"
+      });
+    }
 
-    // Diagnostic GET endpoints
-    if (pathname === "/system/health") return await getSystemHealth();
-    if (pathname === "/agent-suggestions") return await getAgentSuggestions();
-    if (pathname === "/gene-key-guidance") return await getGeneKeyGuidance();
-    if (pathname === "/effectiveness-dashboard") return await getEffectivenessDashboard();
-    if (pathname === "/recovery-support") return await getRecoverySupport();
-    if (pathname === "/ark-coherence-check") return await checkArkCoherence();
-    if (pathname === "/philadelphia-context") return await getPhiladelphiaContext();
-    if (pathname === "/live-philadelphia-events") return await getLivePhiladelphiaEvents();
-    if (pathname === "/identity/orchestration") return await getIdentityOrchestration();
-    if (pathname === "/recovery/creative-emergence") return await getCreativeEmergence();
-    if (pathname === "/lunacraft/alpha-presence") return await getAlphaPresenceGuidance();
-    if (pathname === "/throatcraft/silence-mapping") return await getSilenceMapping();
-    if (pathname === "/philadelphia/synchronicity") return await getSynchronicityTracking();
+    // Dynamic Actions endpoint
+    const actionsPrefix = "/actions/";
+    if (path.startsWith(actionsPrefix) && method === "POST") {
+      const actionName = decodeURIComponent(path.slice(actionsPrefix.length));
+      if (!actionName) {
+        return jsonResponse({ error: "Missing actionName in path." }, 400);
+      }
 
-    // POST endpoints (mutation, trigger, or user-originating data)
-    if (pathname === "/protocols/aquil-probe") return await activateAquilProbe(request);
-    if (pathname === "/emotional-wave-tracker") return await trackEmotionalWave(request);
-    if (pathname === "/manifestor-initiation") return await manifestorInitiation(request);
-    if (pathname === "/throatcraft-session") return await activateThroatcraft(request);
-    if (pathname === "/trauma-informed-response") return await getTraumaInformedResponse(request);
-    if (pathname === "/multi-identity-orchestration") return await orchestrateIdentities(request);
-    if (pathname === "/predictive-protocol") return await getPredictiveProtocol();
-    if (pathname === "/identity/voice-switch") return await contextVoiceSwitch(request);
-    if (pathname === "/recovery/nervous-system") return await getNervousSystemGuidance(request);
-    if (pathname === "/philadelphia/neighborhood-energy") return await getNeighborhoodEnergy(request);
-    if (pathname === "/lunacraft/cattle-dog-guidance") return await getCattleDogGuidance(request);
-    if (pathname === "/lunacraft/companion-bonding") return await getCompanionBondingAdvice(request);
-    if (pathname === "/somatic/body-awareness") return await getSomaticAwareness(request);
-    if (pathname === "/somatic/nervous-system-regulation") return await getSomaticRegulation(request);
-    if (pathname === "/somatic/trauma-release") return await getSomaticTraumaRelease(request);
-    if (pathname === "/ai-enhance") return await aiEnhancedResponse(request);
-    if (pathname === "/throatcraft/voice-emergence") return await getVoiceEmergenceProtocol(request);
-    if (pathname === "/ritual/gift-instinct-trigger") return await giftInstinctTrigger(request);
+      // Parse JSON body if present
+      let input = {};
+      if (request.headers.get("content-type")?.includes("application/json")) {
+        try {
+          input = await request.json();
+        } catch (e) {
+          return jsonResponse({ error: "Invalid JSON body." }, 400);
+        }
+      }
 
-    // Final fallback
-    return new Response("Not Found", { status: 404 });
-  },
+      // Map of all supported actions
+      const handlers = {
+        getSystemHealth: async () => ({
+          status: "healthy",
+          timestamp: new Date().toISOString(),
+          worker: "signal_q",
+          version: "v6.0"
+        }),
+        activateAquilProbe: async () => ({
+          result: "probe-executed",
+          aiReasoning: "Auto-decision: Proceeded.",
+          friction: [],
+          autonomousExecution: true
+        }),
+        getVoiceEmergenceProtocol: async () => ({
+          state: "emerging",
+          protocol: {
+            practices: ["Vocal warm-ups", "Gentle breath work"],
+            affirmations: ["My voice is ready", "I speak with confidence"]
+          }
+        }),
+        list: async () => ({
+          actions: [
+            {
+              name: "getSystemHealth",
+              description: "Returns system status and timestamp."
+            },
+            {
+              name: "activateAquilProbe",
+              description: "Runs a system-wide probe for protocol readiness."
+            },
+            {
+              name: "getVoiceEmergenceProtocol",
+              description: "Retrieves a custom voice activation sequence."
+            },
+            {
+              name: "deploy",
+              description: "Triggers a GitHub Actions workflow to deploy the Worker."
+            },
+            {
+              name: "list",
+              description: "Lists all available actions and their descriptions."
+            }
+          ]
+        }),
+        deploy: async () => {
+          // Trigger GitHub Actions workflow_dispatch event
+          const repo = "quilross/aquil-symbolic-engine";
+          const workflow = "deploy.yml";
+          const branch = "main";
+          const githubToken = env.GITHUB_TOKEN;
+
+          if (!githubToken) {
+            return { success: false, error: "GitHub token not configured." };
+          }
+
+          const res = await fetch(
+            `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `token ${githubToken}`,
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                ref: branch
+              })
+            }
+          );
+          if (!res.ok) {
+            const error = await res.text();
+            return { success: false, error };
+          }
+          return { success: true, message: "Deployment triggered via GitHub Actions." };
+        }
+      };
+
+      const handler = handlers[actionName];
+      if (!handler) {
+        return jsonResponse({ error: `Unknown action '${actionName}'` }, 404);
+      }
+
+      let output;
+      try {
+        output = await handler(input, env);
+      } catch (err) {
+        return jsonResponse({ error: err.message }, 500);
+      }
+      return jsonResponse(output);
+    }
+
+    return new Response("Not found", { status: 404 });
+  }
 };
+
+function jsonResponse(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: {
+      ...corsHeaders(),
+      "Content-Type": "application/json"
+    }
+  });
+}
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+}
