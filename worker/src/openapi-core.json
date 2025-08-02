@@ -3,7 +3,7 @@
   "info": {
     "title": "Signalhaven GPT Action API",
     "version": "v6.0",
-    "description": "Symbolic and somatic GPT Action endpoints for use in the AQUIL/ARK framework."
+    "description": "Unlimited Actions via dynamic /actions/{actionName} endpoint. See /actions/list for available actions. You can deploy directly via /actions/deploy."
   },
   "servers": [
     { "url": "https://signal_q.catnip-pieces1.workers.dev" }
@@ -13,63 +13,45 @@
       "get": {
         "operationId": "getSystemHealth",
         "summary": "Check system uptime and timestamp.",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
-    "/protocols/aquil-probe": {
+    "/actions/{actionName}": {
       "post": {
-        "operationId": "activateAquilProbe",
-        "summary": "Run system-wide probe for protocol readiness.",
-        "requestBody": { "required": false },
-        "responses": { "200": { "description": "OK" } }
-      }
-    },
-    "/throatcraft/voice-emergence": {
-      "post": {
-        "operationId": "getVoiceEmergenceProtocol",
-        "summary": "Retrieve custom voice activation sequence.",
-        "requestBody": { "required": false },
-        "responses": { "200": { "description": "OK" } }
-      }
-    },
-    "/ritual/gift-instinct-trigger": {
-      "post": {
-        "operationId": "triggerGiftInstinct",
-        "summary": "Trigger symbolic gifting logic based on appreciation context.",
+        "operationId": "invokeAction",
+        "summary": "Invoke any named Action dynamically, including deploy.",
+        "parameters": [
+          {
+            "name": "actionName",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "The name of the Action to invoke. Use 'list' to enumerate all available actions."
+          }
+        ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "target": { "type": "string" },
-                  "emotionalContext": { "type": "string" }
-                },
-                "required": ["target", "emotionalContext"]
-              }
+              "schema": { "type": "object" }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Gift suggestion with symbolic context",
+            "description": "Action response or list of actions.",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "gift": { "type": "string" },
-                    "why": { "type": "string" },
-                    "ritual": { "type": "string" }
-                  }
-                }
+                "schema": { "type": "object" }
               }
             }
           }
         }
       }
     }
-  },
-  "components": {}
+  }
 }
