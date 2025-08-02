@@ -12,10 +12,15 @@
     "lint": "npm audit --audit-level moderate",
     "build": "cd worker && wrangler deploy --dry-run"
   },
-  "keywords": ["cloudflare-workers", "api", "transcendence-agent"],
+  "keywords": [
+    "cloudflare-workers",
+    "api",
+    "transcendence-agent"
+  ],
   "author": "quilross",
   "license": "MIT",
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.0.0",
     "wrangler": "^4.0.0"
   }
 }
