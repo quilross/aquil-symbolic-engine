@@ -5,9 +5,15 @@
  * Tests the /system/health endpoint with various scenarios
  */
 
-const BASE_URL = 'https://signal_q.catnip-pieces1.workers.dev';
-const USER_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
-const ADMIN_TOKEN = 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
+const BASE_URL = process.env.API_BASE_URL;
+const USER_TOKEN = process.env.USER_TOKEN;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+
+if (!BASE_URL || !USER_TOKEN || !ADMIN_TOKEN) {
+  console.log("⚠️  Skipping tests. Set API_BASE_URL, USER_TOKEN and ADMIN_TOKEN to run health checks.");
+  process.exit(0);
+}
+
 
 console.log('🏥 Health Endpoint Test Suite\n');
 console.log(`🌐 API Base: ${BASE_URL}`);

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://signal_q.catnip-pieces1.workers.dev",
+      "url": "https://your-worker.example.workers.dev",
       "description": "Production Cloudflare Worker"
     }
   ],

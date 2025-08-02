@@ -1,73 +1,57 @@
-# Signal Q - Live & Ready 🌟
+# Signal Q Cloudflare Worker
 
-## 🎯 **For CustomGPT**
-- **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
-- **Auth**: Bearer `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
-- **Schema**: Upload `worker/src/openapi-core.json`
+A JavaScript/TypeScript Cloudflare Worker backend for the Signal Q API. The worker is fully runnable inside GitHub Codespaces with no local dependencies.
 
-## 🔑 **Your API Tokens**
-- **User Token**: `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
-- **Admin Token**: `sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o`
+## Development in Codespaces
+1. Open this repository in GitHub Codespaces. The provided dev container installs Node.js 18 and dependencies.
+2. Edit worker code in `worker/src` as needed.
 
-## 📁 **Essential Files**
-```
-/worker/
-  ├── src/
-  │   ├── index.js           # Your live API (deployed)
-  │   └── openapi-core.json  # Upload this to CustomGPT
-  └── wrangler.toml          # Cloudflare config
-```
+## Run the Worker Locally
+Use Wrangler's dev server inside Codespaces:
 
-**API is live at**: https://signal_q.catnip-pieces1.workers.dev ✨
-
----
-
-## 🚀 Deployment Automation
-
-This repository includes comprehensive CI/CD automation for reliable deployment:
-
-### Prerequisites
-- Node.js 18+
-- npm
-
-### GitHub Codespaces
-This repository ships with a ready-to-use [dev container](.devcontainer/devcontainer.json). Open it in GitHub Codespaces to get a cloud-hosted Node.js 18 environment with dependencies installed automatically.
-
-### Quick Start
 ```bash
-# Install dependencies
-npm install
+npm run dev
+```
 
-# Run validation checks
-npm run validate
+## Testing
+`npm test` runs the health test suite. Set the following environment variables to exercise the live API; if they are not provided the tests are skipped.
 
-# Build and validate worker
-npm run build
+- `API_BASE_URL`
+- `USER_TOKEN`
+- `ADMIN_TOKEN`
 
-# Deploy to Cloudflare Workers
+Example:
+```bash
+API_BASE_URL=https://your-worker.example.workers.dev \
+USER_TOKEN=ct_user_token \
+ADMIN_TOKEN=ct_admin_token \
+npm test
+```
+
+## Deployment
+Deploy the worker with Wrangler:
+
+```bash
 npm run deploy
 ```
 
-### Available Scripts
-- `npm run validate` - Run comprehensive validation checks
-- `npm run lint` - Security audit and linting
-- `npm run build` - Build validation (dry-run)
-- `npm run test` - Run health tests
-- `npm run deploy` - Deploy to Cloudflare Workers
-- `npm run dev` - Start development server
+The deploy script requires a `CLOUDFLARE_API_TOKEN` and any runtime secrets (such as `API_TOKEN` and `API_TOKEN_ADMIN`) supplied via environment variables or GitHub Actions secrets. Pushes to `main` trigger the CI workflow in `.github/workflows/ci.yml`.
 
-### CI/CD Pipeline
-The GitHub Actions workflow automatically:
-- ✅ Validates npm dependencies and security
-- ✅ Checks worker configuration
-- ✅ Validates JavaScript syntax
-- ✅ Tests deployment configuration
-- ✅ Runs OpenAPI sync validation
-- ✅ Validates OpenAPI schema for OpenAI custom actions
-- ✅ Performs comprehensive project validation
+## Extending the Agent
+- Add new endpoints or logic in `worker/src/index.js`.
+- Update `worker/src/openapi-core.json` when APIs change.
+- Use modular functions and avoid Node.js-only APIs (e.g., `fs`, `net`).
 
-## 🛡️ Security & Validation
-- Automated security auditing with `npm audit`
-- Wrangler v4 for latest security updates
-- Comprehensive deployment validation
-- Zero-vulnerability dependency management
+## Repository Structure
+```
+/worker/
+  ├── src/
+  │   ├── index.js           # Worker implementation
+  │   └── openapi-core.json  # OpenAPI schema
+  ├── health-test.js         # Optional health check script
+  ├── test-api.js            # Basic API invocation helper
+  └── wrangler.toml          # Cloudflare configuration
+```
+
+## Security
+No credentials or secrets are stored in the repository. Provide tokens through environment variables or GitHub Actions secrets when deploying or running tests.

@@ -9,7 +9,7 @@ info:
 
 # ── WHERE THE GPT WILL CALL ─────────────────────────────────────────────
 servers:
-  - url: https://c.catnip-pieces1.workers.dev/v1            # ← put YOUR worker sub-domain here
+  - url: https://your-worker.example.workers.dev/v1            # ← put YOUR worker sub-domain here
     description: Cloudflare Worker (token-gated)
 
 # ── GLOBAL SECURITY (Bearer token) ─────────────────────────────────────
