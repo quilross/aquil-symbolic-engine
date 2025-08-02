@@ -2,6 +2,18 @@
 // Provides basic REST endpoints with persistent memory using KV and Durable Objects.
 // Designed for the free Cloudflare Workers plan.
 
+// === TEMP DEV TOKENS ===
+// Hardcoded for local development only. Replace with secure secrets in production.
+const DEV_SIGNALQ_API_TOKEN = 'dev-api-token';
+const DEV_SIGNALQ_ADMIN_TOKEN = 'dev-admin-token';
+
+// Extract Bearer token from Authorization header
+function getBearerToken(request) {
+  const auth = request.headers.get('Authorization');
+  if (!auth || !auth.startsWith('Bearer ')) return null;
+  return auth.slice('Bearer '.length);
+}
+
 export default {
   async fetch(request, env) {
     // Handle CORS preflight requests FIRST, before auth
@@ -16,75 +28,100 @@ export default {
       });
     }
 
-    // Simple bearer token auth. Token configured in wrangler.toml as API_TOKEN
-    const auth = request.headers.get('Authorization') || '';
-    const [, token] = auth.split(' ');
-    if (env.API_TOKEN && token !== env.API_TOKEN && token !== env.API_TOKEN_ADMIN) {
-      return new Response('unauthorized', { status: 401 });
-    }
+    // Prefer env tokens; fallback to dev tokens for local testing
+    const SIGNALQ_API_TOKEN = env?.SIGNALQ_API_TOKEN || DEV_SIGNALQ_API_TOKEN;
+    const SIGNALQ_ADMIN_TOKEN = env?.SIGNALQ_ADMIN_TOKEN || DEV_SIGNALQ_ADMIN_TOKEN;
 
-    // Handle system health check without Durable Objects for testing
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
+    const token = getBearerToken(request);
+
     if (path === '/system/health') {
+      if (!token) {
+        return new Response('Unauthorized: No Bearer token', { status: 401 });
+      }
+      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
+        return new Response('Forbidden: Invalid token', { status: 403 });
+      }
+
       const endpointCount = 76; // Updated endpoint count
-      const memoryUsage = typeof performance !== 'undefined' && performance.memory ? 
+      const memoryUsage = typeof performance !== 'undefined' && performance.memory ?
         Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 'unknown';
-      
+
       return new Response(JSON.stringify({
         overall: "healthy",
-        api: { 
-          status: "operational", 
-          responseTime: 45, 
+        api: {
+          status: "operational",
+          responseTime: 45,
           endpoints: endpointCount,
           version: "2.1.0"
         },
-        storage: { 
-          status: "ready", 
+        storage: {
+          status: "ready",
           usage: "minimal",
           durableObjects: "configured"
         },
-        deployment: { 
-          status: "live", 
+        deployment: {
+          status: "live",
           lastUpdate: new Date().toISOString(),
           worker: "signal_q",
           memory: `${memoryUsage}MB`
         },
         ai: {
           binding: "enabled",
-          model: "@cf/meta/llama-3.1-8b-instruct"
+          model: "@cf/meta/llama-3.1-8b-instruct",
         },
         authentication: {
           bearerToken: "required",
-          adminAccess: "configured"
+          adminAccess: "configured",
         },
         recommendations: ["Signal Q is live and operational"],
         timestamp: new Date().toISOString(),
         uptime: 'unknown'
-      }), { 
-        headers: { 
+      }), {
+        headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-        } 
+        }
+      });
+    }
+
+    if (path === '/admin/reset') {
+      if (!token) {
+        return new Response('Unauthorized: No Bearer token', { status: 401 });
+      }
+      if (token !== SIGNALQ_ADMIN_TOKEN) {
+        return new Response('Forbidden: Admin only', { status: 403 });
+      }
+
+      // Placeholder admin reset logic
+      return new Response(JSON.stringify({ status: 'admin_reset_ok' }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+        }
       });
     }
 
     const userId = request.headers.get('X-User-Id') || 'anonymous';
     const id = env.USER_STATE.idFromName(userId);
     const obj = env.USER_STATE.get(id);
-    
+
     // Create a new request with the token in headers for the Durable Object
     const newRequest = new Request(request.url, {
       method: request.method,
       headers: {
         ...Object.fromEntries(request.headers.entries()),
-        'X-Token': token
+        'X-Token': token || ''
       },
       body: request.body
     });
-    
+
     return obj.fetch(newRequest);
   }
 };
