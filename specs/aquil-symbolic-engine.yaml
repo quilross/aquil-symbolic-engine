@@ -1,0 +1,251 @@
+openapi: 3.0.3
+info:
+  title: AQUIL Symbolic Engine API
+  version: 1.0.0
+  description: |
+    API for analyzing symbolic data and managing voice profiles and shifts.
+servers:
+  - url: https://c.catnip-pieces1.workers.dev/v1
+    description: Production Cloudflare Worker
+security:
+  - ApiKeyAuth: []
+paths:
+  /analyze:
+    post:
+      summary: Analyze symbolic data
+      operationId: analyzeSymbolicData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequest'
+      responses:
+        '200':
+          description: Successful analysis
+          headers:
+            Access-Control-Allow-Origin:
+              $ref: '#/components/headers/AccessControlAllowOrigin'
+            Access-Control-Allow-Methods:
+              $ref: '#/components/headers/AccessControlAllowMethods'
+            Access-Control-Allow-Headers:
+              $ref: '#/components/headers/AccessControlAllowHeaders'
+            X-RateLimit-Remaining:
+              description: Remaining requests allowed for the current period
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /voice-profiles/{profileId}:
+    get:
+      summary: Retrieve a voice profile by ID
+      operationId: getVoiceProfile
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Voice profile returned
+          headers:
+            Access-Control-Allow-Origin: { $ref: '#/components/headers/AccessControlAllowOrigin' }
+            Access-Control-Allow-Methods: { $ref: '#/components/headers/AccessControlAllowMethods' }
+            Access-Control-Allow-Headers: { $ref: '#/components/headers/AccessControlAllowHeaders' }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /voice-shifts:
+    post:
+      summary: Record a voice shift event
+      operationId: recordVoiceShift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoiceShift'
+      responses:
+        '201':
+          description: Voice shift recorded
+          headers:
+            Access-Control-Allow-Origin: { $ref: '#/components/headers/AccessControlAllowOrigin' }
+            Access-Control-Allow-Methods: { $ref: '#/components/headers/AccessControlAllowMethods' }
+            Access-Control-Allow-Headers: { $ref: '#/components/headers/AccessControlAllowHeaders' }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceShift'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  headers:
+    AccessControlAllowOrigin:
+      description: CORS origin
+      schema:
+        type: string
+        example: "*"
+    AccessControlAllowMethods:
+      description: Allowed request methods
+      schema:
+        type: string
+        example: "GET, POST, OPTIONS"
+    AccessControlAllowHeaders:
+      description: Allowed request headers
+      schema:
+        type: string
+        example: "Authorization, Content-Type"
+    RetryAfter:
+      description: Number of seconds to wait before making a new request
+      schema:
+        type: integer
+  schemas:
+    AnalysisRequest:
+      type: object
+      properties:
+        data:
+          type: string
+          description: Input data for analysis
+      required:
+        - data
+    AnalysisResult:
+      type: object
+      properties:
+        symbol:
+          type: string
+        meaning:
+          type: string
+      required:
+        - symbol
+        - meaning
+    AnalysisResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalysisResult'
+    VoiceProfile:
+      type: object
+      properties:
+        profile_id:
+          type: string
+        activation_level:
+          type: string
+          enum: [shadow, gift, siddhi]
+        tone:
+          type: string
+      required:
+        - profile_id
+        - activation_level
+        - tone
+    VoiceShift:
+      type: object
+      properties:
+        current_voice_profile_id:
+          type: string
+        next_voice_profile_id:
+          type: string
+        trigger_source:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - current_voice_profile_id
+        - next_voice_profile_id
+        - trigger_source
+        - timestamp
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+  responses:
+    BadRequest:
+      description: Invalid request
+      headers:
+        Access-Control-Allow-Origin: { $ref: '#/components/headers/AccessControlAllowOrigin' }
+        Access-Control-Allow-Methods: { $ref: '#/components/headers/AccessControlAllowMethods' }
+        Access-Control-Allow-Headers: { $ref: '#/components/headers/AccessControlAllowHeaders' }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid API key
+      headers:
+        Access-Control-Allow-Origin: { $ref: '#/components/headers/AccessControlAllowOrigin' }
+        Access-Control-Allow-Methods: { $ref: '#/components/headers/AccessControlAllowMethods' }
+        Access-Control-Allow-Headers: { $ref: '#/components/headers/AccessControlAllowHeaders' }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      headers:
+        Access-Control-Allow-Origin: { $ref: '#/components/headers/AccessControlAllowOrigin' }
+        Access-Control-Allow-Methods: { $ref: '#/components/headers/AccessControlAllowMethods' }
+        Access-Control-Allow-Headers: { $ref: '#/components/headers/AccessControlAllowHeaders' }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Access-Control-Allow-Origin: { $ref: '#/components/headers/AccessControlAllowOrigin' }
+        Access-Control-Allow-Methods: { $ref: '#/components/headers/AccessControlAllowMethods' }
+        Access-Control-Allow-Headers: { $ref: '#/components/headers/AccessControlAllowHeaders' }
+        Retry-After: { $ref: '#/components/headers/RetryAfter' }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServerError:
+      description: Server error
+      headers:
+        Access-Control-Allow-Origin: { $ref: '#/components/headers/AccessControlAllowOrigin' }
+        Access-Control-Allow-Methods: { $ref: '#/components/headers/AccessControlAllowMethods' }
+        Access-Control-Allow-Headers: { $ref: '#/components/headers/AccessControlAllowHeaders' }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
