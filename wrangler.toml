@@ -24,3 +24,5 @@ binding = "AI"
 [env.production]
 main = "src/index.js"
 compatibility_date = "2024-11-01"
+
+npm install --save-dev wrangler@4
