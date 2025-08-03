@@ -1,4 +1,4 @@
-name: CI
+name: signal_q
 
 on:
   push:
