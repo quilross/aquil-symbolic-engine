@@ -18,6 +18,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           environment: production
-          command: deploy
+          command: npx wrangler versions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
