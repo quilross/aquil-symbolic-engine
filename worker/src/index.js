@@ -1,4 +1,4 @@
-iconst actionsList = {
+iconst ; = {
   actions: [
     {
       name: "getSystemHealth",
