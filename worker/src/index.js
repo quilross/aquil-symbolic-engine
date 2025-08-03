@@ -784,7 +784,6 @@ export class UserState {
   }
 
   async exportLogs(token) {
-codex/update-index.js-bearer-token-auth
     if (token !== this.env.SIGNALQ_ADMIN_TOKEN) {
 
     if (token !== this.env.API_TOKEN_ADMIN) {
