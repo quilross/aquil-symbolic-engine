@@ -4,7 +4,7 @@
     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     environment: production
-    command: deploy
+    deploy command: deploy
     wranglerVersion: "3.50.0"
     quiet: false
   env:
