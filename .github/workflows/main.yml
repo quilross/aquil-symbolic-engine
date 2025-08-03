@@ -1,17 +1,15 @@
 name: signal_q
-
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -21,12 +19,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Deploy to Cloudflare Workers with Wrangler
-        uses: cloudflare/wrangler-action@v3.1.0
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          environment: production
-          command: deploy
+      - name: Deploy with Wrangler
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy --minify --verbose
