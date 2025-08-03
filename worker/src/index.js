@@ -186,6 +186,10 @@ function getBearerToken(request) {
 
 export default {
   async fetch(request, env) {
+ codex/update-index.js-bearer-token-auth
+    
+    codex/update-index.js-bearer-token-auth
+main
     // Handle CORS preflight requests FIRST, before auth
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -782,7 +786,11 @@ export class UserState {
   }
 
   async exportLogs(token) {
+codex/update-index.js-bearer-token-auth
     if (token !== this.env.SIGNALQ_ADMIN_TOKEN) {
+
+    if (token !== this.env.API_TOKEN_ADMIN) {
+main
       return new Response('forbidden', { status: 403 });
     }
     const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
@@ -809,6 +817,7 @@ export class UserState {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method.toUpperCase();
+ main
 
     if (method === "OPTIONS") {
       return new Response(null, { status: 200, headers: corsHeaders() });
