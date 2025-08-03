@@ -145,7 +145,7 @@ const handlers = {
     ritual: "Gift presented in morning ritual"
   }),
   aiEnhancedResponse: async (input) => ({
-    enhanced: [AI]: ${input.prompt || "No prompt"}
+    enhanced: `[AI]: ${input.prompt || "No prompt"}`
   }),
   createIdentityNode: async (input) => ({
     created: true,
@@ -237,7 +237,7 @@ export default {
           status: "live",
           lastUpdate: new Date().toISOString(),
           worker: "signal_q",
-          memory: ${memoryUsage}MB
+          memory: `${memoryUsage}MB`
         },
         ai: {
           binding: "enabled",
@@ -633,7 +633,7 @@ export class UserState {
   async createIdentityNode(node) {
     node.version = 1;
     node.timestamp = new Date().toISOString();
-    const key = identity:${node.identity_key};
+    const key = `identity:${node.identity_key}`;
     await this.state.storage.put(key, node);
     await this.inc('writes');
     return this.respond({ created: true });
@@ -666,7 +666,7 @@ export class UserState {
   async recordVoiceShift(shift) {
     shift.version = 1;
     shift.timestamp = new Date().toISOString();
-    const key = voice:${Date.now()};
+    const key = `voice:${Date.now()}`;
     await this.state.storage.put(key, shift);
     await this.inc('writes');
     return this.respond({ recorded: true });
@@ -674,7 +674,7 @@ export class UserState {
 
   // Log a symbolic memory snapshot
   async logMemory(log) {
-    const key = u:${this.state.id}:memory:${Date.now()};
+    const key = `u:${this.state.id}:memory:${Date.now()}`;
     log.version = 1;
     log.timestamp = new Date().toISOString();
     await this.state.storage.put(key, log);
@@ -686,12 +686,12 @@ export class UserState {
   async generateNarrative(data) {
     const friction = ['Narrative may omit important context'];
     await this.inc('reads');
-    return this.respond({ narrative: Reflecting on ${data.memory_log_id}, friction });
+    return this.respond({ narrative: `Reflecting on ${data.memory_log_id}`, friction });
   }
 
   // Fetch a symbolic transition map from KV
   async getSymbolicMap(mapId) {
-    const map = await this.state.storage.get(map:${mapId});
+    const map = await this.state.storage.get(`map:${mapId}`);
     if (!map) return new Response('not found', { status: 404 });
     await this.inc('reads');
     return this.respond(map);
@@ -726,7 +726,7 @@ export class UserState {
 
   // Record a friction rating from the user
   async recordFrictionRating(data) {
-    const key = u:${this.state.id}:friction:${Date.now()};
+    const key = `u:${this.state.id}:friction:${Date.now()}`;
     const entry = {
       version: 1,
       timestamp: new Date().toISOString(),
@@ -753,7 +753,7 @@ export class UserState {
   async createPlayProtocol(play) {
     play.version = 1;
     play.timestamp = new Date().toISOString();
-    const key = play:${Date.now()};
+    const key = `play:${Date.now()}`;
     await this.state.storage.put(key, play);
     await this.inc('writes');
     return this.respond({ created: true });
@@ -763,7 +763,7 @@ export class UserState {
   async logMediaEngagement(media) {
     media.version = 1;
     media.timestamp = new Date().toISOString();
-    const key = u:${this.state.id}:media:${Date.now()};
+    const key = `u:${this.state.id}:media:${Date.now()}`;
     await this.state.storage.put(key, media);
     await this.inc('writes');
     return this.respond({ logged: true });
@@ -771,7 +771,7 @@ export class UserState {
 
   // Log user feedback and rotate leadership role
   async logFeedback(feedback) {
-    const key = u:${this.state.id}:feedback:${Date.now()};
+    const key = `u:${this.state.id}:feedback:${Date.now()}`;
     feedback.version = 1;
     feedback.timestamp = new Date().toISOString();
     const leader = (await this.state.storage.get('leader')) || 'agent';
@@ -784,13 +784,10 @@ export class UserState {
   }
 
   async exportLogs(token) {
-    if (token !== this.env.SIGNALQ_ADMIN_TOKEN) {
-
-    if (token !== this.env.API_TOKEN_ADMIN) {
-main
+    if (token !== this.env.SIGNALQ_ADMIN_TOKEN && token !== this.env.API_TOKEN_ADMIN) {
       return new Response('forbidden', { status: 403 });
     }
-    const list = await this.state.storage.list({ prefix: u:${this.state.id}: });
+    const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
     for (const [name, value] of list) {
       if (value) logs.push({ name, value });
@@ -801,8 +798,8 @@ main
   }
 
   // Return list of all logs for this user (simplified)
-  async getLogs => {
-    const list = await this.state.storage.list({ prefix: u:${this.state.id}: });
+  async getLogs() {
+    const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
     for (const [, value] of list) {
       if (value) logs.push(value);
@@ -811,70 +808,44 @@ main
     return this.respond({ logs });
   }
 
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const method = request.method.toUpperCase();
-
-    if (method === "OPTIONS") {
-      return new Response(null, { status: 200, headers: corsHeaders() });
-    }
-
-    // Health
-    if (path === "/system/health" && method === "GET") {
-      return jsonResponse(await handlers.getSystemHealth());
-    }
-    // Actions List
-    if ((path === "/actions/list" || path === "/workers/actions/list") && method === "POST") {
-      return jsonResponse(await handlers.list());
-    }
-    // Deploy Request
-    if (path === "/deploy/request" && method === "POST") {
-      return jsonResponse(await handlers.requestDeployment());
-    }
-    // Deploy Status
-    if (path === "/deploy/status" && method === "GET") {
-      return jsonResponse(await handlers.getDeploymentStatus());
-    }
-    // Dynamic actions: /actions/{actionName}
-    const actionsPrefix = "/actions/";
-    if (path.startsWith(actionsPrefix) && method === "POST") {
-      const actionName = decodeURIComponent(path.slice(actionsPrefix.length));
-      if (!actionName) return jsonResponse({ error: "Missing actionName in path." }, 400);
-
-      let input = {};
-      if (request.headers.get("content-type")?.includes("application/json")) {
-        try { input = await request.json(); }
-        catch (e) { return jsonResponse({ error: "Invalid JSON body." }, 400); }
-      }
-
-      const handler = handlers[actionName];
-      if (!handler) {
-        return jsonResponse({ error: Unknown action '${actionName}' }, 404);
-      }
-      let output;
-      try {
-        output = await handler(input, env);
-      } catch (err) {
-        return jsonResponse({ error: err.message }, 500);
-      }
-      return jsonResponse(output);
-    }
-    // GET /identity-nodes
-    if (path === "/identity-nodes" && method === "GET") {
-      return jsonResponse(await handlers.listIdentityNodes());
-    }
-    // POST /identity-nodes
-    if (path === "/identity-nodes" && method === "POST") {
-      let input = {};
-      if (request.headers.get("content-type")?.includes("application/json")) {
-        try { input = await request.json(); }
-        catch (e) { return jsonResponse({ error: "Invalid JSON body." }, 400); }
-      }
-      return jsonResponse(await handlers.createIdentityNode(input));
-    }
-    return new Response("Not found", { status: 404 });
+  // Helper methods
+  async inc(operation) {
+    // Increment counter for operation tracking
+    const key = `stats:${operation}`;
+    const current = (await this.state.storage.get(key)) || 0;
+    await this.state.storage.put(key, current + 1);
   }
-};
+
+  respond(data) {
+    return new Response(JSON.stringify(data), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+      }
+    });
+  }
+
+  async rotateDay() {
+    // Placeholder for day rotation logic
+    return true;
+  }
+
+  async getAIProtocolDecision(protocol, data) {
+    // Placeholder for AI decision logic
+    return {
+      shouldProceed: true,
+      reasoning: "AI analysis complete",
+      parameters: data
+    };
+  }
+
+  async autonomouslyExecuteProtocol(protocol, parameters) {
+    // Placeholder for autonomous protocol execution
+    return { executed: true, protocol, parameters };
+  }
+}
 
 function jsonResponse(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
