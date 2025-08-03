@@ -1,5 +1,5 @@
 {
-  "name": "signal-q-api",
+  "name": "signal-q",
   "version": "2.1.0",
   "description": "Signal Q - Autonomous Transcendence Agent API",
   "main": "worker/src/index.js",
@@ -12,10 +12,15 @@
     "lint": "npm audit --audit-level moderate",
     "build": "cd worker && wrangler deploy --dry-run"
   },
-  "keywords": ["cloudflare-workers", "api", "transcendence-agent"],
+  "keywords": [
+    "cloudflare-workers",
+    "api",
+    "transcendence-agent"
+  ],
   "author": "quilross",
   "license": "MIT",
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.0.0",
     "wrangler": "^4.0.0"
   }
 }

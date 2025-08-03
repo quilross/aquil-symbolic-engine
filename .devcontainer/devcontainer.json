@@ -1,0 +1,10 @@
+{
+  "name": "Signal Q API",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-18-bullseye",
+  "postCreateCommand": "npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint"]
+    }
+  }
+}
