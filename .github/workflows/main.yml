@@ -2,7 +2,7 @@ name: signal_q
 on:
   push:
     branches:
-      - main
+      - root
 
 jobs:
   deploy:
