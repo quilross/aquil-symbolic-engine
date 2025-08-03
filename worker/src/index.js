@@ -814,7 +814,6 @@ main
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method.toUpperCase();
- main
 
     if (method === "OPTIONS") {
       return new Response(null, { status: 200, headers: corsHeaders() });
