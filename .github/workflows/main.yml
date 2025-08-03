@@ -1,4 +1,4 @@
-- name: Deploy to Cloudflare Workers with Wrangler
+- name: singnal_q
   uses: cloudflare/wrangler-action@v3.1.0
   with:
     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
