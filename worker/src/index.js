@@ -416,7 +416,31 @@ export class UserState {
 
     return new Response('Not found', { status: 404 });
   }
+  // 🔁 Simple ping action
+  if (actionName === "ping") {
+    return new Response(
+      JSON.stringify({ status: "ok", echo: body || null }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
 
+  // 🚫 Block self-referencing GPT action
+  if (actionName === "invokeAction") {
+    return new Response(
+      JSON.stringify({
+        status: "blocked",
+        reason: "Self-referencing function call not allowed",
+        action: actionName
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
   // Handle core endpoints
   async handleCoreEndpoints(path, method, request, token) {
     const coreEndpoints = {
