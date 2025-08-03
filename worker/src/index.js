@@ -186,7 +186,6 @@ function getBearerToken(request) {
 
 export default {
   async fetch(request, env) {
-    codex/update-index.js-for-bearer-token-auth
     // Handle CORS preflight requests FIRST, before auth
     if (request.method === 'OPTIONS') {
       return new Response(null, {
