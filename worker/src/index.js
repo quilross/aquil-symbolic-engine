@@ -782,7 +782,7 @@ export class UserState {
   }
 
   async exportLogs(token) {
-    if (token !== this.env.API_TOKEN_ADMIN) {
+    if (token !== this.env.SIGNALQ_ADMIN_TOKEN) {
       return new Response('forbidden', { status: 403 });
     }
     const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
