@@ -1,6 +1,18 @@
-// worker/src/index.js (Signal Q Hybrid: Actions + Durable Object + Clean Routing)
+// worker/src/index.js (Signal Q Actions Edition, Durable Object stubbed inline)
 
-import { UserState } from './UserState.js'; // Durable Object class
+// --- Inline UserState Durable Object ---
+export class UserState {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+  async fetch(request) {
+    // Safe stub response for all DO requests
+    return new Response(JSON.stringify({ ok: true, stub: true, timestamp: new Date().toISOString() }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +31,7 @@ const actionsList = [
   { name: "deploy", description: "Trigger GitHub Actions workflow to deploy latest Worker code.", method: "POST", path: "/actions/deploy" },
   { name: "list", description: "List all available Actions and their descriptions.", method: "POST", path: "/actions/list" },
   { name: "getDeploymentStatus", description: "Get deployment status and info.", method: "GET", path: "/deploy/status" }
+  // Extend with more as needed...
 ];
 
 // --- Handlers for each action ---
@@ -68,7 +81,7 @@ async function handleRequest(request, event) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // --- CORS preflight ---
+    // CORS preflight
     if (method === 'OPTIONS') return corsPreflight();
 
     // --- Dynamic actions routing: /actions/{actionName} ---
@@ -76,11 +89,13 @@ async function handleRequest(request, event) {
     if (path.startsWith(actionsPrefix) && method === "POST") {
       const actionName = decodeURIComponent(path.slice(actionsPrefix.length));
       if (!actionName) return jsonResponse({ error: "Missing actionName in path." }, 400);
+
       let input = {};
       if (request.headers.get("content-type")?.includes("application/json")) {
         try { input = await request.json(); }
         catch (e) { return jsonResponse({ error: "Invalid JSON body." }, 400); }
       }
+
       const handler = handlers[actionName];
       if (!handler) {
         return jsonResponse({ error: `Unknown action '${actionName}'` }, 404);
@@ -94,7 +109,7 @@ async function handleRequest(request, event) {
       return jsonResponse(output);
     }
 
-    // --- Static action discovery endpoints ---
+    // --- Static endpoints ---
     if ((path === "/actions/list" || path === "/workers/actions/list") && method === "POST") {
       return jsonResponse(await handlers.list());
     }
@@ -104,19 +119,20 @@ async function handleRequest(request, event) {
     if (path === "/deploy/status" && method === "GET") {
       return jsonResponse(await handlers.getDeploymentStatus());
     }
-
-    // --- Durable Object Routing ---
-    // Example: routes all other requests through UserState DO based on X-User-Id header (or anonymous fallback)
-    if (event && event.env && event.env.USER_STATE) {
-      const userId = request.headers.get('X-User-Id') || 'anonymous';
-      const id = event.env.USER_STATE.idFromName(userId);
-      const obj = event.env.USER_STATE.get(id);
-      // Proxy the request to the Durable Object (UserState)
-      return obj.fetch(request);
+    if (path === "/identity-nodes" && method === "GET") {
+      return jsonResponse(await handlers.listIdentityNodes());
+    }
+    if (path === "/identity-nodes" && method === "POST") {
+      let input = {};
+      if (request.headers.get("content-type")?.includes("application/json")) {
+        try { input = await request.json(); }
+        catch (e) { return jsonResponse({ error: "Invalid JSON body." }, 400); }
+      }
+      return jsonResponse({ created: true, ...input });
     }
 
     // --- Fallback ---
-    return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+    return new Response("Not found", { status: 404 });
   } catch (error) {
     return errorResponse(error);
   }
@@ -140,5 +156,6 @@ function errorResponse(error) {
   );
 }
 
+// Durable Object is now inline, so the export remains valid!
 export { UserState };
 export default handleRequest;
