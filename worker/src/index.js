@@ -804,7 +804,7 @@ main
   }
 
   // Return list of all logs for this user (simplified)
-  async getLogs() {
+  async getLogs() =>
     const list = await this.state.storage.list({ prefix: `u:${this.state.id}:` });
     const logs = [];
     for (const [, value] of list) {
