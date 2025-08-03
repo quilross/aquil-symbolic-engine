@@ -440,7 +440,19 @@ export class UserState {
         headers: { "Content-Type": "application/json" }
       }
     );
+  }// 🚧 Fallback for unknown actions
+return new Response(
+  JSON.stringify({
+    status: "error",
+    message: `Action '${actionName}' is not recognized.`,
+    suggestion: "Use the 'list' action to see available options.",
+    blueprint_refs: ["SYSTEM:router.fallback", "GK:28.1.shadow"]
+  }),
+  {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
   }
+);
   // Handle core endpoints
   async handleCoreEndpoints(path, method, request, token) {
     const coreEndpoints = {
