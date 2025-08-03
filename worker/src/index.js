@@ -1,4 +1,4 @@
-const actionsList = {
+iconst actionsList = {
   actions: [
     {
       name: "getSystemHealth",
@@ -417,7 +417,7 @@ export class UserState {
     return new Response('Not found', { status: 404 });
   }
   // 🔁 Simple ping action
-  if (actionName ) {ping") {
+  if (actionName ) {ping") 
     return new Response(
       JSON.stringify({ status: "ok", echo: body || null }),
       {
