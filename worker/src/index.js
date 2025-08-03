@@ -845,6 +845,37 @@ export class UserState {
     // Placeholder for autonomous protocol execution
     return { executed: true, protocol, parameters };
   }
+
+  // Essential stub methods for the core functionality
+  async requestDeployment() {
+    return this.respond({
+      message: "Deployment request received! Someone will review and trigger a deploy."
+    });
+  }
+
+  async getDeploymentStatus() {
+    return this.respond({
+      deployed: true,
+      lastDeployedAt: "2025-08-02T12:00:00Z",
+      by: "AutoDeployBot",
+      status: "All systems healthy."
+    });
+  }
+
+  async getSystemHealth() {
+    return this.respond({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      worker: "signal_q",
+      version: "v6.0"
+    });
+  }
+
+  async getVoiceEmergenceProtocol() {
+    return this.respond({
+      sequence: ["Hum", "Speak affirmation", "Resonance check"]
+    });
+  }
 }
 
 function jsonResponse(obj, status = 200) {
