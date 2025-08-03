@@ -13,6 +13,9 @@
       "get": {
         "operationId": "getSystemHealth",
         "summary": "Check system uptime and timestamp.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -51,6 +54,14 @@
             }
           }
         }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
