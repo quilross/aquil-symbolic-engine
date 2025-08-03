@@ -18,4 +18,4 @@ new_classes = ["UserState"]
 [ai]
 binding = "AI"
 
-npm install --save-dev wrangler@4
+
