@@ -1,9 +1,5 @@
-
-// src/index.js
-
 const actionsList = {
   actions: [
-    // -- CORE EXAMPLES --
     {
       name: "getSystemHealth",
       description: "Returns system health status, version, and current timestamp.",
@@ -34,8 +30,8 @@ const actionsList = {
       method: "POST",
       path: "/ritual/gift-instinct-trigger",
       parameters: {
-        target: "string (required) â Target of the appreciation (e.g. username or userID)",
-        emotionalContext: "string (required) â Context or reason for the gift"
+        target: "string (required) — Target of the appreciation (e.g. username or userID)",
+        emotionalContext: "string (required) — Context or reason for the gift"
       },
       example: {
         curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/ritual/gift-instinct-trigger -H 'Content-Type: application/json' -d '{\"target\":\"user123\",\"emotionalContext\":\"Teamwork excellence\"}'"
@@ -46,7 +42,7 @@ const actionsList = {
       description: "Request a generic AI-enhanced response for any prompt.",
       method: "POST",
       path: "/ai-enhance",
-      parameters: { prompt: "string (required) â The text prompt for enhancement" },
+      parameters: { prompt: "string (required) — The text prompt for enhancement" },
       example: {
         curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/ai-enhance -H 'Content-Type: application/json' -d '{\"prompt\":\"Summarize quarterly goals\"}'"
       }
@@ -56,7 +52,7 @@ const actionsList = {
       description: "Add a new identity node with the given name.",
       method: "POST",
       path: "/identity-nodes",
-      parameters: { nodeName: "string (required) â Name of the identity node" },
+      parameters: { nodeName: "string (required) — Name of the identity node" },
       example: {
         curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/identity-nodes -H 'Content-Type: application/json' -d '{\"nodeName\":\"Example Node\"}'"
       }
@@ -74,7 +70,7 @@ const actionsList = {
       description: "Log user feedback for system or service analysis.",
       method: "POST",
       path: "/feedback",
-      parameters: { feedback: "string (required) â Feedback text" },
+      parameters: { feedback: "string (required) — Feedback text" },
       example: {
         curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/feedback -H 'Content-Type: application/json' -d '{\"feedback\":\"Great experience!\"}'"
       }
@@ -118,13 +114,63 @@ const actionsList = {
       path: "/deploy/status",
       parameters: {},
       example: { curl: "curl https://signal_q.catnip-pieces1.workers.dev/deploy/status" }
-    },
-    // ---- SYMBOLIC, GIFT, & TRAUMA-AWARE ACTIONS (handlers and full list continued below) ----
+    }
+    // Add more actions here as needed...
   ]
 };
 
-// Handler functions for all symbolic/creative/trauma-aware actions
-// See next cell for code continuation (due to file size)
+// --- ACTION HANDLERS ---
+const handlers = {
+  deploy: async () => ({
+    success: true,
+    message: "Deploy triggered (simulate actual deploy with GitHub Actions API/webhook)."
+  }),
+  list: async () => actionsList,
+  getSystemHealth: async () => ({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    worker: "signal_q",
+    version: "v6.0"
+  }),
+  activateAquilProbe: async () => ({
+    probe: "AQUIL Probe activated",
+    time: new Date().toISOString()
+  }),
+  getVoiceEmergenceProtocol: async () => ({
+    sequence: ["Hum", "Speak affirmation", "Resonance check"]
+  }),
+  triggerGiftInstinct: async (input) => ({
+    symbolicGift: "White feather",
+    reason: input.emotionalContext || "Appreciation",
+    ritual: "Gift presented in morning ritual"
+  }),
+  aiEnhancedResponse: async (input) => ({
+    enhanced: `[AI]: ${input.prompt || "No prompt"}`
+  }),
+  createIdentityNode: async (input) => ({
+    created: true,
+    nodeName: input.nodeName || "Unnamed"
+  }),
+  listIdentityNodes: async () => ({
+    nodes: ["Identity Node 1", "Identity Node 2"]
+  }),
+  logFeedback: async (input) => ({
+    received: true,
+    feedback: input.feedback || ""
+  }),
+  playProtocol: async () => ({
+    protocol: "Play logged"
+  }),
+  requestDeployment: async () => ({
+    message: "Deployment request received! Someone will review and trigger a deploy."
+  }),
+  getDeploymentStatus: async () => ({
+    deployed: true,
+    lastDeployedAt: "2025-08-02T12:00:00Z",
+    by: "AutoDeployBot",
+    status: "All systems healthy."
+  })
+};
 
 export default {
   async fetch(request, env) {
@@ -136,32 +182,23 @@ export default {
       return new Response(null, { status: 200, headers: corsHeaders() });
     }
 
-    if (path === "/deploy/request" && method === "POST") {
-      return jsonResponse({
-        success: true,
-        message: "Deployment request received! Someone will review and trigger a deploy."
-      });
-    }
-    if (path === "/deploy/status" && method === "GET") {
-      return jsonResponse({
-        deployed: true,
-        lastDeployedAt: "2025-08-02T12:00:00Z",
-        by: "AutoDeployBot",
-        status: "All systems healthy."
-      });
-    }
-    if ((path === "/actions/list" || path === "/workers/actions/list") && method === "POST") {
-      return jsonResponse(actionsList);
-    }
+    // Health
     if (path === "/system/health" && method === "GET") {
-      return jsonResponse({
-        status: "healthy",
-        timestamp: new Date().toISOString(),
-        worker: "signal_q",
-        version: "v6.0"
-      });
+      return jsonResponse(await handlers.getSystemHealth());
     }
-
+    // Actions List
+    if ((path === "/actions/list" || path === "/workers/actions/list") && method === "POST") {
+      return jsonResponse(await handlers.list());
+    }
+    // Deploy Request
+    if (path === "/deploy/request" && method === "POST") {
+      return jsonResponse(await handlers.requestDeployment());
+    }
+    // Deploy Status
+    if (path === "/deploy/status" && method === "GET") {
+      return jsonResponse(await handlers.getDeploymentStatus());
+    }
+    // Dynamic actions: /actions/{actionName}
     const actionsPrefix = "/actions/";
     if (path.startsWith(actionsPrefix) && method === "POST") {
       const actionName = decodeURIComponent(path.slice(actionsPrefix.length));
@@ -172,12 +209,6 @@ export default {
         try { input = await request.json(); }
         catch (e) { return jsonResponse({ error: "Invalid JSON body." }, 400); }
       }
-
-      // ACTION HANDLERS: See next cell (split for size)
-      // We'll join files after code generation.
-
-      // Place holder: real handlers inserted in next part!
-      const handlers = {};
 
       const handler = handlers[actionName];
       if (!handler) {
@@ -191,9 +222,18 @@ export default {
       }
       return jsonResponse(output);
     }
-
+    // GET /identity-nodes
     if (path === "/identity-nodes" && method === "GET") {
-      return jsonResponse({ nodes: ["Identity Node 1", "Identity Node 2"] });
+      return jsonResponse(await handlers.listIdentityNodes());
+    }
+    // POST /identity-nodes
+    if (path === "/identity-nodes" && method === "POST") {
+      let input = {};
+      if (request.headers.get("content-type")?.includes("application/json")) {
+        try { input = await request.json(); }
+        catch (e) { return jsonResponse({ error: "Invalid JSON body." }, 400); }
+      }
+      return jsonResponse(await handlers.createIdentityNode(input));
     }
     return new Response("Not found", { status: 404 });
   }
