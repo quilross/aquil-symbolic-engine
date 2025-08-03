@@ -18,4 +18,11 @@ new_classes = ["UserState"]
 [ai]
 binding = "AI"
 
+[observability.logs]
+enabled = true
+
+
+
+
+
 
