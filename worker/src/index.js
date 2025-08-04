@@ -1,18 +1,5 @@
-// Existing imports and code
+// Existing content before line 36...
 
-// Add the new route handling code
-router.get("/system/health", () => {
-  return new Response(JSON.stringify({
-    status: "ok",
-    message: "Signalhaven backend is operational.",
-    timestamp: new Date().toISOString()
-  }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" }
-  });
-});
+export default { async fetch(request, env, ctx) { console.log("Routing request:", request.method, request.url); return router.handle(request, env, ctx); }, }; // Added content
 
-// Add the logging statement
-console.log("Routing request:", request.method, request.url);
-
-// Existing code continues...
+// Existing content after line 36...
