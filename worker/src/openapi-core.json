@@ -6,7 +6,9 @@
     "description": "Unlimited Actions via dynamic /actions/{actionName} endpoint. See /actions/list for available actions. You can deploy directly via /actions/deploy."
   },
   "servers": [
-    { "url": "https://signal_q.catnip-pieces1.workers.dev" }
+    {
+      "url": "https://signal_q.catnip-pieces1.workers.dev"
+    }
   ],
   "paths": {
     "/system/health": {
@@ -14,11 +16,20 @@
         "operationId": "getSystemHealth",
         "summary": "Check system uptime and timestamp.",
         "security": [
-          { "bearerAuth": [] }
+          {
+            "bearerAuth": []
+          }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -32,7 +43,9 @@
             "name": "actionName",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "The name of the Action to invoke. Use 'list' to enumerate all available actions."
           }
         ],
@@ -40,7 +53,9 @@
           "required": false,
           "content": {
             "application/json": {
-              "schema": { "type": "object" }
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
             }
           }
         },
@@ -49,7 +64,9 @@
             "description": "Action response or list of actions.",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
               }
             }
           }
@@ -58,6 +75,28 @@
     }
   },
   "components": {
+    "schemas": {
+      "GenericInput": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "GenericResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
