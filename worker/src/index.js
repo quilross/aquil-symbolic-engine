@@ -100,6 +100,14 @@ const actionsList = {
       example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/list" }
     },
     {
+      name: "probeIdentity",
+      description: "Confirm the current identity status.",
+      method: "POST",
+      path: "/actions/probe_identity",
+      parameters: {},
+      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity" }
+    },
+    {
       name: "requestDeployment",
       description: "Ask for deployment assistance.",
       method: "POST",
@@ -170,17 +178,11 @@ const handlers = {
     by: "AutoDeployBot",
     status: "All systems healthy."
   }),
-  probe_identity: async (request, env, ctx, body) => {
-    return new Response(JSON.stringify({
-      status: 'mirror',
-      identity_key: env.profile?.current_identity?.identity_key || 'undefined',
-      emotion: env.profile?.current_state?.dominant_emotion || 'neutral',
-      gene_key: env.profile?.current_state?.active_gene_key || 'unknown',
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  },
+  probe_identity: async (req, env, ctx, body) => ({
+    probe: "Identity confirmed",
+    timestamp: new Date().toISOString(),
+    friction: ["Continue as your whole self"],
+  }),
   recalibrate_state: async (request, env, ctx, body) => {
     return new Response(JSON.stringify({
       status: 'success',
@@ -230,6 +232,42 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
     const token = getBearerToken(request);
+
+    if (path.startsWith('/actions/')) {
+      const handlerName = path.slice('/actions/'.length); // preserve raw action name
+      const cors = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+      };
+      const handler = handlers[handlerName];
+
+      if (!handler) {
+        return new Response(
+          JSON.stringify({ error: 'Not found' }),
+          { status: 404, headers: { 'Content-Type': 'application/json', ...cors } }
+        );
+      }
+
+      let body = null;
+      if (request.headers.get('Content-Type')?.includes('application/json')) {
+        try { body = await request.json(); } catch (e) { body = null; }
+      }
+
+      const result = await handler(request, env, null, body);
+
+      if (result instanceof Response) {
+        const headers = new Headers(result.headers);
+        for (const [k, v] of Object.entries(cors)) {
+          if (!headers.has(k)) headers.set(k, v);
+        }
+        return new Response(result.body, { status: result.status, headers });
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json', ...cors }
+      });
+    }
 
     if (path === '/system/health') {
       if (!token) {
