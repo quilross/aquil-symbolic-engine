@@ -254,7 +254,7 @@ export default {
         try { body = await request.json(); } catch (e) { body = null; }
       }
 
-      const result = await handler(request, env, null, body);
+      const result = await handler(request, env, {}, body);
 
       if (result instanceof Response) {
         const headers = new Headers(result.headers);
