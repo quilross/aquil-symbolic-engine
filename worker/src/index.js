@@ -261,7 +261,10 @@ export default {
         for (const [k, v] of Object.entries(cors)) {
           if (!headers.has(k)) headers.set(k, v);
         }
-        return new Response(result.body, { status: result.status, headers });
+        // Clone the response to avoid issues with consumed ReadableStreams
+        const cloned = result.clone();
+        const bodyBuffer = await cloned.arrayBuffer();
+        return new Response(bodyBuffer, { status: result.status, headers });
       }
 
       return new Response(JSON.stringify(result), {
