@@ -246,7 +246,7 @@ export default {
 
     if (path.startsWith('/actions/')) {
       const action = path.slice('/actions/'.length);
-      const handlerName = action.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+      const handlerName = action; // Use raw name like 'probe_identity'
       const handler = handlers[handlerName];
       if (!handler) {
         return new Response('Not found', { status: 404, headers: {
