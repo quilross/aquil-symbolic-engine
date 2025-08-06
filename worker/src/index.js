@@ -245,9 +245,13 @@ const handlers = {
   },
   system_health: async (req, env, ctx, body) => {
     const payload = {
-      status: "online",
+      overall: "healthy",
+      api: { status: "online" },
+      storage: { status: "operational" },
+      deployment: { status: "active" },
       timestamp: new Date().toISOString(),
-      version: "v6.0",
+      worker: "signal_q",
+      version: "v6.0"
     };
     
     return new Response(JSON.stringify(payload), {
@@ -343,6 +347,14 @@ export default {
     if (path === '/system/health' && request.method === 'GET') {
       if (!token) {
         return new Response('Unauthorized: No Bearer token', { 
+          status: 401,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
+      }
+      
+      // Validate token
+      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
+        return new Response('Unauthorized: Invalid token', { 
           status: 401,
           headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
         });
