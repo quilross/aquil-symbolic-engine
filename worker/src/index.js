@@ -100,6 +100,14 @@ const actionsList = {
       example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/list" }
     },
     {
+      name: "probeIdentity",
+      description: "Confirm the current identity status.",
+      method: "POST",
+      path: "/actions/probe_identity",
+      parameters: {},
+      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity" }
+    },
+    {
       name: "requestDeployment",
       description: "Ask for deployment assistance.",
       method: "POST",
@@ -170,15 +178,24 @@ const handlers = {
     by: "AutoDeployBot",
     status: "All systems healthy."
   }),
-  probe_identity: async (request, env, ctx, body) => {
-    return new Response(JSON.stringify({
-      status: 'mirror',
-      identity_key: env.profile?.current_identity?.identity_key || 'undefined',
-      emotion: env.profile?.current_state?.dominant_emotion || 'neutral',
-      gene_key: env.profile?.current_state?.active_gene_key || 'unknown',
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { 'Content-Type': 'application/json' }
+  probe_identity: async (req, env, ctx, body) => {
+    const payload = {
+      probe: "Identity confirmed",
+      timestamp: new Date().toISOString(),
+      friction: ["Continue as your whole self"],
+    };
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
+  system_health: async (req, env, ctx, body) => {
+    const payload = {
+      status: "online",
+      timestamp: new Date().toISOString(),
+      version: "v6.0",
+    };
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
     });
   },
   recalibrate_state: async (request, env, ctx, body) => {
@@ -231,56 +248,40 @@ export default {
     const path = url.pathname.replace(/\/$/, '');
     const token = getBearerToken(request);
 
-    if (path === '/system/health') {
-      if (!token) {
-        return new Response('Unauthorized: No Bearer token', { status: 401 });
-      }
-      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
-        return new Response('Forbidden: Invalid token', { status: 403 });
+    if (path.startsWith('/actions/')) {
+      const handlerName = path.slice('/actions/'.length); // preserve raw action name
+      const cors = corsHeaders();
+      const handler = handlers[handlerName];
+
+      if (!handler) {
+        return new Response(
+          JSON.stringify({ error: 'Not found' }),
+          { status: 404, headers: { 'Content-Type': 'application/json', ...cors } }
+        );
       }
 
-      const endpointCount = 76; // Updated endpoint count
-      const memoryUsage = typeof performance !== 'undefined' && performance.memory ?
-        Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 'unknown';
+      let body = null;
+      if (request.headers.get('Content-Type')?.includes('application/json')) {
+        try { body = await request.json(); } catch (e) { body = null; }
+      }
 
-      return new Response(JSON.stringify({
-        overall: "healthy",
-        api: {
-          status: "operational",
-          responseTime: 45,
-          endpoints: endpointCount,
-          version: "2.1.0"
-        },
-        storage: {
-          status: "ready",
-          usage: "minimal",
-          durableObjects: "configured"
-        },
-        deployment: {
-          status: "live",
-          lastUpdate: new Date().toISOString(),
-          worker: "signal_q",
-          memory: `${memoryUsage}MB`
-        },
-        ai: {
-          binding: "enabled",
-          model: "@cf/meta/llama-3.1-8b-instruct",
-        },
-        authentication: {
-          bearerToken: "required",
-          adminAccess: "configured",
-        },
-        recommendations: ["Signal Q is live and operational"],
-        timestamp: new Date().toISOString(),
-        uptime: 'unknown'
-      }), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+      const result = await handler(request, env, null, body);
+
+      if (result instanceof Response) {
+        const headers = new Headers(result.headers);
+        for (const [k, v] of Object.entries(cors)) {
+          if (!headers.has(k)) headers.set(k, v);
         }
+        return new Response(result.body, { status: result.status, headers });
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json', ...cors }
       });
+    }
+
+    if (path === '/system/health' && request.method === 'GET') {
+      return handlers.system_health(request, env);
     }
 
     if (path === '/admin/reset') {
@@ -437,7 +438,7 @@ export class UserState {
     const aiResponse = await this.handleAIEndpoints(path, method, request);
     if (aiResponse) return aiResponse;
 
-    return new Response('Not found', { status: 404 });
+    return new Response('Not found', { status: 404, headers: { 'Content-Type': 'text/plain', ...corsHeaders() } });
   }
 
   // Handle core endpoints
@@ -715,7 +716,7 @@ export class UserState {
   // Fetch a symbolic transition map from KV
   async getSymbolicMap(mapId) {
     const map = await this.state.storage.get(`map:${mapId}`);
-    if (!map) return new Response('not found', { status: 404 });
+    if (!map) return new Response('not found', { status: 404, headers: { 'Content-Type': 'text/plain', ...corsHeaders() } });
     await this.inc('reads');
     return this.respond(map);
   }
@@ -910,7 +911,7 @@ function jsonResponse(obj, status = 200) {
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-User-Id"
   };
 }
