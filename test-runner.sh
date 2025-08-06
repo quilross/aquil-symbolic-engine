@@ -62,7 +62,7 @@ for i in {1..30}; do
             echo "🔧 Codespaces Troubleshooting:"
             echo "   • Check if port $TEST_PORT is being forwarded in the PORTS tab"
             echo "   • Ensure firewall allows access to *.workers.dev domains"
-            echo "   • Try running 'npm run dev' manually to see detailed logs"
+            echo "   • Try running 'npm run dev:fallback' manually for firewall-safe development"
         fi
         kill $DEV_PID 2>/dev/null
         exit 1

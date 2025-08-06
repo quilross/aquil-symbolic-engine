@@ -1,8 +1,13 @@
 {
   "name": "Signal Q API - Zero Config Environment",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-18-bullseye",
+
+  "postCreateCommand": "npm ci && echo '🌟 GitHub Codespaces ready! Use npm run dev:fallback for firewall-safe development.'",
+  "forwardPorts": [8787, 8788, 8789],
+
   "postCreateCommand": ".devcontainer/setup.sh",
   "forwardPorts": [8787, 8788, 8789, 3000],
+
   "portsAttributes": {
     "8787": {
       "label": "Wrangler Dev (Primary)",

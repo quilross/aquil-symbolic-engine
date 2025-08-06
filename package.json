@@ -7,6 +7,7 @@
   "scripts": {
     "deploy": "cd worker && wrangler deploy",
     "dev": "cd worker && wrangler dev",
+    "dev:fallback": "node scripts/wrangler-fallback.js dev",
     "validate": "node scripts/validate-ci.js",
     "test": "./test-runner.sh",
     "lint": "npm audit --audit-level moderate",
