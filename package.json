@@ -11,7 +11,14 @@
     "test": "./test-runner.sh",
     "lint": "npm audit --audit-level moderate",
     "build": "cd worker && wrangler deploy --dry-run",
-    "codespaces:check": "./scripts/codespaces-check.sh"
+    "codespaces:check": "./scripts/codespaces-check.sh",
+    "setup": ".devcontainer/setup.sh",
+    "health": ".devcontainer/health-check.sh",
+    "mcp:start": ".devcontainer/start-mcp.sh",
+    "mcp:stop": "pkill -f mcp-server || true",
+    "logs": "tail -f logs/*.log",
+    "debug": "cd worker && wrangler dev --local --log-level debug",
+    "reset": "npm run mcp:stop && rm -rf logs/*.log && npm run setup"
   },
   "keywords": [
     "cloudflare-workers",

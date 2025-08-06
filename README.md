@@ -30,40 +30,95 @@ This repository includes comprehensive CI/CD automation for reliable deployment:
 - Node.js 18+
 - npm
 
-### GitHub Codespaces
+### 🌟 Zero-Config GitHub Codespaces
 
-This repository ships with a ready-to-use [dev container](.devcontainer/devcontainer.json) optimized for GitHub Codespaces. Open it in GitHub Codespaces to get a cloud-hosted Node.js 18 environment with dependencies installed automatically.
+This repository provides a **zero-configuration development environment** through GitHub Codespaces. Everything is automatically set up for immediate development with no manual configuration required.
 
-#### Codespaces Setup
+#### 🚀 Instant Setup
 1. **Open in Codespaces**: Click the green "Code" button → Codespaces → Create codespace
-2. **Port Forwarding**: Ports 8787-8789 are automatically forwarded for development
-3. **Environment Ready**: Dependencies are installed via `npm ci` during container setup
-4. **Compatibility Check**: Run `npm run codespaces:check` to validate setup
+2. **Automatic Configuration**: The environment sets up automatically (2-3 minutes)
+3. **Start Developing**: Everything is ready - begin coding immediately!
 
-#### Codespaces-Specific Features
-- ✅ **Auto Port Forwarding**: Development ports (8787, 8788, 8789) are automatically exposed
-- ✅ **Environment Detection**: Test runner automatically detects Codespaces environment
-- ✅ **VS Code Extensions**: ESLint, JSON support, and Tailwind CSS extensions pre-installed  
-- ✅ **GitHub CLI**: Pre-installed for repository management
+#### ✨ Zero-Config Features
+- 🤖 **GitHub Copilot Pre-configured** - AI assistance ready out-of-the-box
+- 🛠️ **Wrangler CLI Installed** - Cloudflare Workers development tools ready
+- 🔌 **MCP Server Integration** - Model Context Protocol server for enhanced development
+- 📊 **Active Logging & Tracing** - All API interactions logged for debugging
+- 🔧 **VS Code Optimized** - Pre-installed extensions and optimal settings
+- 🚀 **Ephemeral Session Support** - Clean initialization every time
+- 🎯 **Auto Port Forwarding** - Development ports (8787, 8788, 8789, 3000) ready
 
-#### Firewall & Network Considerations
-When using Codespaces, you may encounter firewall restrictions that block access to:
-- `signal_q.catnip-pieces1.workers.dev`
-- `workers.cloudflare.com`
-- Other Cloudflare Worker domains
+#### 🎯 Quick Start Commands
+```bash
+# Start development immediately
+npm run dev
 
-**Workaround Options:**
-1. **Request Domain Allowlist**: Ask your network administrator to allowlist:
-   - `*.workers.dev`
-   - `*.cloudflare.com`
-   - `api.cloudflare.com`
-2. **Local Development**: Use local testing with `npm run dev` instead of deployed endpoints
-3. **VPN/Proxy**: Use a VPN or proxy service if organizational policies permit
+# Run comprehensive tests
+npm test
 
-#### Codespaces Troubleshooting
-- **Port Access**: Check the PORTS tab in VS Code for forwarded URLs
-- **Logs**: Run `npm run dev` manually to see detailed wrangler logs
-- **Network Issues**: See firewall considerations above
+# Validate entire setup
+health
+
+# Deploy when ready
+npm run deploy
+```
+
+#### 📚 Complete Setup Guide
+See [📖 Zero-Config Codespaces Guide](.devcontainer/CODESPACES_GUIDE.md) for:
+- Detailed feature overview
+- Development workflow
+- Debugging and monitoring tools
+- Troubleshooting guide
+- Advanced MCP integration details
+
+#### 🔌 Enhanced Development Tools
+- **GitHub Copilot & Chat** - AI-powered development assistance
+- **Model Context Protocol Server** - Enhanced AI context on port 3000
+- **Comprehensive Logging** - Structured logs in `logs/` directory  
+- **Debug Profiles** - Pre-configured VS Code debugging
+- **Health Monitoring** - Automated system health checks
+- **API Testing Tools** - REST client and automated test runners
+
+#### 🌐 Network & Firewall Considerations
+The zero-config environment is designed to work within most corporate firewalls. If you encounter connectivity issues:
+
+**Automatic Workarounds:**
+- Local development server mode (bypasses external calls)
+- Offline-capable debugging and testing
+- Internal MCP server for enhanced development context
+
+**Manual Network Configuration (if needed):**
+1. **Domain Allowlist**: Request access to `*.workers.dev` and `*.cloudflare.com`
+2. **Local Testing**: Use `npm run dev` for isolated development
+3. **VPN/Proxy**: Use approved network tools if organizational policies permit
+
+#### 🛠️ Zero-Config Troubleshooting
+Most issues are automatically handled by the zero-config setup. If you encounter problems:
+
+```bash
+# Run comprehensive health check
+health
+
+# Check setup status
+npm run codespaces:check
+
+# View setup logs
+cat logs/signal-q.log
+
+# Restart services if needed
+.devcontainer/post-start.sh
+```
+
+**Common Auto-Fixes:**
+- ✅ **Dependency Issues** - Automatically resolved during setup
+- ✅ **Port Conflicts** - Automatically detects and uses available ports
+- ✅ **Service Startup** - Health checks ensure all services are running
+- ✅ **Environment Variables** - Automatically configured for Codespaces
+
+**Manual Intervention Rarely Needed:**
+- Check PORTS tab in VS Code if forwarding issues occur
+- Reload VS Code window if Copilot needs activation
+- Use `health` command to validate all systems
 
 ### Quick Start
 ```bash
