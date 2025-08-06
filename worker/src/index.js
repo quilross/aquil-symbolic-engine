@@ -100,6 +100,14 @@ const actionsList = {
       example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/list" }
     },
     {
+      name: "probeIdentity",
+      description: "Confirm the current identity status.",
+      method: "POST",
+      path: "/actions/probe_identity",
+      parameters: {},
+      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity" }
+    },
+    {
       name: "requestDeployment",
       description: "Ask for deployment assistance.",
       method: "POST",
@@ -126,6 +134,11 @@ const handlers = {
     message: "Deploy triggered (simulate actual deploy with GitHub Actions API/webhook)."
   }),
   list: async () => actionsList,
+  probeIdentity: async () => ({
+    probe: "Identity confirmed",
+    timestamp: new Date().toISOString(),
+    friction: ["Continue as your whole self"],
+  }),
   getSystemHealth: async () => ({
     status: "healthy",
     timestamp: new Date().toISOString(),
@@ -180,8 +193,25 @@ const handlers = {
     }), {
       headers: { 'Content-Type': 'application/json' }
     });
+add-probe_identity-to-handlers
   }
 };
+
+  },
+  recalibrate_state: async (request, env, ctx, body) => {
+    return new Response(JSON.stringify({
+      status: 'success',
+      message: 'Symbolic recalibration complete.',
+      identity_key: env.profile?.current_identity?.identity_key || 'undefined',
+      dominant_emotion: env.profile?.current_state?.dominant_emotion || 'neutral',
+      active_gene_key: env.profile?.current_state?.active_gene_key || 'unknown',
+      timestamp: new Date().toISOString()
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  };
+ main
 
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
@@ -218,6 +248,33 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
     const token = getBearerToken(request);
+
+    if (path.startsWith('/actions/')) {
+      const action = path.slice('/actions/'.length);
+      const handlerName = action; // Use raw name like 'probe_identity'
+      const handler = handlers[handlerName];
+      if (!handler) {
+        return new Response('Not found', { status: 404, headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+        }});
+      }
+      let body = null;
+      if (request.headers.get('Content-Type')?.includes('application/json')) {
+        try { body = await request.json(); } catch (e) { body = null; }
+      }
+      const result = await handler(request, env, null, body);
+      if (result instanceof Response) return result;
+      return new Response(JSON.stringify(result), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+        }
+      });
+    }
 
     if (path === '/system/health') {
       if (!token) {
