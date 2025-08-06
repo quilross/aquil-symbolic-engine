@@ -281,7 +281,7 @@ export default {
     }
 
     if (path === '/system/health' && request.method === 'GET') {
-      return handlers.system_health(request, env);
+      return handlers.system_health(request, env, null, null);
     }
 
     if (path === '/admin/reset') {
