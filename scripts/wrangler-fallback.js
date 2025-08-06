@@ -141,7 +141,7 @@ async function main() {
   console.log('======================================================');
   
   // Check if we're in Codespaces
-  const isCodespaces = process.env.CODESPACES || process.env.CODESPACES_ENV;
+  const isCodespaces = process.env.CODESPACES;
   if (isCodespaces) {
     console.log('🏗️  GitHub Codespaces environment detected');
   }
