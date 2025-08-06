@@ -234,7 +234,6 @@ const handlers = {
     status: "All systems healthy."
   }),
   probe_identity: async (req, env, ctx, body) => {
-add-probe_identity-to-handlers
     const payload = {
       probe: "Identity confirmed",
       timestamp: new Date().toISOString(),
@@ -250,26 +249,7 @@ add-probe_identity-to-handlers
       timestamp: new Date().toISOString(),
       version: "v6.0",
     };
-
-    // Enhanced probe_identity with AI decision-making and friction handling
-    const aiAnalysis = {
-      identityConfirmed: true,
-      frictionLevel: 'low',
-      recommendations: ['Continue as your whole self', 'Trust your authentic expression']
-    };
     
-    const payload = {
-      probe: "Identity confirmed with AI analysis",
-      timestamp: new Date().toISOString(),
-      friction: aiAnalysis.recommendations,
-      aiDecision: {
-        confidence: 0.95,
-        frictionLevel: aiAnalysis.frictionLevel,
-        identityStatus: aiAnalysis.identityConfirmed ? 'confirmed' : 'uncertain'
-      }
-    };
-    
- main
     return new Response(JSON.stringify(payload), {
       headers: { "Content-Type": "application/json", ...corsHeaders() },
     });
@@ -325,11 +305,7 @@ export default {
     const token = getBearerToken(request);
 
     if (path.startsWith('/actions/')) {
-add-probe_identity-to-handlers
-      const handlerName = path.slice('/actions/'.length); // preserve raw action name
-
       const handlerName = path.slice('/actions/'.length);
- main
       const cors = corsHeaders();
       const handler = handlers[handlerName];
 
@@ -338,8 +314,6 @@ add-probe_identity-to-handlers
           JSON.stringify({ error: 'Not found' }),
           { status: 404, headers: { 'Content-Type': 'application/json', ...cors } }
         );
-add-probe_identity-to-handlers
-
       }
 
       let body = null;
@@ -366,42 +340,29 @@ add-probe_identity-to-handlers
       });
     }
 
-    if (path === '/system/health') {
-      if (!token) {
-        return new Response('Unauthorized: No Bearer token', { status: 401 });
- main
-      }
-
-      let body = null;
-      if (request.headers.get('Content-Type')?.includes('application/json')) {
-        try { body = await request.json(); } catch (e) { body = null; }
-      }
-
-      const result = await handler(request, env, null, body);
-
-      if (result instanceof Response) {
-        const headers = new Headers(result.headers);
-        for (const [k, v] of Object.entries(cors)) {
-          if (!headers.has(k)) headers.set(k, v);
-        }
-        return new Response(result.body, { status: result.status, headers });
-      }
-
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json', ...cors }
-      });
-    }
-
     if (path === '/system/health' && request.method === 'GET') {
+      if (!token) {
+        return new Response('Unauthorized: No Bearer token', { 
+          status: 401,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
+      }
+      
       return handlers.system_health(request, env, null, null);
     }
 
     if (path === '/admin/reset') {
       if (!token) {
-        return new Response('Unauthorized: No Bearer token', { status: 401 });
+        return new Response('Unauthorized: No Bearer token', { 
+          status: 401,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
       }
       if (token !== SIGNALQ_ADMIN_TOKEN) {
-        return new Response('Forbidden: Admin only', { status: 403 });
+        return new Response('Forbidden: Admin only', { 
+          status: 403,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
       }
 
       // Placeholder admin reset logic
@@ -409,9 +370,7 @@ add-probe_identity-to-handlers
         status: 200,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+          ...corsHeaders()
         }
       });
     }
