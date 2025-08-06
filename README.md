@@ -31,7 +31,39 @@ This repository includes comprehensive CI/CD automation for reliable deployment:
 - npm
 
 ### GitHub Codespaces
-This repository ships with a ready-to-use [dev container](.devcontainer/devcontainer.json). Open it in GitHub Codespaces to get a cloud-hosted Node.js 18 environment with dependencies installed automatically.
+
+This repository ships with a ready-to-use [dev container](.devcontainer/devcontainer.json) optimized for GitHub Codespaces. Open it in GitHub Codespaces to get a cloud-hosted Node.js 18 environment with dependencies installed automatically.
+
+#### Codespaces Setup
+1. **Open in Codespaces**: Click the green "Code" button → Codespaces → Create codespace
+2. **Port Forwarding**: Ports 8787-8789 are automatically forwarded for development
+3. **Environment Ready**: Dependencies are installed via `npm ci` during container setup
+4. **Compatibility Check**: Run `npm run codespaces:check` to validate setup
+
+#### Codespaces-Specific Features
+- ✅ **Auto Port Forwarding**: Development ports (8787, 8788, 8789) are automatically exposed
+- ✅ **Environment Detection**: Test runner automatically detects Codespaces environment
+- ✅ **VS Code Extensions**: ESLint, JSON support, and Tailwind CSS extensions pre-installed  
+- ✅ **GitHub CLI**: Pre-installed for repository management
+
+#### Firewall & Network Considerations
+When using Codespaces, you may encounter firewall restrictions that block access to:
+- `signal_q.catnip-pieces1.workers.dev`
+- `workers.cloudflare.com`
+- Other Cloudflare Worker domains
+
+**Workaround Options:**
+1. **Request Domain Allowlist**: Ask your network administrator to allowlist:
+   - `*.workers.dev`
+   - `*.cloudflare.com`
+   - `api.cloudflare.com`
+2. **Local Development**: Use local testing with `npm run dev` instead of deployed endpoints
+3. **VPN/Proxy**: Use a VPN or proxy service if organizational policies permit
+
+#### Codespaces Troubleshooting
+- **Port Access**: Check the PORTS tab in VS Code for forwarded URLs
+- **Logs**: Run `npm run dev` manually to see detailed wrangler logs
+- **Network Issues**: See firewall considerations above
 
 ### Quick Start
 ```bash
@@ -55,6 +87,7 @@ npm run deploy
 - `npm run test` - Run health tests
 - `npm run deploy` - Deploy to Cloudflare Workers
 - `npm run dev` - Start development server
+- `npm run codespaces:check` - Check GitHub Codespaces compatibility
 
 ### CI/CD Pipeline
 The GitHub Actions workflow automatically:

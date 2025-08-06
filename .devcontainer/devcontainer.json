@@ -2,9 +2,47 @@
   "name": "Signal Q API",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-18-bullseye",
   "postCreateCommand": "npm ci",
+  "forwardPorts": [8787, 8788, 8789],
+  "portsAttributes": {
+    "8787": {
+      "label": "Wrangler Dev (Primary)",
+      "onAutoForward": "notify"
+    },
+    "8788": {
+      "label": "Test Server", 
+      "onAutoForward": "notify"
+    },
+    "8789": {
+      "label": "Wrangler Dev (Alt)",
+      "onAutoForward": "silent"
+    }
+  },
   "customizations": {
     "vscode": {
-      "extensions": ["dbaeumer.vscode-eslint"]
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-json",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true
+        }
+      }
+    },
+    "codespaces": {
+      "openFiles": [
+        "README.md",
+        "worker/src/index.js"
+      ]
     }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteEnv": {
+    "CODESPACES_ENV": "true"
   }
 }

@@ -10,7 +10,8 @@
     "validate": "node scripts/validate-ci.js",
     "test": "./test-runner.sh",
     "lint": "npm audit --audit-level moderate",
-    "build": "cd worker && wrangler deploy --dry-run"
+    "build": "cd worker && wrangler deploy --dry-run",
+    "codespaces:check": "./scripts/codespaces-check.sh"
   },
   "keywords": [
     "cloudflare-workers",
