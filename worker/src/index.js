@@ -192,10 +192,6 @@ const handlers = {
     return new Response(JSON.stringify(payload), {
       headers: { "Content-Type": "application/json", ...corsHeaders() },
     });
-add-probe_identity-to-handlers
-  }
-};
-
   },
   recalibrate_state: async (request, env, ctx, body) => {
     return new Response(JSON.stringify({
@@ -209,8 +205,7 @@ add-probe_identity-to-handlers
       headers: { 'Content-Type': 'application/json' }
     });
   }
-  };
- main
+};
 
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
@@ -249,7 +244,6 @@ export default {
     const token = getBearerToken(request);
 
     if (path.startsWith('/actions/')) {
-add-probe_identity-to-handlers
       const handlerName = path.slice('/actions/'.length); // preserve raw action name
       const cors = corsHeaders();
       const handler = handlers[handlerName];
@@ -261,23 +255,10 @@ add-probe_identity-to-handlers
         );
       }
 
-
-      const action = path.slice('/actions/'.length);
-      const handlerName = action; // Use raw name like 'probe_identity'
-      const handler = handlers[handlerName];
-      if (!handler) {
-        return new Response('Not found', { status: 404, headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-        }});
-      }
-main
       let body = null;
       if (request.headers.get('Content-Type')?.includes('application/json')) {
         try { body = await request.json(); } catch (e) { body = null; }
       }
-add-probe_identity-to-handlers
 
       const result = await handler(request, env, null, body);
 
@@ -291,17 +272,6 @@ add-probe_identity-to-handlers
 
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...cors }
-
-      const result = await handler(request, env, null, body);
-      if (result instanceof Response) return result;
-      return new Response(JSON.stringify(result), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-        }
- main
       });
     }
 
