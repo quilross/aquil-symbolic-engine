@@ -247,7 +247,10 @@ export default {
 
       let body = null;
       if (request.headers.get('Content-Type')?.includes('application/json')) {
-        try { body = await request.json(); } catch (e) { body = null; }
+        try { body = await request.json(); } catch (e) { 
+          console.error('Failed to parse JSON body:', e);
+          body = null; 
+        }
       }
 
       const result = await handler(request, env, null, body);
