@@ -1,8 +1,8 @@
 {
-  "name": "Signal Q API",
+  "name": "Signal Q API - Zero Config Environment",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-18-bullseye",
-  "postCreateCommand": "npm ci",
-  "forwardPorts": [8787, 8788, 8789],
+  "postCreateCommand": ".devcontainer/setup.sh",
+  "forwardPorts": [8787, 8788, 8789, 3000],
   "portsAttributes": {
     "8787": {
       "label": "Wrangler Dev (Primary)",
@@ -15,34 +15,83 @@
     "8789": {
       "label": "Wrangler Dev (Alt)",
       "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "MCP Server",
+      "onAutoForward": "silent"
     }
   },
   "customizations": {
     "vscode": {
       "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
         "dbaeumer.vscode-eslint",
         "ms-vscode.vscode-json",
-        "bradlc.vscode-tailwindcss"
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.rest-client",
+        "humao.rest-client",
+        "ms-vscode.vscode-json5",
+        "ms-vscode.hexeditor",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "ms-vscode.remote-repositories"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.fixAll.eslint": true
+        },
+        "github.copilot.enable": {
+          "*": true,
+          "yaml": true,
+          "plaintext": true,
+          "markdown": true,
+          "javascript": true,
+          "typescript": true,
+          "json": true
+        },
+        "editor.inlineSuggest.enabled": true,
+        "editor.suggest.preview": true,
+        "workbench.enableExperiments": false,
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 1000,
+        "terminal.integrated.env.linux": {
+          "WRANGLER_LOG": "info",
+          "CLOUDFLARE_API_TOKEN_REQUIRED": "false",
+          "MCP_SERVER_ENABLED": "true",
+          "DEBUG": "signal-q:*"
         }
       }
     },
     "codespaces": {
       "openFiles": [
         "README.md",
-        "worker/src/index.js"
+        "worker/src/index.js",
+        ".devcontainer/CODESPACES_GUIDE.md"
       ]
     }
   },
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000"
+    }
   },
   "remoteEnv": {
-    "CODESPACES_ENV": "true"
-  }
+    "CODESPACES_ENV": "true",
+    "ZERO_CONFIG_ENABLED": "true",
+    "NODE_ENV": "development",
+    "WRANGLER_LOG": "info"
+  },
+  "onCreateCommand": "echo 'Zero-config Codespaces environment initializing...'",
+  "updateContentCommand": "npm ci && .devcontainer/health-check.sh",
+  "postStartCommand": ".devcontainer/post-start.sh"
 }

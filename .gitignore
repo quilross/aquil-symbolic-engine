@@ -26,14 +26,25 @@ worker/.wrangler/
 ehthumbs.db
 Thumbs.db
 
-# IDE files
-.vscode/
+# IDE files (keep VS Code tasks and launch configs but ignore user settings)
+.vscode/settings.json
 .idea/
 *.swp
 *.swo
 
-# Logs
+# Logs and temporary development files
 *.log
+logs/
+*.pid
+nohup.out
+
+# MCP Server temporary files
+/tmp/mcp-server.js
+/tmp/mcp-server.pid
+
+# Build artifacts
+dist/
+build/
 
 # Temporary files
 tmp/
