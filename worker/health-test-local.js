@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * Comprehensive Health Endpoint Test Suite
- * Tests the /system/health endpoint with various scenarios
+ * Comprehensive Health Endpoint Test Suite - Local Development Version
+ * Tests the /system/health endpoint with various scenarios against local dev server
  */
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:8788';
+const BASE_URL = 'http://localhost:8788';
 const USER_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
 const ADMIN_TOKEN = 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
 
-console.log('🏥 Health Endpoint Test Suite\n');
+console.log('🏥 Health Endpoint Test Suite (Local Dev Server)\n');
 console.log(`🌐 API Base: ${BASE_URL}`);
 console.log(`🔑 User Token: ${USER_TOKEN.substring(0, 15)}...`);
 console.log(`👑 Admin Token: ${ADMIN_TOKEN.substring(0, 18)}...\n`);
@@ -74,24 +74,6 @@ async function testHealthEndpoint() {
       headers: { 'Authorization': `Bearer ${USER_TOKEN}` },
       expectedStatus: 200,
       shouldHaveJson: true
-    },
-    {
-      name: 'ProbeIdentity Valid Token',
-      url: `${BASE_URL}/actions/probe_identity`,
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${USER_TOKEN}` },
-      expectedStatus: 200,
-      shouldHaveJson: true,
-      isProbeIdentity: true
-    },
-    {
-      name: 'ProbeIdentity No Token',
-      url: `${BASE_URL}/actions/probe_identity`,
-      method: 'POST',
-      headers: {},
-      expectedStatus: 200,
-      shouldHaveJson: true,
-      isProbeIdentity: true
     }
   ];
 
@@ -121,21 +103,13 @@ async function testHealthEndpoint() {
           jsonValid = true;
           
           if (test.shouldHaveJson && test.expectedStatus === 200) {
-            if (test.isProbeIdentity) {
-              hasRequiredFields = !!(
-                jsonData.probe &&
-                jsonData.timestamp &&
-                jsonData.friction
-              );
-            } else {
-              hasRequiredFields = !!(
-                jsonData.overall && 
-                jsonData.api && 
-                jsonData.storage && 
-                jsonData.deployment &&
-                jsonData.timestamp
-              );
-            }
+            hasRequiredFields = !!(
+              jsonData.overall && 
+              jsonData.api && 
+              jsonData.storage && 
+              jsonData.deployment &&
+              jsonData.timestamp
+            );
           }
         }
       } catch (e) {
@@ -166,15 +140,9 @@ async function testHealthEndpoint() {
       if (result.success) {
         console.log(`✅ ${test.name}: PASS (${response.status})`);
         if (jsonData && result.hasRequiredFields) {
-          if (test.isProbeIdentity) {
-            console.log(`   🔍 Probe: ${jsonData.probe}`);
-            console.log(`   ⏰ Timestamp: ${jsonData.timestamp}`);
-            console.log(`   ⚡ Friction: ${JSON.stringify(jsonData.friction)}`);
-          } else {
-            console.log(`   📊 Overall: ${jsonData.overall}`);
-            console.log(`   📡 API Status: ${jsonData.api?.status}`);
-            console.log(`   💾 Storage: ${jsonData.storage?.status}`);
-          }
+          console.log(`   📊 Overall: ${jsonData.overall}`);
+          console.log(`   📡 API Status: ${jsonData.api?.status}`);
+          console.log(`   💾 Storage: ${jsonData.storage?.status}`);
         }
       } else {
         console.log(`❌ ${test.name}: FAIL (got ${response.status}, expected ${test.expectedStatus})`);
@@ -183,6 +151,128 @@ async function testHealthEndpoint() {
         }
         if (test.shouldHaveJson && jsonValid && !hasRequiredFields) {
           console.log(`   ⚠️  Missing required fields in response`);
+          console.log(`   📄 Response: ${JSON.stringify(jsonData)}`);
+        }
+      }
+
+    } catch (error) {
+      console.log(`❌ ${test.name}: ERROR - ${error.message}`);
+      results.push({
+        name: test.name,
+        url: test.url,
+        error: error.message,
+        success: false
+      });
+    }
+    
+    console.log('');
+  }
+}
+
+async function testProbeIdentityEndpoint() {
+  console.log('🔍 Testing probeIdentity Action Endpoint\n');
+  
+  const probeTests = [
+    {
+      name: 'ProbeIdentity Valid Token',
+      url: `${BASE_URL}/actions/probe_identity`,
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${USER_TOKEN}` },
+      expectedStatus: 200,
+      shouldHaveJson: true
+    },
+    {
+      name: 'ProbeIdentity Invalid Token',
+      url: `${BASE_URL}/actions/probe_identity`,
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer invalid_token' },
+      expectedStatus: 200, // Actions don't require auth based on the code
+      shouldHaveJson: true
+    },
+    {
+      name: 'ProbeIdentity No Token',
+      url: `${BASE_URL}/actions/probe_identity`,
+      method: 'POST',
+      headers: {},
+      expectedStatus: 200,
+      shouldHaveJson: true
+    },
+    {
+      name: 'ProbeIdentity CORS Preflight',
+      url: `${BASE_URL}/actions/probe_identity`,
+      method: 'OPTIONS',
+      headers: {},
+      expectedStatus: 200,
+      shouldHaveJson: false
+    }
+  ];
+
+  for (const test of probeTests) {
+    try {
+      console.log(`🔄 Testing: ${test.name}`);
+      
+      const options = {
+        method: test.method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...test.headers
+        }
+      };
+
+      const response = await fetch(test.url, options);
+      const statusMatch = response.status === test.expectedStatus;
+      
+      let jsonData = null;
+      let jsonValid = false;
+      let hasRequiredFields = false;
+
+      try {
+        const text = await response.text();
+        if (text) {
+          jsonData = JSON.parse(text);
+          jsonValid = true;
+          
+          if (test.shouldHaveJson && test.expectedStatus === 200) {
+            hasRequiredFields = !!(
+              jsonData.probe &&
+              jsonData.timestamp &&
+              jsonData.friction
+            );
+          }
+        }
+      } catch (e) {
+        // Not JSON or empty response
+      }
+
+      const result = {
+        name: test.name,
+        url: test.url,
+        status: response.status,
+        statusMatch,
+        expectedJson: test.shouldHaveJson,
+        hasJson: jsonValid,
+        hasRequiredFields,
+        data: jsonData,
+        success: statusMatch && (!test.shouldHaveJson || hasRequiredFields)
+      };
+
+      results.push(result);
+
+      if (result.success) {
+        console.log(`✅ ${test.name}: PASS (${response.status})`);
+        if (jsonData && result.hasRequiredFields) {
+          console.log(`   🔍 Probe: ${jsonData.probe}`);
+          console.log(`   ⏰ Timestamp: ${jsonData.timestamp}`);
+          console.log(`   ⚡ Friction: ${JSON.stringify(jsonData.friction)}`);
+        }
+      } else {
+        console.log(`❌ ${test.name}: FAIL (got ${response.status}, expected ${test.expectedStatus})`);
+        if (test.shouldHaveJson && !jsonValid) {
+          console.log(`   ⚠️  Expected JSON response but got invalid/no JSON`);
+        }
+        if (test.shouldHaveJson && jsonValid && !hasRequiredFields) {
+          console.log(`   ⚠️  Missing required fields in response`);
+          console.log(`   📄 Response: ${JSON.stringify(jsonData)}`);
         }
       }
 
@@ -217,33 +307,21 @@ async function printSummary() {
     });
   }
 
-  // Check for deployment status
-  const successfulHealthCheck = results.find(r => 
-    r.name === 'Valid User Token' && r.success
-  );
-
-  if (successfulHealthCheck) {
-    console.log('\n🎉 DEPLOYMENT STATUS: HEALTHY');
+  if (successful === total) {
+    console.log('\n🎉 ALL TESTS PASSED!');
     console.log('✅ The /system/health endpoint is working correctly!');
-    console.log('\n🔗 Ready for CustomGPT Integration:');
-    console.log(`   Base URL: ${BASE_URL}`);
-    console.log(`   Bearer Token: ${USER_TOKEN}`);
-    console.log(`   Schema File: worker/src/openapi-core.json`);
+    console.log('✅ The /actions/probe_identity endpoint is working correctly!');
   } else {
-    console.log('\n⚠️  DEPLOYMENT STATUS: NEEDS ATTENTION');
-    console.log('❌ The /system/health endpoint is not working correctly.');
-    console.log('\n🔧 Next Steps:');
-    console.log('   1. Ensure worker is deployed: wrangler deploy');
-    console.log('   2. Check deployment URL is correct');
-    console.log('   3. Verify tokens match wrangler.toml configuration');
-    console.log('   4. Check Cloudflare Workers dashboard for errors');
+    console.log('\n⚠️  SOME TESTS FAILED');
+    console.log('❌ Please check the failing tests above.');
   }
 
-  console.log('\n📚 Full Test Results Available Above ↑');
+  console.log('\n📚 Local Development Server Test Results ↑');
 }
 
 // Run tests
 testHealthEndpoint()
+  .then(testProbeIdentityEndpoint)
   .then(printSummary)
   .catch(error => {
     console.error('Test suite failed:', error);
