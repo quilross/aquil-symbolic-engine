@@ -41,7 +41,7 @@ function testConnectivity(hostname) {
     };
 
     const req = https.request(options, (res) => {
-      resolve(res.statusCode < 500); // Accept any non-server-error response
+      resolve(res.statusCode >= 200 && res.statusCode < 400); // Accept only successful or redirected responses
     });
 
     req.on('error', () => resolve(false));
