@@ -20,6 +20,8 @@
 
 **API is live at**: https://signal_q.catnip-pieces1.workers.dev ✨
 
+**🔥 NEW: Firewall-Safe Automation** - Automatic fallback to local development when Cloudflare endpoints are unreachable. Use `npm run dev:fallback` for zero-config development in restrictive networks.
+
 ---
 
 ## 🚀 Deployment Automation
@@ -45,6 +47,35 @@ This repository ships with a ready-to-use [dev container](.devcontainer/devconta
 - ✅ **Environment Detection**: Test runner automatically detects Codespaces environment
 - ✅ **VS Code Extensions**: ESLint, JSON support, and Tailwind CSS extensions pre-installed  
 - ✅ **GitHub CLI**: Pre-installed for repository management
+- ✅ **Firewall-Safe Automation**: Automatic fallback to local development when Cloudflare endpoints are unreachable
+
+#### Firewall-Safe Development & Automation
+
+The repository includes intelligent firewall-safe automation that automatically detects network restrictions and adapts accordingly:
+
+**🔄 Automatic Fallback Logic**
+- **Connectivity Detection**: Automatically tests connectivity to `sparrow.cloudflare.com` and `workers.cloudflare.com`
+- **Smart Fallback**: If Cloudflare endpoints are unreachable, automatically switches to local development mode
+- **Zero Configuration**: Works out-of-the-box in restrictive network environments
+
+**📡 Development Server Options**
+```bash
+# Automatic fallback (recommended for Codespaces)
+npm run dev:fallback
+
+# Manual cloud development (requires Cloudflare connectivity)
+npm run dev
+
+# Force local development 
+cd worker && wrangler dev --local --port 8788
+```
+
+**🌐 Required Domain Allowlist**
+For optimal functionality in restrictive networks, allowlist these domains:
+- `sparrow.cloudflare.com` - Cloudflare API endpoint
+- `workers.cloudflare.com` - Workers platform endpoint  
+- `registry.npmjs.org` - npm package registry
+- `signal_q.catnip-pieces1.workers.dev` - Production API endpoint (from OpenAPI spec)
 
 #### Firewall & Network Considerations
 When using Codespaces, you may encounter firewall restrictions that block access to:
@@ -52,13 +83,14 @@ When using Codespaces, you may encounter firewall restrictions that block access
 - `workers.cloudflare.com`
 - Other Cloudflare Worker domains
 
-**Workaround Options:**
-1. **Request Domain Allowlist**: Ask your network administrator to allowlist:
-   - `*.workers.dev`
-   - `*.cloudflare.com`
-   - `api.cloudflare.com`
-2. **Local Development**: Use local testing with `npm run dev` instead of deployed endpoints
-3. **VPN/Proxy**: Use a VPN or proxy service if organizational policies permit
+**Automated Solutions:**
+1. **Fallback Script**: Use `npm run dev:fallback` - automatically detects connectivity issues and falls back to local mode
+2. **Local Development**: Fully functional local development server with simulated bindings
+3. **Environment Detection**: Scripts automatically adapt behavior based on network connectivity
+
+**Manual Workaround Options:**
+1. **Request Domain Allowlist**: Ask your network administrator to allowlist the domains listed above
+2. **VPN/Proxy**: Use a VPN or proxy service if organizational policies permit
 
 #### Codespaces Troubleshooting
 - **Port Access**: Check the PORTS tab in VS Code for forwarded URLs
@@ -86,7 +118,8 @@ npm run deploy
 - `npm run build` - Build validation (dry-run)
 - `npm run test` - Run health tests
 - `npm run deploy` - Deploy to Cloudflare Workers
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server (cloud mode)
+- `npm run dev:fallback` - Start development server with automatic firewall-safe fallback
 - `npm run codespaces:check` - Check GitHub Codespaces compatibility
 
 ### CI/CD Pipeline
@@ -104,3 +137,25 @@ The GitHub Actions workflow automatically:
 - Wrangler v4 for latest security updates
 - Comprehensive deployment validation
 - Zero-vulnerability dependency management
+
+## 🔧 Automation & Fallback Mechanisms
+
+This repository includes intelligent automation for firewall-safe development:
+
+### Wrangler Fallback Script (`scripts/wrangler-fallback.js`)
+- **Connectivity Testing**: Automatically tests access to `sparrow.cloudflare.com` and `workers.cloudflare.com`
+- **Intelligent Fallback**: Falls back to local development mode when Cloudflare endpoints are unreachable
+- **Zero Configuration**: Works automatically in restrictive network environments
+- **Usage**: `npm run dev:fallback` or `node scripts/wrangler-fallback.js dev`
+
+### Codespaces Integration
+- **PostCreateCommand**: Automatically runs `npm ci` and notifies about firewall-safe development
+- **Port Forwarding**: Pre-configured for development ports (8787, 8788, 8789)
+- **Environment Detection**: Automatically adapts to Codespaces environment
+
+### Network Requirements
+For optimal functionality, allowlist these domains:
+- `sparrow.cloudflare.com` - Cloudflare API endpoint
+- `workers.cloudflare.com` - Workers platform endpoint  
+- `registry.npmjs.org` - npm package registry
+- `signal_q.catnip-pieces1.workers.dev` - Production API endpoint
