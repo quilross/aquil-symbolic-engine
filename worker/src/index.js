@@ -193,6 +193,10 @@ const handlers = {
     }), {
       headers: { 'Content-Type': 'application/json' }
     });
+add-probe_identity-to-handlers
+  }
+};
+
   },
   recalibrate_state: async (request, env, ctx, body) => {
     return new Response(JSON.stringify({
@@ -207,6 +211,7 @@ const handlers = {
     });
   }
   };
+ main
 
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
