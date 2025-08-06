@@ -234,22 +234,20 @@ const handlers = {
     status: "All systems healthy."
   }),
   probe_identity: async (req, env, ctx, body) => {
-    // Enhanced probe_identity with AI decision-making and friction handling
-    const aiAnalysis = {
-      identityConfirmed: true,
-      frictionLevel: 'low',
-      recommendations: ['Continue as your whole self', 'Trust your authentic expression']
-    };
-    
     const payload = {
-      probe: "Identity confirmed with AI analysis",
+      probe: "Identity confirmed",
       timestamp: new Date().toISOString(),
-      friction: aiAnalysis.recommendations,
-      aiDecision: {
-        confidence: 0.95,
-        frictionLevel: aiAnalysis.frictionLevel,
-        identityStatus: aiAnalysis.identityConfirmed ? 'confirmed' : 'uncertain'
-      }
+      friction: ["Continue as your whole self"],
+    };
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
+  system_health: async (req, env, ctx, body) => {
+    const payload = {
+      status: "online",
+      timestamp: new Date().toISOString(),
+      version: "v6.0",
     };
     
     return new Response(JSON.stringify(payload), {
@@ -272,8 +270,8 @@ const handlers = {
 
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
-const DEV_SIGNALQ_API_TOKEN = 'dev-api-token';
-const DEV_SIGNALQ_ADMIN_TOKEN = 'dev-admin-token';
+const DEV_SIGNALQ_API_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+const DEV_SIGNALQ_ADMIN_TOKEN = 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
 
 // Extract Bearer token from Authorization header
 function getBearerToken(request) {
@@ -342,64 +340,29 @@ export default {
       });
     }
 
-    if (path === '/system/health') {
+    if (path === '/system/health' && request.method === 'GET') {
       if (!token) {
-        return new Response('Unauthorized: No Bearer token', { status: 401 });
+        return new Response('Unauthorized: No Bearer token', { 
+          status: 401,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
       }
-      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
-        return new Response('Forbidden: Invalid token', { status: 403 });
-      }
-
-      const endpointCount = 76; // Updated endpoint count
-      const memoryUsage = typeof performance !== 'undefined' && performance.memory ?
-        Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 'unknown';
-
-      return new Response(JSON.stringify({
-        overall: "healthy",
-        api: {
-          status: "operational",
-          responseTime: 45,
-          endpoints: endpointCount,
-          version: "2.1.0"
-        },
-        storage: {
-          status: "ready",
-          usage: "minimal",
-          durableObjects: "configured"
-        },
-        deployment: {
-          status: "live",
-          lastUpdate: new Date().toISOString(),
-          worker: "signal_q",
-          memory: `${memoryUsage}MB`
-        },
-        ai: {
-          binding: "enabled",
-          model: "@cf/meta/llama-3.1-8b-instruct",
-        },
-        authentication: {
-          bearerToken: "required",
-          adminAccess: "configured",
-        },
-        recommendations: ["Signal Q is live and operational"],
-        timestamp: new Date().toISOString(),
-        uptime: 'unknown'
-      }), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
-        }
-      });
+      
+      return handlers.system_health(request, env, null, null);
     }
 
     if (path === '/admin/reset') {
       if (!token) {
-        return new Response('Unauthorized: No Bearer token', { status: 401 });
+        return new Response('Unauthorized: No Bearer token', { 
+          status: 401,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
       }
       if (token !== SIGNALQ_ADMIN_TOKEN) {
-        return new Response('Forbidden: Admin only', { status: 403 });
+        return new Response('Forbidden: Admin only', { 
+          status: 403,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
       }
 
       // Placeholder admin reset logic
@@ -407,9 +370,7 @@ export default {
         status: 200,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
+          ...corsHeaders()
         }
       });
     }
