@@ -270,8 +270,8 @@ const handlers = {
 
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
-const DEV_SIGNALQ_API_TOKEN = 'dev-api-token';
-const DEV_SIGNALQ_ADMIN_TOKEN = 'dev-admin-token';
+const DEV_SIGNALQ_API_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+const DEV_SIGNALQ_ADMIN_TOKEN = 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
 
 // Extract Bearer token from Authorization header
 function getBearerToken(request) {
