@@ -50,7 +50,6 @@ function testConnectivity(hostname) {
       resolve(false);
     });
 
-    req.setTimeout(CONNECTIVITY_TIMEOUT);
     req.end();
   });
 }
