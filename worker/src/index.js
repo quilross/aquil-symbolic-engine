@@ -183,15 +183,14 @@ const handlers = {
     by: "AutoDeployBot",
     status: "All systems healthy."
   }),
-  probe_identity: async (request, env, ctx, body) => {
-    return new Response(JSON.stringify({
-      status: 'mirror',
-      identity_key: env.profile?.current_identity?.identity_key || 'undefined',
-      emotion: env.profile?.current_state?.dominant_emotion || 'neutral',
-      gene_key: env.profile?.current_state?.active_gene_key || 'unknown',
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { 'Content-Type': 'application/json' }
+  probe_identity: async (req, env, ctx, body) => {
+    const payload = {
+      probe: "Identity confirmed",
+      timestamp: new Date().toISOString(),
+      friction: ["Continue as your whole self"],
+    };
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
     });
 add-probe_identity-to-handlers
   }
@@ -250,6 +249,19 @@ export default {
     const token = getBearerToken(request);
 
     if (path.startsWith('/actions/')) {
+add-probe_identity-to-handlers
+      const handlerName = path.slice('/actions/'.length); // preserve raw action name
+      const cors = corsHeaders();
+      const handler = handlers[handlerName];
+
+      if (!handler) {
+        return new Response(
+          JSON.stringify({ error: 'Not found' }),
+          { status: 404, headers: { 'Content-Type': 'application/json', ...cors } }
+        );
+      }
+
+
       const action = path.slice('/actions/'.length);
       const handlerName = action; // Use raw name like 'probe_identity'
       const handler = handlers[handlerName];
@@ -260,10 +272,26 @@ export default {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
         }});
       }
+main
       let body = null;
       if (request.headers.get('Content-Type')?.includes('application/json')) {
         try { body = await request.json(); } catch (e) { body = null; }
       }
+add-probe_identity-to-handlers
+
+      const result = await handler(request, env, null, body);
+
+      if (result instanceof Response) {
+        const headers = new Headers(result.headers);
+        for (const [k, v] of Object.entries(cors)) {
+          if (!headers.has(k)) headers.set(k, v);
+        }
+        return new Response(result.body, { status: result.status, headers });
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json', ...cors }
+
       const result = await handler(request, env, null, body);
       if (result instanceof Response) return result;
       return new Response(JSON.stringify(result), {
@@ -273,6 +301,7 @@ export default {
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
         }
+ main
       });
     }
 
@@ -482,7 +511,7 @@ export class UserState {
     const aiResponse = await this.handleAIEndpoints(path, method, request);
     if (aiResponse) return aiResponse;
 
-    return new Response('Not found', { status: 404 });
+    return new Response('Not found', { status: 404, headers: { 'Content-Type': 'text/plain', ...corsHeaders() } });
   }
 
   // Handle core endpoints
@@ -760,7 +789,7 @@ export class UserState {
   // Fetch a symbolic transition map from KV
   async getSymbolicMap(mapId) {
     const map = await this.state.storage.get(`map:${mapId}`);
-    if (!map) return new Response('not found', { status: 404 });
+    if (!map) return new Response('not found', { status: 404, headers: { 'Content-Type': 'text/plain', ...corsHeaders() } });
     await this.inc('reads');
     return this.respond(map);
   }
@@ -955,7 +984,7 @@ function jsonResponse(obj, status = 200) {
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-User-Id"
   };
 }
