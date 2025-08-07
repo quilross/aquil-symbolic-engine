@@ -332,7 +332,8 @@ export default {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id'
         }
       });
- if (path === '/admin/reset') {
+    }
+    if (path === '/admin/reset') {
       if (!token) {
         return new Response('Unauthorized: No Bearer token', { 
           status: 401,
