@@ -280,6 +280,17 @@ const handlers = {
       headers: { "Content-Type": "application/json", ...corsHeaders() },
     });
   },
+  system_health: async (req, env, ctx, body) => {
+    const payload = {
+      status: "online",
+      timestamp: new Date().toISOString(),
+      version: "v6.0",
+    };
+    
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
   recalibrate_state: async (request, env, ctx, body) => {
     return new Response(JSON.stringify({
       status: 'success',
@@ -331,7 +342,7 @@ export default {
     const token = getBearerToken(request);
 
     if (path.startsWith('/actions/')) {
-      const handlerName = path.slice('/actions/'.length);
+      const handlerName = path.slice('/actions/'.length); // preserve raw action name
       const cors = corsHeaders();
       const handler = handlers[handlerName];
 
@@ -340,6 +351,37 @@ export default {
           JSON.stringify({ error: 'Not found' }),
           { status: 404, headers: { 'Content-Type': 'application/json', ...cors } }
         );
+      }
+
+      let body = null;
+      if (request.headers.get('Content-Type')?.includes('application/json')) {
+        try { body = await request.json(); } catch (e) { 
+          console.error('Failed to parse JSON body:', e);
+          body = null; 
+        }
+      }
+
+      const result = await handler(request, env, null, body);
+
+      if (result instanceof Response) {
+        const headers = new Headers(result.headers);
+        for (const [k, v] of Object.entries(cors)) {
+          if (!headers.has(k)) headers.set(k, v);
+        }
+        return new Response(result.body, { status: result.status, headers });
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json', ...cors }
+      });
+    }
+
+    if (path === '/system/health' && request.method === 'GET') {
+      if (!token) {
+        return new Response('Unauthorized: No Bearer token', { 
+          status: 401,
+          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
+        });
       }
 
       let body = null;
@@ -364,6 +406,8 @@ export default {
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json', ...cors }
       });
+      
+      return handlers.system_health(request, env, null, null);
     }
 
     if (path === '/system/health' && request.method === 'GET') {
