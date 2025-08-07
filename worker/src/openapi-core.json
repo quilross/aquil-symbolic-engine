@@ -1,1 +1,262 @@
-{"openapi":"3.1.0","info":{"title":"Signalhaven GPT Action API","version":"v6.0","description":"This API provides dynamic action invocation, health checks, and deployment capabilities for the Signalhaven symbolic engine. Use /actions/list to enumerate available actions. All endpoints require Bearer authentication and return machine-readable JSON responses suitable for GPT plugins or automation."},"servers":[{"url":"https://signal_q.catnip-pieces1.workers.dev","description":"Cloudflare Worker Production Endpoint"}],"security":[{"bearerAuth":[]}],"paths":{"/system/health":{"get":{"operationId":"getSystemHealth","summary":"Check system uptime, health status, and current server timestamp.","responses":{"200":{"description":"Healthy status with timestamp and version.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericResponse"}}}}}}},"/actions/probe_identity":{"post":{"operationId":"probeIdentity","summary":"Probe the current identity or service context for the calling agent.","requestBody":{"required":false,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericInput"}}}},"responses":{"200":{"description":"Identity probe response.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericResponse"}}}}}},"/actions/list":{"post":{"operationId":"listActions","summary":"List all available actions for the current agent context.","requestBody":{"required":false,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericInput"}}}},"responses":{"200":{"description":"Array of action names and descriptions.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericResponse"}}}}}},"/actions/deploy":{"post":{"operationId":"triggerDeploy","summary":"Deploy or update the service using the provided configuration.","requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericInput"}}}},"responses":{"200":{"description":"Deployment response with status and message.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericResponse"}}}}}},"/actions/{actionName":{"post":{"operationId":"invokeAction","summary":"Invoke any named action dynamically (including deploy). Use actionName 'list' to enumerate all available actions.","parameters":[{"name":"actionName","in":"path","required":true,"schema":{"type":"string"},"description":"The name of the Action to invoke. Use 'list' for all actions."}],"requestBody":{"required":false,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericInput"}}}},"responses":{"200":{"description":"Action response or list of actions.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GenericResponse"}}}}}}},"components":{"schemas":{"GenericInput":{"type":"object","description":"Flexible input for actions. All properties are optional and dynamic.","additionalProperties":true},"GenericResponse":{"type":"object","description":"Standard response for all API methods.","properties":{"status":{"type":"string","description":"Status string, e.g. 'healthy', 'success', 'error'."},"message":{"type":"string","description":"Optional human-readable message."},"timestamp":{"type":"string","format":"date-time","description":"ISO8601 timestamp of response."}},"additionalProperties":true}},"securitySchemes":{"bearerAuth":{"type":"http","scheme":"bearer","description":"Bearer authentication for all API endpoints."}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Signalhaven GPT Action API",
+    "version": "v6.0",
+    "description": "This API provides dynamic action invocation, health checks, and deployment capabilities for the Signalhaven symbolic engine. Use /actions/list to enumerate available actions. All endpoints require Bearer authentication and return machine-readable JSON responses suitable for GPT plugins or automation."
+  },
+  "servers": [
+    {
+      "url": "https://signal_q.catnip-pieces1.workers.dev",
+      "description": "Cloudflare Worker Production Endpoint"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/system/health": {
+      "get": {
+        "operationId": "getSystemHealth",
+        "summary": "Check system uptime, health status, and current server timestamp",
+        "description": "Returns comprehensive system health information including API status, storage status, deployment status, and current timestamp. Used for monitoring and GPT plugin health checks.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Healthy status with timestamp and version information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/probe_identity": {
+      "post": {
+        "operationId": "probeIdentity",
+        "summary": "Probe the current identity or service context for the calling agent",
+        "description": "Performs identity verification and returns current identity status, stability metrics, and authentication context. Essential for GPT plugins to confirm system readiness.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identity probe response with stability metrics and recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/recalibrate_state": {
+      "post": {
+        "operationId": "recalibrateState",
+        "summary": "Recalibrate symbolic engine state and synchronize identity parameters",
+        "description": "Performs a complete state recalibration of the symbolic engine, resetting identity parameters, emotional state, and active gene keys. Returns updated state information.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "State recalibration complete with updated parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/deploy": {
+      "post": {
+        "operationId": "triggerDeploy",
+        "summary": "Deploy or update the service using the provided configuration",
+        "description": "Triggers deployment workflow for the symbolic engine. Used in build/deploy workflows to update the service with latest code changes.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deployment response with status and message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/list": {
+      "post": {
+        "operationId": "listActions",
+        "summary": "List all available actions for the current agent context",
+        "description": "Returns a comprehensive list of all available symbolic handlers/modules and their descriptions. This is how dynamic actions are discovered by GPT plugins and other automation tools.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Array of action names, descriptions, and usage examples",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/{actionName}": {
+      "post": {
+        "operationId": "invokeAction",
+        "summary": "Invoke any named action dynamically",
+        "description": "Dynamically invoke any available symbolic action by name. Use 'list' as actionName to enumerate all available actions. This is the primary endpoint for GPT plugin dynamic action execution.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "actionName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The name of the action to invoke. Use 'list' to get all available actions."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action response or list of actions, depending on actionName",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GenericInput": {
+        "type": "object",
+        "description": "Flexible input for actions. All properties are optional and dynamic.",
+        "additionalProperties": true
+      },
+      "GenericResponse": {
+        "type": "object",
+        "description": "Standard response for all API methods.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Status string, e.g. 'healthy', 'success', 'error'."
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional human-readable message."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO8601 timestamp of response."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer authentication for all API endpoints."
+      }
+    }
+  }
+}
