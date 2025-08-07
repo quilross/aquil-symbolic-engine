@@ -1,0 +1,28 @@
+name = "signal_q"
+main = "worker/src/index.js"
+compatibility_date = "2024-11-01"
+account_id = "b07412f2f2389e8b537051bc092f3376"
+
+[[kv_namespaces]]
+binding = "SIGNAL_KV"
+id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
+
+[[durable_objects.bindings]]
+name = "USER_STATE"
+class_name = "UserState"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["UserState"]
+
+[ai]
+binding = "AI"
+
+[observability.logs]
+enabled = true
+
+
+
+
+
+
