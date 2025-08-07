@@ -1,5 +1,5 @@
 name = "signal_q"
-main = "src/index.js"
+main = "worker/src/index.js"
 compatibility_date = "2024-11-01"
 account_id = "b07412f2f2389e8b537051bc092f3376"
 

@@ -258,6 +258,28 @@ const handlers = {
       headers: { "Content-Type": "application/json", ...corsHeaders() },
     });
   },
+  system_health: async (req, env, ctx, body) => {
+    const payload = {
+      status: "online",
+      timestamp: new Date().toISOString(),
+      version: "v6.0",
+    };
+    
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
+  system_health: async (req, env, ctx, body) => {
+    const payload = {
+      status: "online",
+      timestamp: new Date().toISOString(),
+      version: "v6.0",
+    };
+    
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
   recalibrate_state: async (request, env, ctx, body) => {
     return new Response(JSON.stringify({
       status: 'success',
@@ -347,14 +369,6 @@ export default {
     if (path === '/system/health' && request.method === 'GET') {
       if (!token) {
         return new Response('Unauthorized: No Bearer token', { 
-          status: 401,
-          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
-        });
-      }
-      
-      // Validate token
-      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
-        return new Response('Unauthorized: Invalid token', { 
           status: 401,
           headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
         });
