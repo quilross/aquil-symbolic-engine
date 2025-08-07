@@ -169,8 +169,31 @@ const handlers = {
     lastDeployedAt: "2025-08-02T12:00:00Z",
     by: "AutoDeployBot",
     status: "All systems healthy."
-  })
-};
+  }),
+  probe_identity: async (request, env, ctx, body) => {
+    return new Response(JSON.stringify({
+      status: 'mirror',
+      identity_key: env.profile?.current_identity?.identity_key || 'undefined',
+      emotion: env.profile?.current_state?.dominant_emotion || 'neutral',
+      gene_key: env.profile?.current_state?.active_gene_key || 'unknown',
+      timestamp: new Date().toISOString()
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  },
+  recalibrate_state: async (request, env, ctx, body) => {
+    return new Response(JSON.stringify({
+      status: 'success',
+      message: 'Symbolic recalibration complete.',
+      identity_key: env.profile?.current_identity?.identity_key || 'undefined',
+      dominant_emotion: env.profile?.current_state?.dominant_emotion || 'neutral',
+      active_gene_key: env.profile?.current_state?.active_gene_key || 'unknown',
+      timestamp: new Date().toISOString()
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  };
 
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
