@@ -1,4 +1,6 @@
 name: signal_q
+permissions:
+  contents: read
 
 on:
   push:
@@ -26,3 +28,42 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  codespaces-compatibility:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Validate devcontainer configuration
+        run: |
+          echo "🔍 Checking devcontainer configuration..."
+          
+          # Check if devcontainer.json exists and is valid JSON
+          if [ ! -f ".devcontainer/devcontainer.json" ]; then
+            echo "❌ devcontainer.json not found"
+            exit 1
+          fi
+          
+          # Validate JSON syntax
+          cat .devcontainer/devcontainer.json | python3 -m json.tool > /dev/null
+          echo "✅ devcontainer.json is valid JSON"
+          
+          # Check for required port forwarding
+          if grep -q '"forwardPorts"' .devcontainer/devcontainer.json; then
+            echo "✅ Port forwarding configuration found"
+          else
+            echo "❌ Port forwarding configuration missing"
+            exit 1
+          fi
+          
+          # Check for Codespaces environment detection in test runner
+          if grep -q "CODESPACES" test-runner.sh; then
+            echo "✅ Codespaces environment detection found in test-runner.sh"
+          else
+            echo "❌ Codespaces environment detection missing in test-runner.sh"
+            exit 1
+          fi
+          
+          echo "🎉 Codespaces compatibility checks passed!"

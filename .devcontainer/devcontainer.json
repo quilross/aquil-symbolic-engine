@@ -1,10 +1,1 @@
-{
-  "name": "Signal Q API",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-18-bullseye",
-  "postCreateCommand": "npm ci",
-  "customizations": {
-    "vscode": {
-      "extensions": ["dbaeumer.vscode-eslint"]
-    }
-  }
-}
+{ "name": "Aquil Symbolic Engine", "postCreateCommand": "npm install && npx wrangler dev --remote --port 8788", "forwardPorts": [8788], "customizations": { "vscode": { "extensions": [ "cloudflare.wrangler", "GitHub.copilot" ] } } }

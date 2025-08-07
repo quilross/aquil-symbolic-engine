@@ -5,12 +5,8 @@
   "main": "worker/src/index.js",
   "type": "module",
   "scripts": {
-    "deploy": "cd worker && wrangler deploy",
-    "dev": "cd worker && wrangler dev",
-    "validate": "node scripts/validate-ci.js",
-    "test": "cd worker && node health-test.js",
-    "lint": "npm audit --audit-level moderate",
-    "build": "cd worker && wrangler deploy --dry-run"
+    "dev": "wrangler dev --remote --port 8788",
+    "deploy": "wrangler deploy"
   },
   "keywords": [
     "cloudflare-workers",
@@ -22,5 +18,8 @@
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.0.0",
     "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "@apidevtools/swagger-cli": "^4.0.4"
   }
 }

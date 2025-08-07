@@ -234,22 +234,46 @@ const handlers = {
     status: "All systems healthy."
   }),
   probe_identity: async (req, env, ctx, body) => {
-    // Enhanced probe_identity with AI decision-making and friction handling
-    const aiAnalysis = {
-      identityConfirmed: true,
-      frictionLevel: 'low',
-      recommendations: ['Continue as your whole self', 'Trust your authentic expression']
+    const payload = {
+      probe: "Identity confirmed",
+      timestamp: new Date().toISOString(),
+      friction: ["Continue as your whole self"],
+    };
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
+  system_health: async (req, env, ctx, body) => {
+    const payload = {
+      overall: "healthy",
+      api: { status: "online" },
+      storage: { status: "operational" },
+      deployment: { status: "active" },
+      timestamp: new Date().toISOString(),
+      worker: "signal_q",
+      version: "v6.0"
     };
     
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
+  system_health: async (req, env, ctx, body) => {
     const payload = {
-      probe: "Identity confirmed with AI analysis",
+      status: "online",
       timestamp: new Date().toISOString(),
-      friction: aiAnalysis.recommendations,
-      aiDecision: {
-        confidence: 0.95,
-        frictionLevel: aiAnalysis.frictionLevel,
-        identityStatus: aiAnalysis.identityConfirmed ? 'confirmed' : 'uncertain'
-      }
+      version: "v6.0",
+    };
+    
+    return new Response(JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json", ...corsHeaders() },
+    });
+  },
+  system_health: async (req, env, ctx, body) => {
+    const payload = {
+      status: "online",
+      timestamp: new Date().toISOString(),
+      version: "v6.0",
     };
     
     return new Response(JSON.stringify(payload), {

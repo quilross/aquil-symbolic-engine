@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Wrangler Dev",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/node_modules/.bin/wrangler",
+            "args": ["dev", "worker/src/index.js", "--local", "--port", "8787"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "WRANGLER_LOG": "debug",
+                "DEBUG": "signal-q:*"
+            },
+            "console": "integratedTerminal",
+            "outputCapture": "std"
+        },
+        {
+            "name": "Debug Tests",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/worker/health-test.js",
+            "env": {
+                "TEST_BASE_URL": "http://localhost:8787",
+                "DEBUG": "signal-q:*"
+            },
+            "console": "integratedTerminal"
+        }
+    ]
+}
