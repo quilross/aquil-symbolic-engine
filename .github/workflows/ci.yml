@@ -1,4 +1,6 @@
 name: signal_q
+permissions:
+  contents: read
 
 on:
   push:
