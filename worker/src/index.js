@@ -245,7 +245,6 @@ const handlers = {
     status: "All systems healthy.",
     timestamp: new Date().toISOString()
   })
-};
 
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
