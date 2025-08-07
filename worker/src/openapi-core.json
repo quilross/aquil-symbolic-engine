@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Signalhaven GPT Action API",
+    "title": "Signalhaven Actions API",
     "version": "v6.0",
-    "description": "This API provides dynamic action invocation, health checks, and deployment capabilities for the Signalhaven symbolic engine. Use /actions/list to enumerate available actions. All endpoints require Bearer authentication and return machine-readable JSON responses suitable for GPT plugins or automation."
+    "description": "This API provides consolidated action invocation for the Signalhaven symbolic engine. All endpoints require Bearer authentication. Use /actions/list to enumerate available actions."
   },
   "servers": [
     {
@@ -17,41 +17,11 @@
     }
   ],
   "paths": {
-    "/system/health": {
-      "get": {
-        "operationId": "getSystemHealth",
-        "summary": "Check system uptime, health status, and current server timestamp",
-        "description": "Returns comprehensive health status including system uptime, worker version, and current timestamp. Essential for monitoring service availability.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Healthy status with timestamp and version.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenericResponse"
-                },
-                "example": {
-                  "status": "healthy",
-                  "timestamp": "2024-01-01T12:00:00.000Z",
-                  "worker": "signal_q",
-                  "version": "v6.0"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/actions/probe_identity": {
+    "/actions/system_health": {
       "post": {
-        "operationId": "probeIdentity",
-        "summary": "Probe the current identity or service context for the calling agent",
-        "description": "Performs a comprehensive identity probe with authentication verification, stability analysis, and coherence assessment. Returns detailed identity metrics and recommendations.",
+        "operationId": "getSystemHealth",
+        "summary": "Check system health status and version",
+        "description": "Returns system health status, timestamp, worker name, and version information.",
         "security": [
           {
             "bearerAuth": []
@@ -69,7 +39,50 @@
         },
         "responses": {
           "200": {
-            "description": "Identity probe response with detailed analysis.",
+            "description": "System health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "timestamp": "2024-01-01T12:00:00.000Z",
+                  "worker": "signal_q",
+                  "version": "v6.0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Bearer token required"
+          }
+        }
+      }
+    },
+    "/actions/probe_identity": {
+      "post": {
+        "operationId": "probeIdentity",
+        "summary": "Probe current identity status with enriched analysis",
+        "description": "Performs comprehensive identity probe with stability analysis, coherence assessment, and authenticity verification. Returns detailed identity metrics and recommendations.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identity probe response with enriched analysis",
             "content": {
               "application/json": {
                 "schema": {
@@ -88,6 +101,9 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Bearer token required"
           }
         }
       }
@@ -95,8 +111,8 @@
     "/actions/recalibrate_state": {
       "post": {
         "operationId": "recalibrateState",
-        "summary": "Recalibrate the symbolic state and identity configuration",
-        "description": "Performs a complete symbolic recalibration of the current state, including identity key verification, dominant emotion assessment, and active gene key analysis. Returns updated state information.",
+        "summary": "Recalibrate symbolic state and identity configuration",
+        "description": "Performs complete symbolic recalibration including identity key verification, dominant emotion assessment, and active gene key analysis.",
         "security": [
           {
             "bearerAuth": []
@@ -112,13 +128,9 @@
             }
           }
         },
-        "summary": "Check system uptime and timestamp.",
-        "security": [
-          { "bearerAuth": [] }
-        ],
         "responses": {
           "200": {
-            "description": "Symbolic recalibration complete with state information.",
+            "description": "Symbolic recalibration complete with state information",
             "content": {
               "application/json": {
                 "schema": {
@@ -134,6 +146,9 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Bearer token required"
           }
         }
       }
@@ -141,8 +156,8 @@
     "/actions/deploy": {
       "post": {
         "operationId": "triggerDeploy",
-        "summary": "Deploy or update the service using the provided configuration",
-        "description": "Triggers a deployment workflow for the service. This endpoint initiates deployment processes and should be used for build/deploy workflows in production environments.",
+        "summary": "Trigger deployment workflow",
+        "description": "Initiates deployment process for the service. Simulates triggering real deploy workflow.",
         "security": [
           {
             "bearerAuth": []
@@ -160,7 +175,7 @@
         },
         "responses": {
           "200": {
-            "description": "Deployment response with status and message.",
+            "description": "Deployment triggered successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -172,6 +187,9 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Bearer token required"
           }
         }
       }
@@ -179,8 +197,8 @@
     "/actions/list": {
       "post": {
         "operationId": "listActions",
-        "summary": "List all available actions for dynamic discovery",
-        "description": "Returns a comprehensive list of all available symbolic handlers/modules. This is the primary endpoint for dynamic action discovery by GPT plugins, providing action names, descriptions, parameters, and example usage.",
+        "summary": "List all available public actions",
+        "description": "Returns a comprehensive list of all available public actions for dynamic discovery by GPT plugins and automation tools.",
         "security": [
           {
             "bearerAuth": []
@@ -198,7 +216,7 @@
         },
         "responses": {
           "200": {
-            "description": "Array of action names and descriptions for dynamic discovery.",
+            "description": "Array of available public actions",
             "content": {
               "application/json": {
                 "schema": {
@@ -207,83 +225,42 @@
                 "example": {
                   "actions": [
                     {
-                      "name": "getSystemHealth",
-                      "description": "Returns system health status, version, and current timestamp.",
-                      "method": "GET",
-                      "path": "/system/health"
+                      "name": "list",
+                      "description": "List all available public actions",
+                      "method": "POST",
+                      "path": "/actions/list"
                     },
                     {
-                      "name": "probeIdentity", 
-                      "description": "Confirm the current identity status.",
+                      "name": "system_health",
+                      "description": "Check system health status and version",
+                      "method": "POST",
+                      "path": "/actions/system_health"
+                    },
+                    {
+                      "name": "probe_identity",
+                      "description": "Probe current identity status with enriched analysis",
                       "method": "POST",
                       "path": "/actions/probe_identity"
+                    },
+                    {
+                      "name": "recalibrate_state",
+                      "description": "Recalibrate symbolic state and identity configuration",
+                      "method": "POST",
+                      "path": "/actions/recalibrate_state"
+                    },
+                    {
+                      "name": "deploy",
+                      "description": "Trigger deployment workflow",
+                      "method": "POST",
+                      "path": "/actions/deploy"
                     }
                   ]
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/actions/{actionName}": {
-      "post": {
-        "operationId": "invokeAction",
-        "summary": "Invoke any named action dynamically",
-        "description": "Universal endpoint for dynamic action invocation. Accepts any valid actionName and routes to the appropriate handler. Use /actions/list to discover available actions. Supports all documented actions including deploy, probe_identity, recalibrate_state, and custom handlers.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "actionName",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "examples": ["list", "deploy", "probe_identity", "recalibrate_state"]
-            },
-            "description": "The name of the action to invoke. Use 'list' to enumerate all available actions, or any action name returned by the list endpoint."
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenericInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Action response or list of actions, depending on the invoked action.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenericResponse"
-                }
-              }
-            }
           },
-          "404": {
-            "description": "Action not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Not found"
-                    }
-                  }
-                }
-              }
-            }
+          "401": {
+            "description": "Unauthorized - Bearer token required"
           }
         }
       }
@@ -328,14 +305,6 @@
         "type": "http",
         "scheme": "bearer",
         "description": "Bearer authentication for all API endpoints. Include the token in the Authorization header as 'Bearer {token}'."
-      }
-    }
-  },
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
       }
     }
   }
