@@ -24,6 +24,24 @@
 
 ---
 
+## 🌐 Firewall/Network Requirements
+
+For full automation, deployment, and CI/Codespaces operation, ensure the following endpoints are reachable through your network/firewall:
+
+### Required Endpoints
+- **sparrow.cloudflare.com** - Cloudflare API endpoint
+- **workers.cloudflare.com** - Workers platform endpoint  
+- **registry.npmjs.org** - npm package registry
+- **signal_q.catnip-pieces1.workers.dev** - Production API endpoint
+
+### Network Restrictions & Fallbacks
+If these endpoints are blocked, the repository includes intelligent automation:
+- **Automatic Detection**: Scripts test connectivity and adapt automatically
+- **Local Fallback**: Use `npm run dev:fallback` for zero-config development in restrictive networks
+- **Offline Capability**: Full local development server with simulated bindings
+
+---
+
 ## 🚀 Deployment Automation
 
 This repository includes comprehensive CI/CD automation for reliable deployment:
@@ -71,12 +89,8 @@ npm run dev
 cd worker && wrangler dev --local --port 8788
 ```
 
-**🌐 Required Domain Allowlist**
-For optimal functionality in restrictive networks, allowlist these domains:
-- `sparrow.cloudflare.com` - Cloudflare API endpoint
-- `workers.cloudflare.com` - Workers platform endpoint  
-- `registry.npmjs.org` - npm package registry
-- `signal_q.catnip-pieces1.workers.dev` - Production API endpoint (from OpenAPI spec)
+**🌐 Network Configuration**
+See the [Firewall/Network Requirements](#-firewallnetwork-requirements) section above for required endpoint allowlisting.
 
 #### Firewall & Network Considerations
 When using Codespaces, you may encounter firewall restrictions that block access to:
@@ -150,7 +164,7 @@ The zero-config environment is designed to work within most corporate firewalls.
 - Internal MCP server for enhanced development context
 
 **Manual Network Configuration (if needed):**
-1. **Domain Allowlist**: Request access to `*.workers.dev` and `*.cloudflare.com`
+1. **Domain Allowlist**: See [Firewall/Network Requirements](#-firewallnetwork-requirements) for required endpoints
 2. **Local Testing**: Use `npm run dev` for isolated development
 3. **VPN/Proxy**: Use approved network tools if organizational policies permit
 
@@ -238,10 +252,3 @@ This repository includes intelligent automation for firewall-safe development:
 - **PostCreateCommand**: Automatically runs `npm ci` and notifies about firewall-safe development
 - **Port Forwarding**: Pre-configured for development ports (8787, 8788, 8789)
 - **Environment Detection**: Automatically adapts to Codespaces environment
-
-### Network Requirements
-For optimal functionality, allowlist these domains:
-- `sparrow.cloudflare.com` - Cloudflare API endpoint
-- `workers.cloudflare.com` - Workers platform endpoint  
-- `registry.npmjs.org` - npm package registry
-- `signal_q.catnip-pieces1.workers.dev` - Production API endpoint
