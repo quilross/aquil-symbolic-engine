@@ -112,6 +112,10 @@
             }
           }
         },
+        "summary": "Check system uptime and timestamp.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
         "responses": {
           "200": {
             "description": "Symbolic recalibration complete with state information.",
@@ -324,6 +328,14 @@
         "type": "http",
         "scheme": "bearer",
         "description": "Bearer authentication for all API endpoints. Include the token in the Authorization header as 'Bearer {token}'."
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
