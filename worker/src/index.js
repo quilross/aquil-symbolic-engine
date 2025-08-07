@@ -183,7 +183,7 @@ export default {
         version: "v6.0"
       }), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders() }
-      });
+      return handlers.system_health(request);
     }
 
     if (path === '/admin/reset') {
