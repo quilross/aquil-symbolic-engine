@@ -18,5 +18,8 @@
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.0.0",
     "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "@apidevtools/swagger-cli": "^4.0.4"
   }
 }
