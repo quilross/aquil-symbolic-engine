@@ -43,7 +43,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericResponse"
+                  "$ref": "#/components/schemas/SystemHealthResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "timestamp": "2024-01-01T00:00:00.000Z",
+                  "worker": "signal_q",
+                  "version": "v6.0"
                 }
               }
             }
@@ -80,7 +86,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericResponse"
+                  "$ref": "#/components/schemas/ProbeIdentityResponse"
+                },
+                "example": {
+                  "probe": "Identity confirmed",
+                  "timestamp": "2024-01-01T00:00:00.000Z",
+                  "analysis": {
+                    "stability": 0.92,
+                    "coherence": "high",
+                    "authenticity": 0.88,
+                    "recommendation": "Identity integration optimal - proceed with confidence"
+                  }
                 }
               }
             }
@@ -117,7 +133,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericResponse"
+                  "$ref": "#/components/schemas/RecalibrateStateResponse"
+                },
+                "example": {
+                  "state": "recalibrated",
+                  "timestamp": "2024-01-01T00:00:00.000Z",
+                  "identity_key": "primary_manifester",
+                  "dominant_emotion": "clarity"
                 }
               }
             }
@@ -154,7 +176,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericResponse"
+                  "$ref": "#/components/schemas/DeployResponse"
+                },
+                "example": {
+                  "deployment": "triggered",
+                  "timestamp": "2024-01-01T00:00:00.000Z"
                 }
               }
             }
@@ -194,38 +220,7 @@
                   "$ref": "#/components/schemas/ActionsListResponse"
                 },
                 "example": {
-                  "actions": [
-                    {
-                      "name": "list",
-                      "description": "List all available public actions",
-                      "method": "POST",
-                      "path": "/actions/list"
-                    },
-                    {
-                      "name": "system_health",
-                      "description": "Check system health status and version",
-                      "method": "POST",
-                      "path": "/actions/system_health"
-                    },
-                    {
-                      "name": "probe_identity",
-                      "description": "Probe current identity status with enriched analysis",
-                      "method": "POST",
-                      "path": "/actions/probe_identity"
-                    },
-                    {
-                      "name": "recalibrate_state",
-                      "description": "Recalibrate symbolic state and identity configuration",
-                      "method": "POST",
-                      "path": "/actions/recalibrate_state"
-                    },
-                    {
-                      "name": "deploy",
-                      "description": "Trigger deployment workflow",
-                      "method": "POST",
-                      "path": "/actions/deploy"
-                    }
-                  ]
+                  "actions": ["list", "system_health", "probe_identity", "recalibrate_state", "deploy"]
                 }
               }
             }
@@ -243,31 +238,105 @@
         "type": "object",
         "description": "Generic input object for actions that accept optional parameters"
       },
-      "GenericResponse": {
+      "SystemHealthResponse": {
         "type": "object",
-        "description": "Generic response object returned by actions"
+        "required": ["status", "timestamp", "worker", "version"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["healthy"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "worker": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ProbeIdentityResponse": {
+        "type": "object",
+        "required": ["probe", "timestamp", "analysis"],
+        "properties": {
+          "probe": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "analysis": {
+            "type": "object",
+            "required": ["stability", "coherence", "authenticity", "recommendation"],
+            "properties": {
+              "stability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "coherence": {
+                "type": "string",
+                "enum": ["high", "medium", "low"]
+              },
+              "authenticity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "recommendation": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "RecalibrateStateResponse": {
+        "type": "object",
+        "required": ["state", "timestamp", "identity_key", "dominant_emotion"],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["recalibrated"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "identity_key": {
+            "type": "string"
+          },
+          "dominant_emotion": {
+            "type": "string"
+          }
+        }
+      },
+      "DeployResponse": {
+        "type": "object",
+        "required": ["deployment", "timestamp"],
+        "properties": {
+          "deployment": {
+            "type": "string",
+            "enum": ["triggered"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "ActionsListResponse": {
         "type": "object",
+        "required": ["actions"],
         "properties": {
           "actions": {
             "type": "array",
             "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "description": {
-                  "type": "string"
-                },
-                "method": {
-                  "type": "string"
-                },
-                "path": {
-                  "type": "string"
-                }
-              }
+              "type": "string",
+              "enum": ["list", "system_health", "probe_identity", "recalibrate_state", "deploy"]
             }
           }
         }

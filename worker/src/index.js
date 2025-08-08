@@ -1,54 +1,14 @@
+// Canonical actions list - POST /actions/list response
 const actionsList = {
-  actions: [
-    {
-      name: "list",
-      description: "List all available public actions",
-      method: "POST",
-      path: "/actions/list",
-      parameters: {},
-      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/list -H 'Authorization: Bearer TOKEN'" }
-    },
-    {
-      name: "system_health",
-      description: "Check system health status and version",
-      method: "POST",
-      path: "/actions/system_health",
-      parameters: {},
-      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/system_health -H 'Authorization: Bearer TOKEN'" }
-    },
-    {
-      name: "probe_identity",
-      description: "Probe current identity status with enriched analysis",
-      method: "POST",
-      path: "/actions/probe_identity",
-      parameters: {},
-      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity -H 'Authorization: Bearer TOKEN'" }
-    },
-    {
-      name: "recalibrate_state",
-      description: "Recalibrate symbolic state and identity configuration",
-      method: "POST",
-      path: "/actions/recalibrate_state",
-      parameters: {},
-      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/recalibrate_state -H 'Authorization: Bearer TOKEN'" }
-    },
-    {
-      name: "deploy",
-      description: "Trigger deployment workflow",
-      method: "POST",
-      path: "/actions/deploy",
-      parameters: {},
-      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/deploy -H 'Authorization: Bearer TOKEN'" }
-    }
-  ]
+  actions: ["list", "system_health", "probe_identity", "recalibrate_state", "deploy"]
 };
 
 // --- ACTION HANDLERS ---
 const handlers = {
   list: async () => actionsList,
   deploy: async () => ({
-    success: true,
-    message: "Deploy triggered (simulate actual deploy with GitHub Actions API/webhook)."
+    deployment: "triggered",
+    timestamp: new Date().toISOString()
   }),
   probe_identity: async (req, env, ctx, body) => {
     // Enhanced probe identity with comprehensive analysis
@@ -59,9 +19,8 @@ const handlers = {
     };
     
     return {
-      probe: "Identity confirmed with detailed analysis",
+      probe: "Identity confirmed",
       timestamp: new Date().toISOString(),
-      friction: ["Continue as your whole self", "Trust your authentic expression"],
       analysis: {
         stability: aiAnalysis.identityStability,
         coherence: aiAnalysis.coherenceLevel,
@@ -71,22 +30,17 @@ const handlers = {
     };
   },
   system_health: async () => ({
-    overall: "healthy",
-    api: { status: "online" },
-    storage: { status: "operational" },
-    deployment: { status: "active" },
+    status: "healthy",
     timestamp: new Date().toISOString(),
     worker: "signal_q",
     version: "v6.0"
   }),
   recalibrate_state: async (request, env, ctx, body) => {
     return {
-      status: 'success',
-      message: 'Symbolic recalibration complete.',
+      state: "recalibrated",
+      timestamp: new Date().toISOString(),
       identity_key: env.profile?.current_identity?.identity_key || 'primary_manifester',
-      dominant_emotion: env.profile?.current_state?.dominant_emotion || 'clarity',
-      active_gene_key: env.profile?.current_state?.active_gene_key || 'emergence',
-      timestamp: new Date().toISOString()
+      dominant_emotion: env.profile?.current_state?.dominant_emotion || 'clarity'
     };
   }
 };
@@ -242,6 +196,18 @@ export default {
         const response = createProblemResponse(
           'Authentication Required',
           'Bearer token is required for action endpoints',
+          401,
+          correlationId
+        );
+        logRequest(method, path, 401, correlationId, startTime);
+        return response;
+      }
+      
+      // Validate token against known valid tokens
+      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
+        const response = createProblemResponse(
+          'Invalid Credentials',
+          'The provided Bearer token is not valid',
           401,
           correlationId
         );
