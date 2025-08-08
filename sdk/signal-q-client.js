@@ -191,9 +191,11 @@ class SignalQClient {
   }
 }
 
-// Node.js export
+// Node.js export (primary export)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = SignalQClient;
+  module.exports.SignalQClient = SignalQClient;
+  module.exports.default = SignalQClient;
 }
 
 // Browser global

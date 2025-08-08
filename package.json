@@ -13,7 +13,8 @@
     "secret-scan:install": "node scripts/secret-scan.cjs install",
     "validate": "npm run secret-scan && npm audit",
     "build": "echo 'Validation build - checking worker syntax' && cd worker && wrangler dev --dry-run",
-    "lint": "npm audit --audit-level moderate"
+    "lint": "npm audit --audit-level moderate",
+    "demo:sdk": "node sdk/demo.cjs"
   },
   "keywords": [
     "cloudflare-workers",
