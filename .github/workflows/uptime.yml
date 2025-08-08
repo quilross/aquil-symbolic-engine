@@ -7,6 +7,7 @@ on:
 
 permissions:
   issues: write
+  
 jobs:
   uptime-check:
     runs-on: ubuntu-latest
@@ -19,13 +20,28 @@ jobs:
 
       - name: Check version endpoint
         run: |
-          curl "$BASE_URL/version" | jq -e '.version and .gitSha and .buildTime and .environment'
+          echo "📦 Checking /version endpoint..."
+          curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .gitSha and .buildTime and .environment'
 
-      - name: Check health endpoint
+      - name: Check health endpoint with detailed error capture
         env:
           SIGNALQ_API_TOKEN_PROD: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
         run: |
-          curl -s -D headers.txt -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee body.json | jq -e '.status=="healthy"'
+          echo "🏥 Checking /actions/system_health endpoint..."
+          # First attempt
+          if curl -s -D headers.txt -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee body.json | jq -e '.status=="healthy"' 2>/dev/null; then
+            echo "✅ Health check passed"
+          else
+            echo "⚠️ First attempt failed, retrying after 5 seconds..."
+            sleep 5
+            # Second attempt
+            if curl -s -D headers.txt -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee body.json | jq -e '.status=="healthy"' 2>/dev/null; then
+              echo "✅ Health check passed on retry"
+            else
+              echo "❌ Health check failed after retry"
+              exit 1
+            fi
+          fi
 
       - name: Create or update uptime issue on failure
         if: failure()
@@ -39,11 +55,13 @@ jobs:
             const title = 'Uptime Log';
             
             // Extract correlation ID from headers if available
-            let correlationId = 'N/A';
+            let correlationId = 'none';
             let httpStatus = 'N/A';
             let bodyExcerpt = 'Response body not available';
+            let versionInfo = 'N/A';
             
             try {
+              // Get correlation ID from response headers
               if (fs.existsSync('headers.txt')) {
                 const headers = fs.readFileSync('headers.txt', 'utf8');
                 const correlationMatch = headers.match(/X-Correlation-ID:\s*(.+)/i);
@@ -56,9 +74,16 @@ jobs:
                 }
               }
               
+              // Get response body excerpt (truncated to 200 chars)
               if (fs.existsSync('body.json')) {
                 const body = fs.readFileSync('body.json', 'utf8');
                 bodyExcerpt = body.length > 200 ? body.substring(0, 200) + '...' : body;
+              }
+              
+              // Get version info from successful version call
+              if (fs.existsSync('v.json')) {
+                const versionData = JSON.parse(fs.readFileSync('v.json', 'utf8'));
+                versionInfo = `${versionData.version || 'unknown'} (${versionData.gitSha || 'unknown'})`;
               }
             } catch (e) {
               console.error('Error reading response files:', e);
@@ -68,6 +93,7 @@ jobs:
             - **Endpoint**: POST /actions/system_health
             - **HTTP Status**: ${httpStatus}
             - **Correlation ID**: ${correlationId}
+            - **Version**: ${versionInfo}
             - **Response Excerpt**: \`${bodyExcerpt}\`
             
             ---
