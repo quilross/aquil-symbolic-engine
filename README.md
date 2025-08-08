@@ -26,70 +26,75 @@
 
 Get Signal Q running in GitHub Codespaces in under 2 minutes:
 
-### Prerequisites
-- GitHub Codespaces environment (this is detected automatically)
-- Or local machine with Node.js 18+
-
-### Quick Start
 ```bash
-# 1. Install dependencies (automatically done in Codespaces)
+# 1. Install dependencies
 npm ci
 
-# 2. Start development server
+# 2. Start development server  
 npx wrangler dev
+# Use printed dev URL (default 8787)
 
-# ⚠️ IMPORTANT: Use the printed URL from wrangler dev output
-# Default is http://127.0.0.1:8787 but wrangler will print the actual URL
-# Don't hardcode ports - always use the printed URL!
-
-# 3. Set up environment variables for testing (in a new terminal)
+# 3. Set up environment variable for testing (in a new terminal)
 export SIGNALQ_API_TOKEN=dev-placeholder
 
 # 4. Test the public version endpoint (no auth required)
-curl http://127.0.0.1:8787/version
+curl /version
 
-# 5. Test the canonical actions API (requires Bearer auth)
-curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/actions/system_health
-curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/actions/list
+# 5. Test the authenticated health endpoint (requires Bearer auth)
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" /actions/system_health
 ```
 
-### Local Development Environment Variables
+**Note**: Always use the printed URL from wrangler dev output (often http://localhost:8787).
 
-Create/edit `.dev.vars` for local development:
+## 📦 SDK Usage
+
+Use the JavaScript SDK for easier API interaction:
+
+```javascript
+const SignalQClient = require('./sdk/signal-q-client.js');
+
+const client = new SignalQClient({
+  baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+  token: process.env.SIGNALQ_API_TOKEN
+});
+
+// Get version info
+const version = await client.version();
+console.log(version); // {"version":"2.1.0","gitSha":"...","environment":"production"}
+
+// Check system health  
+const health = await client.systemHealth();
+console.log(health); // {"status":"healthy","timestamp":"...","worker":"signal_q"}
+```
+
+**Curl equivalents:**
 ```bash
-# .dev.vars (automatically loaded by wrangler dev)
-SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
-SIGNALQ_ADMIN_TOKEN=sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o
+# Version endpoint (no auth)
+curl https://signal_q.catnip-pieces1.workers.dev/version
 
-# Optional: version info (set by CI in production)
-# GIT_SHA=local-development
-# BUILD_TIME=2025-01-01T00:00:00.000Z
-# NODE_ENV=development
+# System health (requires Bearer auth)
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+     https://signal_q.catnip-pieces1.workers.dev/actions/system_health
 ```
 
-**Note**: `.dev.vars` is used by Wrangler for local development and aligns with Cloudflare Workers binding guidance. In production, these are set as encrypted environment variables.
+## Production Deploy & Smoke
 
-## Production Deploy & Smoke Tests
+Run the deploy-and-smoke workflow to deploy and verify production:
 
-Signal Q uses automated CI/CD with integrated smoke testing for production deployments.
+1. Go to Actions → "Deploy and Smoke Test"
+2. Click "Run workflow"
+3. The workflow will:
+   - `npm ci`
+   - `wrangler deploy`
+   - `export BASE_URL=https://signal_q.catnip-pieces1.workers.dev`
+   - `curl -sSf "$BASE_URL/version" | jq .`
+   - `curl -sSf -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee health.json | jq .`
+   - Fail if `.status != "healthy"` (jq check)
+   - Retry once after sleep 5 on network error
 
-### Required Secrets
-
-Configure these secrets in your GitHub repository settings:
-```
-CLOUDFLARE_API_TOKEN=your_api_token_here
-SIGNALQ_API_TOKEN_PROD=sq_live_prod_token_here
-```
-
-### Deploy and Smoke Workflow
-
-The `deploy-and-smoke.yml` workflow automatically:
-1. ✅ Validates build and OpenAPI schema
-2. 🚀 Deploys to Cloudflare Workers production environment  
-3. 🔍 Runs smoke tests against the live production URL
-4. ✅ Verifies GET /version returns 200 JSON
-5. 🏥 Tests POST /actions/system_health with Bearer auth
-6. 🔄 Retries health check once on transient network errors
+**Expected outputs:**
+- Version JSON: `{"version":"2.1.0","gitSha":"...","buildTime":"...","environment":"production"}`
+- Health JSON: `{"status":"healthy","timestamp":"...","worker":"signal_q","version":"v6.0"}`
 
 ### Triggering Deployment
 
@@ -431,23 +436,24 @@ This repository includes intelligent automation for firewall-safe development:
 
 ### Common Issues and Solutions
 
-#### 404 Errors
-- **Check path**: Ensure you're using the correct endpoint path
-  - ✅ Correct: `POST /actions/system_health`
-  - ❌ Incorrect: `GET /system_health` or `POST /health`
-- **Verify URL**: Use the printed URL from `wrangler dev` output (default: http://127.0.0.1:8787)
-- **Don't hardcode ports**: Always use the URL that wrangler prints, not assumed ports
+#### 404: Check path
+- Ensure you're using the correct endpoint path
+- Correct: `POST /actions/system_health`
+- Incorrect: `GET /system_health` or `POST /health`
 
-#### 401/403 Authentication Errors
-- **Header format**: Ensure exact header format: `Authorization: Bearer <token>`
-- **Token validation**: 
-  - User tokens start with `sq_live_`
-  - Admin tokens start with `sq_admin_`
-  - Check for extra spaces or incorrect characters
-- **Environment**: Verify you're using the right token for dev vs production
+#### 401/403: Exact Bearer header  
+- Ensure exact header format: `Authorization: Bearer <token>`
+- Check for extra spaces or incorrect characters
+- Verify you're using the right token for dev vs production
 
-#### Development Port Issues
-- **Use printed URL**: Don't assume port 8788 - wrangler may use 8787 or other ports
+#### Dev port: Use printed URL (often 8787)
+- Don't assume port - always use the URL that wrangler prints
+- Default is often http://localhost:8787 but may vary
+
+#### Prod: Run wrangler tail in a split terminal while curling
+- In terminal 1: `npx wrangler tail --env production`
+- In terminal 2: Make your curl requests
+- View real-time logs to debug issues
 - **Check wrangler output**: Always use the URL that `npx wrangler dev` prints
 - **Port conflicts**: If 8787 is busy, wrangler will choose another port automatically
 
