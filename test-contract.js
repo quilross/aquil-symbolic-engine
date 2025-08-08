@@ -10,7 +10,7 @@ const TOKEN = process.env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b
 
 console.log('🧪 Running Signal Q Contract Tests');
 console.log(`📡 Base URL: ${BASE_URL}`);
-console.log(`🔑 Token: ${TOKEN.substring(0, 10)}...`);
+console.log(`🔑 Token: ${TOKEN ? '[SET]' : '[NOT SET]'}`);
 console.log('');
 
 let passed = 0;
