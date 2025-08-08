@@ -1,5 +1,5 @@
 name = "signal_q"
-main = "worker/src/index.js"
+main = "src/index.js"
 compatibility_date = "2024-11-01"
 account_id = "b07412f2f2389e8b537051bc092f3376"
 
@@ -21,8 +21,22 @@ binding = "AI"
 [observability.logs]
 enabled = true
 
+[env.production]
+name = "signal-q-prod"
+vars = { NODE_ENV = "production" }
 
+[env.production.kv_namespaces]
+binding = "SIGNAL_KV"
+id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 
+[env.production.durable_objects.bindings]
+name = "USER_STATE"
+class_name = "UserState"
 
+[env.production.ai]
+binding = "AI"
+
+[env.production.observability.logs]
+enabled = true
 
 

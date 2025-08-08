@@ -12,7 +12,7 @@
     "secret-scan": "node scripts/secret-scan.cjs",
     "secret-scan:install": "node scripts/secret-scan.cjs install",
     "validate": "npm run secret-scan && npm audit",
-    "build": "echo 'Validation build - checking worker syntax' && cd worker && wrangler dev --dry-run",
+    "build": "echo 'Validation build - checking worker syntax' && cd worker && node -c src/index.js && echo '✅ Worker syntax is valid'",
     "lint": "npm audit --audit-level moderate",
     "demo:sdk": "node sdk/demo.cjs"
   },

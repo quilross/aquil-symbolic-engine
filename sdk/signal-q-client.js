@@ -5,7 +5,7 @@
  * @example
  * const client = new SignalQClient({
  *   baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
- *   token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+ *   token: process.env.SIGNALQ_API_TOKEN
  * });
  * 
  * const health = await client.health();
@@ -191,7 +191,7 @@ class SignalQClient {
   }
 }
 
-// Node.js export (primary export)
+// Node.js CommonJS export 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = SignalQClient;
   module.exports.SignalQClient = SignalQClient;
@@ -203,8 +203,7 @@ if (typeof window !== 'undefined') {
   window.SignalQClient = SignalQClient;
 }
 
-// ES6 export
-if (typeof exports !== 'undefined') {
-  exports.SignalQClient = SignalQClient;
-  exports.default = SignalQClient;
+// For ES modules when imported via require in mixed environments
+if (typeof global !== 'undefined' && typeof module === 'undefined') {
+  global.SignalQClient = SignalQClient;
 }

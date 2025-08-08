@@ -21,7 +21,7 @@ curl https://signal_q.catnip-pieces1.workers.dev/version
 
 ```bash
 # Health check with USER token
-curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   https://signal_q.catnip-pieces1.workers.dev/system/health
 
 # Expected response:
@@ -39,7 +39,7 @@ curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
 ```bash
 # Admin reset with ADMIN token
 curl -X POST \
-  -H "Authorization: Bearer sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2" \
+  -H "Authorization: Bearer $SIGNALQ_ADMIN_TOKEN" \
   https://signal_q.catnip-pieces1.workers.dev/admin/reset
 
 # Expected response:
@@ -61,7 +61,7 @@ curl -X POST \
 
 # Probe identity
 curl -X POST \
-  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"context": "testing"}' \
   https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity
@@ -78,7 +78,7 @@ const SignalQClient = require('./sdk/signal-q-client.js');
 // Create client instance
 const client = new SignalQClient({
   baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
-  token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+  token: process.env.SIGNALQ_API_TOKEN
 });
 
 // Basic operations
@@ -108,7 +108,7 @@ async function basicExample() {
 async function advancedExample() {
   const client = new SignalQClient({
     baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
-    token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h',
+    token: process.env.SIGNALQ_API_TOKEN,
     timeout: 10000 // 10 second timeout
   });
 
