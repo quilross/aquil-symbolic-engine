@@ -7,7 +7,13 @@
   "scripts": {
     "test": "./test-runner.sh",
     "dev": "wrangler dev --remote --port 8788",
-    "deploy": "wrangler deploy"
+    "dev:fallback": "node scripts/wrangler-fallback.js dev",
+    "deploy": "wrangler deploy",
+    "secret-scan": "node scripts/secret-scan.cjs",
+    "secret-scan:install": "node scripts/secret-scan.cjs install",
+    "validate": "npm run secret-scan && npm audit",
+    "build": "echo 'Validation build - checking worker syntax' && cd worker && wrangler dev --dry-run",
+    "lint": "npm audit --audit-level moderate"
   },
   "keywords": [
     "cloudflare-workers",

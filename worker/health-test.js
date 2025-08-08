@@ -19,6 +19,14 @@ const results = [];
 async function testHealthEndpoint() {
   const tests = [
     {
+      name: 'Version Endpoint (Public)',
+      url: `${BASE_URL}/version`,
+      headers: {},
+      expectedStatus: 200,
+      shouldHaveJson: true,
+      isVersion: true
+    },
+    {
       name: 'Valid User Token',
       url: `${BASE_URL}/system/health`,
       headers: { 'Authorization': `Bearer ${USER_TOKEN}` },
@@ -127,6 +135,12 @@ async function testHealthEndpoint() {
                 jsonData.timestamp &&
                 jsonData.friction
               );
+            } else if (test.isVersion) {
+              hasRequiredFields = !!(
+                jsonData.version &&
+                jsonData.gitSha &&
+                jsonData.buildTime
+              );
             } else {
               hasRequiredFields = !!(
                 jsonData.overall && 
@@ -170,6 +184,10 @@ async function testHealthEndpoint() {
             console.log(`   🔍 Probe: ${jsonData.probe}`);
             console.log(`   ⏰ Timestamp: ${jsonData.timestamp}`);
             console.log(`   ⚡ Friction: ${JSON.stringify(jsonData.friction)}`);
+          } else if (test.isVersion) {
+            console.log(`   📦 Version: ${jsonData.version}`);
+            console.log(`   🔗 Git SHA: ${jsonData.gitSha}`);
+            console.log(`   🏗️ Build Time: ${jsonData.buildTime}`);
           } else {
             console.log(`   📊 Overall: ${jsonData.overall}`);
             console.log(`   📡 API Status: ${jsonData.api?.status}`);
