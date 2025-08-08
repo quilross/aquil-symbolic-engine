@@ -22,6 +22,69 @@
 
 **🔥 NEW: Firewall-Safe Automation** - Automatic fallback to local development when Cloudflare endpoints are unreachable. Use `npm run dev:fallback` for zero-config development in restrictive networks.
 
+## 🚀 Codespaces Quickstart
+
+Get Signal Q running in GitHub Codespaces in under 2 minutes:
+
+### Prerequisites
+- GitHub Codespaces environment (this is detected automatically)
+- Or local machine with Node.js 18+
+
+### Quick Start
+```bash
+# 1. Install dependencies (automatically done in Codespaces)
+npm ci
+
+# 2. Start development server
+npx wrangler dev
+
+# Note the printed URL (usually http://127.0.0.1:8787)
+# Wrangler will print the actual URL - use that instead of assuming port 8788
+
+# 3. Set up environment variables for testing
+export SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+
+# 4. Test the endpoints
+curl http://127.0.0.1:8787/version
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/system/health
+```
+
+### Production Smoke Test
+```bash
+# Set production environment
+export SIGNALQ_BASE_URL=https://signal_q.catnip-pieces1.workers.dev
+export SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+
+# Deploy to production
+npx wrangler deploy
+
+# Run smoke tests
+./scripts/smoke.sh
+
+# Or use Node.js version
+node scripts/smoke.js
+```
+
+### Troubleshooting
+
+**If you get 404 errors:**
+- Verify the exact route path (`/system/health` vs `/health`)
+- Check that the development server URL is correct (use the URL printed by `wrangler dev`)
+
+**If you get 401/403 errors:**
+- Ensure you're using the correct Authorization header: `"Authorization: Bearer $SIGNALQ_API_TOKEN"`
+- For admin endpoints, use `$SIGNALQ_ADMIN_TOKEN` instead
+- Verify your token starts with `sq_live_` (user) or `sq_admin_` (admin)
+
+**If development server fails to start:**
+- Don't assume port 8788 - read the actual URL/port printed by Wrangler
+- Check for port conflicts or use `--port` flag to specify a different port
+
+**If production deployment errors:**
+- Run `npx wrangler tail` in a second terminal for real-time logs
+- Check the tail output when retrying your curl commands
+- Ensure you have proper Cloudflare credentials configured
+
 ---
 
 ## 🌐 Firewall/Network Requirements

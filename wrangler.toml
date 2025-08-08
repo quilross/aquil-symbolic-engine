@@ -21,6 +21,9 @@ binding = "AI"
 [observability.logs]
 enabled = true
 
+[dev]
+port = 8787
+
 
 
 
