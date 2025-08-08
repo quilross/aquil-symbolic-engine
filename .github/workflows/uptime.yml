@@ -5,6 +5,8 @@ on:
     - cron: '*/10 * * * *'  # Every 10 minutes
   workflow_dispatch:
 
+permissions:
+  issues: write
 jobs:
   uptime-check:
     runs-on: ubuntu-latest
