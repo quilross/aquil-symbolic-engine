@@ -166,206 +166,219 @@ export default {
       return response;
     }
     
-    // Handle CORS preflight requests FIRST, before auth
-    if (request.method === 'OPTIONS') {
-      const response = new Response(null, {
-        status: 200,
+    try {
+      // Handle CORS preflight requests FIRST, before auth
+      if (request.method === 'OPTIONS') {
+        const response = new Response(null, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
+            'X-Correlation-ID': correlationId
+          }
+        });
+        logRequest(method, path, 200, correlationId, startTime);
+        return response;
+      }
+
+      // Prefer env tokens; fallback to dev tokens for local testing
+      const SIGNALQ_API_TOKEN = env?.SIGNALQ_API_TOKEN || DEV_SIGNALQ_API_TOKEN;
+      const SIGNALQ_ADMIN_TOKEN = env?.SIGNALQ_ADMIN_TOKEN || DEV_SIGNALQ_ADMIN_TOKEN;
+
+      const token = getBearerToken(request);
+
+      if (path.startsWith('/actions/')) {
+        const handlerName = path.slice('/actions/'.length); // preserve raw action name
+        const cors = corsHeaders();
+        
+        // Enforce Bearer auth on all /actions/* endpoints
+        if (!token) {
+          const response = createProblemResponse(
+            'Authentication Required',
+            'Bearer token is required for action endpoints',
+            401,
+            correlationId
+          );
+          logRequest(method, path, 401, correlationId, startTime);
+          return response;
+        }
+        
+        // Validate token against known valid tokens
+        if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
+          const response = createProblemResponse(
+            'Invalid Credentials',
+            'The provided Bearer token is not valid',
+            401,
+            correlationId
+          );
+          logRequest(method, path, 401, correlationId, startTime);
+          return response;
+        }
+        
+        const handler = handlers[handlerName];
+
+        if (!handler) {
+          const response = createProblemResponse(
+            'Not Found',
+            `Action '${handlerName}' not found`,
+            404,
+            correlationId
+          );
+          logRequest(method, path, 404, correlationId, startTime);
+          return response;
+        }
+
+        let body = null;
+        if (request.headers.get('Content-Type')?.includes('application/json')) {
+          try { body = await request.json(); } catch (e) { 
+            console.error('Failed to parse JSON body:', e);
+            body = null; 
+          }
+        }
+
+        const result = await handler(request, env, null, body);
+
+        if (result instanceof Response) {
+          const headers = new Headers(result.headers);
+          headers.set('X-Correlation-ID', correlationId);
+          for (const [k, v] of Object.entries(cors)) {
+            if (!headers.has(k)) headers.set(k, v);
+          }
+          const response = new Response(result.body, { status: result.status, headers });
+          logRequest(method, path, result.status, correlationId, startTime);
+          return response;
+        }
+
+        const response = new Response(JSON.stringify(result), {
+          headers: { 
+            'Content-Type': 'application/json', 
+            'X-Correlation-ID': correlationId,
+            ...cors 
+          }
+        });
+        logRequest(method, path, 200, correlationId, startTime);
+        return response;
+      }
+
+      // Version endpoint (public)
+      if (path === '/version' && request.method === 'GET') {
+        const response = new Response(JSON.stringify(getVersionInfo(env)), {
+          headers: { 
+            'Content-Type': 'application/json', 
+            'X-Correlation-ID': correlationId,
+            ...corsHeaders() 
+          }
+        });
+        logRequest(method, path, 200, correlationId, startTime);
+        return response;
+      }
+
+      // Health endpoint (requires USER or ADMIN token)
+      if (path === '/system/health' && request.method === 'GET') {
+        if (!token) {
+          const response = createProblemResponse(
+            'Authentication Required',
+            'Bearer token is required to access this endpoint',
+            401,
+            correlationId
+          );
+          logRequest(method, path, 401, correlationId, startTime);
+          return response;
+        }
+        if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
+          const response = createProblemResponse(
+            'Invalid Credentials',
+            'The provided Bearer token is not valid',
+            401,
+            correlationId
+          );
+          logRequest(method, path, 401, correlationId, startTime);
+          return response;
+        }
+        
+        const healthData = await handlers.system_health(request, env, null, null);
+        const response = new Response(JSON.stringify(healthData), {
+          headers: { 
+            'Content-Type': 'application/json', 
+            'X-Correlation-ID': correlationId,
+            ...corsHeaders() 
+          }
+        });
+        logRequest(method, path, 200, correlationId, startTime);
+        return response;
+      }
+
+      // Admin reset endpoint (requires ADMIN token only)
+      if (path === '/admin/reset') {
+        if (!token) {
+          const response = createProblemResponse(
+            'Authentication Required',
+            'Bearer token is required to access admin endpoints',
+            401,
+            correlationId
+          );
+          logRequest(method, path, 401, correlationId, startTime);
+          return response;
+        }
+        if (token !== SIGNALQ_ADMIN_TOKEN) {
+          const response = createProblemResponse(
+            'Insufficient Permissions',
+            'This endpoint requires admin privileges. User tokens are not permitted.',
+            403,
+            correlationId
+          );
+          logRequest(method, path, 403, correlationId, startTime);
+          return response;
+        }
+
+        // Placeholder admin reset logic
+        const response = new Response(JSON.stringify({ 
+          status: 'admin_reset_ok',
+          timestamp: new Date().toISOString(),
+          version: getVersionInfo(env).version
+        }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Correlation-ID': correlationId,
+            ...corsHeaders()
+          }
+        });
+        logRequest(method, path, 200, correlationId, startTime);
+        return response;
+      }
+
+      const userId = request.headers.get('X-User-Id') || 'anonymous';
+      const id = env.USER_STATE.idFromName(userId);
+      const obj = env.USER_STATE.get(id);
+
+      // Create a new request with the token and correlation ID for the Durable Object
+      const newRequest = new Request(request.url, {
+        method: request.method,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
+          ...Object.fromEntries(request.headers.entries()),
+          'X-Token': token || '',
           'X-Correlation-ID': correlationId
-        }
+        },
+        body: request.body
       });
-      logRequest(method, path, 200, correlationId, startTime);
+
+      const response = await obj.fetch(newRequest);
+      logRequest(method, path, response.status, correlationId, startTime);
       return response;
-    }
-
-    // Prefer env tokens; fallback to dev tokens for local testing
-    const SIGNALQ_API_TOKEN = env?.SIGNALQ_API_TOKEN || DEV_SIGNALQ_API_TOKEN;
-    const SIGNALQ_ADMIN_TOKEN = env?.SIGNALQ_ADMIN_TOKEN || DEV_SIGNALQ_ADMIN_TOKEN;
-
-    const token = getBearerToken(request);
-
-    if (path.startsWith('/actions/')) {
-      const handlerName = path.slice('/actions/'.length); // preserve raw action name
-      const cors = corsHeaders();
       
-      // Enforce Bearer auth on all /actions/* endpoints
-      if (!token) {
-        const response = createProblemResponse(
-          'Authentication Required',
-          'Bearer token is required for action endpoints',
-          401,
-          correlationId
-        );
-        logRequest(method, path, 401, correlationId, startTime);
-        return response;
-      }
-      
-      // Validate token against known valid tokens
-      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
-        const response = createProblemResponse(
-          'Invalid Credentials',
-          'The provided Bearer token is not valid',
-          401,
-          correlationId
-        );
-        logRequest(method, path, 401, correlationId, startTime);
-        return response;
-      }
-      
-      const handler = handlers[handlerName];
-
-      if (!handler) {
-        const response = createProblemResponse(
-          'Not Found',
-          `Action '${handlerName}' not found`,
-          404,
-          correlationId
-        );
-        logRequest(method, path, 404, correlationId, startTime);
-        return response;
-      }
-
-      let body = null;
-      if (request.headers.get('Content-Type')?.includes('application/json')) {
-        try { body = await request.json(); } catch (e) { 
-          console.error('Failed to parse JSON body:', e);
-          body = null; 
-        }
-      }
-
-      const result = await handler(request, env, null, body);
-
-      if (result instanceof Response) {
-        const headers = new Headers(result.headers);
-        headers.set('X-Correlation-ID', correlationId);
-        for (const [k, v] of Object.entries(cors)) {
-          if (!headers.has(k)) headers.set(k, v);
-        }
-        const response = new Response(result.body, { status: result.status, headers });
-        logRequest(method, path, result.status, correlationId, startTime);
-        return response;
-      }
-
-      const response = new Response(JSON.stringify(result), {
-        headers: { 
-          'Content-Type': 'application/json', 
-          'X-Correlation-ID': correlationId,
-          ...cors 
-        }
-      });
-      logRequest(method, path, 200, correlationId, startTime);
+    } catch (error) {
+      console.error('Unhandled error in fetch:', error);
+      const response = createProblemResponse(
+        'Internal Server Error',
+        'An unexpected error occurred while processing your request',
+        500,
+        correlationId
+      );
+      logRequest(method, path, 500, correlationId, startTime);
       return response;
     }
-
-    // Version endpoint (public)
-    if (path === '/version' && request.method === 'GET') {
-      const response = new Response(JSON.stringify(getVersionInfo(env)), {
-        headers: { 
-          'Content-Type': 'application/json', 
-          'X-Correlation-ID': correlationId,
-          ...corsHeaders() 
-        }
-      });
-      logRequest(method, path, 200, correlationId, startTime);
-      return response;
-    }
-
-    // Health endpoint (requires USER or ADMIN token)
-    if (path === '/system/health' && request.method === 'GET') {
-      if (!token) {
-        const response = createProblemResponse(
-          'Authentication Required',
-          'Bearer token is required to access this endpoint',
-          401,
-          correlationId
-        );
-        logRequest(method, path, 401, correlationId, startTime);
-        return response;
-      }
-      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
-        const response = createProblemResponse(
-          'Invalid Credentials',
-          'The provided Bearer token is not valid',
-          401,
-          correlationId
-        );
-        logRequest(method, path, 401, correlationId, startTime);
-        return response;
-      }
-      
-      const healthData = await handlers.system_health(request, env, null, null);
-      const response = new Response(JSON.stringify(healthData), {
-        headers: { 
-          'Content-Type': 'application/json', 
-          'X-Correlation-ID': correlationId,
-          ...corsHeaders() 
-        }
-      });
-      logRequest(method, path, 200, correlationId, startTime);
-      return response;
-    }
-
-    // Admin reset endpoint (requires ADMIN token only)
-    if (path === '/admin/reset') {
-      if (!token) {
-        const response = createProblemResponse(
-          'Authentication Required',
-          'Bearer token is required to access admin endpoints',
-          401,
-          correlationId
-        );
-        logRequest(method, path, 401, correlationId, startTime);
-        return response;
-      }
-      if (token !== SIGNALQ_ADMIN_TOKEN) {
-        const response = createProblemResponse(
-          'Insufficient Permissions',
-          'This endpoint requires admin privileges. User tokens are not permitted.',
-          403,
-          correlationId
-        );
-        logRequest(method, path, 403, correlationId, startTime);
-        return response;
-      }
-
-      // Placeholder admin reset logic
-      const response = new Response(JSON.stringify({ 
-        status: 'admin_reset_ok',
-        timestamp: new Date().toISOString(),
-        version: getVersionInfo(env).version
-      }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Correlation-ID': correlationId,
-          ...corsHeaders()
-        }
-      });
-      logRequest(method, path, 200, correlationId, startTime);
-      return response;
-    }
-
-    const userId = request.headers.get('X-User-Id') || 'anonymous';
-    const id = env.USER_STATE.idFromName(userId);
-    const obj = env.USER_STATE.get(id);
-
-    // Create a new request with the token and correlation ID for the Durable Object
-    const newRequest = new Request(request.url, {
-      method: request.method,
-      headers: {
-        ...Object.fromEntries(request.headers.entries()),
-        'X-Token': token || '',
-        'X-Correlation-ID': correlationId
-      },
-      body: request.body
-    });
-
-    const response = await obj.fetch(newRequest);
-    logRequest(method, path, response.status, correlationId, startTime);
-    return response;
   }
 };
 

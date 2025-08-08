@@ -426,3 +426,66 @@ This repository includes intelligent automation for firewall-safe development:
 - **PostCreateCommand**: Automatically runs `npm ci` and notifies about firewall-safe development
 - **Port Forwarding**: Pre-configured for development ports (8787, 8788, 8789)
 - **Environment Detection**: Automatically adapts to Codespaces environment
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 404 Errors
+- **Check path**: Ensure you're using the correct endpoint path
+  - ✅ Correct: `POST /actions/system_health`
+  - ❌ Incorrect: `GET /system_health` or `POST /health`
+- **Verify URL**: Use the printed URL from `wrangler dev` output (default: http://127.0.0.1:8787)
+- **Don't hardcode ports**: Always use the URL that wrangler prints, not assumed ports
+
+#### 401/403 Authentication Errors
+- **Header format**: Ensure exact header format: `Authorization: Bearer <token>`
+- **Token validation**: 
+  - User tokens start with `sq_live_`
+  - Admin tokens start with `sq_admin_`
+  - Check for extra spaces or incorrect characters
+- **Environment**: Verify you're using the right token for dev vs production
+
+#### Development Port Issues
+- **Use printed URL**: Don't assume port 8788 - wrangler may use 8787 or other ports
+- **Check wrangler output**: Always use the URL that `npx wrangler dev` prints
+- **Port conflicts**: If 8787 is busy, wrangler will choose another port automatically
+
+#### Production Deployment Issues
+- **Check logs**: Use `npx wrangler tail --env production` in a separate terminal
+- **Correlation IDs**: Look for `X-Correlation-ID` header in error responses for debugging
+- **Retry logic**: The deploy workflow includes automatic retry for transient network issues
+
+#### Network/Firewall Issues
+- **Test connectivity**: Run `curl -I https://workers.cloudflare.com` to check access
+- **Fallback mode**: Use `npm run dev:fallback` for local development
+- **Required domains**: Ensure access to:
+  - `workers.cloudflare.com`
+  - `sparrow.cloudflare.com` 
+  - `signal_q.catnip-pieces1.workers.dev`
+
+#### Error Response Format
+All API errors return RFC 7807 problem+json format:
+```json
+{
+  "type": "about:blank",
+  "title": "Authentication Required", 
+  "detail": "Bearer token is required for action endpoints",
+  "status": 401,
+  "correlationId": "uuid-for-tracking",
+  "timestamp": "2025-01-01T00:00:00.000Z"
+}
+```
+
+#### Debugging Steps
+1. **Check the correlation ID** in error responses for tracing
+2. **Monitor logs** with `npx wrangler tail` while making requests
+3. **Test with curl** to isolate client vs server issues:
+   ```bash
+   # Test version (no auth)
+   curl -v http://127.0.0.1:8787/version
+   
+   # Test authenticated endpoint
+   curl -v -X POST -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8787/actions/system_health
+   ```
+4. **Verify environment variables** are properly set in `.dev.vars` or production
