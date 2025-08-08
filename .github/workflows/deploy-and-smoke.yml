@@ -33,7 +33,17 @@ jobs:
 
       - name: Smoke test - Version endpoint
         run: |
-          curl -sSf "$BASE_URL/version" | jq .
+          # Test version endpoint with jq assertions and retry
+          test_version() {
+            curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .gitSha and .buildTime and .environment'
+          }
+          
+          # Try version check, retry once on network error
+          if ! test_version; then
+            echo "Retrying version check in 5 seconds..."
+            sleep 5
+            test_version
+          fi
 
       - name: Smoke test - Health endpoint (with retry)
         env:
@@ -41,15 +51,7 @@ jobs:
         run: |
           # Function to test health endpoint
           test_health() {
-            curl -sSf -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee health.json | jq .
-            # Check if status is "healthy"
-            STATUS=$(jq -r '.status' health.json)
-            if [ "$STATUS" != "healthy" ]; then
-              echo "❌ Health check failed - status is '$STATUS' (expected 'healthy')"
-              return 1
-            fi
-            echo "✅ Health endpoint OK (status: $STATUS)"
-            return 0
+            curl -sSf -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee h.json | jq -e '.status=="healthy"'
           }
           
           # Try the health check, retry once on network error
@@ -58,3 +60,9 @@ jobs:
             sleep 5
             test_health
           fi
+
+      - name: Run contract tests
+        env:
+          SIGNALQ_API_TOKEN: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
+        run: |
+          node scripts/test-contract.js
