@@ -226,6 +226,48 @@
         }
       }
     },
+    "/actions/system_health": {
+      "post": {
+        "operationId": "getSystemHealthAction",
+        "summary": "Check system health status for GPT plugins",
+        "description": "GPT-compatible version of system health check. Returns comprehensive health status including system uptime, worker version, and current timestamp. This endpoint is optimized for GPT plugin consumption.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Healthy status with timestamp and version for GPT consumption.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "example": {
+                  "status": "healthy",
+                  "timestamp": "2024-01-01T12:00:00.000Z",
+                  "worker": "signal_q",
+                  "version": "v6.0",
+                  "api_status": "online",
+                  "storage": "operational"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/actions/{actionName}": {
       "post": {
         "operationId": "invokeAction",
@@ -328,14 +370,6 @@
         "type": "http",
         "scheme": "bearer",
         "description": "Bearer authentication for all API endpoints. Include the token in the Authorization header as 'Bearer {token}'."
-      }
-    }
-  },
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
       }
     }
   }

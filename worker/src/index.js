@@ -108,6 +108,14 @@ const actionsList = {
       example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity" }
     },
     {
+      name: "system_health",
+      description: "Check system health status for GPT plugins.",
+      method: "POST",
+      path: "/actions/system_health",
+      parameters: {},
+      example: { curl: "curl -X POST https://signal_q.catnip-pieces1.workers.dev/actions/system_health" }
+    },
+    {
       name: "requestDeployment",
       description: "Ask for deployment assistance.",
       method: "POST",
@@ -159,6 +167,14 @@ const handlers = {
     timestamp: new Date().toISOString(),
     worker: "signal_q",
     version: "v6.0"
+  }),
+  system_health: async () => ({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    worker: "signal_q",
+    version: "v6.0",
+    api_status: "online",
+    storage: "operational"
   }),
   activateAquilProbe: async (req, env, ctx, body) => {
     // Enhanced AQUIL Probe with AI decision-making and friction analysis
