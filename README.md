@@ -49,20 +49,73 @@ curl http://127.0.0.1:8787/version
 curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/system/health
 ```
 
-### Production Smoke Test
+### Production Deployment
+
+Signal Q uses automated CI/CD for production deployments. Follow these steps for manual deployment:
+
+#### 1. Set Repository Secrets
+
+Configure these secrets in your GitHub repository settings:
+```
+CLOUDFLARE_API_TOKEN=your_api_token_here
+CLOUDFLARE_ACCOUNT_ID=your_account_id_here
+SIGNALQ_API_TOKEN_PROD=sq_live_prod_token_here
+SIGNALQ_ADMIN_TOKEN_PROD=sq_admin_prod_token_here
+```
+
+#### 2. Deploy via GitHub Actions
+
+**Option A: Manual Dispatch**
+1. Go to Actions → Production Deploy
+2. Click "Run workflow"
+3. Select "production" environment
+4. Click "Run workflow"
+
+**Option B: Tagged Release**
 ```bash
-# Set production environment
-export SIGNALQ_BASE_URL=https://signal_q.catnip-pieces1.workers.dev
-export SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+git tag v2.1.1
+git push origin v2.1.1
+```
 
-# Deploy to production
-npx wrangler deploy
+#### 3. Verify Deployment
 
-# Run smoke tests
+Run the smoke test script against the production endpoint:
+```bash
+export SIGNALQ_BASE_URL=https://signal-q-prod.catnip-pieces1.workers.dev
+export SIGNALQ_API_TOKEN=your_production_token_here
 ./scripts/smoke.sh
+```
 
-# Or use Node.js version
-node scripts/smoke.js
+#### 4. Live Debugging
+
+Use `wrangler tail` to monitor live logs:
+```bash
+cd worker
+wrangler tail --env production
+```
+
+In another terminal, make requests to see real-time logs:
+```bash
+curl "$SIGNALQ_BASE_URL/version"
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$SIGNALQ_BASE_URL/system/health"
+```
+
+#### Build Metadata
+
+The `/version` endpoint includes build metadata:
+- `gitSha`: Commit SHA from deployment
+- `buildTime`: Timestamp of build
+- `environment`: "production" for prod deployments
+- `version`: From package.json
+
+Example response:
+```json
+{
+  "version": "2.1.0",
+  "gitSha": "abc123def456",
+  "buildTime": "2025-01-15T10:30:45.123Z",
+  "environment": "production"
+}
 ```
 
 ### Troubleshooting
