@@ -19,13 +19,13 @@ jobs:
 
       - name: Check version endpoint
         run: |
-          curl -s "$BASE_URL/version" | jq -e .version
+          curl "$BASE_URL/version" | jq -e '.version and .gitSha and .buildTime and .environment'
 
       - name: Check health endpoint
         env:
           SIGNALQ_API_TOKEN_PROD: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
         run: |
-          curl -s -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | jq -e '.status=="healthy"'
+          curl -s -D headers.txt -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee body.json | jq -e '.status=="healthy"'
 
       - name: Create or update uptime issue on failure
         if: failure()
@@ -34,19 +34,45 @@ jobs:
           SIGNALQ_API_TOKEN_PROD: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
         with:
           script: |
+            const fs = require('fs');
             const timestamp = new Date().toISOString();
             const title = 'Uptime Log';
             
-            // Try to get the last response body for debugging
-            let lastResponse = 'Response body not available';
+            // Extract correlation ID from headers if available
+            let correlationId = 'N/A';
+            let httpStatus = 'N/A';
+            let bodyExcerpt = 'Response body not available';
+            
             try {
-              // This would contain the actual response if we captured it
-              lastResponse = 'Check failed at ' + timestamp;
+              if (fs.existsSync('headers.txt')) {
+                const headers = fs.readFileSync('headers.txt', 'utf8');
+                const correlationMatch = headers.match(/X-Correlation-ID:\s*(.+)/i);
+                if (correlationMatch) {
+                  correlationId = correlationMatch[1].trim();
+                }
+                const statusMatch = headers.match(/HTTP\/\d\.\d\s+(\d+)/);
+                if (statusMatch) {
+                  httpStatus = statusMatch[1];
+                }
+              }
+              
+              if (fs.existsSync('body.json')) {
+                const body = fs.readFileSync('body.json', 'utf8');
+                bodyExcerpt = body.length > 200 ? body.substring(0, 200) + '...' : body;
+              }
             } catch (e) {
-              // Fallback if no response captured
+              console.error('Error reading response files:', e);
             }
             
-            const entry = `🔴 **Uptime check failed** - ${timestamp}\n\nLast response: ${lastResponse}\n\n---\n\n`;
+            const entry = `🔴 **Uptime check failed** - ${timestamp}
+            - **Endpoint**: POST /actions/system_health
+            - **HTTP Status**: ${httpStatus}
+            - **Correlation ID**: ${correlationId}
+            - **Response Excerpt**: \`${bodyExcerpt}\`
+            
+            ---
+            
+            `;
             
             // Look for existing uptime issue
             const { data: issues } = await github.rest.issues.listForRepo({

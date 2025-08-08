@@ -28,6 +28,7 @@
     "wrangler": "^4.0.0"
   },
   "dependencies": {
-    "@apidevtools/swagger-cli": "^4.0.4"
+    "@apidevtools/swagger-cli": "^4.0.4",
+    "node-fetch": "^3.3.2"
   }
 }

@@ -2,12 +2,12 @@
 
 ## 🎯 **For CustomGPT**
 - **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
-- **Auth**: Bearer `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
+- **Auth**: Bearer `$SIGNALQ_API_TOKEN`
 - **Schema**: Upload `worker/src/openapi-core.json`
 
 ## 🔑 **Your API Tokens**
-- **User Token**: `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
-- **Admin Token**: `sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o`
+- **User Token**: `$SIGNALQ_API_TOKEN`
+- **Admin Token**: `$SIGNALQ_ADMIN_TOKEN`
 
 ## 📁 **Essential Files**
 ```
@@ -32,19 +32,20 @@ npm ci
 
 # 2. Start development server  
 npx wrangler dev
-# Use printed dev URL (default 8787)
+# Note the printed URL (defaults to http://127.0.0.1:8787)
 
-# 3. Set up environment variable for testing (in a new terminal)
-export SIGNALQ_API_TOKEN=dev-placeholder
+# 3. Set environment variables for testing (in a new terminal)
+export DEV_BASE="http://127.0.0.1:8787"  # Use the printed URL
+export SIGNALQ_API_TOKEN="dev-placeholder"
 
 # 4. Test the public version endpoint (no auth required)
-curl /version
+curl "$DEV_BASE/version"
 
 # 5. Test the authenticated health endpoint (requires Bearer auth)
-curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" /actions/system_health
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$DEV_BASE/actions/system_health"
 ```
 
-**Note**: Always use the printed URL from wrangler dev output (often http://localhost:8787).
+**Note**: Always use the printed URL from wrangler dev output (defaults to http://127.0.0.1:8787).
 
 ## 📦 SDK Usage
 
@@ -75,6 +76,22 @@ curl https://signal_q.catnip-pieces1.workers.dev/version
 # System health (requires Bearer auth)
 curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
      https://signal_q.catnip-pieces1.workers.dev/actions/system_health
+```
+
+## Production Smoke
+
+Test production deployment:
+
+```bash
+# Set production environment variables
+export SIGNALQ_BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
+export SIGNALQ_API_TOKEN="your-production-token"
+
+# Test public version endpoint
+curl "$SIGNALQ_BASE_URL/version"
+
+# Test authenticated health endpoint
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$SIGNALQ_BASE_URL/actions/system_health"
 ```
 
 ## Production Deploy & Smoke
@@ -190,7 +207,7 @@ Example response:
 **If you get 401/403 errors:**
 - Ensure you're using the correct Authorization header: `"Authorization: Bearer $SIGNALQ_API_TOKEN"`
 - For admin endpoints, use `$SIGNALQ_ADMIN_TOKEN` instead
-- Verify your token starts with `sq_live_` (user) or `sq_admin_` (admin)
+- Verify your token is set correctly as an environment variable
 
 **If development server fails to start:**
 - Don't assume port 8788 - read the actual URL/port printed by Wrangler
