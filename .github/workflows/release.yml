@@ -1,0 +1,118 @@
+name: Release Workflow
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Wrangler authentication
+        run: |
+          echo "${{ secrets.CLOUDFLARE_API_TOKEN }}" | wrangler auth login --api-token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Set build metadata environment variables
+        run: |
+          echo "GIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" >> $GITHUB_ENV
+          echo "NODE_ENV=production" >> $GITHUB_ENV
+
+      - name: Deploy to production with metadata
+        run: |
+          cd worker
+          # Set environment variables for the Worker
+          wrangler secret put GIT_SHA --env production <<< "${{ env.GIT_SHA }}"
+          wrangler secret put BUILD_TIME --env production <<< "${{ env.BUILD_TIME }}"
+          wrangler secret put NODE_ENV --env production <<< "${{ env.NODE_ENV }}"
+          
+          # Deploy to production
+          wrangler deploy --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Wait for deployment
+        run: |
+          echo "⏳ Waiting 30 seconds for deployment to be ready..."
+          sleep 30
+
+      - name: Run production smoke tests
+        run: |
+          BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
+          
+          echo "🚀 Running production smoke tests..."
+          
+          # Test version endpoint and capture response
+          echo "📦 Testing /version endpoint..."
+          curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .gitSha and .buildTime and .environment'
+          
+          # Test health endpoint
+          echo "🏥 Testing /actions/system_health endpoint..."
+          curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/system_health" | tee h.json | jq -e '.status=="healthy"'
+          
+          # Test other endpoints
+          echo "📋 Testing /actions/list..."
+          curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/list" | jq -e '.actions and (.actions|length>=5)'
+          
+          echo "🔍 Testing /actions/probe_identity..."
+          curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/probe_identity" | jq -e '.analysis and .analysis.stability and .analysis.coherence and .analysis.authenticity and .analysis.recommendation'
+          
+          echo "🔄 Testing /actions/recalibrate_state..."
+          curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/recalibrate_state" | jq -e '.state=="recalibrated" and .identity_key and .dominant_emotion'
+          
+          echo "🚀 Testing /actions/deploy..."
+          curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/deploy" | jq -e '.deployment=="triggered"'
+          
+          echo "✅ All smoke tests passed"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Release ${{ github.ref_name }}
+            
+            **Production Deployment:** ✅ Successful
+            **Smoke Tests:** ✅ All Passed
+            
+            ### Version Information
+            ```json
+            $(cat v.json)
+            ```
+            
+            ### System Health Check
+            ```json
+            $(cat h.json)
+            ```
+            
+            **Git SHA:** `${{ github.sha }}`
+            **Build Time:** `${{ env.BUILD_TIME }}`
+            **Environment:** `production`
+          draft: false
+          prerelease: false
+          files: |
+            v.json
+            h.json

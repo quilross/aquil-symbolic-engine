@@ -1,0 +1,240 @@
+name: Validate API (Preview + Production Matrix)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint and format check
+        run: |
+          if npm run lint 2>/dev/null; then
+            echo "✅ Lint check passed"
+          else
+            echo "ℹ️ No lint script available"
+          fi
+
+      - name: Validate worker syntax
+        run: npm run build
+
+      - name: Validate OpenAPI specification
+        run: npx swagger-cli validate worker/src/openapi-core.json
+
+  deploy-and-smoke:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        env: [preview, production]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Wrangler authentication
+        run: |
+          echo "${{ secrets.CLOUDFLARE_API_TOKEN }}" | wrangler auth login --api-token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy and get URL
+        id: deploy
+        run: |
+          cd worker
+          if [ "${{ matrix.env }}" = "preview" ]; then
+            echo "🚀 Deploying to preview..."
+            DEPLOY_OUTPUT=$(wrangler deploy --dry-run=false 2>&1)
+            echo "$DEPLOY_OUTPUT"
+            # Extract preview URL from wrangler output
+            PREVIEW_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^[:space:]]*\.workers\.dev' | head -1)
+            if [ -z "$PREVIEW_URL" ]; then
+              # Fallback: construct preview URL based on worker name
+              PREVIEW_URL="https://signal_q.catnip-pieces1.workers.dev"
+            fi
+            echo "BASE_URL=$PREVIEW_URL" >> $GITHUB_ENV
+            echo "BASE_URL=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          else
+            echo "🚀 Deploying to production..."
+            wrangler deploy --env production
+            echo "BASE_URL=https://signal_q.catnip-pieces1.workers.dev" >> $GITHUB_ENV
+            echo "BASE_URL=https://signal_q.catnip-pieces1.workers.dev" >> $GITHUB_OUTPUT
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Wait for deployment
+        run: |
+          echo "⏳ Waiting 30 seconds for deployment to be ready..."
+          sleep 30
+
+      - name: Test version endpoint
+        run: |
+          echo "📦 Testing /version endpoint..."
+          for attempt in 1 2; do
+            if curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .gitSha and .buildTime and .environment'; then
+              echo "✅ Version endpoint test passed"
+              break
+            else
+              if [ $attempt -eq 1 ]; then
+                echo "⚠️ First attempt failed, retrying..."
+                sleep 5
+              else
+                echo "❌ Version endpoint test failed after retry"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Test system health endpoint
+        run: |
+          echo "🏥 Testing /actions/system_health endpoint..."
+          for attempt in 1 2; do
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/system_health" | tee h.json | jq -e '.status=="healthy"'; then
+              echo "✅ System health test passed"
+              break
+            else
+              if [ $attempt -eq 1 ]; then
+                echo "⚠️ First attempt failed, retrying..."
+                sleep 5
+              else
+                echo "❌ System health test failed after retry"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Test actions list endpoint
+        run: |
+          echo "📋 Testing /actions/list endpoint..."
+          for attempt in 1 2; do
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/list" | tee list.json | jq -e '.actions and (.actions|length>=5)'; then
+              echo "✅ Actions list test passed"
+              break
+            else
+              if [ $attempt -eq 1 ]; then
+                echo "⚠️ First attempt failed, retrying..."
+                sleep 5
+              else
+                echo "❌ Actions list test failed after retry"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Test probe identity endpoint
+        run: |
+          echo "🔍 Testing /actions/probe_identity endpoint..."
+          for attempt in 1 2; do
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/probe_identity" | tee probe.json | jq -e '.analysis and .analysis.stability and .analysis.coherence and .analysis.authenticity and .analysis.recommendation'; then
+              echo "✅ Probe identity test passed"
+              break
+            else
+              if [ $attempt -eq 1 ]; then
+                echo "⚠️ First attempt failed, retrying..."
+                sleep 5
+              else
+                echo "❌ Probe identity test failed after retry"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Test recalibrate state endpoint
+        run: |
+          echo "🔄 Testing /actions/recalibrate_state endpoint..."
+          for attempt in 1 2; do
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/recalibrate_state" | tee recalibrate.json | jq -e '.state=="recalibrated" and .identity_key and .dominant_emotion'; then
+              echo "✅ Recalibrate state test passed"
+              break
+            else
+              if [ $attempt -eq 1 ]; then
+                echo "⚠️ First attempt failed, retrying..."
+                sleep 5
+              else
+                echo "❌ Recalibrate state test failed after retry"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Test deploy endpoint
+        run: |
+          echo "🚀 Testing /actions/deploy endpoint..."
+          for attempt in 1 2; do
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/deploy" | tee deploy.json | jq -e '.deployment=="triggered"'; then
+              echo "✅ Deploy action test passed"
+              break
+            else
+              if [ $attempt -eq 1 ]; then
+                echo "⚠️ First attempt failed, retrying..."
+                sleep 5
+              else
+                echo "❌ Deploy action test failed after retry"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Store test results as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.env }}
+          path: |
+            v.json
+            h.json
+            list.json
+            probe.json
+            recalibrate.json
+            deploy.json
+
+  contracts:
+    runs-on: ubuntu-latest
+    needs: deploy-and-smoke
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run contract tests
+        run: |
+          node scripts/test-contract.js --base "https://signal_q.catnip-pieces1.workers.dev" --token "${{ secrets.SIGNALQ_API_TOKEN_PROD }}"
+        env:
+          BASE_URL: https://signal_q.catnip-pieces1.workers.dev
+          SIGNALQ_API_TOKEN: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}

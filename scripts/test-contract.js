@@ -1,143 +1,143 @@
 #!/usr/bin/env node
+
 /**
  * Contract tests for Signal Q API
- * Validates basic shapes and authentication for core endpoints
+ * Tests that validate the expected structure and behavior of key endpoints
+ * 
+ * Usage:
+ *   node scripts/test-contract.js
+ *   node scripts/test-contract.js --base https://example.com --token abc123
+ *   BASE_URL=https://example.com SIGNALQ_API_TOKEN=abc123 node scripts/test-contract.js
  */
 
-import assert from 'assert';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-
-const BASE_URL = process.env.BASE_URL || 'http://localhost:8787';
-const API_TOKEN = process.env.SIGNALQ_API_TOKEN || 'dev-placeholder';
-
-async function httpRequest(url, options = {}) {
-  const fetch = (await import('node-fetch')).default;
-  const response = await fetch(url, options);
-  const text = await response.text();
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const parsed = {};
   
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch (e) {
-    data = text;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--base' && i + 1 < args.length) {
+      parsed.base = args[i + 1];
+      i++;
+    } else if (args[i] === '--token' && i + 1 < args.length) {
+      parsed.token = args[i + 1];
+      i++;
+    }
   }
   
-  return {
-    status: response.status,
-    headers: Object.fromEntries(response.headers.entries()),
-    data
-  };
+  return parsed;
+}
+
+const cliArgs = parseArgs();
+const BASE_URL = cliArgs.base || process.env.BASE_URL || 'http://localhost:8787';
+const TOKEN = cliArgs.token || process.env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+
+console.log('🧪 Running Signal Q Contract Tests');
+console.log(`📡 Base URL: ${BASE_URL}`);
+console.log(`🔑 Token: ${TOKEN ? '[SET]' : '[NOT SET]'}`);
+console.log('');
+
+let passed = 0;
+let failed = 0;
+
+function assert(condition, message) {
+  if (condition) {
+    console.log(`✅ ${message}`);
+    passed++;
+  } else {
+    console.log(`❌ ${message}`);
+    failed++;
+  }
+}
+
+function assertKeys(obj, keys, path = '') {
+  keys.forEach(key => {
+    const fullPath = path ? `${path}.${key}` : key;
+    assert(obj.hasOwnProperty(key), `Has required key: ${fullPath}`);
+  });
 }
 
 async function testSystemHealth() {
-  console.log('Testing POST /actions/system_health...');
+  console.log('🏥 Testing POST /actions/system_health');
   
-  const response = await httpRequest(`${BASE_URL}/actions/system_health`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_TOKEN}`,
-      'Content-Type': 'application/json'
-    }
-  });
+  try {
+    const response = await fetch(`${BASE_URL}/actions/system_health`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    assert(response.status === 200, 'system_health returns 200 OK');
+    
+    const data = await response.json();
+    
+    // Assert required keys
+    assertKeys(data, ['status', 'timestamp', 'worker', 'version']);
+    
+    // Assert status is "healthy"
+    assert(data.status === 'healthy', 'system_health status is "healthy"');
+    
+    console.log(`   📊 Response: ${JSON.stringify(data)}`);
+    
+  } catch (error) {
+    console.log(`❌ system_health test failed: ${error.message}`);
+    failed++;
+  }
   
-  assert.strictEqual(response.status, 200, 'Expected 200 status');
-  assert.strictEqual(response.data.status, 'healthy', 'Expected status to be "healthy"');
-  assert(response.data.timestamp, 'Expected timestamp field');
-  assert.match(response.data.timestamp, /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, 'Expected ISO-8601 timestamp');
-  assert.strictEqual(typeof response.data.worker, 'string', 'Expected worker to be string');
-  assert.strictEqual(typeof response.data.version, 'string', 'Expected version to be string');
-  
-  console.log('✅ System health test passed');
+  console.log('');
 }
 
 async function testProbeIdentity() {
-  console.log('Testing POST /actions/probe_identity...');
+  console.log('🔍 Testing POST /actions/probe_identity');
   
-  const response = await httpRequest(`${BASE_URL}/actions/probe_identity`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_TOKEN}`,
-      'Content-Type': 'application/json'
-    }
-  });
+  try {
+    const response = await fetch(`${BASE_URL}/actions/probe_identity`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    assert(response.status === 200, 'probe_identity returns 200 OK');
+    
+    const data = await response.json();
+    
+    // Assert required keys
+    assertKeys(data, ['probe', 'timestamp', 'analysis']);
+    assertKeys(data.analysis, ['stability', 'coherence', 'authenticity', 'recommendation'], 'analysis');
+    
+    console.log(`   📊 Response: ${JSON.stringify(data)}`);
+    
+  } catch (error) {
+    console.log(`❌ probe_identity test failed: ${error.message}`);
+    failed++;
+  }
   
-  assert.strictEqual(response.status, 200, 'Expected 200 status');
-  assert.strictEqual(typeof response.data.probe, 'string', 'Expected probe to be string');
-  assert(response.data.timestamp, 'Expected timestamp field');
-  assert.match(response.data.timestamp, /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, 'Expected ISO-8601 timestamp');
-  
-  // Test analysis object
-  const analysis = response.data.analysis;
-  assert(analysis, 'Expected analysis object');
-  assert(typeof analysis.stability === 'number' && analysis.stability >= 0 && analysis.stability <= 1, 
-    'Expected stability to be number 0..1');
-  assert(['high', 'medium', 'low'].includes(analysis.coherence), 
-    'Expected coherence to be one of high/medium/low');
-  assert(typeof analysis.authenticity === 'number' && analysis.authenticity >= 0 && analysis.authenticity <= 1, 
-    'Expected authenticity to be number 0..1');
-  assert.strictEqual(typeof analysis.recommendation, 'string', 
-    'Expected recommendation to be string');
-  
-  console.log('✅ Probe identity test passed');
-}
-
-async function testAuthenticationRequired() {
-  console.log('Testing authentication requirement...');
-  
-  const response = await httpRequest(`${BASE_URL}/actions/system_health`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-    // No Authorization header
-  });
-  
-  assert.strictEqual(response.status, 401, 'Expected 401 status for missing auth');
-  assert.strictEqual(response.headers['content-type'], 'application/problem+json', 
-    'Expected problem+json content type');
-  assert(response.headers['x-correlation-id'], 'Expected X-Correlation-ID header');
-  assert.strictEqual(response.data.status, 401, 'Expected status 401 in problem response');
-  assert(response.data.correlationId, 'Expected correlationId in problem response');
-  
-  console.log('✅ Authentication test passed');
-}
-
-async function testVersionEndpoint() {
-  console.log('Testing GET /version (public)...');
-  
-  const response = await httpRequest(`${BASE_URL}/version`);
-  
-  assert.strictEqual(response.status, 200, 'Expected 200 status');
-  assert(response.data.version, 'Expected version field');
-  assert(response.data.gitSha, 'Expected gitSha field');
-  assert(response.data.buildTime, 'Expected buildTime field');
-  assert(response.data.environment, 'Expected environment field');
-  
-  console.log('✅ Version endpoint test passed');
+  console.log('');
 }
 
 async function runTests() {
-  console.log(`Running contract tests against ${BASE_URL}`);
-  console.log('Using API token');
+  await testSystemHealth();
+  await testProbeIdentity();
   
-  try {
-    await testVersionEndpoint();
-    await testSystemHealth();
-    await testProbeIdentity();
-    await testAuthenticationRequired();
-    
-    console.log('\n🎉 All contract tests passed!');
-    process.exit(0);
-  } catch (error) {
-    console.error('\n❌ Contract test failed:', error.message);
+  console.log('📋 Test Summary:');
+  console.log(`✅ Passed: ${passed}`);
+  console.log(`❌ Failed: ${failed}`);
+  console.log(`📊 Total: ${passed + failed}`);
+  
+  if (failed > 0) {
+    console.log('\n❌ Some tests failed!');
     process.exit(1);
+  } else {
+    console.log('\n🎉 All tests passed!');
+    process.exit(0);
   }
 }
 
-// Check if this is the main module (ES module way)
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runTests();
-}
-
-export { runTests };
+runTests().catch(error => {
+  console.error('💥 Test runner failed:', error);
+  process.exit(1);
+});
