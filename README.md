@@ -38,36 +38,94 @@ npm ci
 # 2. Start development server
 npx wrangler dev
 
-# Note the printed URL (usually http://127.0.0.1:8787)
-# Wrangler will print the actual URL - use that instead of assuming port 8788
+# ⚠️ IMPORTANT: Use the printed URL from wrangler dev output
+# Default is http://127.0.0.1:8787 but wrangler will print the actual URL
+# Don't hardcode ports - always use the printed URL!
 
-# 3. Set up environment variables for testing
-export SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+# 3. Set up environment variables for testing (in a new terminal)
+export SIGNALQ_API_TOKEN=dev-placeholder
 
-# 4. Test the endpoints
+# 4. Test the public version endpoint (no auth required)
 curl http://127.0.0.1:8787/version
-curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/system/health
+
+# 5. Test the canonical actions API (requires Bearer auth)
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/actions/system_health
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/actions/list
 ```
 
-### Production Deployment
+### Local Development Environment Variables
 
-Signal Q uses automated CI/CD for production deployments. Follow these steps for manual deployment:
+Create/edit `.dev.vars` for local development:
+```bash
+# .dev.vars (automatically loaded by wrangler dev)
+SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+SIGNALQ_ADMIN_TOKEN=sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o
 
-#### 1. Set Repository Secrets
+# Optional: version info (set by CI in production)
+# GIT_SHA=local-development
+# BUILD_TIME=2025-01-01T00:00:00.000Z
+# NODE_ENV=development
+```
+
+**Note**: `.dev.vars` is used by Wrangler for local development and aligns with Cloudflare Workers binding guidance. In production, these are set as encrypted environment variables.
+
+## Production Deploy & Smoke Tests
+
+Signal Q uses automated CI/CD with integrated smoke testing for production deployments.
+
+### Required Secrets
 
 Configure these secrets in your GitHub repository settings:
 ```
 CLOUDFLARE_API_TOKEN=your_api_token_here
-CLOUDFLARE_ACCOUNT_ID=your_account_id_here
 SIGNALQ_API_TOKEN_PROD=sq_live_prod_token_here
-SIGNALQ_ADMIN_TOKEN_PROD=sq_admin_prod_token_here
 ```
 
-#### 2. Deploy via GitHub Actions
+### Deploy and Smoke Workflow
 
-**Option A: Manual Dispatch**
-1. Go to Actions → Production Deploy
-2. Click "Run workflow"
+The `deploy-and-smoke.yml` workflow automatically:
+1. ✅ Validates build and OpenAPI schema
+2. 🚀 Deploys to Cloudflare Workers production environment  
+3. 🔍 Runs smoke tests against the live production URL
+4. ✅ Verifies GET /version returns 200 JSON
+5. 🏥 Tests POST /actions/system_health with Bearer auth
+6. 🔄 Retries health check once on transient network errors
+
+### Triggering Deployment
+
+**Option A: Manual Workflow Dispatch**
+1. Go to Actions → "Deploy and Smoke Test"
+2. Click "Run workflow" 
+3. Select "production" environment
+4. Click "Run workflow"
+
+**Option B: Git Tag (Recommended)**
+```bash
+git tag v2.1.1
+git push origin v2.1.1
+```
+
+### Manual Smoke Testing
+
+Test production deployment locally:
+```bash
+export BASE=https://signal_q.catnip-pieces1.workers.dev
+export TOKEN=your_production_token_here
+bash scripts/smoke.sh
+```
+
+### Monitoring & Debugging
+
+Use `wrangler tail` to monitor live production logs:
+```bash
+npx wrangler tail --env production
+```
+
+In another terminal, make test requests:
+```bash
+curl https://signal_q.catnip-pieces1.workers.dev/version
+curl -X POST -H "Authorization: Bearer $TOKEN" https://signal_q.catnip-pieces1.workers.dev/actions/system_health
+```
 3. Select "production" environment
 4. Click "Run workflow"
 
@@ -368,3 +426,66 @@ This repository includes intelligent automation for firewall-safe development:
 - **PostCreateCommand**: Automatically runs `npm ci` and notifies about firewall-safe development
 - **Port Forwarding**: Pre-configured for development ports (8787, 8788, 8789)
 - **Environment Detection**: Automatically adapts to Codespaces environment
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 404 Errors
+- **Check path**: Ensure you're using the correct endpoint path
+  - ✅ Correct: `POST /actions/system_health`
+  - ❌ Incorrect: `GET /system_health` or `POST /health`
+- **Verify URL**: Use the printed URL from `wrangler dev` output (default: http://127.0.0.1:8787)
+- **Don't hardcode ports**: Always use the URL that wrangler prints, not assumed ports
+
+#### 401/403 Authentication Errors
+- **Header format**: Ensure exact header format: `Authorization: Bearer <token>`
+- **Token validation**: 
+  - User tokens start with `sq_live_`
+  - Admin tokens start with `sq_admin_`
+  - Check for extra spaces or incorrect characters
+- **Environment**: Verify you're using the right token for dev vs production
+
+#### Development Port Issues
+- **Use printed URL**: Don't assume port 8788 - wrangler may use 8787 or other ports
+- **Check wrangler output**: Always use the URL that `npx wrangler dev` prints
+- **Port conflicts**: If 8787 is busy, wrangler will choose another port automatically
+
+#### Production Deployment Issues
+- **Check logs**: Use `npx wrangler tail --env production` in a separate terminal
+- **Correlation IDs**: Look for `X-Correlation-ID` header in error responses for debugging
+- **Retry logic**: The deploy workflow includes automatic retry for transient network issues
+
+#### Network/Firewall Issues
+- **Test connectivity**: Run `curl -I https://workers.cloudflare.com` to check access
+- **Fallback mode**: Use `npm run dev:fallback` for local development
+- **Required domains**: Ensure access to:
+  - `workers.cloudflare.com`
+  - `sparrow.cloudflare.com` 
+  - `signal_q.catnip-pieces1.workers.dev`
+
+#### Error Response Format
+All API errors return RFC 7807 problem+json format:
+```json
+{
+  "type": "about:blank",
+  "title": "Authentication Required", 
+  "detail": "Bearer token is required for action endpoints",
+  "status": 401,
+  "correlationId": "uuid-for-tracking",
+  "timestamp": "2025-01-01T00:00:00.000Z"
+}
+```
+
+#### Debugging Steps
+1. **Check the correlation ID** in error responses for tracing
+2. **Monitor logs** with `npx wrangler tail` while making requests
+3. **Test with curl** to isolate client vs server issues:
+   ```bash
+   # Test version (no auth)
+   curl -v http://127.0.0.1:8787/version
+   
+   # Test authenticated endpoint
+   curl -v -X POST -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8787/actions/system_health
+   ```
+4. **Verify environment variables** are properly set in `.dev.vars` or production

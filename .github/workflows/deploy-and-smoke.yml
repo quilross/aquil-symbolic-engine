@@ -1,0 +1,141 @@
+name: Deploy and Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy-and-smoke:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate build
+        run: npm run build
+
+      - name: Validate OpenAPI
+        run: npx swagger-cli validate worker/src/openapi-core.json
+
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GIT_SHA: ${{ github.sha }}
+          BUILD_TIME: ${{ github.event.head_commit.timestamp }}
+          NODE_ENV: production
+        run: |
+          npx wrangler deploy --env production
+
+      - name: Set base URL for smoke tests
+        id: set-url
+        run: |
+          echo "BASE_URL=https://signal_q.catnip-pieces1.workers.dev" >> $GITHUB_OUTPUT
+
+      - name: Wait for deployment propagation
+        run: sleep 10
+
+      - name: Smoke test - Version endpoint
+        run: |
+          echo "Testing GET /version (public endpoint)..."
+          RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" "${{ steps.set-url.outputs.BASE_URL }}/version")
+          STATUS=$(echo "$RESPONSE" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+          BODY=$(echo "$RESPONSE" | sed 's/HTTPSTATUS:[0-9]*$//')
+          
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Version endpoint failed with status $STATUS"
+            echo "Response: $BODY"
+            exit 1
+          fi
+          
+          VERSION=$(echo "$BODY" | grep -o '"version":"[^"]*' | cut -d'"' -f4)
+          if [ -z "$VERSION" ]; then
+            echo "❌ Version endpoint returned invalid JSON"
+            echo "Response: $BODY"
+            exit 1
+          fi
+          
+          echo "✅ Version endpoint OK (version: $VERSION)"
+
+      - name: Smoke test - Health endpoint (with retry)
+        env:
+          SIGNALQ_API_TOKEN_PROD: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
+        run: |
+          echo "Testing POST /actions/system_health (authenticated endpoint)..."
+          
+          # Function to test health endpoint
+          test_health() {
+            RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+              -X POST \
+              -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" \
+              "${{ steps.set-url.outputs.BASE_URL }}/actions/system_health")
+            STATUS=$(echo "$RESPONSE" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+            BODY=$(echo "$RESPONSE" | sed 's/HTTPSTATUS:[0-9]*$//')
+            
+            if [ "$STATUS" != "200" ]; then
+              echo "❌ Health endpoint failed with status $STATUS"
+              echo "Response: $BODY"
+              return 1
+            fi
+            
+            HEALTH_STATUS=$(echo "$BODY" | grep -o '"status":"[^"]*' | cut -d'"' -f4)
+            if [ "$HEALTH_STATUS" != "healthy" ]; then
+              echo "❌ Health check failed - status is '$HEALTH_STATUS' (expected 'healthy')"
+              echo "Response: $BODY"
+              return 1
+            fi
+            
+            echo "✅ Health endpoint OK (status: $HEALTH_STATUS)"
+            return 0
+          }
+          
+          # Try the health check, retry once on failure (for transient network issues)
+          if ! test_health; then
+            echo "Retrying health check in 5 seconds..."
+            sleep 5
+            test_health
+          fi
+
+      - name: Run full smoke test script
+        env:
+          BASE: ${{ steps.set-url.outputs.BASE_URL }}
+          TOKEN: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
+        run: |
+          echo "Running complete smoke test suite..."
+          bash scripts/smoke.sh
+
+      - name: Deployment success notification
+        if: success()
+        run: |
+          echo "🎉 Deployment and smoke tests completed successfully!"
+          echo "✅ Production URL: ${{ steps.set-url.outputs.BASE_URL }}"
+          echo "✅ All endpoints responding correctly"
+          echo "✅ Authentication working properly"
+
+      - name: Deployment failure notification
+        if: failure()
+        run: |
+          echo "❌ Deployment or smoke tests failed!"
+          echo "Check the logs above for details."
+          echo "Production URL: ${{ steps.set-url.outputs.BASE_URL }}"
+          exit 1
