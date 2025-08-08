@@ -17,8 +17,8 @@ const getSignalQClient = new Function(sdkCode + '; return SignalQClient;');
 const SignalQClient = getSignalQClient();
 
 // Environment variables with defaults
-const SIGNALQ_BASE_URL = process.env.SIGNALQ_BASE_URL || 'https://signal_q.catnip-pieces1.workers.dev';
-const SIGNALQ_API_TOKEN = process.env.SIGNALQ_API_TOKEN || '';
+const BASE = process.env.BASE || 'https://signal_q.catnip-pieces1.workers.dev';
+const TOKEN = process.env.TOKEN || '';
 
 // Colors for output
 const colors = {
@@ -30,21 +30,21 @@ const colors = {
 
 async function runSmokeTest() {
   console.log('🚀 Signal Q Smoke Test (Node.js with SDK)');
-  console.log(`Base URL: ${SIGNALQ_BASE_URL}`);
-  console.log(`API Token: ${SIGNALQ_API_TOKEN.substring(0, 10)}...`);
+  console.log(`Base URL: ${BASE}`);
+  console.log(`API Token: ${TOKEN.substring(0, 10)}...`);
   console.log('');
 
   // Check if API token is provided
-  if (!SIGNALQ_API_TOKEN) {
-    console.log(`${colors.red}❌ Error: SIGNALQ_API_TOKEN environment variable is required${colors.reset}`);
-    console.log('Example: export SIGNALQ_API_TOKEN=sq_live_xxxxxxxxxxxxxxxxxxxx');
+  if (!TOKEN) {
+    console.log(`${colors.red}❌ Error: TOKEN environment variable is required${colors.reset}`);
+    console.log('Example: export TOKEN=sq_live_xxxxxxxxxxxxxxxxxxxx');
     process.exit(1);
   }
 
   try {
     // Test 1: Version endpoint (no auth required) - using raw fetch
     console.log('📋 Testing GET /version (raw fetch)...');
-    const versionResponse = await fetch(`${SIGNALQ_BASE_URL}/version`);
+    const versionResponse = await fetch(`${BASE}/version`);
     
     if (!versionResponse.ok) {
       console.log(`${colors.red}❌ Version endpoint failed with status ${versionResponse.status}${colors.reset}`);
@@ -63,25 +63,40 @@ async function runSmokeTest() {
     console.log(`${colors.green}✅ Version endpoint OK (version: ${versionData.version})${colors.reset}`);
     console.log('');
 
-    // Test 2: Health endpoint (requires auth) - using SDK
-    console.log('🏥 Testing GET /system/health (using SDK)...');
+    // Test 2: Health endpoint (requires auth) - using raw fetch
+    console.log('🏥 Testing POST /actions/system_health (raw fetch)...');
     
-    const client = new SignalQClient({
-      baseUrl: SIGNALQ_BASE_URL,
-      token: SIGNALQ_API_TOKEN
+    const healthResponse = await fetch(`${BASE}/actions/system_health`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${TOKEN}`,
+        'Content-Type': 'application/json'
+      }
     });
+    
+    if (!healthResponse.ok) {
+      console.log(`${colors.red}❌ Health endpoint failed with status ${healthResponse.status}${colors.reset}`);
+      const responseText = await healthResponse.text();
+      console.log(`Response: ${responseText}`);
+      process.exit(1);
+    }
 
-    const healthData = await client.health();
-    if (healthData.overall !== 'healthy') {
-      console.log(`${colors.red}❌ Health check failed - overall status is '${healthData.overall}' (expected 'healthy')${colors.reset}`);
+    const healthData = await healthResponse.json();
+    if (healthData.status !== 'healthy') {
+      console.log(`${colors.red}❌ Health check failed - status is '${healthData.status}' (expected 'healthy')${colors.reset}`);
       console.log(`Response: ${JSON.stringify(healthData)}`);
       process.exit(1);
     }
 
-    console.log(`${colors.green}✅ Health endpoint OK (overall: ${healthData.overall})${colors.reset}`);
+    console.log(`${colors.green}✅ Health endpoint OK (status: ${healthData.status})${colors.reset}`);
     
     // Test 3: SDK version method
     console.log('📦 Testing SDK version method...');
+    const client = new SignalQClient({
+      baseUrl: BASE,
+      token: TOKEN
+    });
+    
     const sdkVersionData = await client.version();
     if (sdkVersionData.version !== versionData.version) {
       console.log(`${colors.red}❌ SDK version mismatch${colors.reset}`);
@@ -93,7 +108,7 @@ async function runSmokeTest() {
     // Summary
     console.log(`${colors.green}🎉 All smoke tests passed!${colors.reset}`);
     console.log(`✅ Version endpoint: ${versionData.version}`);
-    console.log(`✅ Health status: ${healthData.overall}`);
+    console.log(`✅ Health status: ${healthData.status}`);
     console.log(`✅ SDK integration: working`);
     console.log('');
     console.log('Signal Q API is healthy and SDK is working correctly.');

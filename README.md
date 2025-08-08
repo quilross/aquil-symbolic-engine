@@ -38,16 +38,36 @@ npm ci
 # 2. Start development server
 npx wrangler dev
 
-# Note the printed URL (usually http://127.0.0.1:8787)
-# Wrangler will print the actual URL - use that instead of assuming port 8788
+# ⚠️ IMPORTANT: Use the printed URL from wrangler dev output
+# Default is http://127.0.0.1:8787 but wrangler will print the actual URL
+# Don't hardcode ports - always use the printed URL!
 
-# 3. Set up environment variables for testing
-export SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+# 3. Set up environment variables for testing (in a new terminal)
+export SIGNALQ_API_TOKEN=dev-placeholder
 
-# 4. Test the endpoints
+# 4. Test the public version endpoint (no auth required)
 curl http://127.0.0.1:8787/version
-curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/system/health
+
+# 5. Test the canonical actions API (requires Bearer auth)
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/actions/system_health
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" http://127.0.0.1:8787/actions/list
 ```
+
+### Local Development Environment Variables
+
+Create/edit `.dev.vars` for local development:
+```bash
+# .dev.vars (automatically loaded by wrangler dev)
+SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+SIGNALQ_ADMIN_TOKEN=sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o
+
+# Optional: version info (set by CI in production)
+# GIT_SHA=local-development
+# BUILD_TIME=2025-01-01T00:00:00.000Z
+# NODE_ENV=development
+```
+
+**Note**: `.dev.vars` is used by Wrangler for local development and aligns with Cloudflare Workers binding guidance. In production, these are set as encrypted environment variables.
 
 ### Production Deployment
 
