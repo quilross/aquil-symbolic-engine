@@ -69,25 +69,63 @@ SIGNALQ_ADMIN_TOKEN=sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1i6o
 
 **Note**: `.dev.vars` is used by Wrangler for local development and aligns with Cloudflare Workers binding guidance. In production, these are set as encrypted environment variables.
 
-### Production Deployment
+## Production Deploy & Smoke Tests
 
-Signal Q uses automated CI/CD for production deployments. Follow these steps for manual deployment:
+Signal Q uses automated CI/CD with integrated smoke testing for production deployments.
 
-#### 1. Set Repository Secrets
+### Required Secrets
 
 Configure these secrets in your GitHub repository settings:
 ```
 CLOUDFLARE_API_TOKEN=your_api_token_here
-CLOUDFLARE_ACCOUNT_ID=your_account_id_here
 SIGNALQ_API_TOKEN_PROD=sq_live_prod_token_here
-SIGNALQ_ADMIN_TOKEN_PROD=sq_admin_prod_token_here
 ```
 
-#### 2. Deploy via GitHub Actions
+### Deploy and Smoke Workflow
 
-**Option A: Manual Dispatch**
-1. Go to Actions → Production Deploy
-2. Click "Run workflow"
+The `deploy-and-smoke.yml` workflow automatically:
+1. ✅ Validates build and OpenAPI schema
+2. 🚀 Deploys to Cloudflare Workers production environment  
+3. 🔍 Runs smoke tests against the live production URL
+4. ✅ Verifies GET /version returns 200 JSON
+5. 🏥 Tests POST /actions/system_health with Bearer auth
+6. 🔄 Retries health check once on transient network errors
+
+### Triggering Deployment
+
+**Option A: Manual Workflow Dispatch**
+1. Go to Actions → "Deploy and Smoke Test"
+2. Click "Run workflow" 
+3. Select "production" environment
+4. Click "Run workflow"
+
+**Option B: Git Tag (Recommended)**
+```bash
+git tag v2.1.1
+git push origin v2.1.1
+```
+
+### Manual Smoke Testing
+
+Test production deployment locally:
+```bash
+export BASE=https://signal_q.catnip-pieces1.workers.dev
+export TOKEN=your_production_token_here
+bash scripts/smoke.sh
+```
+
+### Monitoring & Debugging
+
+Use `wrangler tail` to monitor live production logs:
+```bash
+npx wrangler tail --env production
+```
+
+In another terminal, make test requests:
+```bash
+curl https://signal_q.catnip-pieces1.workers.dev/version
+curl -X POST -H "Authorization: Bearer $TOKEN" https://signal_q.catnip-pieces1.workers.dev/actions/system_health
+```
 3. Select "production" environment
 4. Click "Run workflow"
 
