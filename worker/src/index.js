@@ -97,26 +97,28 @@ function validateEnvironment(env) {
   const required = [];
   const warnings = [];
   
-  // Check for production tokens
-  if (!env?.SIGNALQ_API_TOKEN && !DEV_SIGNALQ_API_TOKEN) {
-    required.push('SIGNALQ_API_TOKEN');
-  }
-  if (!env?.SIGNALQ_ADMIN_TOKEN && !DEV_SIGNALQ_ADMIN_TOKEN) {
-    required.push('SIGNALQ_ADMIN_TOKEN');
-  }
-  
-  // Warn about dev tokens in production
+  // In production, require proper env tokens (no fallback to dev tokens)
   if (env?.NODE_ENV === 'production') {
     if (!env?.SIGNALQ_API_TOKEN) {
-      warnings.push('Using development API token in production environment');
+      required.push('SIGNALQ_API_TOKEN');
     }
     if (!env?.SIGNALQ_ADMIN_TOKEN) {
-      warnings.push('Using development admin token in production environment');
+      required.push('SIGNALQ_ADMIN_TOKEN');
+    }
+  } else {
+    // In non-production, check for either env or dev tokens
+    if (!env?.SIGNALQ_API_TOKEN && !DEV_SIGNALQ_API_TOKEN) {
+      required.push('SIGNALQ_API_TOKEN or DEV_SIGNALQ_API_TOKEN');
+    }
+    if (!env?.SIGNALQ_ADMIN_TOKEN && !DEV_SIGNALQ_ADMIN_TOKEN) {
+      required.push('SIGNALQ_ADMIN_TOKEN or DEV_SIGNALQ_ADMIN_TOKEN');
     }
   }
   
   if (required.length > 0) {
-    throw new Error(`Missing required environment variables: ${required.join(', ')}`);
+    const error = new Error(`Configuration Error: Missing required environment variables: ${required.join(', ')}`);
+    error.isConfigError = true;
+    throw error;
   }
   
   return { warnings };

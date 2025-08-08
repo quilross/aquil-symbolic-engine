@@ -12,7 +12,7 @@ npm ci
 npm run dev:fallback
 
 # 3. Test health endpoint (5 seconds)
-curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   http://localhost:8788/system/health
 ```
 
@@ -36,16 +36,16 @@ Test the live production API:
 ```bash
 # 1. Set environment variables (5 seconds)
 export BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
-export TOKEN="sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+export SIGNALQ_API_TOKEN="your_production_token_here"
 
 # 2. Test health endpoint (10 seconds)
-curl -H "Authorization: Bearer $TOKEN" "$BASE_URL/system/health"
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$BASE_URL/system/health"
 
 # 3. Test version endpoint (public) (10 seconds)
 curl "$BASE_URL/version"
 
 # 4. Test identity probe (15 seconds)
-curl -X POST -H "Authorization: Bearer $TOKEN" \
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   -H "Content-Type: application/json" \
   "$BASE_URL/actions/probe_identity"
 ```
