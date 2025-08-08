@@ -38,6 +38,38 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Start development server for contract tests
+        run: |
+          npm run dev &
+          DEV_PID=$!
+          echo "DEV_PID=$DEV_PID" >> $GITHUB_ENV
+          
+          # Wait for server to start
+          for i in {1..30}; do
+            if curl -f http://localhost:8787/version >/dev/null 2>&1; then
+              echo "✅ Development server started"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Development server failed to start"
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Run contract tests
+        env:
+          BASE_URL: http://localhost:8787
+          SIGNALQ_API_TOKEN: sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+        run: node test-contract.js
+
+      - name: Stop development server
+        if: always()
+        run: |
+          if [ ! -z "$DEV_PID" ]; then
+            kill $DEV_PID || true
+          fi
+
   deploy-staging:
     needs: build
     runs-on: ubuntu-latest

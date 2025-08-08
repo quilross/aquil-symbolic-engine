@@ -95,19 +95,30 @@ function generateCorrelationId() {
   return crypto.randomUUID();
 }
 
-// Log request with correlation ID (sanitized - no tokens)
-function logRequest(method, path, status, correlationId, startTime = Date.now()) {
-  const duration = Date.now() - startTime;
+// Structured logger with correlation ID support
+function logRequest(method, path, status, correlationId, startTime, action = null, env = null) {
+  const duration_ms = Date.now() - startTime;
+  const logLevel = env?.LOG_LEVEL || 'info';
+  
+  // Determine if we should log based on level
+  const levels = { error: 0, warn: 1, info: 2 };
+  const currentLevel = levels[logLevel] || 2;
+  
+  // Only log info level if configured for info
+  if (currentLevel < 2) return;
+  
   const logData = {
+    ts: new Date().toISOString(),
     method,
     path: path.replace(/\/[a-f0-9-]{36}/g, '/:id'), // Sanitize UUIDs
+    action,
     status,
-    correlationId,
-    duration: `${duration}ms`,
-    timestamp: new Date().toISOString()
+    duration_ms,
+    correlationId
   };
   
-  console.log('REQUEST', JSON.stringify(logData));
+  // Output single JSON line per request (no extra text)
+  console.log(JSON.stringify(logData));
 }
 
 // Create problem+json error response
@@ -162,7 +173,7 @@ export default {
         500,
         correlationId
       );
-      logRequest(method, path, 500, correlationId, startTime);
+      logRequest(method, path, 500, correlationId, startTime, null, env);
       return response;
     }
     
@@ -178,7 +189,7 @@ export default {
             'X-Correlation-ID': correlationId
           }
         });
-        logRequest(method, path, 200, correlationId, startTime);
+        logRequest(method, path, 200, correlationId, startTime, null, env);
         return response;
       }
 
@@ -200,7 +211,7 @@ export default {
             401,
             correlationId
           );
-          logRequest(method, path, 401, correlationId, startTime);
+          logRequest(method, path, 401, correlationId, startTime, null, env);
           return response;
         }
         
@@ -212,7 +223,7 @@ export default {
             401,
             correlationId
           );
-          logRequest(method, path, 401, correlationId, startTime);
+          logRequest(method, path, 401, correlationId, startTime, null, env);
           return response;
         }
         
@@ -225,7 +236,7 @@ export default {
             404,
             correlationId
           );
-          logRequest(method, path, 404, correlationId, startTime);
+          logRequest(method, path, 404, correlationId, startTime, null, env);
           return response;
         }
 
@@ -246,7 +257,7 @@ export default {
             if (!headers.has(k)) headers.set(k, v);
           }
           const response = new Response(result.body, { status: result.status, headers });
-          logRequest(method, path, result.status, correlationId, startTime);
+          logRequest(method, path, result.status, correlationId, startTime, handlerName, env);
           return response;
         }
 
@@ -257,7 +268,7 @@ export default {
             ...cors 
           }
         });
-        logRequest(method, path, 200, correlationId, startTime);
+        logRequest(method, path, 200, correlationId, startTime, null, env);
         return response;
       }
 
@@ -270,7 +281,7 @@ export default {
             ...corsHeaders() 
           }
         });
-        logRequest(method, path, 200, correlationId, startTime);
+        logRequest(method, path, 200, correlationId, startTime, null, env);
         return response;
       }
 
@@ -283,7 +294,7 @@ export default {
             401,
             correlationId
           );
-          logRequest(method, path, 401, correlationId, startTime);
+          logRequest(method, path, 401, correlationId, startTime, null, env);
           return response;
         }
         if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
@@ -293,7 +304,7 @@ export default {
             401,
             correlationId
           );
-          logRequest(method, path, 401, correlationId, startTime);
+          logRequest(method, path, 401, correlationId, startTime, null, env);
           return response;
         }
         
@@ -305,7 +316,7 @@ export default {
             ...corsHeaders() 
           }
         });
-        logRequest(method, path, 200, correlationId, startTime);
+        logRequest(method, path, 200, correlationId, startTime, null, env);
         return response;
       }
 
@@ -318,7 +329,7 @@ export default {
             401,
             correlationId
           );
-          logRequest(method, path, 401, correlationId, startTime);
+          logRequest(method, path, 401, correlationId, startTime, null, env);
           return response;
         }
         if (token !== SIGNALQ_ADMIN_TOKEN) {
@@ -328,7 +339,7 @@ export default {
             403,
             correlationId
           );
-          logRequest(method, path, 403, correlationId, startTime);
+          logRequest(method, path, 403, correlationId, startTime, null, env);
           return response;
         }
 
@@ -345,7 +356,7 @@ export default {
             ...corsHeaders()
           }
         });
-        logRequest(method, path, 200, correlationId, startTime);
+        logRequest(method, path, 200, correlationId, startTime, null, env);
         return response;
       }
 
@@ -365,7 +376,7 @@ export default {
       });
 
       const response = await obj.fetch(newRequest);
-      logRequest(method, path, response.status, correlationId, startTime);
+      logRequest(method, path, response.status, correlationId, startTime, null, env);
       return response;
       
     } catch (error) {
@@ -376,7 +387,7 @@ export default {
         500,
         correlationId
       );
-      logRequest(method, path, 500, correlationId, startTime);
+      logRequest(method, path, 500, correlationId, startTime, null, env);
       return response;
     }
   }

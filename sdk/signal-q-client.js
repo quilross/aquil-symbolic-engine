@@ -133,11 +133,20 @@ class SignalQClient {
    * Check system health
    * @returns {Promise<Object>} - Health status object
    * @example
-   * const health = await client.health();
+   * const health = await client.systemHealth();
    * console.log(health.status); // 'healthy'
    */
+  async systemHealth() {
+    return await this.action('system_health');
+  }
+
+  /**
+   * Legacy alias for systemHealth (deprecated)
+   * @returns {Promise<Object>} - Health status object
+   * @deprecated Use systemHealth() instead
+   */
   async health() {
-    return await this.requestJson('/system/health');
+    return await this.systemHealth();
   }
 
   /**
@@ -189,13 +198,35 @@ class SignalQClient {
   async probeIdentity(context = {}) {
     return await this.action('probe_identity', context);
   }
+
+  /**
+   * Recalibrate the system state
+   * @param {Object} [parameters={}] - Recalibration parameters
+   * @returns {Promise<Object>} - Recalibration results
+   * @example
+   * const result = await client.recalibrateState();
+   * console.log(result.state);
+   */
+  async recalibrateState(parameters = {}) {
+    return await this.action('recalibrate_state', parameters);
+  }
+
+  /**
+   * Deploy the system
+   * @param {Object} [config={}] - Deployment configuration
+   * @returns {Promise<Object>} - Deployment results
+   * @example
+   * const result = await client.deploy();
+   * console.log(result.deployment);
+   */
+  async deploy(config = {}) {
+    return await this.action('deploy', config);
+  }
 }
 
 // Node.js CommonJS export 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = SignalQClient;
-  module.exports.SignalQClient = SignalQClient;
-  module.exports.default = SignalQClient;
 }
 
 // Browser global
