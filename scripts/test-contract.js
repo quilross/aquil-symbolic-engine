@@ -119,7 +119,7 @@ async function testVersionEndpoint() {
 
 async function runTests() {
   console.log(`Running contract tests against ${BASE_URL}`);
-  console.log(`Using API token: ${API_TOKEN.slice(0, 8)}...`);
+  console.log('Using API token');
   
   try {
     await testVersionEndpoint();
