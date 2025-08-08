@@ -16,6 +16,7 @@ worker/.wrangler/
 .env.development.local
 .env.test.local
 .env.production.local
+.dev.vars
 
 # OS generated files
 .DS_Store
