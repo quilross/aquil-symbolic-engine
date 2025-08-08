@@ -1,0 +1,221 @@
+# Authentication, Roles, and Error Handling
+
+## 🔑 Authentication Overview
+
+Signal Q API uses Bearer token authentication with two role levels:
+
+- **USER** (`sq_live_*`): Standard API access for most operations
+- **ADMIN** (`sq_admin_*`): Administrative operations and elevated permissions
+
+## 👥 Role Definitions
+
+### USER Role (`sq_live_*`)
+**Token Pattern:** `sq_live_[32-char-alphanumeric]`  
+**Example:** `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
+
+**Permitted Operations:**
+- ✅ `/system/health` - Health monitoring
+- ✅ `/actions/*` - All action endpoints (no auth required)
+- ✅ `/version` - Version information (public)
+- ✅ Identity and symbolic operations
+- ✅ Data logging and retrieval
+- ❌ `/admin/*` - Administrative operations (403 Forbidden)
+
+### ADMIN Role (`sq_admin_*`)
+**Token Pattern:** `sq_admin_[32-char-alphanumeric]`  
+**Example:** `sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2`
+
+**Permitted Operations:**
+- ✅ All USER role operations
+- ✅ `/admin/reset` - System reset operations
+- ✅ `/export-logs` - Export user data (with token validation)
+- ✅ Administrative data access
+- ✅ System configuration changes
+
+## 🛡️ Route Permission Matrix
+
+| Route | Method | USER | ADMIN | Public | Auth Required |
+|-------|--------|------|-------|--------|---------------|
+| `/version` | GET | ✅ | ✅ | ✅ | No |
+| `/system/health` | GET | ✅ | ✅ | ❌ | Yes |
+| `/actions/*` | POST | ✅ | ✅ | ✅ | No |
+| `/admin/reset` | POST | ❌ | ✅ | ❌ | Yes (Admin) |
+| `/export-logs` | GET | ❌ | ✅ | ❌ | Yes (Admin) |
+| All other routes | * | ✅ | ✅ | ❌ | Yes |
+
+## 📋 Error Response Format
+
+### Problem+JSON Standard
+
+All error responses use the RFC 7807 Problem Details format:
+
+```http
+Content-Type: application/problem+json
+X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
+```
+
+```json
+{
+  "type": "about:blank",
+  "title": "Authentication Required",
+  "detail": "Bearer token is required to access this endpoint",
+  "status": 401,
+  "correlationId": "123e4567-e89b-12d3-a456-426614174000",
+  "timestamp": "2025-01-01T12:00:00.000Z"
+}
+```
+
+### 401 Unauthorized Examples
+
+**Missing Token:**
+```bash
+curl https://signal_q.catnip-pieces1.workers.dev/system/health
+```
+
+```json
+{
+  "type": "about:blank",
+  "title": "Authentication Required",
+  "detail": "Bearer token is required to access this endpoint",
+  "status": 401,
+  "correlationId": "123e4567-e89b-12d3-a456-426614174000",
+  "timestamp": "2025-01-01T12:00:00.000Z"
+}
+```
+
+**Invalid Token:**
+```bash
+curl -H "Authorization: Bearer invalid_token_123" \
+  https://signal_q.catnip-pieces1.workers.dev/system/health
+```
+
+```json
+{
+  "type": "about:blank",
+  "title": "Invalid Credentials",
+  "detail": "The provided Bearer token is not valid",
+  "status": 401,
+  "correlationId": "456e7890-e89b-12d3-a456-426614174001",
+  "timestamp": "2025-01-01T12:00:00.000Z"
+}
+```
+
+### 403 Forbidden Examples
+
+**User Token on Admin Endpoint:**
+```bash
+curl -X POST \
+  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+  https://signal_q.catnip-pieces1.workers.dev/admin/reset
+```
+
+```json
+{
+  "type": "about:blank",
+  "title": "Insufficient Permissions",
+  "detail": "This endpoint requires admin privileges. User tokens are not permitted.",
+  "status": 403,
+  "correlationId": "789e0123-e89b-12d3-a456-426614174002",
+  "timestamp": "2025-01-01T12:00:00.000Z"
+}
+```
+
+## 🔧 Error Handling Middleware
+
+### Implementation Example
+
+```javascript
+// Error handling middleware for consistent problem+json responses
+function createProblemResponse(title, detail, status = 500, correlationId = null) {
+  const problemData = {
+    type: "about:blank",
+    title,
+    detail,
+    status,
+    correlationId: correlationId || crypto.randomUUID(),
+    timestamp: new Date().toISOString()
+  };
+  
+  return new Response(JSON.stringify(problemData), {
+    status,
+    headers: {
+      'Content-Type': 'application/problem+json',
+      'X-Correlation-ID': problemData.correlationId,
+      ...corsHeaders()
+    }
+  });
+}
+
+// Usage in request handlers
+if (!token) {
+  return createProblemResponse(
+    'Authentication Required',
+    'Bearer token is required to access this endpoint',
+    401
+  );
+}
+
+if (token !== SIGNALQ_ADMIN_TOKEN) {
+  return createProblemResponse(
+    'Insufficient Permissions',
+    'This endpoint requires admin privileges. User tokens are not permitted.',
+    403
+  );
+}
+```
+
+## 🧪 Testing Authentication
+
+### Valid Requests
+```bash
+# USER token - health check
+curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+  https://signal_q.catnip-pieces1.workers.dev/system/health
+
+# ADMIN token - reset operation
+curl -X POST \
+  -H "Authorization: Bearer sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2" \
+  https://signal_q.catnip-pieces1.workers.dev/admin/reset
+```
+
+### Error Testing
+```bash
+# Test 401 - no token
+curl https://signal_q.catnip-pieces1.workers.dev/system/health
+
+# Test 401 - invalid token  
+curl -H "Authorization: Bearer invalid_token" \
+  https://signal_q.catnip-pieces1.workers.dev/system/health
+
+# Test 403 - user token on admin endpoint
+curl -X POST \
+  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+  https://signal_q.catnip-pieces1.workers.dev/admin/reset
+```
+
+## 🔍 Correlation ID Tracking
+
+Every error response includes a unique `correlationId` for debugging:
+
+- **Header:** `X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000`
+- **Body:** `"correlationId": "123e4567-e89b-12d3-a456-426614174000"`
+
+Use this ID when reporting issues or debugging authentication problems.
+
+## 🛠️ JavaScript Client Integration
+
+The SDK automatically handles problem+json errors:
+
+```javascript
+const client = new SignalQClient({
+  baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+  token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+});
+
+try {
+  const health = await client.health();
+} catch (error) {
+  // Error message includes correlation ID:
+  // "Invalid Credentials: The provided Bearer token is not valid (Correlation: 123e4567...)"
+  console.error(error.message);
+}

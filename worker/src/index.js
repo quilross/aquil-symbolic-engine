@@ -288,6 +288,37 @@ const handlers = {
   }
 };
 
+// === ENVIRONMENT VALIDATION ===
+// Fail fast if required secrets are missing in production
+function validateEnvironment(env) {
+  const required = [];
+  const warnings = [];
+  
+  // Check for production tokens
+  if (!env?.SIGNALQ_API_TOKEN && !DEV_SIGNALQ_API_TOKEN) {
+    required.push('SIGNALQ_API_TOKEN');
+  }
+  if (!env?.SIGNALQ_ADMIN_TOKEN && !DEV_SIGNALQ_ADMIN_TOKEN) {
+    required.push('SIGNALQ_ADMIN_TOKEN');
+  }
+  
+  // Warn about dev tokens in production
+  if (env?.NODE_ENV === 'production') {
+    if (!env?.SIGNALQ_API_TOKEN) {
+      warnings.push('Using development API token in production environment');
+    }
+    if (!env?.SIGNALQ_ADMIN_TOKEN) {
+      warnings.push('Using development admin token in production environment');
+    }
+  }
+  
+  if (required.length > 0) {
+    throw new Error(`Missing required environment variables: ${required.join(', ')}`);
+  }
+  
+  return { warnings };
+}
+
 // === TEMP DEV TOKENS ===
 // Hardcoded for local development only. Replace with secure secrets in production.
 const DEV_SIGNALQ_API_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
@@ -300,9 +331,57 @@ function getBearerToken(request) {
   return auth.slice('Bearer '.length);
 }
 
+// Generate correlation ID for error tracking
+function generateCorrelationId() {
+  return crypto.randomUUID();
+}
+
+// Create problem+json error response
+function createProblemResponse(title, detail, status = 500, correlationId = null) {
+  const problemData = {
+    type: "about:blank",
+    title,
+    detail,
+    status,
+    correlationId: correlationId || generateCorrelationId(),
+    timestamp: new Date().toISOString()
+  };
+  
+  return new Response(JSON.stringify(problemData), {
+    status,
+    headers: {
+      'Content-Type': 'application/problem+json',
+      'X-Correlation-ID': problemData.correlationId,
+      ...corsHeaders()
+    }
+  });
+}
+
+// Get version information
+function getVersionInfo(env) {
+  return {
+    version: "2.1.0", // From package.json
+    gitSha: env?.GIT_SHA || "local-development",
+    buildTime: env?.BUILD_TIME || new Date().toISOString(),
+    environment: env?.NODE_ENV || "development"
+  };
+}
+
 export default {
   async fetch(request, env) {
-    
+    try {
+      // Validate environment on startup
+      const { warnings } = validateEnvironment(env);
+      if (warnings.length > 0) {
+        console.warn('Environment warnings:', warnings);
+      }
+    } catch (error) {
+      return createProblemResponse(
+        'Configuration Error',
+        error.message,
+        500
+      );
+    }
     
     // Handle CORS preflight requests FIRST, before auth
     if (request.method === 'OPTIONS') {
@@ -359,33 +438,56 @@ export default {
       });
     }
 
+    // Version endpoint (public)
+    if (path === '/version' && request.method === 'GET') {
+      return new Response(JSON.stringify(getVersionInfo(env)), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders() }
+      });
+    }
+
+    // Health endpoint (requires USER or ADMIN token)
     if (path === '/system/health' && request.method === 'GET') {
-      if (!token || (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN)) {
-        return new Response('Unauthorized: No Bearer token', { 
-          status: 401,
-          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
-        });
+      if (!token) {
+        return createProblemResponse(
+          'Authentication Required',
+          'Bearer token is required to access this endpoint',
+          401
+        );
+      }
+      if (token !== SIGNALQ_API_TOKEN && token !== SIGNALQ_ADMIN_TOKEN) {
+        return createProblemResponse(
+          'Invalid Credentials',
+          'The provided Bearer token is not valid',
+          401
+        );
       }
       
       return handlers.system_health(request, env, null, null);
     }
 
+    // Admin reset endpoint (requires ADMIN token only)
     if (path === '/admin/reset') {
       if (!token) {
-        return new Response('Unauthorized: No Bearer token', { 
-          status: 401,
-          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
-        });
+        return createProblemResponse(
+          'Authentication Required',
+          'Bearer token is required to access admin endpoints',
+          401
+        );
       }
       if (token !== SIGNALQ_ADMIN_TOKEN) {
-        return new Response('Forbidden: Admin only', { 
-          status: 403,
-          headers: { 'Content-Type': 'text/plain', ...corsHeaders() }
-        });
+        return createProblemResponse(
+          'Insufficient Permissions',
+          'This endpoint requires admin privileges. User tokens are not permitted.',
+          403
+        );
       }
 
       // Placeholder admin reset logic
-      return new Response(JSON.stringify({ status: 'admin_reset_ok' }), {
+      return new Response(JSON.stringify({ 
+        status: 'admin_reset_ok',
+        timestamp: new Date().toISOString(),
+        version: getVersionInfo(env).version
+      }), {
         status: 200,
         headers: {
           'Content-Type': 'application/json',

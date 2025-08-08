@@ -19,6 +19,14 @@ const results = [];
 async function testHealthEndpoint() {
   const tests = [
     {
+      name: 'Version Endpoint (Public)',
+      url: `${BASE_URL}/version`,
+      headers: {},
+      expectedStatus: 200,
+      shouldHaveJson: true,
+      isVersion: true
+    },
+    {
       name: 'Valid User Token',
       url: `${BASE_URL}/system/health`,
       headers: { 'Authorization': `Bearer ${USER_TOKEN}` },
@@ -103,13 +111,21 @@ async function testHealthEndpoint() {
           jsonValid = true;
           
           if (test.shouldHaveJson && test.expectedStatus === 200) {
-            hasRequiredFields = !!(
-              jsonData.overall && 
-              jsonData.api && 
-              jsonData.storage && 
-              jsonData.deployment &&
-              jsonData.timestamp
-            );
+            if (test.isVersion) {
+              hasRequiredFields = !!(
+                jsonData.version &&
+                jsonData.gitSha &&
+                jsonData.buildTime
+              );
+            } else {
+              hasRequiredFields = !!(
+                jsonData.overall && 
+                jsonData.api && 
+                jsonData.storage && 
+                jsonData.deployment &&
+                jsonData.timestamp
+              );
+            }
           }
         }
       } catch (e) {
@@ -140,9 +156,15 @@ async function testHealthEndpoint() {
       if (result.success) {
         console.log(`✅ ${test.name}: PASS (${response.status})`);
         if (jsonData && result.hasRequiredFields) {
-          console.log(`   📊 Overall: ${jsonData.overall}`);
-          console.log(`   📡 API Status: ${jsonData.api?.status}`);
-          console.log(`   💾 Storage: ${jsonData.storage?.status}`);
+          if (test.isVersion) {
+            console.log(`   📦 Version: ${jsonData.version}`);
+            console.log(`   🔗 Git SHA: ${jsonData.gitSha}`);
+            console.log(`   🏗️ Build Time: ${jsonData.buildTime}`);
+          } else {
+            console.log(`   📊 Overall: ${jsonData.overall}`);
+            console.log(`   📡 API Status: ${jsonData.api?.status}`);
+            console.log(`   💾 Storage: ${jsonData.storage?.status}`);
+          }
         }
       } else {
         console.log(`❌ ${test.name}: FAIL (got ${response.status}, expected ${test.expectedStatus})`);
