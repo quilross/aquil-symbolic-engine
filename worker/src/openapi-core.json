@@ -17,6 +17,32 @@
     }
   ],
   "paths": {
+    "/version": {
+      "get": {
+        "operationId": "getVersion",
+        "summary": "Get version information",
+        "description": "Returns version metadata including version number, git SHA, build time, and environment. This endpoint does not require authentication.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Version information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                },
+                "example": {
+                  "version": "2.1.0",
+                  "gitSha": "abc123def456",
+                  "buildTime": "2024-01-01T00:00:00.000Z",
+                  "environment": "production"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/actions/system_health": {
       "post": {
         "operationId": "getSystemHealth",
@@ -338,6 +364,25 @@
               "type": "string",
               "enum": ["list", "system_health", "probe_identity", "recalibrate_state", "deploy"]
             }
+          }
+        }
+      },
+      "VersionResponse": {
+        "type": "object",
+        "required": ["version", "gitSha", "buildTime", "environment"],
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "gitSha": {
+            "type": "string"
+          },
+          "buildTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "environment": {
+            "type": "string"
           }
         }
       }

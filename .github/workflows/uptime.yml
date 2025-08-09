@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Set base URL
         run: |
-          export BASE_URL=https://signal_q.catnip-pieces1.workers.dev
+          BASE_URL=https://signal_q.catnip-pieces1.workers.dev
           echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
 
       - name: Check version endpoint
@@ -66,7 +66,7 @@ jobs:
                 const headers = fs.readFileSync('headers.txt', 'utf8');
                 const correlationMatch = headers.match(/X-Correlation-ID:\s*(.+)/i);
                 if (correlationMatch) {
-                  correlationId = correlationMatch[1].trim();
+                  correlationId = correlationMatch[1].trim().replace(/\r/g, '');
                 }
                 const statusMatch = headers.match(/HTTP\/\d\.\d\s+(\d+)/);
                 if (statusMatch) {

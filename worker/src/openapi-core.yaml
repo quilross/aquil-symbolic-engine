@@ -1,0 +1,296 @@
+openapi: 3.0.3
+info:
+  title: Signalhaven Actions API
+  version: v6.0
+  description: This API provides consolidated action invocation for the Signalhaven symbolic engine. All endpoints require Bearer authentication. Use /actions/list to enumerate available actions.
+servers:
+  - url: 'https://signal_q.catnip-pieces1.workers.dev'
+    description: Cloudflare Worker Production Endpoint
+security:
+  - bearerAuth: []
+paths:
+  /version:
+    get:
+      operationId: getVersion
+      summary: Get version information
+      description: 'Returns version metadata including version number, git SHA, build time, and environment. This endpoint does not require authentication.'
+      security: []
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+              example:
+                version: 2.1.0
+                gitSha: abc123def456
+                buildTime: '2024-01-01T00:00:00.000Z'
+                environment: production
+  /actions/system_health:
+    post:
+      operationId: getSystemHealth
+      summary: Check system health status and version
+      description: 'Returns system health status, timestamp, worker name, and version information.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealthResponse'
+              example:
+                status: healthy
+                timestamp: '2024-01-01T00:00:00.000Z'
+                worker: signal_q
+                version: v6.0
+        '401':
+          description: Unauthorized - Bearer token required
+  /actions/probe_identity:
+    post:
+      operationId: probeIdentity
+      summary: Probe current identity status with enriched analysis
+      description: 'Performs comprehensive identity probe with stability analysis, coherence assessment, and authenticity verification. Returns detailed identity metrics and recommendations.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Identity probe response with enriched analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeIdentityResponse'
+              example:
+                probe: Identity confirmed
+                timestamp: '2024-01-01T00:00:00.000Z'
+                analysis:
+                  stability: 0.92
+                  coherence: high
+                  authenticity: 0.88
+                  recommendation: Identity integration optimal - proceed with confidence
+        '401':
+          description: Unauthorized - Bearer token required
+  /actions/recalibrate_state:
+    post:
+      operationId: recalibrateState
+      summary: Recalibrate symbolic state and identity configuration
+      description: 'Performs complete symbolic recalibration including identity key verification, dominant emotion assessment, and active gene key analysis.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Symbolic recalibration complete with state information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecalibrateStateResponse'
+              example:
+                state: recalibrated
+                timestamp: '2024-01-01T00:00:00.000Z'
+                identity_key: primary_manifester
+                dominant_emotion: clarity
+        '401':
+          description: Unauthorized - Bearer token required
+  /actions/deploy:
+    post:
+      operationId: triggerDeploy
+      summary: Trigger deployment workflow
+      description: Initiates deployment process for the service. Simulates triggering real deploy workflow.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Deployment triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeployResponse'
+              example:
+                deployment: triggered
+                timestamp: '2024-01-01T00:00:00.000Z'
+        '401':
+          description: Unauthorized - Bearer token required
+  /actions/list:
+    post:
+      operationId: listActions
+      summary: List all available public actions
+      description: Returns a comprehensive list of all available public actions for dynamic discovery by GPT plugins and automation tools.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Array of available public actions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionsListResponse'
+              example:
+                actions:
+                  - list
+                  - system_health
+                  - probe_identity
+                  - recalibrate_state
+                  - deploy
+        '401':
+          description: Unauthorized - Bearer token required
+components:
+  schemas:
+    GenericInput:
+      type: object
+      description: Generic input object for actions that accept optional parameters
+    SystemHealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - worker
+        - version
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+        timestamp:
+          type: string
+          format: date-time
+        worker:
+          type: string
+        version:
+          type: string
+    ProbeIdentityResponse:
+      type: object
+      required:
+        - probe
+        - timestamp
+        - analysis
+      properties:
+        probe:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        analysis:
+          type: object
+          required:
+            - stability
+            - coherence
+            - authenticity
+            - recommendation
+          properties:
+            stability:
+              type: number
+              minimum: 0
+              maximum: 1
+            coherence:
+              type: string
+              enum:
+                - high
+                - medium
+                - low
+            authenticity:
+              type: number
+              minimum: 0
+              maximum: 1
+            recommendation:
+              type: string
+    RecalibrateStateResponse:
+      type: object
+      required:
+        - state
+        - timestamp
+        - identity_key
+        - dominant_emotion
+      properties:
+        state:
+          type: string
+          enum:
+            - recalibrated
+        timestamp:
+          type: string
+          format: date-time
+        identity_key:
+          type: string
+        dominant_emotion:
+          type: string
+    DeployResponse:
+      type: object
+      required:
+        - deployment
+        - timestamp
+      properties:
+        deployment:
+          type: string
+          enum:
+            - triggered
+        timestamp:
+          type: string
+          format: date-time
+    ActionsListResponse:
+      type: object
+      required:
+        - actions
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+            enum:
+              - list
+              - system_health
+              - probe_identity
+              - recalibrate_state
+              - deploy
+    VersionResponse:
+      type: object
+      required:
+        - version
+        - gitSha
+        - buildTime
+        - environment
+      properties:
+        version:
+          type: string
+        gitSha:
+          type: string
+        buildTime:
+          type: string
+          format: date-time
+        environment:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 'Bearer authentication for all API endpoints. Include the token in the Authorization header as ''Bearer {token}''.'
