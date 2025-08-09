@@ -4,7 +4,7 @@
 // This script helps test your Signal Q deployment
 
 const API_BASE = 'https://signal_q.catnip-pieces1.workers.dev';
-const API_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+const API_TOKEN = process.env.SIGNALQ_API_TOKEN || 'dev-placeholder';
 
 async function makeRequest(endpoint, method = 'GET', body = null) {
   const url = `${API_BASE}${endpoint}`;

@@ -181,7 +181,7 @@ wrangler tail --env production
 In another terminal, make requests to see real-time logs:
 ```bash
 curl "$SIGNALQ_BASE_URL/version"
-curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$SIGNALQ_BASE_URL/system/health"
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$SIGNALQ_BASE_URL/actions/system_health"
 ```
 
 #### Build Metadata

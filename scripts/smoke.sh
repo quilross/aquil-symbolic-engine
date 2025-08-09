@@ -27,7 +27,7 @@ echo ""
 # Check if API token is provided
 if [ -z "$TOKEN" ]; then
     echo -e "${RED}❌ Error: TOKEN environment variable is required${NC}"
-    echo "Example: export TOKEN=sq_live_xxxxxxxxxxxxxxxxxxxx"
+    echo "Example: export TOKEN=\$SIGNALQ_API_TOKEN"
     exit 1
 fi
 
