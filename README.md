@@ -78,6 +78,10 @@ curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
      https://signal_q.catnip-pieces1.workers.dev/actions/system_health
 ```
 
+### Legacy Endpoint Note
+
+**Legacy GET /system/health**: The endpoint `GET /system/health` is still implemented for backward compatibility but is not recommended for new integrations. It is not included in the OpenAPI specification. Use `POST /actions/system_health` instead.
+
 ## Production Smoke
 
 Test production deployment:

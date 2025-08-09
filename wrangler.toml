@@ -22,12 +22,16 @@ enabled = true
 
 [vars]
 LOG_LEVEL = "info"
+GIT_SHA = "local-development"
+BUILD_TIME = ""
+NODE_ENV = "development"
 
 [dev]
 port = 8787
 
 [env.production]
 name = "signal_q_production"
+vars = { NODE_ENV = "production" }
 
 
 

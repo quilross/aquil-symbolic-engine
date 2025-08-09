@@ -177,6 +177,18 @@ export default {
           return response;
         }
 
+        // Check for admin-only restrictions on deploy action
+        if (actionName === 'deploy' && token === env?.SIGNALQ_API_TOKEN && env?.SIGNALQ_ADMIN_TOKEN) {
+          // If admin token is configured and user is using regular token for deploy, deny access
+          const response = problemJSON({
+            title: 'Insufficient Permissions',
+            detail: 'Deploy action requires administrative privileges',
+            status: 403
+          }, correlationId);
+          logRequest(method, path, actionName, 403, Date.now() - startTime, correlationId, env);
+          return response;
+        }
+
         // Check if action exists
         const handler = actionHandlers[actionName];
         if (!handler) {

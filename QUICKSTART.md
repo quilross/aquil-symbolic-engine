@@ -118,7 +118,7 @@ npm run validate  # Security scan + dependency audit
 - **Firewall blocking?** Use fallback mode which runs completely locally
 
 ### Authentication Errors
-- **401 Unauthorized?** Check your Bearer token format: `Bearer sq_live_...`
+- **401 Unauthorized?** Check your Bearer token format: `Bearer $SIGNALQ_API_TOKEN...`
 - **403 Forbidden?** Some endpoints require admin tokens, not user tokens
 
 ### Quick Health Check

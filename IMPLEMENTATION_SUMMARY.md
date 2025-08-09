@@ -9,14 +9,14 @@ This document summarizes the complete implementation of all 7 requirements from 
 ### One-Minute Local Quickstart
 ```bash
 npm ci && npm run dev:fallback
-curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   http://localhost:8788/system/health
 ```
 
 ### One-Minute Production Smoke Test
 ```bash
 export BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
-export TOKEN="sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+export TOKEN="$SIGNALQ_API_TOKEN"
 curl -H "Authorization: Bearer $TOKEN" "$BASE_URL/system/health"
 ```
 
@@ -50,8 +50,8 @@ curl -H "Authorization: Bearer $TOKEN" "$BASE_URL/system/health"
 ## ✅ 2. Auth, Roles, and Errors
 
 ### Role Definitions
-- **USER** (`sq_live_*`): Standard API access, health monitoring, actions
-- **ADMIN** (`sq_admin_*`): All user permissions + admin endpoints + data export
+- **USER** (`$SIGNALQ_API_TOKEN*`): Standard API access, health monitoring, actions
+- **ADMIN** (`$SIGNALQ_ADMIN_TOKEN*`): All user permissions + admin endpoints + data export
 
 ### Route Permission Matrix
 | Route | USER | ADMIN | Public |
@@ -140,8 +140,8 @@ function validateEnvironment(env) {
 ### .env.example Structure
 ```bash
 # === DEVELOPMENT TOKENS (Local Only) ===
-SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
-SIGNALQ_ADMIN_TOKEN=sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2
+SIGNALQ_API_TOKEN=$SIGNALQ_API_TOKEN
+SIGNALQ_ADMIN_TOKEN=$SIGNALQ_ADMIN_TOKEN
 
 # === BUILD INFORMATION ===
 GIT_SHA=local-development
@@ -170,7 +170,7 @@ NODE_ENV=development
 
 ### cURL Example for Protected Route
 ```bash
-curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   https://signal_q.catnip-pieces1.workers.dev/system/health
 ```
 
@@ -178,7 +178,7 @@ curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
 ```javascript
 const client = new SignalQClient({
   baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
-  token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+  token: '$SIGNALQ_API_TOKEN'
 });
 
 const health = await client.health();

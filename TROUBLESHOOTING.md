@@ -16,8 +16,8 @@
 | Symptom | Likely Cause | Test | Fix |
 |---------|-------------|------|-----|
 | 401 "Authentication Required" | Missing Bearer token | `curl /system/health` (no auth) | Add `-H "Authorization: Bearer <token>"` |
-| 401 "Invalid Credentials" | Wrong/expired token | `echo $TOKEN \| cut -c1-10` | Use valid sq_live_* or sq_admin_* token |
-| 403 "Insufficient Permissions" | User token on admin endpoint | `curl -X POST /admin/reset` with user token | Use admin token (sq_admin_*) |
+| 401 "Invalid Credentials" | Wrong/expired token | `echo $TOKEN \| cut -c1-10` | Use valid $SIGNALQ_API_TOKEN* or $SIGNALQ_ADMIN_TOKEN* token |
+| 403 "Insufficient Permissions" | User token on admin endpoint | `curl -X POST /admin/reset` with user token | Use admin token ($SIGNALQ_ADMIN_TOKEN*) |
 | Token looks truncated in logs | Shell escaping issue | `echo "${TOKEN}" \| wc -c` | Quote token properly: `"$TOKEN"` |
 
 ### ⚙️ Configuration Issues
@@ -116,7 +116,7 @@
 
 2. **Test with Known Good Token**
    ```bash
-   curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+   curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
      https://signal_q.catnip-pieces1.workers.dev/system/health
    ```
 
@@ -156,7 +156,7 @@
 # comprehensive-health-check.sh
 
 BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
-TOKEN="sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+TOKEN="$SIGNALQ_API_TOKEN"
 
 echo "🔍 Signal Q Health Diagnostic"
 echo "============================="
@@ -213,16 +213,16 @@ echo "Environment variables:"
 
 # Check token format
 echo -e "\nToken format validation:"
-if [[ "$SIGNALQ_API_TOKEN" =~ ^sq_live_[a-zA-Z0-9]{32}$ ]]; then
+if [[ "$SIGNALQ_API_TOKEN" =~ ^$SIGNALQ_API_TOKEN[a-zA-Z0-9]{32}$ ]]; then
   echo "✅ API token format valid"
 else
-  echo "❌ API token format invalid (should be sq_live_[32chars])"
+  echo "❌ API token format invalid (should be $SIGNALQ_API_TOKEN[32chars])"
 fi
 
-if [[ "$SIGNALQ_ADMIN_TOKEN" =~ ^sq_admin_[a-zA-Z0-9]{32}$ ]]; then
+if [[ "$SIGNALQ_ADMIN_TOKEN" =~ ^$SIGNALQ_ADMIN_TOKEN[a-zA-Z0-9]{32}$ ]]; then
   echo "✅ Admin token format valid"  
 else
-  echo "❌ Admin token format invalid (should be sq_admin_[32chars])"
+  echo "❌ Admin token format invalid (should be $SIGNALQ_ADMIN_TOKEN[32chars])"
 fi
 
 echo "🏁 Validation complete"
@@ -244,7 +244,7 @@ fetch('https://signal_q.catnip-pieces1.workers.dev/version')
 // Debug SDK connection
 const client = new SignalQClient({
   baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
-  token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+  token: '$SIGNALQ_API_TOKEN'
 });
 
 // Test with timeout
