@@ -60,7 +60,7 @@ jobs:
       - name: Run contract tests
         env:
           BASE_URL: http://localhost:8787
-          SIGNALQ_API_TOKEN: sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+          SIGNALQ_API_TOKEN: dev-placeholder
         run: node scripts/test-contract.js
 
       - name: Stop development server
@@ -111,7 +111,7 @@ jobs:
       - name: Staging smoke test
         run: |
           STAGING_URL="https://signal_q_staging.catnip-pieces1.workers.dev"
-          TOKEN="${{ secrets.SIGNALQ_API_TOKEN_STAGING || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h' }}"
+          TOKEN="${{ secrets.SIGNALQ_API_TOKEN_STAGING || 'dev-placeholder' }}"
           
           echo "🧪 Testing staging deployment..."
           
@@ -170,7 +170,7 @@ jobs:
       - name: Production smoke test
         run: |
           PROD_URL="https://signal_q.catnip-pieces1.workers.dev"
-          TOKEN="${{ secrets.SIGNALQ_API_TOKEN_PROD || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h' }}"
+          TOKEN="${{ secrets.SIGNALQ_API_TOKEN_PROD || 'dev-placeholder' }}"
           
           echo "🚀 Testing production deployment..."
           

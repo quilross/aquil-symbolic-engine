@@ -30,7 +30,7 @@ function parseArgs() {
 
 const cliArgs = parseArgs();
 const BASE_URL = cliArgs.base || process.env.BASE_URL || 'http://localhost:8787';
-const TOKEN = cliArgs.token || process.env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+const TOKEN = cliArgs.token || process.env.SIGNALQ_API_TOKEN || 'dev-placeholder';
 
 console.log('🧪 Running Signal Q Contract Tests');
 console.log(`📡 Base URL: ${BASE_URL}`);
