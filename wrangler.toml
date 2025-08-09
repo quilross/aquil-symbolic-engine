@@ -25,13 +25,23 @@ LOG_LEVEL = "info"
 GIT_SHA = "local-development"
 BUILD_TIME = ""
 NODE_ENV = "development"
+# Custom domain configuration - falls back to workers.dev if not set
+CUSTOM_DOMAIN = ""
 
 [dev]
 port = 8787
 
 [env.production]
 name = "signal_q_production"
-vars = { NODE_ENV = "production" }
+vars = { NODE_ENV = "production", CUSTOM_DOMAIN = "signal-q.example.com" }
+
+[env.staging]
+name = "signal_q_staging"  
+vars = { NODE_ENV = "staging", CUSTOM_DOMAIN = "signal-q-staging.example.com" }
+
+[env.preview]
+name = "signal_q_preview"
+vars = { NODE_ENV = "preview", CUSTOM_DOMAIN = "signal-q-preview.example.com" }
 
 
 

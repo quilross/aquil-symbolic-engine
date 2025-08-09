@@ -13,34 +13,34 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Set base URL
-        run: |
-          BASE_URL=https://signal_q.catnip-pieces1.workers.dev
-          echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Check version endpoint
-        run: |
-          echo "📦 Checking /version endpoint..."
-          curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .gitSha and .buildTime and .environment'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Check health endpoint with detailed error capture
+      - name: Run domain validation script
         env:
-          SIGNALQ_API_TOKEN_PROD: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
+          CUSTOM_DOMAIN: signal-q.example.com
+          SIGNALQ_API_TOKEN: ${{ secrets.SIGNALQ_API_TOKEN_PROD }}
         run: |
-          echo "🏥 Checking /actions/system_health endpoint..."
-          # First attempt
-          if curl -s -D headers.txt -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee body.json | jq -e '.status=="healthy"' 2>/dev/null; then
-            echo "✅ Health check passed"
+          node scripts/domain-validation.cjs | tee uptime-results.log
+
+      - name: Parse results and check status
+        run: |
+          # Extract final status from log
+          if grep -q "✅ OPERATIONAL" uptime-results.log; then
+            echo "STATUS=operational" >> $GITHUB_ENV
+            echo "✅ All systems operational"
+          elif grep -q "🔄.*operational" uptime-results.log; then
+            echo "STATUS=fallback" >> $GITHUB_ENV
+            echo "⚠️ Operating on fallback domain"
           else
-            echo "⚠️ First attempt failed, retrying after 5 seconds..."
-            sleep 5
-            # Second attempt
-            if curl -s -D headers.txt -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee body.json | jq -e '.status=="healthy"' 2>/dev/null; then
-              echo "✅ Health check passed on retry"
-            else
-              echo "❌ Health check failed after retry"
-              exit 1
-            fi
+            echo "STATUS=down" >> $GITHUB_ENV
+            echo "❌ Systems experiencing issues"
+            exit 1
           fi
 
       - name: Create or update uptime issue on failure
@@ -54,47 +54,25 @@ jobs:
             const timestamp = new Date().toISOString();
             const title = 'Uptime Log';
             
-            // Extract correlation ID from headers if available
-            let correlationId = 'none';
-            let httpStatus = 'N/A';
-            let bodyExcerpt = 'Response body not available';
-            let versionInfo = 'N/A';
-            
+            // Read uptime results
+            let logContent = 'Validation log not available';
             try {
-              // Get correlation ID from response headers
-              if (fs.existsSync('headers.txt')) {
-                const headers = fs.readFileSync('headers.txt', 'utf8');
-                const correlationMatch = headers.match(/X-Correlation-ID:\s*(.+)/i);
-                if (correlationMatch) {
-                  correlationId = correlationMatch[1].trim().replace(/\r/g, '');
-                }
-                const statusMatch = headers.match(/HTTP\/\d\.\d\s+(\d+)/);
-                if (statusMatch) {
-                  httpStatus = statusMatch[1];
-                }
-              }
-              
-              // Get response body excerpt (truncated to 200 chars)
-              if (fs.existsSync('body.json')) {
-                const body = fs.readFileSync('body.json', 'utf8');
-                bodyExcerpt = body.length > 200 ? body.substring(0, 200) + '...' : body;
-              }
-              
-              // Get version info from successful version call
-              if (fs.existsSync('v.json')) {
-                const versionData = JSON.parse(fs.readFileSync('v.json', 'utf8'));
-                versionInfo = `${versionData.version || 'unknown'} (${versionData.gitSha || 'unknown'})`;
+              if (fs.existsSync('uptime-results.log')) {
+                logContent = fs.readFileSync('uptime-results.log', 'utf8');
               }
             } catch (e) {
-              console.error('Error reading response files:', e);
+              console.error('Error reading uptime results:', e);
             }
             
-            const entry = `🔴 **Uptime check failed** - ${timestamp}
-            - **Endpoint**: POST /actions/system_health
-            - **HTTP Status**: ${httpStatus}
-            - **Correlation ID**: ${correlationId}
-            - **Version**: ${versionInfo}
-            - **Response Excerpt**: \`${bodyExcerpt}\`
+            const entry = `🔴 **Multi-domain uptime check failed** - ${timestamp}
+            
+            **Custom Domain**: signal-q.example.com
+            **Fallback Domain**: signal_q.catnip-pieces1.workers.dev
+            
+            **Validation Results:**
+            \`\`\`
+            ${logContent.slice(-2000)}  // Last 2000 chars
+            \`\`\`
             
             ---
             
@@ -126,6 +104,6 @@ jobs:
                 repo: context.repo.repo,
                 title: title,
                 body: entry,
-                labels: ['uptime', 'monitoring']
+                labels: ['uptime', 'monitoring', 'multi-domain']
               });
             }

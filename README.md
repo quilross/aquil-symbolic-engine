@@ -1,7 +1,8 @@
 # Signal Q - Live & Ready 🌟
 
 ## 🎯 **For CustomGPT**
-- **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
+- **Primary URL**: `https://signal-q.example.com` (custom domain)
+- **Fallback URL**: `https://signal_q.catnip-pieces1.workers.dev` (workers.dev)
 - **Auth**: Bearer `$SIGNALQ_API_TOKEN`
 - **Schema**: Upload `worker/src/openapi-core.json`
 
@@ -18,7 +19,8 @@
   └── wrangler.toml          # Cloudflare config
 ```
 
-**API is live at**: https://signal_q.catnip-pieces1.workers.dev ✨
+**Primary API**: https://signal-q.example.com ✨
+**Fallback API**: https://signal_q.catnip-pieces1.workers.dev ✨
 
 **🔥 NEW: Firewall-Safe Automation** - Automatic fallback to local development when Cloudflare endpoints are unreachable. Use `npm run dev:fallback` for zero-config development in restrictive networks.
 
@@ -55,7 +57,8 @@ Use the JavaScript SDK for easier API interaction:
 const SignalQClient = require('./sdk/signal-q-client.js');
 
 const client = new SignalQClient({
-  baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+  baseUrl: 'https://signal-q.example.com', // Primary custom domain
+  // Fallback: 'https://signal_q.catnip-pieces1.workers.dev',
   token: process.env.SIGNALQ_API_TOKEN
 });
 
@@ -70,10 +73,17 @@ console.log(health); // {"status":"healthy","timestamp":"...","worker":"signal_q
 
 **Curl equivalents:**
 ```bash
-# Version endpoint (no auth)
+# Version endpoint (no auth) - Primary domain
+curl https://signal-q.example.com/version
+
+# Version endpoint (no auth) - Fallback domain  
 curl https://signal_q.catnip-pieces1.workers.dev/version
 
-# System health (requires Bearer auth)
+# System health (requires Bearer auth) - Primary domain
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+     https://signal-q.example.com/actions/system_health
+
+# System health (requires Bearer auth) - Fallback domain
 curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
      https://signal_q.catnip-pieces1.workers.dev/actions/system_health
 ```
@@ -88,7 +98,8 @@ Test production deployment:
 
 ```bash
 # Set production environment variables
-export SIGNALQ_BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
+export SIGNALQ_BASE_URL="https://signal-q.example.com"  # Primary domain
+# Or fallback: export SIGNALQ_BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
 export SIGNALQ_API_TOKEN="your-production-token"
 
 # Test public version endpoint

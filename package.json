@@ -11,9 +11,11 @@
     "deploy": "npx wrangler deploy",
     "secret-scan": "node scripts/secret-scan.cjs",
     "secret-scan:install": "node scripts/secret-scan.cjs install",
-    "validate": "npm run secret-scan && npm audit && npm run validate:openapi",
+    "validate": "npm run secret-scan && npm audit && npm run validate:openapi && npm run validate:domains",
     "validate:openapi": "npx swagger-cli validate worker/src/openapi-core.json",
-    "build": "echo 'Validation build - checking worker syntax and OpenAPI spec' && cd worker && node -c src/index.js && echo '✅ Worker syntax is valid' && cd .. && npm run validate:openapi && echo '✅ OpenAPI specification is valid'",
+    "validate:openapi:yaml": "npx swagger-cli validate worker/src/openapi-core.yaml",
+    "validate:domains": "node scripts/domain-validation.cjs",
+    "build": "echo 'Validation build - checking worker syntax and OpenAPI spec' && cd worker && node -c src/index.js && echo '✅ Worker syntax is valid' && cd .. && npm run validate:openapi && npm run validate:openapi:yaml && echo '✅ OpenAPI specifications are valid'",
     "lint": "npm audit --audit-level moderate",
     "demo:sdk": "node sdk/demo.cjs"
   },

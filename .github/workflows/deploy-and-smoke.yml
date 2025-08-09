@@ -28,21 +28,24 @@ jobs:
 
       - name: Set base URL for smoke tests
         run: |
-          export BASE_URL=https://signal_q.catnip-pieces1.workers.dev
-          echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
+          # Use custom domain if available, fallback to workers.dev
+          export PRIMARY_URL=https://signal-q.example.com
+          export FALLBACK_URL=https://signal_q.catnip-pieces1.workers.dev
+          echo "PRIMARY_URL=$PRIMARY_URL" >> $GITHUB_ENV
+          echo "FALLBACK_URL=$FALLBACK_URL" >> $GITHUB_ENV
 
-      - name: Smoke test - Version endpoint
+      - name: Smoke test - Version endpoint (Primary)
         run: |
           # Test version endpoint with jq assertions and retry
           test_version() {
-            curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .gitSha and .buildTime and .environment'
+            curl -sSf "$PRIMARY_URL/version" | tee v-primary.json | jq -e '.version and .gitSha and .buildTime and .environment'
           }
           
           # Try version check, retry once on network error
           if ! test_version; then
-            echo "Retrying version check in 5 seconds..."
+            echo "Primary domain failed, testing fallback in 5 seconds..."
             sleep 5
-            test_version
+            curl -sSf "$FALLBACK_URL/version" | tee v-fallback.json | jq -e '.version and .gitSha and .buildTime and .environment'
           fi
 
       - name: Smoke test - Health endpoint (with retry)
@@ -51,14 +54,15 @@ jobs:
         run: |
           # Function to test health endpoint
           test_health() {
-            curl -sSf -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee h.json | jq -e '.status=="healthy"'
+            local url=$1
+            curl -sSf -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$url/actions/system_health" | tee h-$(basename $url).json | jq -e '.status=="healthy"'
           }
           
-          # Try the health check, retry once on network error
-          if ! test_health; then
-            echo "Retrying health check in 5 seconds..."
+          # Try the health check on primary domain, fallback if needed
+          if ! test_health "$PRIMARY_URL"; then
+            echo "Primary domain health check failed, trying fallback in 5 seconds..."
             sleep 5
-            test_health
+            test_health "$FALLBACK_URL"
           fi
 
       - name: Run contract tests

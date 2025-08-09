@@ -4,8 +4,18 @@ info:
   version: v6.0
   description: This API provides consolidated action invocation for the Signalhaven symbolic engine. All endpoints require Bearer authentication. Use /actions/list to enumerate available actions.
 servers:
+  - url: 'https://signal-q.example.com'
+    description: Production Custom Domain
+  - url: 'https://signal-q-staging.example.com'
+    description: Staging Custom Domain
+  - url: 'https://signal-q-preview.example.com'
+    description: Preview Custom Domain
   - url: 'https://signal_q.catnip-pieces1.workers.dev'
-    description: Cloudflare Worker Production Endpoint
+    description: Cloudflare Worker Production Fallback
+  - url: 'https://signal_q_staging.catnip-pieces1.workers.dev'
+    description: Cloudflare Worker Staging
+  - url: 'https://signal_q_preview.catnip-pieces1.workers.dev'
+    description: Cloudflare Worker Preview
 security:
   - bearerAuth: []
 paths:

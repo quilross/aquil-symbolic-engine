@@ -1,16 +1,16 @@
 # Signal Q GPT Tool Bindings
 
-This document defines the GPT tool bindings for all Signal Q actions. These should be configured in the GPT tool namespace `signal_q_catnip_pieces1_workers_dev__jit_plugin`.
+This document defines the GPT tool bindings for all Signal Q actions. These should be configured in the GPT tool namespace `signal_q_example_com__jit_plugin` (for custom domain) or `signal_q_catnip_pieces1_workers_dev__jit_plugin` (for workers.dev fallback).
 
 ## Tool Definitions
 
 ### 1. Version Tool (No Auth)
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.version`
+**Tool Name**: `signal_q_example_com__jit_plugin.version` (or fallback namespace)
 
 ```json
 {
   "method": "GET",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/version",
+  "url": "https://signal-q.example.com/version",
   "headers": {
     "Content-Type": "application/json"
   },
@@ -25,12 +25,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 2. System Health 
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.systemHealth`
+**Tool Name**: `signal_q_example_com__jit_plugin.systemHealth` (or fallback namespace)
 
 ```json
 {
   "method": "POST", 
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/system_health",
+  "url": "https://signal-q.example.com/actions/system_health",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -48,12 +48,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 3. List Actions
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.listActions`
+**Tool Name**: `signal_q_example_com__jit_plugin.listActions` (or fallback namespace)
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/list", 
+  "url": "https://signal-q.example.com/actions/list", 
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -68,12 +68,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 4. Probe Identity
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.probeIdentity`
+**Tool Name**: `signal_q_example_com__jit_plugin.probeIdentity` (or fallback namespace)
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity",
+  "url": "https://signal-q.example.com/actions/probe_identity",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -95,12 +95,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 5. Recalibrate State
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.recalibrateState`
+**Tool Name**: `signal_q_example_com__jit_plugin.recalibrateState` (or fallback namespace)
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/recalibrate_state",
+  "url": "https://signal-q.example.com/actions/recalibrate_state",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -118,12 +118,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 6. Trigger Deploy (Admin Required)
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.triggerDeploy`
+**Tool Name**: `signal_q_example_com__jit_plugin.triggerDeploy` (or fallback namespace)
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/deploy",
+  "url": "https://signal-q.example.com/actions/deploy",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_ADMIN_TOKEN}",
     "Content-Type": "application/json"
@@ -138,6 +138,16 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 }
 ```
 
+## Domain Configuration
+
+### Primary Domain (Preferred)
+Use the custom domain namespace: `signal_q_example_com__jit_plugin`
+- Base URL: `https://signal-q.example.com`
+
+### Fallback Domain
+If custom domain is not available, use: `signal_q_catnip_pieces1_workers_dev__jit_plugin`
+- Base URL: `https://signal_q.catnip-pieces1.workers.dev`
+
 ## GPT Instructions
 
 When using these tools in your GPT configuration, include these instructions:
@@ -148,6 +158,10 @@ Use POST /actions/system_health for health checks, not the legacy GET /system/he
 If any action returns a problem+json response, report the title, detail, status, and correlationId to the user.
 
 The triggerDeploy action requires an admin token and may return 403 Forbidden if called with a regular user token.
+
+Configure tool namespace based on available domain:
+- Primary: signal_q_example_com__jit_plugin
+- Fallback: signal_q_catnip_pieces1_workers_dev__jit_plugin
 
 All actions except version require Bearer authentication. Never echo or log the actual token values.
 

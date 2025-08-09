@@ -8,6 +8,18 @@ function generateCorrelationId() {
   return crypto.randomUUID();
 }
 
+// Get the appropriate base URL for the current environment
+function getBaseUrl(env, request) {
+  // Use custom domain if configured, otherwise fall back to workers.dev
+  if (env?.CUSTOM_DOMAIN) {
+    return `https://${env.CUSTOM_DOMAIN}`;
+  }
+  
+  // Extract from request URL as fallback
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}`;
+}
+
 // CORS headers for all responses
 function corsHeaders() {
   return {

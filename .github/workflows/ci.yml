@@ -110,22 +110,39 @@ jobs:
 
       - name: Staging smoke test
         run: |
-          STAGING_URL="https://signal_q_staging.catnip-pieces1.workers.dev"
+          # Test both custom domain and workers.dev for staging
+          PRIMARY_STAGING_URL="https://signal-q-staging.example.com"
+          FALLBACK_STAGING_URL="https://signal_q_staging.catnip-pieces1.workers.dev"
           TOKEN="${{ secrets.SIGNALQ_API_TOKEN_STAGING || 'dev-placeholder' }}"
           
           echo "🧪 Testing staging deployment..."
           
-          # Test version endpoint (public)
+          # Test version endpoint (public) - Try primary first
           echo "📦 Version check:"
-          curl -f "$STAGING_URL/version" | jq .
+          if curl -f "$PRIMARY_STAGING_URL/version" 2>/dev/null | jq .; then
+            echo "✅ Primary staging domain accessible"
+          else
+            echo "⚠️ Primary staging domain failed, trying fallback..."
+            curl -f "$FALLBACK_STAGING_URL/version" | jq .
+          fi
           
-          # Test health endpoint (auth required)
+          # Test health endpoint (auth required) - Try primary first
           echo "🏥 Health check:"
-          curl -f -H "Authorization: Bearer $TOKEN" "$STAGING_URL/system/health" | jq .
+          if curl -f -H "Authorization: Bearer $TOKEN" "$PRIMARY_STAGING_URL/actions/system_health" 2>/dev/null | jq .; then
+            echo "✅ Primary staging health check passed"
+          else
+            echo "⚠️ Primary staging health check failed, trying fallback..."
+            curl -f -H "Authorization: Bearer $TOKEN" "$FALLBACK_STAGING_URL/actions/system_health" | jq .
+          fi
           
-          # Test probe identity
+          # Test probe identity - Try primary first
           echo "🔍 Identity probe:"
-          curl -f -X POST -H "Authorization: Bearer $TOKEN" "$STAGING_URL/actions/probe_identity" | jq .
+          if curl -f -X POST -H "Authorization: Bearer $TOKEN" "$PRIMARY_STAGING_URL/actions/probe_identity" 2>/dev/null | jq .; then
+            echo "✅ Primary staging probe identity passed"
+          else
+            echo "⚠️ Primary staging probe identity failed, trying fallback..."
+            curl -f -X POST -H "Authorization: Bearer $TOKEN" "$FALLBACK_STAGING_URL/actions/probe_identity" | jq .
+          fi
           
           echo "✅ Staging smoke test passed"
 
@@ -169,30 +186,48 @@ jobs:
 
       - name: Production smoke test
         run: |
-          PROD_URL="https://signal_q.catnip-pieces1.workers.dev"
+          # Test both custom domain and workers.dev fallback
+          PRIMARY_URL="https://signal-q.example.com"
+          FALLBACK_URL="https://signal_q.catnip-pieces1.workers.dev"
           TOKEN="${{ secrets.SIGNALQ_API_TOKEN_PROD || 'dev-placeholder' }}"
           
           echo "🚀 Testing production deployment..."
           
-          # Test version endpoint (public)
-          echo "📦 Version check:"
-          VERSION_RESPONSE=$(curl -f "$PROD_URL/version")
-          echo "$VERSION_RESPONSE" | jq .
+          # Test version endpoint (public) - Primary domain first
+          echo "📦 Version check (Primary domain):"
+          if VERSION_RESPONSE=$(curl -f "$PRIMARY_URL/version" 2>/dev/null); then
+            echo "$VERSION_RESPONSE" | jq .
+            DEPLOYED_SHA=$(echo "$VERSION_RESPONSE" | jq -r .gitSha)
+          else
+            echo "⚠️ Primary domain failed, trying fallback..."
+            VERSION_RESPONSE=$(curl -f "$FALLBACK_URL/version")
+            echo "$VERSION_RESPONSE" | jq .
+            DEPLOYED_SHA=$(echo "$VERSION_RESPONSE" | jq -r .gitSha)
+          fi
           
           # Verify git SHA matches
-          DEPLOYED_SHA=$(echo "$VERSION_RESPONSE" | jq -r .gitSha)
           if [ "$DEPLOYED_SHA" != "${{ github.sha }}" ]; then
             echo "❌ Git SHA mismatch: expected ${{ github.sha }}, got $DEPLOYED_SHA"
             exit 1
           fi
           
-          # Test health endpoint (auth required)
+          # Test health endpoint (auth required) - Try primary first
           echo "🏥 Health check:"
-          curl -f -H "Authorization: Bearer $TOKEN" "$PROD_URL/system/health" | jq .
+          if curl -f -H "Authorization: Bearer $TOKEN" "$PRIMARY_URL/actions/system_health" 2>/dev/null | jq .; then
+            echo "✅ Primary domain health check passed"
+          else
+            echo "⚠️ Primary domain health check failed, trying fallback..."
+            curl -f -H "Authorization: Bearer $TOKEN" "$FALLBACK_URL/actions/system_health" | jq .
+          fi
           
-          # Test probe identity
+          # Test probe identity - Try primary first  
           echo "🔍 Identity probe:"
-          curl -f -X POST -H "Authorization: Bearer $TOKEN" "$PROD_URL/actions/probe_identity" | jq .
+          if curl -f -X POST -H "Authorization: Bearer $TOKEN" "$PRIMARY_URL/actions/probe_identity" 2>/dev/null | jq .; then
+            echo "✅ Primary domain probe identity passed"
+          else
+            echo "⚠️ Primary domain probe identity failed, trying fallback..."
+            curl -f -X POST -H "Authorization: Bearer $TOKEN" "$FALLBACK_URL/actions/probe_identity" | jq .
+          fi
           
           echo "✅ Production smoke test passed"
 
@@ -200,13 +235,17 @@ jobs:
         run: |
           echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | Status | URL |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------------|--------|-----|" >> $GITHUB_STEP_SUMMARY
-          echo "| Staging | ✅ Deployed | https://signal_q_staging.catnip-pieces1.workers.dev |" >> $GITHUB_STEP_SUMMARY
-          echo "| Production | ✅ Deployed | https://signal_q.catnip-pieces1.workers.dev |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | Status | Primary Domain | Fallback Domain |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------------|--------|----------------|-----------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Staging | ✅ Deployed | https://signal-q-staging.example.com | https://signal_q_staging.catnip-pieces1.workers.dev |" >> $GITHUB_STEP_SUMMARY
+          echo "| Production | ✅ Deployed | https://signal-q.example.com | https://signal_q.catnip-pieces1.workers.dev |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Git SHA:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Build Time:** \`$(date -u +'%Y-%m-%dT%H:%M:%S.%3NZ')\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Domain Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Primary**: Custom domains (signal-q.example.com)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Fallback**: Workers.dev domains for high availability" >> $GITHUB_STEP_SUMMARY
 
   codespaces-compatibility:
     runs-on: ubuntu-latest
