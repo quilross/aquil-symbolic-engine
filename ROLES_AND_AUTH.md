@@ -4,14 +4,14 @@
 
 Signal Q API uses Bearer token authentication with two role levels:
 
-- **USER** (`sq_live_*`): Standard API access for most operations
-- **ADMIN** (`sq_admin_*`): Administrative operations and elevated permissions
+- **USER** (`$SIGNALQ_API_TOKEN*`): Standard API access for most operations
+- **ADMIN** (`$SIGNALQ_ADMIN_TOKEN*`): Administrative operations and elevated permissions
 
 ## 👥 Role Definitions
 
-### USER Role (`sq_live_*`)
-**Token Pattern:** `sq_live_[32-char-alphanumeric]`  
-**Example:** `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
+### USER Role (`$SIGNALQ_API_TOKEN*`)
+**Token Pattern:** `$SIGNALQ_API_TOKEN[32-char-alphanumeric]`  
+**Example:** `$SIGNALQ_API_TOKEN`
 
 **Permitted Operations:**
 - ✅ `/system/health` - Health monitoring
@@ -21,9 +21,9 @@ Signal Q API uses Bearer token authentication with two role levels:
 - ✅ Data logging and retrieval
 - ❌ `/admin/*` - Administrative operations (403 Forbidden)
 
-### ADMIN Role (`sq_admin_*`)
-**Token Pattern:** `sq_admin_[32-char-alphanumeric]`  
-**Example:** `sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2`
+### ADMIN Role (`$SIGNALQ_ADMIN_TOKEN*`)
+**Token Pattern:** `$SIGNALQ_ADMIN_TOKEN[32-char-alphanumeric]`  
+**Example:** `$SIGNALQ_ADMIN_TOKEN`
 
 **Permitted Operations:**
 - ✅ All USER role operations
@@ -105,7 +105,7 @@ curl -H "Authorization: Bearer invalid_token_123" \
 **User Token on Admin Endpoint:**
 ```bash
 curl -X POST \
-  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   https://signal_q.catnip-pieces1.workers.dev/admin/reset
 ```
 
@@ -169,12 +169,12 @@ if (token !== SIGNALQ_ADMIN_TOKEN) {
 ### Valid Requests
 ```bash
 # USER token - health check
-curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   https://signal_q.catnip-pieces1.workers.dev/system/health
 
 # ADMIN token - reset operation
 curl -X POST \
-  -H "Authorization: Bearer sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2" \
+  -H "Authorization: Bearer $SIGNALQ_ADMIN_TOKEN" \
   https://signal_q.catnip-pieces1.workers.dev/admin/reset
 ```
 
@@ -189,7 +189,7 @@ curl -H "Authorization: Bearer invalid_token" \
 
 # Test 403 - user token on admin endpoint
 curl -X POST \
-  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   https://signal_q.catnip-pieces1.workers.dev/admin/reset
 ```
 
@@ -209,7 +209,7 @@ The SDK automatically handles problem+json errors:
 ```javascript
 const client = new SignalQClient({
   baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
-  token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+  token: '$SIGNALQ_API_TOKEN'
 });
 
 try {

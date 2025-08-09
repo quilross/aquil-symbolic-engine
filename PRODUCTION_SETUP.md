@@ -9,11 +9,11 @@
 ```bash
 # Set API token for user operations
 wrangler secret put SIGNALQ_API_TOKEN
-# Enter: sq_live_[your-32-char-production-token]
+# Enter: $SIGNALQ_API_TOKEN[your-32-char-production-token]
 
 # Set admin token for administrative operations  
 wrangler secret put SIGNALQ_ADMIN_TOKEN
-# Enter: sq_admin_[your-32-char-production-admin-token]
+# Enter: $SIGNALQ_ADMIN_TOKEN[your-32-char-production-admin-token]
 
 # Optional: Set build information
 wrangler secret put GIT_SHA
@@ -90,8 +90,8 @@ vim .env
 ### .env File Structure
 ```bash
 # === DEVELOPMENT TOKENS (Local Only) ===
-SIGNALQ_API_TOKEN=sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
-SIGNALQ_ADMIN_TOKEN=sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2
+SIGNALQ_API_TOKEN=$SIGNALQ_API_TOKEN
+SIGNALQ_ADMIN_TOKEN=$SIGNALQ_ADMIN_TOKEN
 
 # === BUILD INFORMATION ===
 GIT_SHA=local-development
@@ -117,8 +117,8 @@ CLOUDFLARE_API_TOKEN=your_cloudflare_api_token
 CLOUDFLARE_ACCOUNT_ID=your_account_id
 
 # Production tokens (if different from staging)
-SIGNALQ_API_TOKEN_PROD=sq_live_[production-token]
-SIGNALQ_ADMIN_TOKEN_PROD=sq_admin_[production-admin-token]
+SIGNALQ_API_TOKEN_PROD=$SIGNALQ_API_TOKEN[production-token]
+SIGNALQ_ADMIN_TOKEN_PROD=$SIGNALQ_ADMIN_TOKEN[production-admin-token]
 ```
 
 ### Automated Version Information
@@ -210,7 +210,7 @@ wrangler secret put SIGNALQ_ADMIN_TOKEN
 **2. Invalid Token Format**
 ```bash
 # Symptom: 401 "Invalid Credentials" 
-# Fix: Ensure tokens follow pattern sq_live_* or sq_admin_*
+# Fix: Ensure tokens follow pattern $SIGNALQ_API_TOKEN* or $SIGNALQ_ADMIN_TOKEN*
 # Check: Token is exactly 32 characters after prefix
 ```
 

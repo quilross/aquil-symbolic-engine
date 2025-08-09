@@ -55,7 +55,7 @@ curl -X POST \
 ```bash
 # List all available actions
 curl -X POST \
-  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
+  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   -H "Content-Type: application/json" \
   https://signal_q.catnip-pieces1.workers.dev/actions/list
 
@@ -157,7 +157,7 @@ async function advancedExample() {
         async function testAPI() {
             const client = new SignalQClient({
                 baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
-                token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+                token: '$SIGNALQ_API_TOKEN'
             });
             
             const output = document.getElementById('output');
@@ -257,7 +257,7 @@ class SignalQClient:
 def main():
     client = SignalQClient(
         base_url='https://signal_q.catnip-pieces1.workers.dev',
-        token='sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+        token='$SIGNALQ_API_TOKEN'
     )
     
     try:
@@ -296,7 +296,7 @@ if __name__ == '__main__':
 # health-check.sh - Comprehensive API health verification
 
 BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
-TOKEN="sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+TOKEN="$SIGNALQ_API_TOKEN"
 
 echo "🏥 Signal Q Health Check"
 echo "======================="
@@ -350,7 +350,7 @@ echo -e "\n🎉 All health checks passed!"
 # batch-operations.sh - Perform multiple API operations
 
 BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
-TOKEN="sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
+TOKEN="$SIGNALQ_API_TOKEN"
 
 echo "🔄 Batch Operations"
 echo "=================="
@@ -395,7 +395,7 @@ describe('Signal Q API', () => {
   beforeEach(() => {
     client = new SignalQClient({
       baseUrl: process.env.TEST_BASE_URL || 'http://localhost:8788',
-      token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
+      token: '$SIGNALQ_API_TOKEN'
     });
   });
 
