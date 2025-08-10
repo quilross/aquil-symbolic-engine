@@ -25,11 +25,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate OpenAPI JSON specification
-        run: npx swagger-cli validate worker/src/openapi-core.json
-
-      - name: Validate OpenAPI YAML specification  
-        run: npx swagger-cli validate worker/src/openapi-core.yaml
+      - name: Validate OpenAPI YAML specification (canonical)
+        run: npx swagger-cli validate worker/openapi-core.yaml
 
       - name: Validate worker syntax
         run: npm run build
@@ -103,9 +100,9 @@ jobs:
 
       - name: Test system health endpoint
         run: |
-          echo "🏥 Testing /actions/system_health endpoint..."
+          echo "🏥 Testing /system/health endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/system_health" | tee h.json | jq -e '.status=="healthy" and .timestamp and .worker and .version'; then
+            if curl -sSf "$BASE_URL/system/health" | tee h.json | jq -e '.status=="ok" and .timestamp and .name and .version'; then
               echo "✅ System health test passed"
               break
             else
@@ -123,7 +120,7 @@ jobs:
         run: |
           echo "📋 Testing /actions/list endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/list" | jq -e '.actions and (.actions|index("system_health")!=null) and (.actions|index("deploy")!=null)'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/list" | jq -e '.actions and (.actions|index("list")!=null) and (.actions|index("deploy")!=null) and (.actions|index("probe_identity")!=null)'; then
               echo "✅ Actions list test passed"
               break
             else

@@ -1,3 +1,4 @@
+# DEPRECATED: Quarantined Aug 2025. Superseded by Gene Keys kernel path. Do not import in active runtime.
 name: Deploy and Smoke Test
 
 on:

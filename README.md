@@ -1,9 +1,34 @@
 # Signal Q - Live & Ready 🌟
 
+## 🌟 Runtime Simplification (Aug 2025)
+
+**Gene Keys kernel path** - Single-route runtime optimized for transcendence operations.
+
+### Canonical Endpoints
+- `GET /version` - Service version and build info (public)
+- `GET /system/health` - System health status (public)
+- `POST /actions/list` - List available actions (authenticated)
+- `POST /actions/probe_identity` - Identity probe with analysis (authenticated)
+- `POST /actions/recalibrate_state` - State recalibration (authenticated)  
+- `POST /actions/deploy` - Deployment trigger (authenticated)
+
+### Legacy Quarantine
+Legacy classifiers/tools quarantined under `legacy/` and gated by feature flags:
+- `ENABLE_LEGACY_TOOLS=false`
+- `ENABLE_LEGACY_CLASSIFIERS=false`  
+- `ENABLE_LEGACY_AGENTS=false`
+
+### GPT Integration
+- **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
+- **Schema**: Use `worker/openapi-core.yaml` (raw GitHub URL)
+- **Auth**: Bearer token required for `/actions/*` endpoints
+
+---
+
 ## 🎯 **For CustomGPT**
 - **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
 - **Auth**: Bearer `$SIGNALQ_API_TOKEN`
-- **Schema**: Upload `worker/src/openapi-core.json`
+- **Schema**: Upload `worker/openapi-core.yaml` (canonical OpenAPI 3.0.3)
 
 ## 🔑 **Your API Tokens**
 - **User Token**: `$SIGNALQ_API_TOKEN`
@@ -12,10 +37,14 @@
 ## 📁 **Essential Files**
 ```
 /worker/
-  ├── src/
-  │   ├── index.js           # Your live API (deployed)
-  │   └── openapi-core.json  # Upload this to CustomGPT
-  └── wrangler.toml          # Cloudflare config
+  ├── index.js                # Your live API (deployed)
+  ├── openapi-core.yaml       # Upload this to CustomGPT (canonical)
+  ├── config/featureFlags.js  # Legacy feature toggles
+  └── wrangler.toml           # Cloudflare config
+/legacy/                      # Quarantined components (Aug 2025)
+  ├── openapi/               # Legacy OpenAPI specs
+  ├── workflows/             # Legacy CI workflows
+  └── README.md              # Rollback instructions
 ```
 
 **API is live at**: https://signal_q.catnip-pieces1.workers.dev ✨
@@ -41,8 +70,11 @@ export SIGNALQ_API_TOKEN="dev-placeholder"
 # 4. Test the public version endpoint (no auth required)
 curl "$DEV_BASE/version"
 
-# 5. Test the authenticated health endpoint (requires Bearer auth)
-curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$DEV_BASE/actions/system_health"
+# 5. Test the public health endpoint (no auth required)
+curl "$DEV_BASE/system/health"
+
+# 6. Test authenticated actions (requires Bearer auth)
+curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$DEV_BASE/actions/list"
 ```
 
 **Note**: Always use the printed URL from wrangler dev output (defaults to http://127.0.0.1:8787).

@@ -70,11 +70,11 @@ async function testHealthEndpoint() {
       shouldHaveJson: false
     },
     {
-      name: 'Case Sensitivity Test',
+      name: 'Case Sensitivity Test (Normalized to Lowercase)',
       url: `${BASE_URL}/System/Health`,
-      headers: { 'Authorization': `Bearer ${USER_TOKEN}` },
-      expectedStatus: 404,
-      shouldHaveJson: false
+      headers: {},
+      expectedStatus: 200,
+      shouldHaveJson: true
     },
     {
       name: 'Trailing Slash Test',
@@ -248,7 +248,7 @@ async function printSummary() {
     console.log('\n🔗 Ready for CustomGPT Integration:');
     console.log(`   Base URL: ${BASE_URL}`);
     console.log(`   Bearer Token: ${USER_TOKEN}`);
-    console.log(`   Schema File: worker/src/openapi-core.json`);
+    console.log(`   Schema File: worker/openapi-core.yaml`);
   } else {
     console.log('\n⚠️  DEPLOYMENT STATUS: NEEDS ATTENTION');
     console.log('❌ The /system/health endpoint is not working correctly.');
