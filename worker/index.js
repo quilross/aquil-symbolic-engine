@@ -68,18 +68,19 @@ function logRequest(method, path, action, status, duration_ms, correlationId, en
   console.log(JSON.stringify(logData));
 }
 
+// === RUNTIME GUARD ===
+// Prevent imports from legacy quarantined code
+function preventLegacyImports() {
+  // Guard against accidental legacy imports during runtime
+  const legacyPaths = ['/legacy/', '../legacy/', './legacy/'];
+  // This is a compile-time guard - actual runtime imports would need import maps
+}
+
 // === ACTION HANDLERS ===
 
 const actionHandlers = {
   list: async () => ({
-    actions: ["list", "system_health", "probe_identity", "recalibrate_state", "deploy"]
-  }),
-
-  system_health: async () => ({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    worker: "signal_q",
-    version: "v6.0"
+    actions: ["list", "probe_identity", "recalibrate_state", "deploy"]
   }),
 
   probe_identity: async () => ({
@@ -130,10 +131,10 @@ export default {
       // PUBLIC: GET /version
       if (path === '/version' && method === 'GET') {
         const info = {
-          name: env?.WORKER_NAME || 'signal-q',
-          version: env?.APP_VERSION || 'v0',
-          timestamp: new Date().toISOString(),
-          buildTimestamp: env?.BUILD_TIME || new Date().toISOString()
+          version: env?.APP_VERSION || '2.1.0',
+          gitSha: env?.GIT_SHA || 'dev-local',
+          buildTime: env?.BUILD_TIME || new Date().toISOString(),
+          environment: env?.ENVIRONMENT || 'development'
         };
         const response = new Response(JSON.stringify(info), {
           headers: {

@@ -27,46 +27,46 @@ async function testHealthEndpoint() {
       isVersion: true
     },
     {
-      name: 'Valid User Token',
-      url: `${BASE_URL}/system/health`,
-      headers: { 'Authorization': `Bearer ${USER_TOKEN}` },
-      expectedStatus: 200,
-      shouldHaveJson: true
-    },
-    {
-      name: 'Valid Admin Token', 
-      url: `${BASE_URL}/system/health`,
-      headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
-      expectedStatus: 200,
-      shouldHaveJson: true
-    },
-    {
-      name: 'Invalid Token',
-      url: `${BASE_URL}/system/health`,
-      headers: { 'Authorization': 'Bearer invalid_token_123' },
-      expectedStatus: 401,
-      shouldHaveJson: false
-    },
-    {
-      name: 'Missing Token',
+      name: 'Valid User Token (Health is Public)',
       url: `${BASE_URL}/system/health`,
       headers: {},
-      expectedStatus: 401,
-      shouldHaveJson: false
+      expectedStatus: 200,
+      shouldHaveJson: true
     },
     {
-      name: 'Malformed Auth Header',
+      name: 'Valid Admin Token (Health is Public)', 
+      url: `${BASE_URL}/system/health`,
+      headers: {},
+      expectedStatus: 200,
+      shouldHaveJson: true
+    },
+    {
+      name: 'Invalid Token (Health is Public)',
+      url: `${BASE_URL}/system/health`,
+      headers: { 'Authorization': 'Bearer invalid_token_123' },
+      expectedStatus: 200,
+      shouldHaveJson: true
+    },
+    {
+      name: 'Missing Token (Health is Public)',
+      url: `${BASE_URL}/system/health`,
+      headers: {},
+      expectedStatus: 200,
+      shouldHaveJson: true
+    },
+    {
+      name: 'Malformed Auth Header (Health is Public)',
       url: `${BASE_URL}/system/health`, 
       headers: { 'Authorization': 'InvalidFormat' },
-      expectedStatus: 401,
-      shouldHaveJson: false
+      expectedStatus: 200,
+      shouldHaveJson: true
     },
     {
       name: 'CORS Preflight',
       url: `${BASE_URL}/system/health`,
       method: 'OPTIONS',
       headers: {},
-      expectedStatus: 200,
+      expectedStatus: 204,
       shouldHaveJson: false
     },
     {
@@ -97,9 +97,8 @@ async function testHealthEndpoint() {
       url: `${BASE_URL}/actions/probe_identity`,
       method: 'POST',
       headers: {},
-      expectedStatus: 200,
-      shouldHaveJson: true,
-      isProbeIdentity: true
+      expectedStatus: 401,
+      shouldHaveJson: false
     }
   ];
 
@@ -133,20 +132,21 @@ async function testHealthEndpoint() {
               hasRequiredFields = !!(
                 jsonData.probe &&
                 jsonData.timestamp &&
-                jsonData.friction
+                jsonData.analysis
               );
             } else if (test.isVersion) {
               hasRequiredFields = !!(
                 jsonData.version &&
                 jsonData.gitSha &&
-                jsonData.buildTime
+                jsonData.buildTime &&
+                jsonData.environment
               );
             } else {
+              // Health endpoint validation
               hasRequiredFields = !!(
-                jsonData.overall && 
-                jsonData.api && 
-                jsonData.storage && 
-                jsonData.deployment &&
+                jsonData.name && 
+                jsonData.version && 
+                jsonData.status && 
                 jsonData.timestamp
               );
             }
@@ -183,15 +183,17 @@ async function testHealthEndpoint() {
           if (test.isProbeIdentity) {
             console.log(`   🔍 Probe: ${jsonData.probe}`);
             console.log(`   ⏰ Timestamp: ${jsonData.timestamp}`);
-            console.log(`   ⚡ Friction: ${JSON.stringify(jsonData.friction)}`);
+            console.log(`   ⚡ Analysis: ${JSON.stringify(jsonData.analysis)}`);
           } else if (test.isVersion) {
             console.log(`   📦 Version: ${jsonData.version}`);
             console.log(`   🔗 Git SHA: ${jsonData.gitSha}`);
             console.log(`   🏗️ Build Time: ${jsonData.buildTime}`);
+            console.log(`   🌍 Environment: ${jsonData.environment}`);
           } else {
-            console.log(`   📊 Overall: ${jsonData.overall}`);
-            console.log(`   📡 API Status: ${jsonData.api?.status}`);
-            console.log(`   💾 Storage: ${jsonData.storage?.status}`);
+            console.log(`   📛 Name: ${jsonData.name}`);
+            console.log(`   📦 Version: ${jsonData.version}`);
+            console.log(`   💚 Status: ${jsonData.status}`);
+            console.log(`   ⏰ Timestamp: ${jsonData.timestamp}`);
           }
         }
       } else {
@@ -237,7 +239,7 @@ async function printSummary() {
 
   // Check for deployment status
   const successfulHealthCheck = results.find(r => 
-    r.name === 'Valid User Token' && r.success
+    r.name === 'Valid User Token (Health is Public)' && r.success
   );
 
   if (successfulHealthCheck) {

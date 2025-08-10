@@ -27,19 +27,12 @@ paths:
                 gitSha: abc123def456
                 buildTime: '2024-01-01T00:00:00.000Z'
                 environment: production
-  /actions/system_health:
-    post:
+  /system/health:
+    get:
       operationId: getSystemHealth
-      summary: Check system health status and version
-      description: 'Returns system health status, timestamp, worker name, and version information.'
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenericInput'
+      summary: Check system health status
+      description: 'Returns system health status, timestamp, worker name, and version information. This endpoint does not require authentication.'
+      security: []
       responses:
         '200':
           description: System health status
@@ -48,12 +41,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/SystemHealthResponse'
               example:
-                status: healthy
+                name: signal-q
+                version: v0
+                status: ok
                 timestamp: '2024-01-01T00:00:00.000Z'
-                worker: signal_q
-                version: v6.0
-        '401':
-          description: Unauthorized - Bearer token required
   /actions/probe_identity:
     post:
       operationId: probeIdentity
@@ -159,7 +150,6 @@ paths:
               example:
                 actions:
                   - list
-                  - system_health
                   - probe_identity
                   - recalibrate_state
                   - deploy
@@ -173,22 +163,22 @@ components:
     SystemHealthResponse:
       type: object
       required:
+        - name
+        - version
         - status
         - timestamp
-        - worker
-        - version
       properties:
-        status:
-          type: string
-          enum:
-            - healthy
-        timestamp:
-          type: string
-          format: date-time
-        worker:
+        name:
           type: string
         version:
           type: string
+        status:
+          type: string
+          enum:
+            - ok
+        timestamp:
+          type: string
+          format: date-time
     ProbeIdentityResponse:
       type: object
       required:
@@ -268,7 +258,6 @@ components:
             type: string
             enum:
               - list
-              - system_health
               - probe_identity
               - recalibrate_state
               - deploy
