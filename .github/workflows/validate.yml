@@ -98,7 +98,7 @@ jobs:
             fi
           done
 
-      - name: Test system health endpoint
+      - name: Test system health endpoint (canonical lowercase path)
         run: |
           echo "🏥 Testing /system/health endpoint..."
           for attempt in 1 2; do
