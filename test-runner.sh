@@ -37,7 +37,7 @@ fi
 
 # Start wrangler dev in background
 cd worker
-npx wrangler dev src/index.js --local --port $TEST_PORT > wrangler.log 2>&1 &
+npx wrangler dev index.js --local --port $TEST_PORT > wrangler.log 2>&1 &
 DEV_PID=$!
 
 # Wait for server to start and check logs
