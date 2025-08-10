@@ -3,9 +3,23 @@
 
 // === HELPER FUNCTIONS ===
 
-// Generate correlation ID for error tracking
-function generateCorrelationId() {
-  return crypto.randomUUID();
+// Extract or generate correlation ID from request
+function correlationIdFrom(req) {
+  const h = req.headers.get('x-correlation-id');
+  return h && h.trim() ? h.trim() : (crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+}
+
+// Create RFC7807 problem+json error response
+function problemJson(status, title, detail, correlationId, instance = undefined, type = "about:blank") {
+  const body = { type, title, status, detail, instance };
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'content-type': 'application/problem+json',
+      'x-correlation-id': correlationId,
+      'access-control-allow-origin': '*'
+    }
+  });
 }
 
 // CORS headers for all responses
@@ -13,29 +27,8 @@ function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Correlation-ID'
   };
-}
-
-// Create RFC7807 problem+json error response
-function problemJSON({ title, detail, status }, correlationId) {
-  const problemData = {
-    type: "about:blank",
-    title,
-    detail,
-    status,
-    correlationId,
-    timestamp: new Date().toISOString()
-  };
-
-  return new Response(JSON.stringify(problemData), {
-    status,
-    headers: {
-      'Content-Type': 'application/problem+json',
-      'X-Correlation-ID': correlationId,
-      ...corsHeaders()
-    }
-  });
 }
 
 // Extract Bearer token from Authorization header
@@ -112,7 +105,7 @@ const actionHandlers = {
 export default {
   async fetch(request, env, ctx) {
     const startTime = Date.now();
-    const correlationId = request.headers.get('X-Correlation-ID') || generateCorrelationId();
+    const correlationId = correlationIdFrom(request);
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '').toLowerCase() || '/';
     const method = request.method;
@@ -122,7 +115,10 @@ export default {
       if (method === 'OPTIONS') {
         const response = new Response(null, {
           status: 204,
-          headers: corsHeaders()
+          headers: {
+            ...corsHeaders(),
+            'x-correlation-id': correlationId
+          }
         });
         logRequest(method, path, null, 204, Date.now() - startTime, correlationId, env);
         return response;
@@ -139,7 +135,7 @@ export default {
         const response = new Response(JSON.stringify(info), {
           headers: {
             'Content-Type': 'application/json',
-            'X-Correlation-ID': correlationId,
+            'x-correlation-id': correlationId,
             ...corsHeaders()
           }
         });
@@ -154,11 +150,7 @@ export default {
         // Require Bearer auth
         const token = getBearerToken(request);
         if (!token) {
-          const response = problemJSON({
-            title: 'Authentication Required',
-            detail: 'Bearer token is required for action endpoints',
-            status: 401
-          }, correlationId);
+          const response = problemJson(401, 'Unauthorized', 'Missing or invalid Bearer token.', correlationId);
           logRequest(method, path, actionName, 401, Date.now() - startTime, correlationId, env);
           return response;
         }
@@ -166,11 +158,7 @@ export default {
         // Validate token against user/admin tokens
         const validTokens = [env?.USER_TOKEN, env?.ADMIN_TOKEN].filter(Boolean);
         if (!validTokens.includes(token)) {
-          const response = problemJSON({
-            title: 'Forbidden',
-            detail: 'The provided Bearer token is not valid',
-            status: 403
-          }, correlationId);
+          const response = problemJson(403, 'Forbidden', 'The provided Bearer token is not valid', correlationId);
           logRequest(method, path, actionName, 403, Date.now() - startTime, correlationId, env);
           return response;
         }
@@ -178,11 +166,7 @@ export default {
         // Check if action exists
         const handler = actionHandlers[actionName];
         if (!handler) {
-          const response = problemJSON({
-            title: 'Not Found',
-            detail: `Action '${actionName}' not found`,
-            status: 404
-          }, correlationId);
+          const response = problemJson(404, 'Not Found', `Action '${actionName}' not found`, correlationId);
           logRequest(method, path, actionName, 404, Date.now() - startTime, correlationId, env);
           return response;
         }
@@ -193,7 +177,7 @@ export default {
           const response = new Response(JSON.stringify(result), {
             headers: {
               'Content-Type': 'application/json',
-              'X-Correlation-ID': correlationId,
+              'x-correlation-id': correlationId,
               ...corsHeaders()
             }
           });
@@ -201,11 +185,7 @@ export default {
           return response;
         } catch (actionError) {
           console.error('Action execution error:', actionError);
-          const response = problemJSON({
-            title: 'Internal Server Error',
-            detail: 'An error occurred while executing the action',
-            status: 500
-          }, correlationId);
+          const response = problemJson(500, 'Internal Server Error', 'An error occurred while executing the action', correlationId);
           logRequest(method, path, actionName, 500, Date.now() - startTime, correlationId, env);
           return response;
         }
@@ -222,7 +202,7 @@ export default {
         const response = new Response(JSON.stringify(health), {
           headers: {
             'Content-Type': 'application/json',
-            'X-Correlation-ID': correlationId,
+            'x-correlation-id': correlationId,
             ...corsHeaders()
           }
         });
@@ -231,21 +211,13 @@ export default {
       }
 
       // Default 404 for unmatched routes
-      const response = problemJSON({
-        title: 'Not Found',
-        detail: 'The requested endpoint was not found',
-        status: 404
-      }, correlationId);
+      const response = problemJson(404, 'Not Found', 'The requested endpoint was not found', correlationId);
       logRequest(method, path, null, 404, Date.now() - startTime, correlationId, env);
       return response;
 
     } catch (error) {
       console.error('Unhandled error in fetch:', error);
-      const response = problemJSON({
-        title: 'Internal Server Error',
-        detail: 'An unexpected error occurred while processing your request',
-        status: 500
-      }, correlationId);
+      const response = problemJson(500, 'Internal Server Error', error.message ?? 'Unexpected error', correlationId);
       logRequest(method, path, null, 500, Date.now() - startTime, correlationId, env);
       return response;
     }
@@ -260,10 +232,12 @@ export class UserState {
   }
 
   async fetch(request) {
+    const correlationId = correlationIdFrom(request);
     // Minimal pass-through for existing DO functionality
     return new Response(JSON.stringify({ message: "UserState DO active" }), {
       headers: {
         'Content-Type': 'application/json',
+        'x-correlation-id': correlationId,
         ...corsHeaders()
       }
     });

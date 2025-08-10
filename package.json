@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "./test-runner.sh",
+    "test:vitest": "vitest run",
     "dev": "cd worker && npx wrangler dev index.js --remote --port 8787",
     "dev:fallback": "node scripts/wrangler-fallback.js dev",
     "deploy": "cd worker && npx wrangler deploy",
@@ -26,6 +27,7 @@
   "license": "MIT",
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.0.0",
+    "vitest": "^1.5.0",
     "wrangler": "^4.0.0"
   },
   "dependencies": {

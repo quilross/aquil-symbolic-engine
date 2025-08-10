@@ -119,7 +119,7 @@ jobs:
           echo "📦 Version check:"
           curl -f "$STAGING_URL/version" | jq .
           
-          # Test health endpoint (auth required)
+          # Test health endpoint (canonical /system/health)
           echo "🏥 Health check:"
           curl -f -H "Authorization: Bearer $TOKEN" "$STAGING_URL/system/health" | jq .
           
@@ -186,7 +186,7 @@ jobs:
             exit 1
           fi
           
-          # Test health endpoint (auth required)
+          # Test health endpoint (canonical /system/health)
           echo "🏥 Health check:"
           curl -f -H "Authorization: Bearer $TOKEN" "$PROD_URL/system/health" | jq .
           
