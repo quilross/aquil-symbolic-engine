@@ -1,6 +1,9 @@
-name = "signal_q"
-main = "src/index.js"
-compatibility_date = "2024-11-01"
+name = "signal-q"
+main = "index.js"
+compatibility_date = "2025-08-10"
+routes = [
+  { pattern = "signal-q.me", custom_domain = true }
+]
 account_id = "b07412f2f2389e8b537051bc092f3376"
 
 [[kv_namespaces]]
@@ -20,6 +23,12 @@ binding = "AI"
 
 [observability.logs]
 enabled = true
+
+[vars]
+APP_VERSION = "v6.1"
+WORKER_NAME = "signal-q"
+USER_TOKEN = "dev-placeholder"
+ADMIN_TOKEN = "dev-placeholder"
 
 [env.production]
 name = "signal-q-prod"

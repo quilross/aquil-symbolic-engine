@@ -113,46 +113,43 @@ export default {
     const startTime = Date.now();
     const correlationId = request.headers.get('X-Correlation-ID') || generateCorrelationId();
     const url = new URL(request.url);
-    const path = url.pathname.replace(/\/$/, ''); // Remove trailing slash
+    const path = url.pathname.replace(/\/+$/, '').toLowerCase() || '/';
     const method = request.method;
 
     try {
-      // Handle CORS preflight for /actions/* and /version
+      // Handle CORS preflight
       if (method === 'OPTIONS') {
-        if (path.startsWith('/actions/') || path === '/version') {
-          const response = new Response(null, {
-            status: 204,
-            headers: corsHeaders()
-          });
-          logRequest(method, path, null, 204, Date.now() - startTime, correlationId, env);
-          return response;
-        }
+        const response = new Response(null, {
+          status: 204,
+          headers: corsHeaders()
+        });
+        logRequest(method, path, null, 204, Date.now() - startTime, correlationId, env);
+        return response;
       }
 
       // PUBLIC: GET /version
       if (path === '/version' && method === 'GET') {
-        const versionInfo = {
-          version: "2.1.0",
-          gitSha: env?.GIT_SHA || "local-development",
-          buildTime: env?.BUILD_TIME || new Date().toISOString(),
-          environment: env?.NODE_ENV || "development"
+        const info = {
+          name: env?.WORKER_NAME || 'signal-q',
+          version: env?.APP_VERSION || 'v0',
+          timestamp: new Date().toISOString(),
+          buildTimestamp: env?.BUILD_TIME || new Date().toISOString()
         };
-
-        const response = new Response(JSON.stringify(versionInfo), {
+        const response = new Response(JSON.stringify(info), {
           headers: {
             'Content-Type': 'application/json',
             'X-Correlation-ID': correlationId,
             ...corsHeaders()
           }
         });
-        logRequest(method, path, "version", 200, Date.now() - startTime, correlationId, env);
+        logRequest(method, path, 'version', 200, Date.now() - startTime, correlationId, env);
         return response;
       }
 
       // AUTHENTICATED: POST /actions/*
       if (path.startsWith('/actions/') && method === 'POST') {
         const actionName = path.slice('/actions/'.length);
-        
+
         // Require Bearer auth
         const token = getBearerToken(request);
         if (!token) {
@@ -165,24 +162,12 @@ export default {
           return response;
         }
 
-        // Validate token
-        const validTokens = [env?.SIGNALQ_API_TOKEN, env?.SIGNALQ_ADMIN_TOKEN].filter(Boolean);
+        // Validate token against user/admin tokens
+        const validTokens = [env?.USER_TOKEN, env?.ADMIN_TOKEN].filter(Boolean);
         if (!validTokens.includes(token)) {
           const response = problemJSON({
-            title: 'Invalid Credentials',
+            title: 'Forbidden',
             detail: 'The provided Bearer token is not valid',
-            status: 401
-          }, correlationId);
-          logRequest(method, path, actionName, 401, Date.now() - startTime, correlationId, env);
-          return response;
-        }
-
-        // Check for admin-only restrictions on deploy action
-        if (actionName === 'deploy' && token === env?.SIGNALQ_API_TOKEN && env?.SIGNALQ_ADMIN_TOKEN) {
-          // If admin token is configured and user is using regular token for deploy, deny access
-          const response = problemJSON({
-            title: 'Insufficient Permissions',
-            detail: 'Deploy action requires administrative privileges',
             status: 403
           }, correlationId);
           logRequest(method, path, actionName, 403, Date.now() - startTime, correlationId, env);
@@ -225,42 +210,22 @@ export default {
         }
       }
 
-      // LEGACY: GET /system/health (with deprecation headers)
+      // PUBLIC: GET /system/health
       if (path === '/system/health' && method === 'GET') {
-        const token = getBearerToken(request);
-        if (!token) {
-          const response = problemJSON({
-            title: 'Authentication Required',
-            detail: 'Bearer token is required to access this endpoint',
-            status: 401
-          }, correlationId);
-          logRequest(method, path, "legacy-system-health", 401, Date.now() - startTime, correlationId, env);
-          return response;
-        }
-
-        const validTokens = [env?.SIGNALQ_API_TOKEN, env?.SIGNALQ_ADMIN_TOKEN].filter(Boolean);
-        if (!validTokens.includes(token)) {
-          const response = problemJSON({
-            title: 'Invalid Credentials',
-            detail: 'The provided Bearer token is not valid',
-            status: 401
-          }, correlationId);
-          logRequest(method, path, "legacy-system-health", 401, Date.now() - startTime, correlationId, env);
-          return response;
-        }
-
-        const healthData = await actionHandlers.system_health();
-        const response = new Response(JSON.stringify(healthData), {
+        const health = {
+          name: env?.WORKER_NAME || 'signal-q',
+          version: env?.APP_VERSION || 'v0',
+          status: 'ok',
+          timestamp: new Date().toISOString()
+        };
+        const response = new Response(JSON.stringify(health), {
           headers: {
             'Content-Type': 'application/json',
             'X-Correlation-ID': correlationId,
-            'Deprecation': 'true',
-            'Sunset': '2025-12-31T00:00:00Z',
-            'Link': 'https://github.com/quilross/aquil-symbolic-engine#actions_system_health; rel="replacement"',
             ...corsHeaders()
           }
         });
-        logRequest(method, path, "legacy-system-health", 200, Date.now() - startTime, correlationId, env);
+        logRequest(method, path, 'system-health', 200, Date.now() - startTime, correlationId, env);
         return response;
       }
 
