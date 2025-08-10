@@ -167,7 +167,7 @@ async function validateUptime() {
   
   // Summary
   console.log('\n📊 VALIDATION SUMMARY');
-  console.log('=' .repeat(50));
+  console.log('='.repeat(50));
   
   const primaryOk = results.primary.version.success && results.primary.health.success;
   const fallbackOk = results.fallback.version.success && results.fallback.health.success;
