@@ -10,7 +10,7 @@ const USER_TOKEN = process.env.SIGNALQ_API_TOKEN || 'dev-placeholder';
 
 console.log('💨 Signal Q Smoke Tests (Gene Keys Runtime)\n');
 console.log(`🌐 API Base: ${BASE_URL}`);
-console.log(`🔑 Token: ${USER_TOKEN.substring(0, 15)}...\n`);
+console.log(`🔑 Token: [REDACTED]\n`);
 
 async function smokeTest() {
   const tests = [
