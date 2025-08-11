@@ -13,7 +13,15 @@ export class MemoryDO {
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
     if (method === 'POST' && url.pathname === '/append') {
-      const body = await request.json().catch(() => ({}));
+      let body;
+      try {
+        body = await request.json();
+      } catch (err) {
+        return new Response(
+          JSON.stringify({ error: "Invalid JSON in request body" }),
+          { status: 400, headers: { "content-type": "application/json; charset=utf-8" } }
+        );
+      }
       const entry = { ...body, ts: Date.now() };
       await this.state.storage.put(`m:${entry.user}:${entry.ts}`, entry);
       return new Response(null, { status: 204 });
