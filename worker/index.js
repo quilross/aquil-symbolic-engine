@@ -81,7 +81,14 @@ export default {
       }
 
       if (method === 'POST' && path === '/actions/chat') {
-        const body = await request.json().catch(() => ({}));
+        let body;
+        try {
+          body = await request.json();
+        } catch (e) {
+          const res = json({ error: 'Invalid JSON body' }, { status: 400, headers: corsHeaders() });
+          res.headers.set('x-correlation-id', cid);
+          return res;
+        }
         const user = body.user || 'default';
         const reply = { text: `ACK: ${body.prompt ?? ''}`.trim(), model: 'signal-q:echo' };
         await appendMemory(env, user, { kind: 'chat', prompt: body.prompt || '', reply });
