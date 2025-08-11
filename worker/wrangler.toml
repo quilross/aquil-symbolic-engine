@@ -1,10 +1,11 @@
 name = "signal-q"
 main = "index.js"
-compatibility_date = "2025-08-10"
-routes = [
-  { pattern = "signal-q.me", custom_domain = true }
-]
+compatibility_date = "2025-08-01"
+routes = []
 account_id = "b07412f2f2389e8b537051bc092f3376"
+
+[observability]
+enabled = true
 
 [[kv_namespaces]]
 binding = "SIGNAL_KV"
