@@ -220,6 +220,7 @@ paths:
                   - probe_identity
                   - recalibrate_state
                   - trigger_deploy
+                  - chat
         '401':
           description: Unauthorized - Bearer token required
 components:

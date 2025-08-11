@@ -123,7 +123,7 @@ export default {
       }
       // Minimal list endpoint
       if (request.method === 'POST' && path === '/actions/list') {
-        const body = JSON.stringify({ actions: ['probe_identity','recalibrate_state','trigger_deploy','list','chat'] });
+        const body = JSON.stringify({ actions: ['list', 'probe_identity', 'recalibrate_state', 'trigger_deploy', 'chat'] });
         return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
       }
       
