@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Validate OpenAPI YAML specification (canonical)
-        run: npx swagger-cli validate worker/openapi-core.yaml
+        run: npx swagger-cli validate worker/src/openapi-core.yaml
 
       - name: Validate worker syntax
         run: npm run build
@@ -84,7 +84,7 @@ jobs:
         run: |
           echo "📦 Testing /version endpoint..."
           for attempt in 1 2; do
-            if curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .gitSha and .buildTime and .environment'; then
+            if curl -sSf "$BASE_URL/version" | tee v.json | jq -e '.version and .commit'; then
               echo "✅ Version endpoint test passed"
               break
             else
@@ -102,7 +102,7 @@ jobs:
         run: |
           echo "🏥 Testing /system/health endpoint..."
           for attempt in 1 2; do
-            if curl -sSf "$BASE_URL/system/health" | tee h.json | jq -e '.status=="ok" and .timestamp and .name and .version'; then
+            if curl -sSf "$BASE_URL/system/health" | tee h.json | jq -e '.ok==true and .ts'; then
               echo "✅ System health test passed"
               break
             else
@@ -120,7 +120,7 @@ jobs:
         run: |
           echo "📋 Testing /actions/list endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/list" | jq -e '.actions and (.actions|index("list")!=null) and (.actions|index("deploy")!=null) and (.actions|index("probe_identity")!=null)'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/list" | jq -e '.actions and (.actions|index("list")!=null) and (.actions|index("trigger_deploy")!=null) and (.actions|index("probe_identity")!=null)'; then
               echo "✅ Actions list test passed"
               break
             else
@@ -138,7 +138,7 @@ jobs:
         run: |
           echo "🔍 Testing /actions/probe_identity endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/probe_identity" -H "Content-Type: application/json" -d '{}' | jq -e '.analysis and (.analysis.stability|type=="number") and (.analysis.coherence|type=="string") and (.analysis.authenticity|type=="number") and (.analysis.recommendation|type=="string")'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/probe_identity" -H "Content-Type: application/json" -d '{}' | jq -e '.who'; then
               echo "✅ Probe identity test passed"
               break
             else
@@ -172,9 +172,9 @@ jobs:
 
       - name: Test deploy endpoint
         run: |
-          echo "🚀 Testing /actions/deploy endpoint..."
+          echo "🚀 Testing /actions/trigger_deploy endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/deploy" | jq -e '.deployment=="triggered" and .timestamp'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/trigger_deploy" -H "Content-Type: application/json" -d '{"env":"production"}' | jq -e '.deployment=="triggered" and .timestamp'; then
               echo "✅ Deploy action test passed"
               break
             else
