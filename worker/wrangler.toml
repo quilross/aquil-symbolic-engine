@@ -1,6 +1,8 @@
 name = "signal_q"
 main = "worker/index.js"
+
 compatibility_date = "2025-08-01"
+
 workers_dev = false
 
 routes = [
