@@ -30,9 +30,8 @@ describe('Smoke', () => {
     expect(res.headers.get('x-correlation-id')).toBeTruthy();
   });
 
-  it('POST /actions/list (if exists) -> 200', async () => {
-    const res = await call('/actions/list', { method: 'POST' });
-    // If not implemented, you may set this to expect 404 intentionally.
-    expect([200, 404]).toContain(res.status);
+  it('GET /actions/list -> 200', async () => {
+    const res = await call('/actions/list');
+    expect(res.status).toBe(200);
   });
 })

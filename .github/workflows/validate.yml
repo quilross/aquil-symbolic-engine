@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Validate OpenAPI YAML specification (canonical)
-        run: npx swagger-cli validate worker/src/openapi-core.yaml
+        run: npx swagger-cli validate worker/src/openapi-core.json
 
       - name: Validate worker syntax
         run: npm run build

@@ -25,7 +25,7 @@ Configure these 6 tool bindings in your GPT tool/builder configuration:
   }
   ```
 
-#### 2. `listActions` - POST /actions/list
+#### 2. `listActions` - GET /actions/list
 - **Method**: POST
 - **Path**: `/actions/list`
 - **Content-Type**: application/json
@@ -159,4 +159,4 @@ After configuration, test each binding to ensure:
 5. Correlation IDs are properly surfaced to users
 
 ### OpenAPI Schema
-Use `worker/src/openapi-core.json` (OpenAPI 3.1.0) or `worker/src/openapi-core.yaml` (OpenAPI 3.0.3) for schema validation and tool generation if your GPT system supports it.
+Use `worker/src/openapi-core.json` (OpenAPI 3.1.0) for schema validation and tool generation if your GPT system supports it.

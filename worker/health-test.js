@@ -248,7 +248,7 @@ async function printSummary() {
     console.log('\n🔗 Ready for CustomGPT Integration:');
     console.log(`   Base URL: ${BASE_URL}`);
     console.log(`   Bearer Token: ${USER_TOKEN}`);
-    console.log(`   Schema File: worker/openapi-core.yaml`);
+    console.log(`   Schema File: worker/src/openapi-core.json`);
   } else {
     console.log('\n⚠️  DEPLOYMENT STATUS: NEEDS ATTENTION');
     console.log('❌ The /system/health endpoint is not working correctly.');

@@ -11,7 +11,7 @@ import SwaggerParser from '@apidevtools/swagger-parser';
 
 const WORKER_DIR = './worker';
 const REQUIRED_FILES = [
-  'worker/src/index.js',
+  'worker/index.js',
   'worker/wrangler.toml',
   'worker/src/openapi-core.json',
   'package.json',

@@ -159,7 +159,7 @@ wrangler secret put SIGNALQ_ADMIN_TOKEN --env production
 ### Environment Configuration (wrangler.toml)
 ```toml
 name = "signal_q"
-main = "worker/src/index.js"
+main = "worker/index.js"
 
 [env.staging]
 name = "signal_q_staging"

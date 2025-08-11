@@ -8,4 +8,4 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '18' }
       - run: npm ci || npm i
-      - run: npx swagger-cli validate worker/src/openapi-core.yaml
+      - run: npx swagger-cli validate worker/src/openapi-core.json

@@ -49,23 +49,21 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 
 ### 3. List Actions
 **Tool Name**: `signal_q_me__jit_plugin.listActions`
-
 ```json
 {
-  "method": "POST",
-  "url": "https://signal-q.me/actions/list", 
+  "method": "GET",
+  "url": "https://signal-q.me/actions/list",
   "headers": {
-    "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
-    "Content-Type": "application/json"
+    "Authorization": "Bearer {SIGNALQ_API_TOKEN}"
   },
-  "body": {},
   "description": "Get list of all available actions for dynamic discovery",
   "response_format": {
-    "actions": ["list", "system_health", "probe_identity", "recalibrate_state", "deploy"]
+    "actions": ["chat", "probe_identity"]
   },
   "error_handling": "Returns problem+json format with correlationId on errors"
 }
 ```
+
 
 ### 4. Probe Identity
 **Tool Name**: `signal_q_me__jit_plugin.probeIdentity`
