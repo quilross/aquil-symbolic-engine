@@ -548,3 +548,56 @@ All API errors return RFC 7807 problem+json format:
    curl -v -X POST -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8787/actions/system_health
    ```
 4. **Verify environment variables** are properly set in `.dev.vars` or production
+
+---
+
+## 🧬 **Symbolic Kernel (Aug 2025)**
+
+The Gene Keys personality kernel v1 provides intelligent classification and response shaping for conversational interactions.
+
+### What it does
+- **Classify each user turn**: Detects shadow patterns via linguistic cues across 5 Gene Keys (GK3 Chaos, GK28 Purposelessness, GK31 Arrogance, GK49 Reaction, GK61 Psychosis)
+- **Boost retrieval**: Soft-boosts retrieval results when docs are tagged with matching GK tags and states
+- **Shape final response**: Applies structured interventions:
+  - One intervention + one incisive question (always)
+  - GK31 decision memo (when decision is present)
+  - GK61 Poetic↔Practical mini-table (when symbolism is high)
+
+### Usage
+Access via the new `POST /actions/chat` endpoint:
+```bash
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"message": "I feel overwhelm and too many directions"}' \
+     https://signal_q.catnip-pieces1.workers.dev/actions/chat
+```
+
+### Response Format
+```json
+{
+  "response": "Shaped response with interventions...",
+  "gk_classification": {
+    "activeKey": "gk_03",
+    "state": "shadow", 
+    "cues": ["overwhelm", "too many directions"]
+  },
+  "timestamp": "2025-08-11T00:00:00.000Z"
+}
+```
+
+### Tagging docs for better retrieval
+To boost retrieval results, tag your documents with GK metadata:
+```json
+{
+  "content": "Your document content...",
+  "metadata": {
+    "tags": ["gk_28", "shadow", "purpose", "clarity"]
+  }
+}
+```
+
+### Policy Rules
+- **One-question + one-intervention rule**: Each response includes exactly one focusing question and one intervention
+- **GK31 decision memo**: Automatically triggered when decisions are detected or GK31 is active
+- **GK61 Poetic↔Practical**: Triggered when symbolism is high or GK61 is active
+- **Metaphor capping**: Limits abstract content to 20% of response length per global policies

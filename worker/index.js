@@ -73,7 +73,7 @@ function preventLegacyImports() {
 
 const actionHandlers = {
   list: async () => ({
-    actions: ["list", "probe_identity", "recalibrate_state", "deploy"]
+    actions: ["list", "probe_identity", "recalibrate_state", "deploy", "chat"]
   }),
 
   probe_identity: async () => ({
@@ -97,7 +97,55 @@ const actionHandlers = {
   deploy: async () => ({
     deployment: "triggered",
     timestamp: new Date().toISOString()
-  })
+  }),
+
+  chat: async (request, env, ctx) => {
+    // Get user input from request body
+    let userInput = '';
+    try {
+      const body = await request.json();
+      userInput = body?.message || body?.input || '';
+    } catch (e) {
+      userInput = '';
+    }
+
+    if (!userInput) {
+      return {
+        error: "No input provided",
+        message: "Please provide a 'message' or 'input' field in the request body"
+      };
+    }
+
+    // Classify using Gene Keys kernel
+    const last = (env && env.LAST_GK) || null; // if you persist; else null
+    let gk = { activeKey: null, state: null, cues: [] };
+    try {
+      const { classifyGKState } = await import('./src/symbolic/index.js');
+      gk = classifyGKState(userInput, last);
+    } catch (importError) {
+      console.warn('Could not import symbolic modules:', importError);
+    }
+
+    // Generate a basic draft response (in real implementation, this would call an LLM)
+    const draft = `I understand you're saying: "${userInput}". Let me help you work through this.`;
+
+    // Shape response using Gene Keys policy
+    let final = draft;
+    try {
+      const { shapeResponse } = await import('./src/symbolic/index.js');
+      const decisionPresent = /option\s+a\b|\boption\s+b\b|\bchoose\b/i.test(draft);
+      const symbolismHigh = /\bcosmic|signs|destiny|sacred|mythic\b/i.test(userInput + ' ' + draft);
+      final = shapeResponse({ activeKey: gk.activeKey, state: gk.state, draft, decisionPresent, symbolismHigh });
+    } catch (importError) {
+      console.warn('Could not import policy shaping:', importError);
+    }
+
+    return {
+      response: final,
+      gk_classification: gk,
+      timestamp: new Date().toISOString()
+    };
+  }
 };
 
 // === MAIN WORKER ===
