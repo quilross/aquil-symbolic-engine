@@ -69,7 +69,10 @@ export default {
     const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
 
     if (path.startsWith('/actions/')) {
-      if (!token || (token !== env.USER_TOKEN && token !== env.ADMIN_TOKEN)) {
+      if (
+        !token ||
+        (!safeCompare(token, env.USER_TOKEN) && !safeCompare(token, env.ADMIN_TOKEN))
+      ) {
         const res = json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders() });
         res.headers.set('x-correlation-id', cid);
         return res;
