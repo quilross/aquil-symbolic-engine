@@ -27,11 +27,14 @@ function withBaseHeaders(res, cid) {
 // Import OpenAPI specification
 import { openapi } from './openapi.js';
 
+// Import symbolic processing functions
+import { classifyGKState, shapeResponse } from './symbolic/index.js';
+
 // Main fetch handler
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const path = url.pathname.toLowerCase();
+    const path = url.pathname.toLowerCase().replace(/\/+$/, '') || '/'; // Remove trailing slashes except for root
     const cid = correlationIdFrom(request);
 
     // Preflight
@@ -50,12 +53,22 @@ export default {
 
     // Public GETs
     if (request.method === 'GET' && path === '/system/health') {
-      const body = JSON.stringify({ ok: true, ts: new Date().toISOString() });
+      const body = JSON.stringify({ 
+        name: 'signal-q',
+        version: 'v6.0',
+        status: 'ok',
+        timestamp: new Date().toISOString()
+      });
       return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
     }
 
     if (request.method === 'GET' && path === '/version') {
-      const body = JSON.stringify({ version: env?.BUILD_TIME || 'dev', commit: env?.COMMIT || 'unknown' });
+      const body = JSON.stringify({ 
+        version: env?.BUILD_TIME || 'dev', 
+        gitSha: env?.COMMIT || 'unknown',
+        buildTime: new Date().toISOString(),
+        environment: env?.NODE_ENV || 'development'
+      });
       return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
     }
 
@@ -75,6 +88,32 @@ export default {
       }
     }
 
+    // Memory retrieval endpoint (public)
+    if (request.method === 'GET' && path.startsWith('/memory/')) {
+      const userId = path.split('/')[2];
+      if (!userId) {
+        return problemJson(400, 'Bad Request', 'User ID is required', cid);
+      }
+      
+      try {
+        // Get memory for user from Durable Object
+        if (env.MEMORY) {
+          const id = env.MEMORY.idFromName(userId);
+          const stub = env.MEMORY.get(id);
+          const response = await stub.fetch(request);
+          return response;
+        } else {
+          // Fallback when MEMORY DO not available
+          return withBaseHeaders(new Response(JSON.stringify([]), { 
+            status: 200, 
+            headers: { 'content-type': 'application/json' } 
+          }), cid);
+        }
+      } catch (error) {
+        return problemJson(500, 'Memory Service Error', 'Failed to retrieve memory', cid);
+      }
+    }
+
     // Auth for /actions/*
     if (path.startsWith('/actions/')) {
       const auth = request.headers.get('authorization') || '';
@@ -84,12 +123,94 @@ export default {
       }
       // Minimal list endpoint
       if (request.method === 'POST' && path === '/actions/list') {
-        const body = JSON.stringify({ actions: ['probe_identity','recalibrate_state','trigger_deploy','list'] });
+        const body = JSON.stringify({ actions: ['probe_identity','recalibrate_state','trigger_deploy','list','chat'] });
         return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
+      }
+      
+      // Chat endpoint with Gene Keys classification
+      if (request.method === 'POST' && path === '/actions/chat') {
+        try {
+          let requestData = {};
+          try {
+            requestData = await request.json();
+          } catch (e) {
+            // Empty body is fine
+          }
+          
+          const message = requestData.message || '';
+          const userId = requestData.user || null;
+          
+          if (!message) {
+            return problemJson(400, 'Bad Request', 'Message is required', cid);
+          }
+          
+          // Classify using Gene Keys
+          const gkClassification = classifyGKState(message);
+          
+          // Shape response using policy
+          const rawResponse = `I understand you're saying: "${message}". Let me help you work through this.`;
+          const shapedResponse = shapeResponse({
+            activeKey: gkClassification.activeKey,
+            state: gkClassification.state,
+            draft: rawResponse,
+            decisionPresent: /\b(choose|decide|option|pick)\b/i.test(message),
+            symbolismHigh: /\b(cosmic|sacred|mystical|divine|universe)\b/i.test(message)
+          });
+          
+          // Log to memory if user ID provided
+          if (userId && env.MEMORY) {
+            try {
+              const id = env.MEMORY.idFromName(userId);
+              const stub = env.MEMORY.get(id);
+              const memoryRequest = new Request('https://memory/', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  key: gkClassification.activeKey,
+                  tone: gkClassification.state,
+                  cues: gkClassification.cues
+                })
+              });
+              // Fire and forget - don't wait for memory logging
+              stub.fetch(memoryRequest).catch(e => console.error('Memory logging failed:', e));
+            } catch (error) {
+              console.error('Memory logging error:', error);
+            }
+          }
+          
+          const responseBody = JSON.stringify({
+            response: shapedResponse,
+            gk_classification: {
+              activeKey: gkClassification.activeKey,
+              state: gkClassification.state,
+              cues: gkClassification.cues
+            },
+            timestamp: new Date().toISOString()
+          });
+          
+          return withBaseHeaders(new Response(responseBody, { 
+            status: 200, 
+            headers: { 'content-type': 'application/json' } 
+          }), cid);
+          
+        } catch (error) {
+          console.error('Chat endpoint error:', error);
+          return problemJson(500, 'Chat Processing Error', 'Failed to process chat message', cid);
+        }
       }
       // Stub others to 200 for now; your real handlers can replace these
       if (request.method === 'POST' && path === '/actions/probe_identity') {
-        return withBaseHeaders(new Response(JSON.stringify({ who: 'signal-q' }), { status: 200, headers: { 'content-type': 'application/json' } }), cid);
+        const body = JSON.stringify({ 
+          probe: 'Identity confirmed',
+          timestamp: new Date().toISOString(),
+          analysis: {
+            stability: 0.92,
+            coherence: 'high',
+            authenticity: 0.88,
+            recommendation: 'Identity integration optimal - proceed with confidence'
+          }
+        });
+        return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
       }
       if (request.method === 'POST' && path === '/actions/recalibrate_state') {
         return withBaseHeaders(new Response(null, { status: 200 }), cid);

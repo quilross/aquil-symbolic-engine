@@ -38,20 +38,23 @@ Per-user Gene Key state history persistence via Durable Objects:
 ```
 
 ### GPT Integration
-- **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
-- **Schema**: Use `worker/openapi-core.yaml` (raw GitHub URL)
+- **Base URL**: `https://signal_q.catnip-pieces1.workers.dev` (or your custom domain)
+- **Schema**: Use `/openapi.yaml` endpoint (served live from worker)
 - **Auth**: Bearer token required for `/actions/*` endpoints
 
 ---
 
-## 🎯 **For CustomGPT**
-- **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`
-- **Auth**: Bearer `$SIGNALQ_API_TOKEN`
-- **Schema**: Upload `worker/openapi-core.yaml` (canonical OpenAPI 3.0.3)
+## 🎯 **For CustomGPT Setup**
+1. **Get OpenAPI Spec**: Use your deployed worker's `/openapi.yaml` endpoint
+2. **Authentication**: Configure Bearer token authentication in GPT Builder
+3. **Complete Setup Guide**: See [CLOUDFLARE_SETUP.md](./CLOUDFLARE_SETUP.md) for detailed instructions
 
-## 🔑 **Your API Tokens**
-- **User Token**: `$SIGNALQ_API_TOKEN`
-- **Admin Token**: `$SIGNALQ_ADMIN_TOKEN`
+## 🚀 **Quick Deployment**
+1. Fork this repository
+2. Add required secrets to GitHub repository settings (see CLOUDFLARE_SETUP.md)
+3. Push to main branch - automatic deployment via GitHub Actions
+4. Get your worker URL from Cloudflare dashboard
+5. Use `https://your-worker.workers.dev/openapi.yaml` in GPT Builder
 
 ## 📁 **Essential Files**
 ```

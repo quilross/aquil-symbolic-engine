@@ -45,7 +45,73 @@ paths:
                 version: v0
                 status: ok
                 timestamp: '2024-01-01T00:00:00.000Z'
-  /actions/probe_identity:
+  /memory/{user}:
+    get:
+      operationId: getUserMemory
+      summary: Retrieve user's Gene Key state history
+      description: 'Returns chronological history of Gene Key classifications for a specific user. This endpoint does not require authentication.'
+      security: []
+      parameters:
+        - name: user
+          in: path
+          required: true
+          description: User identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User memory history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemoryEntry'
+              example:
+                - timestamp: 1754875422389
+                  key: gk_03
+                  tone: shadow
+                  cues: ["overwhelm"]
+        '400':
+          description: Bad Request - Invalid user ID
+        '500':
+          description: Memory service error
+  /actions/chat:
+    post:
+      operationId: chatWithGeneKeys
+      summary: Chat with Gene Key classification and memory logging
+      description: 'Processes chat messages through Gene Keys personality kernel for intelligent classification and response shaping. Optionally logs interactions to user memory.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              message: "I feel overwhelm and too many directions"
+              user: "user_123"
+      responses:
+        '200':
+          description: Chat response with Gene Key classification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                response: "I understand you're saying: \"I feel overwhelm\". Let me help you work through this.\n\n— Intervention: Offer a 5-minute prototype or test prompt\n\nQ: What is the smallest next step you can take in 10–20 minutes?"
+                gk_classification:
+                  activeKey: gk_03
+                  state: shadow
+                  cues: ["overwhelm", "too many directions"]
+                timestamp: "2024-01-01T00:00:00.000Z"
+        '400':
+          description: Bad Request - Missing message
+        '401':
+          description: Unauthorized - Bearer token required
+        '500':
+          description: Chat processing error
     post:
       operationId: probeIdentity
       summary: Probe current identity status with enriched analysis
@@ -256,6 +322,76 @@ components:
           type: array
           items:
             type: string
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The chat message to process
+        user:
+          type: string
+          description: Optional user identifier for memory logging
+    ChatResponse:
+      type: object
+      required:
+        - response
+        - gk_classification
+        - timestamp
+      properties:
+        response:
+          type: string
+          description: Shaped response with Gene Key interventions
+        gk_classification:
+          type: object
+          required:
+            - activeKey
+            - state
+            - cues
+          properties:
+            activeKey:
+              type: string
+              description: Active Gene Key (e.g., gk_03)
+            state:
+              type: string
+              enum:
+                - shadow
+                - gift
+              description: Current state classification
+            cues:
+              type: array
+              items:
+                type: string
+              description: Linguistic cues that triggered classification
+        timestamp:
+          type: string
+          format: date-time
+    MemoryEntry:
+      type: object
+      required:
+        - timestamp
+        - key
+        - tone
+        - cues
+      properties:
+        timestamp:
+          type: integer
+          description: Unix timestamp of the memory entry
+        key:
+          type: string
+          description: Gene Key identifier (e.g., gk_03)
+        tone:
+          type: string
+          enum:
+            - shadow
+            - gift
+          description: State classification
+        cues:
+          type: array
+          items:
+            type: string
+          description: Linguistic triggers
             enum:
               - list
               - probe_identity
