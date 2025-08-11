@@ -5,8 +5,8 @@
 // Import Memory Durable Object
 import { MemoryDO } from './src/memory.js';
 
-// Import OpenAPI specification as text
-import openapi from './src/openapi-core.yaml' assert { type: 'text' };
+// Import OpenAPI specification
+import { openapi } from './src/openapi.js';
 
 // === HELPER FUNCTIONS ===
 
