@@ -1,0 +1,30 @@
+{
+  "user123": { 
+    "type": "Projector", 
+    "authority": "Emotional" 
+  },
+  "user456": { 
+    "type": "Generator", 
+    "authority": "Sacral" 
+  },
+  "user789": {
+    "type": "Manifesting Generator",
+    "authority": "Sacral"
+  },
+  "user101": {
+    "type": "Manifestor",
+    "authority": "Ego"
+  },
+  "user202": {
+    "type": "Reflector",
+    "authority": "Lunar"
+  },
+  "testuser": {
+    "type": "Projector",
+    "authority": "Splenic"
+  },
+  "demo": {
+    "type": "Generator",
+    "authority": "Emotional"
+  }
+}

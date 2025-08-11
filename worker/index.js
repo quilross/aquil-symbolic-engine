@@ -190,6 +190,17 @@ const actionHandlers = {
       console.warn('Could not import policy shaping:', importError);
     }
 
+    // Blend with persona dynamics (Human Design type & authority)
+    try {
+      const { getPersona, blendResponseWithPersona } = await import('./src/persona.js');
+      const persona = getPersona(userId);
+      if (persona) {
+        final = blendResponseWithPersona(final, persona, { key: gk.activeKey, tone: gk.state });
+      }
+    } catch (importError) {
+      console.warn('Could not import persona modules:', importError);
+    }
+
     // Log Gene Key classification to user's memory (fire-and-forget)
     if (userId && gk.activeKey) {
       logGKState(userId, gk, env);
