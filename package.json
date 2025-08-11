@@ -13,8 +13,9 @@
     "secret-scan": "node scripts/secret-scan.cjs",
     "secret-scan:install": "node scripts/secret-scan.cjs install",
     "validate": "npm run secret-scan && npm audit && npm run validate:openapi",
-    "validate:openapi": "npx swagger-cli validate worker/src/openapi-core.yaml",
-    "build": "echo 'Validation build - checking worker syntax and OpenAPI spec' && cd worker && node -c index.js && echo '✅ Worker syntax is valid' && cd .. && npm run validate:openapi && echo '✅ OpenAPI specification is valid'",
+    "validate:openapi": "npx swagger-cli validate worker/openapi-core.yaml",
+    "generate:openapi": "node scripts/gen-openapi-js.cjs",
+    "build": "echo 'Validation build - checking worker syntax and OpenAPI spec' && npm run generate:openapi && cd worker && node -c index.js && echo '✅ Worker syntax is valid' && cd .. && npm run validate:openapi && echo '✅ OpenAPI specification is valid'",
     "lint": "npm audit --audit-level moderate",
     "demo:sdk": "node sdk/demo.cjs"
   },

@@ -123,7 +123,7 @@ export default {
       }
       // Minimal list endpoint
       if (request.method === 'POST' && path === '/actions/list') {
-        const body = JSON.stringify({ actions: ['probe_identity','recalibrate_state','trigger_deploy','list','chat'] });
+        const body = JSON.stringify({ actions: ['list','probe_identity','recalibrate_state','trigger_deploy','chat'] });
         return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
       }
       
@@ -213,10 +213,20 @@ export default {
         return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
       }
       if (request.method === 'POST' && path === '/actions/recalibrate_state') {
-        return withBaseHeaders(new Response(null, { status: 200 }), cid);
+        const body = JSON.stringify({
+          state: 'recalibrated',
+          timestamp: new Date().toISOString(),
+          identity_key: 'primary_manifester',
+          dominant_emotion: 'clarity'
+        });
+        return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
       }
       if (request.method === 'POST' && path === '/actions/trigger_deploy') {
-        return withBaseHeaders(new Response(null, { status: 200 }), cid);
+        const body = JSON.stringify({
+          deployment: 'triggered',
+          timestamp: new Date().toISOString()
+        });
+        return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
       }
     }
 
