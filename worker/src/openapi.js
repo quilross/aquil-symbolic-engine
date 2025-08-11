@@ -1,117 +1,420 @@
 // OpenAPI specification content
-export const openapi = `openapi: 3.0.3
+export const openapi = `
+openapi: 3.0.3
 info:
-  title: Signal Q API
-  version: 1.0.0
-  description: API used by my custom GPT to check health, get version, and perform actions.
+  title: Signalhaven Actions API
+  version: v6.0
+  description: This API provides consolidated action invocation for the Signalhaven symbolic engine. All endpoints require Bearer authentication. Use /actions/list to enumerate available actions.
 servers:
-  - url: https://signal-q.me
-    description: Production
-  - url: http://127.0.0.1:8787
-    description: Local dev (Wrangler)
+  - url: 'https://signal_q.catnip-pieces1.workers.dev'
+    description: Cloudflare Worker Production Endpoint
+security:
+  - bearerAuth: []
+paths:
+  /version:
+    get:
+      operationId: getVersion
+      summary: Get version information
+      description: 'Returns version metadata including version number, git SHA, build time, and environment. This endpoint does not require authentication.'
+      security: []
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+              example:
+                version: 2.1.0
+                gitSha: abc123def456
+                buildTime: '2024-01-01T00:00:00.000Z'
+                environment: production
+  /system/health:
+    get:
+      operationId: getSystemHealth
+      summary: Check system health status
+      description: 'Returns system health status, timestamp, worker name, and version information. This endpoint does not require authentication.'
+      security: []
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealthResponse'
+              example:
+                name: signal-q
+                version: v0
+                status: ok
+                timestamp: '2024-01-01T00:00:00.000Z'
+  /memory/{user}:
+    get:
+      operationId: getUserMemory
+      summary: Retrieve user's Gene Key state history
+      description: 'Returns chronological history of Gene Key classifications for a specific user. This endpoint does not require authentication.'
+      security: []
+      parameters:
+        - name: user
+          in: path
+          required: true
+          description: User identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User memory history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemoryEntry'
+              example:
+                - timestamp: 1754875422389
+                  key: gk_03
+                  tone: shadow
+                  cues: ["overwhelm"]
+        '400':
+          description: Bad Request - Invalid user ID
+        '500':
+          description: Memory service error
+  /actions/chat:
+    post:
+      operationId: chatWithGeneKeys
+      summary: Chat with Gene Key classification and memory logging
+      description: 'Processes chat messages through Gene Keys personality kernel for intelligent classification and response shaping. Optionally logs interactions to user memory.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              message: "I feel overwhelm and too many directions"
+              user: "user_123"
+      responses:
+        '200':
+          description: Chat response with Gene Key classification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                response: "I understand you're saying: \"I feel overwhelm\". Let me help you work through this.\n\n— Intervention: Offer a 5-minute prototype or test prompt\n\nQ: What is the smallest next step you can take in 10–20 minutes?"
+                gk_classification:
+                  activeKey: gk_03
+                  state: shadow
+                  cues: ["overwhelm", "too many directions"]
+                timestamp: "2024-01-01T00:00:00.000Z"
+        '400':
+          description: Bad Request - Missing message
+        '401':
+          description: Unauthorized - Bearer token required
+        '500':
+          description: Chat processing error
+  /actions/probe_identity:
+    post:
+      operationId: probeIdentity
+      summary: Probe current identity status with enriched analysis
+      description: 'Performs comprehensive identity probe with stability analysis, coherence assessment, and authenticity verification. Returns detailed identity metrics and recommendations.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Identity probe response with enriched analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeIdentityResponse'
+              example:
+                probe: Identity confirmed
+                timestamp: '2024-01-01T00:00:00.000Z'
+                analysis:
+                  stability: 0.92
+                  coherence: high
+                  authenticity: 0.88
+                  recommendation: Identity integration optimal - proceed with confidence
+        '401':
+          description: Unauthorized - Bearer token required
+  /actions/recalibrate_state:
+    post:
+      operationId: recalibrateState
+      summary: Recalibrate symbolic state and identity configuration
+      description: 'Performs complete symbolic recalibration including identity key verification, dominant emotion assessment, and active gene key analysis.'
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Symbolic recalibration complete with state information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecalibrateStateResponse'
+              example:
+                state: recalibrated
+                timestamp: '2024-01-01T00:00:00.000Z'
+                identity_key: primary_manifester
+                dominant_emotion: clarity
+        '401':
+          description: Unauthorized - Bearer token required
+  /actions/trigger_deploy:
+    post:
+      operationId: triggerDeploy
+      summary: Trigger deployment workflow
+      description: Initiates deployment process for the service. Simulates triggering real deploy workflow.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Deployment triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeployResponse'
+              example:
+                deployment: triggered
+                timestamp: '2024-01-01T00:00:00.000Z'
+        '401':
+          description: Unauthorized - Bearer token required
+  /actions/list:
+    post:
+      operationId: listActions
+      summary: List all available public actions
+      description: Returns a comprehensive list of all available public actions for dynamic discovery by GPT plugins and automation tools.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericInput'
+      responses:
+        '200':
+          description: Array of available public actions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionsListResponse'
+              example:
+                actions:
+                  - list
+                  - probe_identity
+                  - recalibrate_state
+                  - trigger_deploy
+        '401':
+          description: Unauthorized - Bearer token required
 components:
+  schemas:
+    GenericInput:
+      type: object
+      description: Generic input object for actions that accept optional parameters
+    SystemHealthResponse:
+      type: object
+      required:
+        - name
+        - version
+        - status
+        - timestamp
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum:
+            - ok
+        timestamp:
+          type: string
+          format: date-time
+    ProbeIdentityResponse:
+      type: object
+      required:
+        - probe
+        - timestamp
+        - analysis
+      properties:
+        probe:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        analysis:
+          type: object
+          required:
+            - stability
+            - coherence
+            - authenticity
+            - recommendation
+          properties:
+            stability:
+              type: number
+              minimum: 0
+              maximum: 1
+            coherence:
+              type: string
+              enum:
+                - high
+                - medium
+                - low
+            authenticity:
+              type: number
+              minimum: 0
+              maximum: 1
+            recommendation:
+              type: string
+    RecalibrateStateResponse:
+      type: object
+      required:
+        - state
+        - timestamp
+        - identity_key
+        - dominant_emotion
+      properties:
+        state:
+          type: string
+          enum:
+            - recalibrated
+        timestamp:
+          type: string
+          format: date-time
+        identity_key:
+          type: string
+        dominant_emotion:
+          type: string
+    DeployResponse:
+      type: object
+      required:
+        - deployment
+        - timestamp
+      properties:
+        deployment:
+          type: string
+          enum:
+            - triggered
+        timestamp:
+          type: string
+          format: date-time
+    ActionsListResponse:
+      type: object
+      required:
+        - actions
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The chat message to process
+        user:
+          type: string
+          description: Optional user identifier for memory logging
+    ChatResponse:
+      type: object
+      required:
+        - response
+        - gk_classification
+        - timestamp
+      properties:
+        response:
+          type: string
+          description: Shaped response with Gene Key interventions
+        gk_classification:
+          type: object
+          required:
+            - activeKey
+            - state
+            - cues
+          properties:
+            activeKey:
+              type: string
+              description: Active Gene Key (e.g., gk_03)
+            state:
+              type: string
+              enum:
+                - shadow
+                - gift
+              description: Current state classification
+            cues:
+              type: array
+              items:
+                type: string
+              description: Linguistic cues that triggered classification
+        timestamp:
+          type: string
+          format: date-time
+    MemoryEntry:
+      type: object
+      required:
+        - timestamp
+        - key
+        - tone
+        - cues
+      properties:
+        timestamp:
+          type: integer
+          description: Unix timestamp of the memory entry
+        key:
+          type: string
+          description: Gene Key identifier (e.g., gk_03)
+        tone:
+          type: string
+          enum:
+            - shadow
+            - gift
+          description: State classification
+        cues:
+          type: array
+          items:
+            type: string
+          description: Linguistic triggers
+    VersionResponse:
+      type: object
+      required:
+        - version
+        - gitSha
+        - buildTime
+        - environment
+      properties:
+        version:
+          type: string
+        gitSha:
+          type: string
+        buildTime:
+          type: string
+          format: date-time
+        environment:
+          type: string
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
-  schemas:
-    Problem:
-      type: object
-      properties:
-        type: { type: string }
-        title: { type: string }
-        status: { type: integer }
-        detail: { type: string }
-        instance: { type: string }
-    Health:
-      type: object
-      properties:
-        ok: { type: boolean }
-        ts: { type: string, format: date-time }
-    Version:
-      type: object
-      properties:
-        version: { type: string }
-        commit: { type: string }
-    ActionList:
-      type: object
-      properties:
-        actions:
-          type: array
-          items: { type: string }
-    DeployRequest:
-      type: object
-      properties:
-        env: { type: string, enum: [preview, production] }
-      required: [env]
-    IdentityProbe:
-      type: object
-      properties:
-        who: { type: string }
-    RecalibrateRequest:
-      type: object
-      properties:
-        mode: { type: string, enum: [light, full] }
-      required: [mode]
-security:
-  - bearerAuth: []
-paths:
-  /system/health:
-    get:
-      operationId: getSystemHealth
-      summary: Health check
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Health' } } } }
-        '4XX': { description: Client error, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-        '5XX': { description: Server error, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-  /version:
-    get:
-      operationId: getVersion
-      summary: Service version
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Version' } } } }
-        '4XX': { description: Client error, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-        '5XX': { description: Server error, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-  /actions/list:
-    post:
-      operationId: listActions
-      summary: List available actions
-      security: [ { bearerAuth: [] } ]
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ActionList' } } } }
-        '401': { description: Unauthorized, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-  /actions/probe_identity:
-    post:
-      operationId: probeIdentity
-      summary: Probe identity
-      security: [ { bearerAuth: [] } ]
-      responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/IdentityProbe' } } } }
-        '401': { description: Unauthorized, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-  /actions/recalibrate_state:
-    post:
-      operationId: recalibrateState
-      summary: Recalibrate server state
-      security: [ { bearerAuth: [] } ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/RecalibrateRequest' }
-      responses:
-        '200': { description: OK }
-        '401': { description: Unauthorized, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
-  /actions/trigger_deploy:
-    post:
-      operationId: triggerDeploy
-      summary: Trigger a deploy
-      security: [ { bearerAuth: [] } ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/DeployRequest' }
-      responses:
-        '200': { description: OK }
-        '401': { description: Unauthorized, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }`;
+      description: 'Bearer authentication for all API endpoints. Include the token in the Authorization header as ''Bearer {token}''.'
+`;

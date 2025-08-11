@@ -112,6 +112,7 @@ paths:
           description: Unauthorized - Bearer token required
         '500':
           description: Chat processing error
+  /actions/probe_identity:
     post:
       operationId: probeIdentity
       summary: Probe current identity status with enriched analysis
@@ -168,7 +169,7 @@ paths:
                 dominant_emotion: clarity
         '401':
           description: Unauthorized - Bearer token required
-  /actions/deploy:
+  /actions/trigger_deploy:
     post:
       operationId: triggerDeploy
       summary: Trigger deployment workflow
@@ -218,7 +219,7 @@ paths:
                   - list
                   - probe_identity
                   - recalibrate_state
-                  - deploy
+                  - trigger_deploy
         '401':
           description: Unauthorized - Bearer token required
 components:
@@ -392,11 +393,6 @@ components:
           items:
             type: string
           description: Linguistic triggers
-            enum:
-              - list
-              - probe_identity
-              - recalibrate_state
-              - deploy
     VersionResponse:
       type: object
       required:
