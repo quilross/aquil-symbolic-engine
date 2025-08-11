@@ -53,9 +53,9 @@ export default {
 
     // Public GETs
     if (request.method === 'GET' && path === '/system/health') {
-      const body = JSON.stringify({ 
+      const body = JSON.stringify({
         name: 'signal-q',
-        version: 'v6.0',
+        version: env?.APP_VERSION || 'v6.1',
         status: 'ok',
         timestamp: new Date().toISOString()
       });
@@ -63,10 +63,10 @@ export default {
     }
 
     if (request.method === 'GET' && path === '/version') {
-      const body = JSON.stringify({ 
-        version: env?.BUILD_TIME || 'dev', 
+      const body = JSON.stringify({
+        version: env?.APP_VERSION || 'dev',
         gitSha: env?.COMMIT || 'unknown',
-        buildTime: new Date().toISOString(),
+        buildTime: env?.BUILD_TIME || new Date().toISOString(),
         environment: env?.NODE_ENV || 'development'
       });
       return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);

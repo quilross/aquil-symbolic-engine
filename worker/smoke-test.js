@@ -6,7 +6,7 @@
  */
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:8788';
-const USER_TOKEN = process.env.SIGNALQ_API_TOKEN || 'dev-placeholder';
+const USER_TOKEN = process.env.SIGNALQ_API_TOKEN || 'test-token';
 
 console.log('💨 Signal Q Smoke Tests (Gene Keys Runtime)\n');
 console.log(`🌐 API Base: ${BASE_URL}`);
