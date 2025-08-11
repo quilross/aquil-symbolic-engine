@@ -1,0 +1,46 @@
+name: Deploy Worker (prod) + Smoke
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '18' }
+      - run: npm ci || npm i
+      - name: Publish
+        run: npx wrangler deploy --minify
+        working-directory: worker
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /system/health
+        run: |
+          set -e
+          curl -fsS https://signal-q.me/system/health -H "x-correlation-id: ci-smoke-$$" -o /dev/null
+      - name: Hit /version
+        run: |
+          set -e
+          curl -fsS https://signal-q.me/version -H "x-correlation-id: ci-smoke-$$" -o /dev/null
+      - name: POST /actions/list with Bearer
+        run: |
+          set -e
+          curl -fsS -X POST https://signal-q.me/actions/list \
+            -H "authorization: Bearer ${{ secrets.API_TOKEN }}" \
+            -H "x-correlation-id: ci-smoke-$$" \
+            -H "content-type: application/json" \
+            -d '{}' -o /dev/null
+      - name: Fetch /openapi.yaml and validate
+        run: |
+          set -e
+          curl -fsS https://signal-q.me/openapi.yaml -o openapi.yaml
+          npx -y @apidevtools/swagger-cli validate openapi.yaml

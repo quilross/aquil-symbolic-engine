@@ -629,3 +629,19 @@ To boost retrieval results, tag your documents with GK metadata:
 - **GK31 decision memo**: Automatically triggered when decisions are detected or GK31 is active
 - **GK61 Poetic↔Practical**: Triggered when symbolism is high or GK61 is active
 - **Metaphor capping**: Limits abstract content to 20% of response length per global policies
+
+## Deployment & Branch Policy
+
+### Production Deployment
+- **Production URL**: https://signal-q.me
+- **CI/CD**: Automatic deployment on push to `main` branch
+- **Smoke Tests**: Automated end-to-end validation after each deployment
+  - `/system/health` - System health check
+  - `/version` - Version information
+  - `/actions/list` - API endpoints validation  
+  - `/openapi.yaml` - OpenAPI specification validation
+
+### Branch Policy
+- **Protected Branches**: Only `main` and `root` branches are maintained
+- **Branch Cleanup**: Use the "Prune Remote Branches" workflow to enforce policy
+- **Workflow**: Manual execution with dry-run option for safety

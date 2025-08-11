@@ -1,0 +1,35 @@
+name: Prune Remote Branches (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (true/false)"
+        required: true
+        default: "true"
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: List branches
+        id: list
+        run: |
+          git fetch --all --prune
+          git branch -r | sed 's#origin/##' | grep -vE '^(HEAD|main|root)$' > branches.txt || true
+          echo "FOUND=$(wc -l < branches.txt)" >> $GITHUB_OUTPUT
+          echo "Branches to delete:"; cat branches.txt || true
+      - name: Delete branches (dry-run or real)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          DRY="${{ github.event.inputs.dry_run }}"
+          while read BR; do
+            [ -z "$BR" ] && continue
+            if [ "$DRY" = "true" ]; then
+              echo "Would delete origin/$BR"
+            else
+              echo "Deleting origin/$BR"
+              gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$BR" || true
+            fi
+          done < branches.txt
