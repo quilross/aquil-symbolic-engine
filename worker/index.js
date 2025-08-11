@@ -5,6 +5,9 @@
 // Import Memory Durable Object
 import { MemoryDO } from './src/memory.js';
 
+// Import OpenAPI specification
+import { openapi } from './src/openapi.js';
+
 // === HELPER FUNCTIONS ===
 
 // Extract user ID from request body or headers for memory logging
@@ -119,18 +122,11 @@ function preventLegacyImports() {
 
 const actionHandlers = {
   list: async () => ({
-    actions: ["list", "probe_identity", "recalibrate_state", "deploy", "chat"]
+    actions: ["list", "probe_identity", "recalibrate_state", "trigger_deploy"]
   }),
 
   probe_identity: async () => ({
-    probe: "Identity confirmed",
-    timestamp: new Date().toISOString(),
-    analysis: {
-      stability: 0.92,
-      coherence: "high",
-      authenticity: 0.88,
-      recommendation: "Identity integration optimal - proceed with confidence"
-    }
+    who: "Identity confirmed"
   }),
 
   recalibrate_state: async (request, env) => ({
@@ -140,78 +136,10 @@ const actionHandlers = {
     dominant_emotion: "clarity"
   }),
 
-  deploy: async () => ({
+  trigger_deploy: async () => ({
     deployment: "triggered",
     timestamp: new Date().toISOString()
-  }),
-
-  chat: async (request, env, ctx) => {
-    // Get user input from request body
-    let userInput = '';
-    let requestBody = null;
-    try {
-      requestBody = await request.json();
-      userInput = requestBody?.message || requestBody?.input || '';
-    } catch (e) {
-      userInput = '';
-    }
-
-    if (!userInput) {
-      return {
-        error: "No input provided",
-        message: "Please provide a 'message' or 'input' field in the request body"
-      };
-    }
-
-    // Extract user ID for memory logging
-    const userId = getUserIdFrom(request, requestBody);
-
-    // Classify using Gene Keys kernel
-    const last = (env && env.LAST_GK) || null; // if you persist; else null
-    let gk = { activeKey: null, state: null, cues: [] };
-    try {
-      const { classifyGKState } = await import('./src/symbolic/index.js');
-      gk = classifyGKState(userInput, last);
-    } catch (importError) {
-      console.warn('Could not import symbolic modules:', importError);
-    }
-
-    // Generate a basic draft response (in real implementation, this would call an LLM)
-    const draft = `I understand you're saying: "${userInput}". Let me help you work through this.`;
-
-    // Shape response using Gene Keys policy
-    let final = draft;
-    try {
-      const { shapeResponse } = await import('./src/symbolic/index.js');
-      const decisionPresent = /option\s+a\b|\boption\s+b\b|\bchoose\b/i.test(draft);
-      const symbolismHigh = /\bcosmic|signs|destiny|sacred|mythic\b/i.test(userInput + ' ' + draft);
-      final = shapeResponse({ activeKey: gk.activeKey, state: gk.state, draft, decisionPresent, symbolismHigh });
-    } catch (importError) {
-      console.warn('Could not import policy shaping:', importError);
-    }
-
-    // Blend with persona dynamics (Human Design type & authority)
-    try {
-      const { getPersona, blendResponseWithPersona } = await import('./src/persona.js');
-      const persona = getPersona(userId);
-      if (persona) {
-        final = blendResponseWithPersona(final, persona, { key: gk.activeKey, tone: gk.state });
-      }
-    } catch (importError) {
-      console.warn('Could not import persona modules:', importError);
-    }
-
-    // Log Gene Key classification to user's memory (fire-and-forget)
-    if (userId && gk.activeKey) {
-      logGKState(userId, gk, env);
-    }
-
-    return {
-      response: final,
-      gk_classification: gk,
-      timestamp: new Date().toISOString()
-    };
-  }
+  })
 };
 
 // === MAIN WORKER ===
@@ -238,13 +166,26 @@ export default {
         return response;
       }
 
+      // PUBLIC: GET /openapi.yaml
+      if (path === '/openapi.yaml' && method === 'GET') {
+        const cid = correlationIdFrom(request);
+        const response = new Response(openapi, {
+          status: 200,
+          headers: {
+            'content-type': 'text/yaml; charset=utf-8',
+            'x-correlation-id': cid,
+            'access-control-allow-origin': '*'
+          }
+        });
+        logRequest(method, path, 'openapi-spec', 200, Date.now() - startTime, correlationId, env);
+        return response;
+      }
+
       // PUBLIC: GET /version
       if (path === '/version' && method === 'GET') {
         const info = {
           version: env?.APP_VERSION || '2.1.0',
-          gitSha: env?.GIT_SHA || 'dev-local',
-          buildTime: env?.BUILD_TIME || new Date().toISOString(),
-          environment: env?.ENVIRONMENT || 'development'
+          commit: env?.GIT_SHA || 'dev-local'
         };
         const response = new Response(JSON.stringify(info), {
           headers: {
@@ -308,10 +249,8 @@ export default {
       // PUBLIC: GET /system/health
       if (path === '/system/health' && method === 'GET') {
         const health = {
-          name: env?.WORKER_NAME || 'signal-q',
-          version: env?.APP_VERSION || 'v0',
-          status: 'ok',
-          timestamp: new Date().toISOString()
+          ok: true,
+          ts: new Date().toISOString()
         };
         const response = new Response(JSON.stringify(health), {
           headers: {

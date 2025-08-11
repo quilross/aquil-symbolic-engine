@@ -570,6 +570,15 @@ All API errors return RFC 7807 problem+json format:
 
 ---
 
+## Spec (for GPT Actions)
+
+**Runtime URL**: https://signal-q.me/openapi.yaml  
+**Raw GitHub URL**: Use `scripts/print-spec-url.sh` to get the direct GitHub raw URL
+
+**Usage Instructions**: Use the Runtime URL first. If the GPT builder refuses it, use the Raw GitHub URL from scripts/print-spec-url.sh.
+
+---
+
 ## 🧬 **Symbolic Kernel (Aug 2025)**
 
 The Gene Keys personality kernel v1 provides intelligent classification and response shaping for conversational interactions.
