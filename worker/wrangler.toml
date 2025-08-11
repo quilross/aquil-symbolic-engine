@@ -14,9 +14,17 @@ id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 name = "USER_STATE"
 class_name = "UserState"
 
+[[durable_objects.bindings]]
+name = "MEMORY"
+class_name = "MemoryDO"
+
 [[migrations]]
 tag = "v1"
 new_classes = ["UserState"]
+
+[[migrations]]
+tag = "v2"
+new_classes = ["MemoryDO"]
 
 [ai]
 binding = "AI"
@@ -38,9 +46,13 @@ vars = { NODE_ENV = "production" }
 binding = "SIGNAL_KV"
 id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
 
-[env.production.durable_objects.bindings]
+[[env.production.durable_objects.bindings]]
 name = "USER_STATE"
 class_name = "UserState"
+
+[[env.production.durable_objects.bindings]]
+name = "MEMORY"
+class_name = "MemoryDO"
 
 [env.production.ai]
 binding = "AI"

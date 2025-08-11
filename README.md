@@ -7,16 +7,35 @@
 ### Canonical Endpoints
 - `GET /version` - Service version and build info (public)
 - `GET /system/health` - System health status (public)
+- `GET /memory/:user` - Retrieve user's Gene Key state history (public)
 - `POST /actions/list` - List available actions (authenticated)
 - `POST /actions/probe_identity` - Identity probe with analysis (authenticated)
 - `POST /actions/recalibrate_state` - State recalibration (authenticated)  
 - `POST /actions/deploy` - Deployment trigger (authenticated)
+- `POST /actions/chat` - Chat with Gene Key classification and memory logging (authenticated)
 
 ### Legacy Quarantine
 Legacy classifiers/tools quarantined under `legacy/` and gated by feature flags:
 - `ENABLE_LEGACY_TOOLS=false`
 - `ENABLE_LEGACY_CLASSIFIERS=false`  
 - `ENABLE_LEGACY_AGENTS=false`
+
+### Memory Anchoring 🧠
+Per-user Gene Key state history persistence via Durable Objects:
+- **Automatic Logging**: Each chat interaction logs Gene Key classification with timestamp
+- **User Isolation**: Each user has separate memory storage using Durable Object naming
+- **Retrieval API**: `GET /memory/:user` returns chronological history in JSON format
+- **Usage**: Include `"user": "user_id"` in chat requests to enable memory logging
+
+**Example Memory Entry:**
+```json
+{
+  "timestamp": 1754875422389,
+  "key": "gk_03", 
+  "tone": "shadow",
+  "cues": ["overwhelm"]
+}
+```
 
 ### GPT Integration
 - **Base URL**: `https://signal_q.catnip-pieces1.workers.dev`

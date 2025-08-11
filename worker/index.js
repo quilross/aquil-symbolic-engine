@@ -1,8 +1,54 @@
 // Signal Q - Minimal Worker Implementation
 // Focuses on exactly 5 POST /actions/* endpoints + GET /version + legacy GET /system/health
+// Memory Anchoring: Persist each user's recent Gene Key state and shadow/gift history
+
+// Import Memory Durable Object
+import { MemoryDO } from './src/memory.js';
 
 // === HELPER FUNCTIONS ===
 
+// Extract user ID from request body or headers for memory logging
+function getUserIdFrom(request, body = null) {
+  // Try to get user ID from request body first
+  if (body && (body.user || body.userId)) {
+    return body.user || body.userId;
+  }
+  
+  // Fallback to a header-based user ID
+  const userHeader = request.headers.get('x-user-id');
+  if (userHeader && userHeader.trim()) {
+    return userHeader.trim();
+  }
+  
+  // Return null if no user ID found
+  return null;
+}
+
+// Log Gene Key classification to user's memory (fire-and-forget)
+async function logGKState(userId, gkClassification, env) {
+  if (!userId || !gkClassification.activeKey || !env?.MEMORY) {
+    return; // Skip logging if missing required data
+  }
+  
+  try {
+    const id = env.MEMORY.idFromName(userId);
+    const memoryObj = env.MEMORY.get(id);
+    
+    // Fire-and-forget logging (don't await to avoid blocking response)
+    memoryObj.fetch('https://dummy/memory', {
+      method: 'PUT',
+      body: JSON.stringify({
+        key: gkClassification.activeKey,
+        tone: gkClassification.state,
+        cues: gkClassification.cues
+      })
+    }).catch(error => {
+      console.warn('Memory logging failed:', error);
+    });
+  } catch (error) {
+    console.warn('Memory logging setup failed:', error);
+  }
+}
 // Extract or generate correlation ID from request
 function correlationIdFrom(req) {
   const h = req.headers.get('x-correlation-id');
@@ -102,9 +148,10 @@ const actionHandlers = {
   chat: async (request, env, ctx) => {
     // Get user input from request body
     let userInput = '';
+    let requestBody = null;
     try {
-      const body = await request.json();
-      userInput = body?.message || body?.input || '';
+      requestBody = await request.json();
+      userInput = requestBody?.message || requestBody?.input || '';
     } catch (e) {
       userInput = '';
     }
@@ -115,6 +162,9 @@ const actionHandlers = {
         message: "Please provide a 'message' or 'input' field in the request body"
       };
     }
+
+    // Extract user ID for memory logging
+    const userId = getUserIdFrom(request, requestBody);
 
     // Classify using Gene Keys kernel
     const last = (env && env.LAST_GK) || null; // if you persist; else null
@@ -138,6 +188,11 @@ const actionHandlers = {
       final = shapeResponse({ activeKey: gk.activeKey, state: gk.state, draft, decisionPresent, symbolismHigh });
     } catch (importError) {
       console.warn('Could not import policy shaping:', importError);
+    }
+
+    // Log Gene Key classification to user's memory (fire-and-forget)
+    if (userId && gk.activeKey) {
+      logGKState(userId, gk, env);
     }
 
     return {
@@ -258,6 +313,47 @@ export default {
         return response;
       }
 
+      // PUBLIC: GET /memory/:user - retrieve user's Gene Key state history
+      if (path.startsWith('/memory/') && method === 'GET') {
+        const userId = path.slice('/memory/'.length);
+        
+        if (!userId || userId.trim() === '') {
+          const response = problemJson(400, 'Bad Request', 'User ID is required', correlationId);
+          logRequest(method, path, 'memory-get', 400, Date.now() - startTime, correlationId, env);
+          return response;
+        }
+
+        if (!env?.MEMORY) {
+          const response = problemJson(503, 'Service Unavailable', 'Memory service not available', correlationId);
+          logRequest(method, path, 'memory-get', 503, Date.now() - startTime, correlationId, env);
+          return response;
+        }
+
+        try {
+          const id = env.MEMORY.idFromName(userId);
+          const memoryObj = env.MEMORY.get(id);
+          const memoryResponse = await memoryObj.fetch('https://dummy/memory');
+          
+          // Forward the response with appropriate headers
+          const responseBody = await memoryResponse.text();
+          const response = new Response(responseBody, {
+            status: memoryResponse.status,
+            headers: {
+              'Content-Type': 'application/json',
+              'x-correlation-id': correlationId,
+              ...corsHeaders()
+            }
+          });
+          logRequest(method, path, 'memory-get', memoryResponse.status, Date.now() - startTime, correlationId, env);
+          return response;
+        } catch (error) {
+          console.error('Memory retrieval error:', error);
+          const response = problemJson(500, 'Internal Server Error', 'Failed to retrieve memory', correlationId);
+          logRequest(method, path, 'memory-get', 500, Date.now() - startTime, correlationId, env);
+          return response;
+        }
+      }
+
       // Default 404 for unmatched routes
       const response = problemJson(404, 'Not Found', 'The requested endpoint was not found', correlationId);
       logRequest(method, path, null, 404, Date.now() - startTime, correlationId, env);
@@ -291,3 +387,6 @@ export class UserState {
     });
   }
 }
+
+// Export MemoryDO for Durable Objects runtime
+export { MemoryDO };
