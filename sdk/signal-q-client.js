@@ -4,7 +4,7 @@
  * 
  * @example
  * const client = new SignalQClient({
- *   baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+ *   baseUrl: 'https://signal-q.me',
  *   token: process.env.SIGNALQ_API_TOKEN
  * });
  * 
@@ -15,7 +15,7 @@ class SignalQClient {
   /**
    * Create a new Signal Q client
    * @param {Object} config - Configuration object
-   * @param {string} config.baseUrl - Base URL for the API (e.g., 'https://signal_q.catnip-pieces1.workers.dev')
+   * @param {string} config.baseUrl - Base URL for the API (e.g., 'https://signal-q.me')
    * @param {string} config.token - Bearer token for authentication
    * @param {number} [config.timeout=30000] - Request timeout in milliseconds
    */

@@ -6,7 +6,7 @@
 set -e
 
 # Environment variables with defaults
-BASE="${BASE:-https://signal_q.catnip-pieces1.workers.dev}"
+BASE="${BASE:-https://signal-q.me}"
 TOKEN="${TOKEN:-}"
 
 # Colors for output

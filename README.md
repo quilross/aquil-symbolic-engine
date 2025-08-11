@@ -11,14 +11,11 @@
 - `POST /actions/list` - List available actions (authenticated)
 - `POST /actions/probe_identity` - Identity probe with analysis (authenticated)
 - `POST /actions/recalibrate_state` - State recalibration (authenticated)  
-- `POST /actions/deploy` - Deployment trigger (authenticated)
+- `POST /actions/trigger_deploy` - Deployment trigger (authenticated)
 - `POST /actions/chat` - Chat with Gene Key classification and memory logging (authenticated)
 
-### Legacy Quarantine
-Legacy classifiers/tools quarantined under `legacy/` and gated by feature flags:
-- `ENABLE_LEGACY_TOOLS=false`
-- `ENABLE_LEGACY_CLASSIFIERS=false`  
-- `ENABLE_LEGACY_AGENTS=false`
+### Legacy Components
+Legacy classifiers and tools have been fully removed after runtime simplification.
 
 ### Memory Anchoring 🧠
 Per-user Gene Key state history persistence via Durable Objects:
@@ -38,7 +35,7 @@ Per-user Gene Key state history persistence via Durable Objects:
 ```
 
 ### GPT Integration
-- **Base URL**: `https://signal_q.catnip-pieces1.workers.dev` (or your custom domain)
+- **Base URL**: `https://signal-q.me` (or your custom domain)
 - **Schema**: Use `/openapi.yaml` endpoint (served live from worker)
 - **Auth**: Bearer token required for `/actions/*` endpoints
 
@@ -54,7 +51,7 @@ Per-user Gene Key state history persistence via Durable Objects:
 2. Add required secrets to GitHub repository settings (see CLOUDFLARE_SETUP.md)
 3. Push to main branch - automatic deployment via GitHub Actions
 4. Get your worker URL from Cloudflare dashboard
-5. Use `https://your-worker.workers.dev/openapi.yaml` in GPT Builder
+5. Use `https://signal-q.me/openapi.yaml` in GPT Builder
 
 ## 📁 **Essential Files**
 ```
@@ -63,13 +60,9 @@ Per-user Gene Key state history persistence via Durable Objects:
   ├── openapi-core.yaml       # Upload this to CustomGPT (canonical)
   ├── config/featureFlags.js  # Legacy feature toggles
   └── wrangler.toml           # Cloudflare config
-/legacy/                      # Quarantined components (Aug 2025)
-  ├── openapi/               # Legacy OpenAPI specs
-  ├── workflows/             # Legacy CI workflows
-  └── README.md              # Rollback instructions
 ```
 
-**API is live at**: https://signal_q.catnip-pieces1.workers.dev ✨
+**API is live at**: https://signal-q.me ✨
 
 **🔥 NEW: Firewall-Safe Automation** - Automatic fallback to local development when Cloudflare endpoints are unreachable. Use `npm run dev:fallback` for zero-config development in restrictive networks.
 
@@ -87,7 +80,7 @@ npx wrangler dev
 
 # 3. Set environment variables for testing (in a new terminal)
 export DEV_BASE="http://127.0.0.1:8787"  # Use the printed URL
-export SIGNALQ_API_TOKEN="dev-placeholder"
+export SIGNALQ_API_TOKEN="test-token"
 
 # 4. Test the public version endpoint (no auth required)
 curl "$DEV_BASE/version"
@@ -109,7 +102,7 @@ Use the JavaScript SDK for easier API interaction:
 const SignalQClient = require('./sdk/signal-q-client.js');
 
 const client = new SignalQClient({
-  baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+  baseUrl: 'https://signal-q.me',
   token: process.env.SIGNALQ_API_TOKEN
 });
 
@@ -125,11 +118,11 @@ console.log(health); // {"status":"healthy","timestamp":"...","worker":"signal_q
 **Curl equivalents:**
 ```bash
 # Version endpoint (no auth)
-curl https://signal_q.catnip-pieces1.workers.dev/version
+curl https://signal-q.me/version
 
 # System health (requires Bearer auth)
 curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-     https://signal_q.catnip-pieces1.workers.dev/actions/system_health
+     https://signal-q.me/actions/system_health
 ```
 
 ### Legacy Endpoint Note
@@ -142,8 +135,8 @@ Test production deployment:
 
 ```bash
 # Set production environment variables
-export SIGNALQ_BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
-export SIGNALQ_API_TOKEN="your-production-token"
+export SIGNALQ_BASE_URL="https://signal-q.me"
+export SIGNALQ_API_TOKEN="prod-token"
 
 # Test public version endpoint
 curl "$SIGNALQ_BASE_URL/version"
@@ -161,7 +154,7 @@ Run the deploy-and-smoke workflow to deploy and verify production:
 3. The workflow will:
    - `npm ci`
    - `wrangler deploy`
-   - `export BASE_URL=https://signal_q.catnip-pieces1.workers.dev`
+   - `export BASE_URL=https://signal-q.me`
    - `curl -sSf "$BASE_URL/version" | jq .`
    - `curl -sSf -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN_PROD" "$BASE_URL/actions/system_health" | tee health.json | jq .`
    - Fail if `.status != "healthy"` (jq check)
@@ -189,8 +182,8 @@ git push origin v2.1.1
 
 Test production deployment locally:
 ```bash
-export BASE=https://signal_q.catnip-pieces1.workers.dev
-export TOKEN=your_production_token_here
+export BASE=https://signal-q.me
+export TOKEN=prod-token
 bash scripts/smoke.sh
 ```
 
@@ -203,8 +196,8 @@ npx wrangler tail --env production
 
 In another terminal, make test requests:
 ```bash
-curl https://signal_q.catnip-pieces1.workers.dev/version
-curl -X POST -H "Authorization: Bearer $TOKEN" https://signal_q.catnip-pieces1.workers.dev/actions/system_health
+curl https://signal-q.me/version
+curl -X POST -H "Authorization: Bearer $TOKEN" https://signal-q.me/actions/system_health
 ```
 3. Select "production" environment
 4. Click "Run workflow"
@@ -219,8 +212,8 @@ git push origin v2.1.1
 
 Run the smoke test script against the production endpoint:
 ```bash
-export SIGNALQ_BASE_URL=https://signal-q-prod.catnip-pieces1.workers.dev
-export SIGNALQ_API_TOKEN=your_production_token_here
+export SIGNALQ_BASE_URL=https://signal-q.me
+export SIGNALQ_API_TOKEN=prod-token
 ./scripts/smoke.sh
 ```
 
@@ -286,7 +279,7 @@ For full automation, deployment, and CI/Codespaces operation, ensure the followi
 - **sparrow.cloudflare.com** - Cloudflare API endpoint
 - **workers.cloudflare.com** - Workers platform endpoint  
 - **registry.npmjs.org** - npm package registry
-- **signal_q.catnip-pieces1.workers.dev** - Production API endpoint
+- **signal-q.me** - Production API endpoint
 
 ### Network Restrictions & Fallbacks
 If these endpoints are blocked, the repository includes intelligent automation:
@@ -348,7 +341,7 @@ See the [Firewall/Network Requirements](#-firewallnetwork-requirements) section 
 
 #### Firewall & Network Considerations
 When using Codespaces, you may encounter firewall restrictions that block access to:
-- `signal_q.catnip-pieces1.workers.dev`
+- `signal-q.me`
 - `workers.cloudflare.com`
 - Other Cloudflare Worker domains
 
@@ -543,7 +536,7 @@ This repository includes intelligent automation for firewall-safe development:
 - **Required domains**: Ensure access to:
   - `workers.cloudflare.com`
   - `sparrow.cloudflare.com` 
-  - `signal_q.catnip-pieces1.workers.dev`
+  - `signal-q.me`
 
 #### Error Response Format
 All API errors return RFC 7807 problem+json format:
@@ -600,7 +593,7 @@ Access via the new `POST /actions/chat` endpoint:
 curl -X POST -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" \
      -d '{"message": "I feel overwhelm and too many directions"}' \
-     https://signal_q.catnip-pieces1.workers.dev/actions/chat
+     https://signal-q.me/actions/chat
 ```
 
 ### Response Format

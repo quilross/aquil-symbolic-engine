@@ -20,7 +20,7 @@ wrangler deploy
 # Test deployment
 echo "🧪 Testing deployment..."
 curl -s -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-     https://signal_q.catnip-pieces1.workers.dev/actions/system_health | jq .status
+     https://signal-q.me/actions/system_health | jq .status
 
 echo "✅ Deploy complete! Your API is live at:"
-echo "   https://signal_q.catnip-pieces1.workers.dev"
+echo "   https://signal-q.me"

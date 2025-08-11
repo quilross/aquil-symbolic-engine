@@ -9,11 +9,11 @@
 ```bash
 # Set API token for user operations
 wrangler secret put SIGNALQ_API_TOKEN
-# Enter: $SIGNALQ_API_TOKEN[your-32-char-production-token]
+# Enter: $SIGNALQ_API_TOKEN[prod-token-32chars]
 
 # Set admin token for administrative operations  
 wrangler secret put SIGNALQ_ADMIN_TOKEN
-# Enter: $SIGNALQ_ADMIN_TOKEN[your-32-char-production-admin-token]
+# Enter: $SIGNALQ_ADMIN_TOKEN[prod-admin-token-32chars]
 
 # Optional: Set build information
 wrangler secret put GIT_SHA
@@ -103,7 +103,7 @@ NODE_ENV=development
 - ✅ `.env.example` is committed to git
 - ❌ `.env` is in `.gitignore` - never commit this!
 - 🔒 Production uses Wrangler secrets, not .env files
-- 🛡️ Dev tokens in .env.example are safe placeholders
+- 🛡️ Dev tokens in .env.example are safe test tokens
 
 ## 🚀 CI/CD Setup
 
@@ -113,11 +113,11 @@ Add these secrets to your repository settings:
 
 ```bash
 # Cloudflare credentials
-CLOUDFLARE_API_TOKEN=your_cloudflare_api_token
-CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_API_TOKEN=cf-api-token
+CLOUDFLARE_ACCOUNT_ID=cf-account-id
 
 # Production tokens (if different from staging)
-SIGNALQ_API_TOKEN_PROD=$SIGNALQ_API_TOKEN[production-token]
+SIGNALQ_API_TOKEN_PROD=$SIGNALQ_API_TOKEN[prod-token]
 SIGNALQ_ADMIN_TOKEN_PROD=$SIGNALQ_ADMIN_TOKEN[production-admin-token]
 ```
 
@@ -176,10 +176,10 @@ vars = { NODE_ENV = "production" }
 ```bash
 # Quick health check
 curl -H "Authorization: Bearer $PROD_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/system/health
+  https://signal-q.me/system/health
 
 # Version check (no auth required)
-curl https://signal_q.catnip-pieces1.workers.dev/version
+curl https://signal-q.me/version
 ```
 
 ### Expected Production Response

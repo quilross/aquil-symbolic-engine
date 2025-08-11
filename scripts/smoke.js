@@ -17,7 +17,7 @@ const getSignalQClient = new Function(sdkCode + '; return SignalQClient;');
 const SignalQClient = getSignalQClient();
 
 // Environment variables with defaults
-const BASE = process.env.BASE || 'https://signal_q.catnip-pieces1.workers.dev';
+const BASE = process.env.BASE || 'https://signal-q.me';
 const TOKEN = process.env.TOKEN || '';
 
 // Colors for output

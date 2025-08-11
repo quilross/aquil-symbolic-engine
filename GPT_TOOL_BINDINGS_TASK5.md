@@ -3,7 +3,7 @@
 ## Task 5: Bind all five actions for GPT under the existing namespace
 
 ### GPT Namespace
-The tools should be added to the existing GPT namespace: `signal_q_catnip_pieces1_workers_dev__jit_plugin`
+The tools should be added to the existing GPT namespace: `signal_q_me__jit_plugin`
 
 ### Required Tool Bindings
 
@@ -94,9 +94,9 @@ Configure these 6 tool bindings in your GPT tool/builder configuration:
   }
   ```
 
-#### 6. `triggerDeploy` - POST /actions/deploy
+#### 6. `triggerDeploy` - POST /actions/trigger_deploy
 - **Method**: POST
-- **Path**: `/actions/deploy`
+- **Path**: `/actions/trigger_deploy`
 - **Content-Type**: application/json
 - **Authentication**: Bearer token (injected by tool system, may require admin token)
 - **Request Body**: `{}` (optional)
@@ -113,13 +113,13 @@ Configure these 6 tool bindings in your GPT tool/builder configuration:
 
 #### Base URL
 ```
-https://signal_q.catnip-pieces1.workers.dev
+https://signal-q.me
 ```
 
 #### Authentication
 - The tool system should inject `Authorization: Bearer {token}` header for all POST endpoints
 - The token should be stored securely by the tool system and not echoed or logged
-- For `/actions/deploy`, an admin token may be required if configured
+- For `/actions/trigger_deploy`, an admin token may be required if configured
 
 #### Error Handling
 All endpoints may return `application/problem+json` errors with:

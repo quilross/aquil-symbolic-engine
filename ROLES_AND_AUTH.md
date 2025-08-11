@@ -69,7 +69,7 @@ X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
 
 **Missing Token:**
 ```bash
-curl https://signal_q.catnip-pieces1.workers.dev/system/health
+curl https://signal-q.me/system/health
 ```
 
 ```json
@@ -86,7 +86,7 @@ curl https://signal_q.catnip-pieces1.workers.dev/system/health
 **Invalid Token:**
 ```bash
 curl -H "Authorization: Bearer invalid_token_123" \
-  https://signal_q.catnip-pieces1.workers.dev/system/health
+  https://signal-q.me/system/health
 ```
 
 ```json
@@ -106,7 +106,7 @@ curl -H "Authorization: Bearer invalid_token_123" \
 ```bash
 curl -X POST \
   -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/admin/reset
+  https://signal-q.me/admin/reset
 ```
 
 ```json
@@ -170,27 +170,27 @@ if (token !== SIGNALQ_ADMIN_TOKEN) {
 ```bash
 # USER token - health check
 curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/system/health
+  https://signal-q.me/system/health
 
 # ADMIN token - reset operation
 curl -X POST \
   -H "Authorization: Bearer $SIGNALQ_ADMIN_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/admin/reset
+  https://signal-q.me/admin/reset
 ```
 
 ### Error Testing
 ```bash
 # Test 401 - no token
-curl https://signal_q.catnip-pieces1.workers.dev/system/health
+curl https://signal-q.me/system/health
 
 # Test 401 - invalid token  
 curl -H "Authorization: Bearer invalid_token" \
-  https://signal_q.catnip-pieces1.workers.dev/system/health
+  https://signal-q.me/system/health
 
 # Test 403 - user token on admin endpoint
 curl -X POST \
   -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/admin/reset
+  https://signal-q.me/admin/reset
 ```
 
 ## 🔍 Correlation ID Tracking
@@ -208,7 +208,7 @@ The SDK automatically handles problem+json errors:
 
 ```javascript
 const client = new SignalQClient({
-  baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+  baseUrl: 'https://signal-q.me',
   token: '$SIGNALQ_API_TOKEN'
 });
 

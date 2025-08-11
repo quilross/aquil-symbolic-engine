@@ -3,10 +3,10 @@ export const openapi = `
 openapi: 3.0.3
 info:
   title: Signalhaven Actions API
-  version: v6.0
+  version: v6.1
   description: This API provides consolidated action invocation for the Signalhaven symbolic engine. All endpoints require Bearer authentication. Use /actions/list to enumerate available actions.
 servers:
-  - url: 'https://signal_q.catnip-pieces1.workers.dev'
+  - url: 'https://signal-q.me'
     description: Cloudflare Worker Production Endpoint
 security:
   - bearerAuth: []
@@ -44,7 +44,7 @@ paths:
                 $ref: '#/components/schemas/SystemHealthResponse'
               example:
                 name: signal-q
-                version: v0
+                version: v6.1
                 status: ok
                 timestamp: '2024-01-01T00:00:00.000Z'
   /memory/{user}:
