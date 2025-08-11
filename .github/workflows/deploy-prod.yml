@@ -45,3 +45,67 @@ jobs:
           set -e
           curl -fsS https://signal-q.me/openapi.yaml -o openapi.yaml
           npx -y @apidevtools/swagger-cli validate openapi.yaml
+
+  readiness-check:
+    needs: smoke
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Post-deploy ingestion readiness summary
+        run: |
+          echo "# 🚀 Post-Deploy Readiness Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Testing Signal Q API endpoints for readiness..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Function to test endpoint and capture result
+          test_endpoint() {
+            local name="$1"
+            local expected_codes="$2"
+            shift 2
+            local cmd=("$@")
+            
+            echo "## $name" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$ ${cmd[*]}" >> $GITHUB_STEP_SUMMARY
+            
+            # Execute curl and capture both output and HTTP status
+            if output=$("${cmd[@]}" -w "HTTP_CODE:%{http_code}" 2>&1); then
+              # Extract HTTP code from output
+              if [[ "$output" =~ HTTP_CODE:([0-9]+)$ ]]; then
+                http_code="${BASH_REMATCH[1]}"
+                response_body="${output%HTTP_CODE:*}"
+              else
+                http_code="000"
+                response_body="$output"
+              fi
+            else
+              http_code="000"
+              response_body="Connection failed"
+            fi
+            
+            echo "HTTP $http_code" >> $GITHUB_STEP_SUMMARY
+            if [[ -n "$response_body" ]]; then
+              echo "$response_body" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            
+            # Check if status code is acceptable
+            if [[ "$expected_codes" == *"$http_code"* ]]; then
+              echo "✅ **Status**: Success (HTTP $http_code)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Status**: Failed (HTTP $http_code, expected: $expected_codes)" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          }
+          
+          # Test all endpoints - using exact curl commands from requirements
+          test_endpoint "Health Check" "200" curl -fsSI https://signal-q.me/system/health
+          test_endpoint "Version Check" "200" curl -fsSI https://signal-q.me/version
+          test_endpoint "OpenAPI Spec" "200" curl -fsSI https://signal-q.me/openapi.yaml
+          test_endpoint "Actions List (OPTIONS)" "204" curl -fsSI -X OPTIONS https://signal-q.me/actions/list
+          test_endpoint "Actions List (POST with Auth)" "200" curl -fsSI -X POST https://signal-q.me/actions/list -H "authorization: Bearer ${{ secrets.API_TOKEN }}" -H "content-type: application/json" -d '{}'
+          
+          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 All readiness checks passed successfully!" >> $GITHUB_STEP_SUMMARY
