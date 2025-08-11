@@ -71,7 +71,11 @@ export default {
       }
 
       if (method === 'GET' && path === '/actions/list') {
-        const res = json({ error: 'Not Found', path }, { status: 404, headers: corsHeaders() });
+        const actions = [
+          { name: 'chat', method: 'POST', path: '/actions/chat', description: 'Send a chat prompt and receive a reply.' },
+          { name: 'probe_identity', method: 'POST', path: '/actions/probe_identity', description: 'Probe identity stability and coherence.' }
+        ];
+        const res = json({ ok: true, actions }, { headers: corsHeaders() });
         res.headers.set('x-correlation-id', cid);
         return res;
       }
