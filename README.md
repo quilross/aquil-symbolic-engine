@@ -8,7 +8,7 @@
 - `GET /version` - Service version and build info (public)
 - `GET /system/health` - System health status (public)
 - `GET /memory/:user` - Retrieve user's Gene Key state history (public)
-- `POST /actions/list` - List available actions (authenticated)
+- `GET /actions/list` - List available actions (authenticated)
 - `POST /actions/probe_identity` - Identity probe with analysis (authenticated)
 - `POST /actions/recalibrate_state` - State recalibration (authenticated)  
 - `POST /actions/trigger_deploy` - Deployment trigger (authenticated)
@@ -57,7 +57,7 @@ Per-user Gene Key state history persistence via Durable Objects:
 ```
 /worker/
   ├── index.js                # Your live API (deployed)
-  ├── openapi-core.yaml       # Upload this to CustomGPT (canonical)
+  ├── src/openapi-core.json   # Upload this to CustomGPT (canonical)
   ├── config/featureFlags.js  # Legacy feature toggles
   └── wrangler.toml           # Cloudflare config
 ```
@@ -89,7 +89,7 @@ curl "$DEV_BASE/version"
 curl "$DEV_BASE/system/health"
 
 # 6. Test authenticated actions (requires Bearer auth)
-curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$DEV_BASE/actions/list"
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$DEV_BASE/actions/list"
 ```
 
 **Note**: Always use the printed URL from wrangler dev output (defaults to http://127.0.0.1:8787).

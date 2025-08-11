@@ -50,7 +50,7 @@ If you get a parse error when importing the OpenAPI spec:
 - Ensure Bearer token format: `Authorization: Bearer <token>`
 - Test with a simple curl command first:
   ```bash
-  curl -X POST -H "Authorization: Bearer test-token" https://signal-q.me/actions/list
+  curl -H "Authorization: Bearer test-token" https://signal-q.me/actions/list
   ```
 
 ### Connection Issues

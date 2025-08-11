@@ -39,10 +39,9 @@ async function smokeTest() {
       }
     },
     {
-      name: 'POST /actions/list with Bearer → 200',
+      name: 'GET /actions/list with Bearer → 200',
       test: async () => {
         const res = await fetch(`${BASE_URL}/actions/list`, {
-          method: 'POST',
           headers: { 'Authorization': `Bearer ${USER_TOKEN}` }
         });
         if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`);

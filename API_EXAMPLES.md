@@ -54,9 +54,8 @@ curl -X POST \
 
 ```bash
 # List all available actions
-curl -X POST \
+curl \
   -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-  -H "Content-Type: application/json" \
   https://signal-q.me/actions/list
 
 # Probe identity

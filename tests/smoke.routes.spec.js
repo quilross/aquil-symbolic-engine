@@ -10,9 +10,9 @@ describe('Routes', () => {
   it('health 200', async () => { const r = await call('/system/health'); expect(r.status).toBe(200) })
   it('version 200', async () => { const r = await call('/version'); expect(r.status).toBe(200) })
   it('spec 200', async () => { const r = await call('/openapi.yaml'); expect(r.status).toBe(200) })
-  it('actions/list requires bearer', async () => { const r = await call('/actions/list', { method:'POST' }); expect(r.status).toBe(401) })
+  it('actions/list requires bearer', async () => { const r = await call('/actions/list'); expect(r.status).toBe(401) })
   it('actions/list 200 with bearer', async () => {
-    const r = await call('/actions/list', { method:'POST', headers: { authorization: 'Bearer test' } });
+    const r = await call('/actions/list', { headers: { authorization: 'Bearer test' } });
     expect(r.status).toBe(200)
   })
 })

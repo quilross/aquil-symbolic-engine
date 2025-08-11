@@ -49,7 +49,7 @@
 - **Namespace**: `signal_q_me__jit_plugin`
 - **Actions Exported**: 
   - `systemHealth` → POST /actions/system_health
-  - `listActions` → POST /actions/list
+  - `listActions` → GET /actions/list
   - `probeIdentity` → POST /actions/probe_identity
   - `recalibrateState` → POST /actions/recalibrate_state
   - `triggerDeploy` → POST /actions/trigger_deploy (admin required)
@@ -67,7 +67,7 @@
 ### JQ Validation Tests (Expected to Pass)
 ```bash
 # Actions list
-curl /actions/list | jq -e '.actions and (.actions|index("system_health")!=null) and (.actions|index("deploy")!=null)'
+curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" /actions/list | jq -e '.actions and (.actions|index("system_health")!=null) and (.actions|index("deploy")!=null)'
 
 # Probe identity  
 curl /actions/probe_identity | jq -e '.analysis and (.analysis.stability|type=="number") and (.analysis.coherence|type=="string") and (.analysis.authenticity|type=="number") and (.analysis.recommendation|type=="string")'

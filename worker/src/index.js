@@ -84,7 +84,7 @@ export default {
           }
         });
       } catch (e) {
-        return problemJson(500, 'Spec Serve Error', e.message || 'Cannot load openapi-core.yaml', cid);
+        return problemJson(500, 'Spec Serve Error', e.message || 'Cannot load openapi-core.json', cid);
       }
     }
 
@@ -122,8 +122,8 @@ export default {
         return problemJson(401, 'Unauthorized', 'Missing or invalid Bearer token.', cid);
       }
       // Minimal list endpoint
-      if (request.method === 'POST' && path === '/actions/list') {
-        const body = JSON.stringify({ actions: ['probe_identity','recalibrate_state','trigger_deploy','list','chat'] });
+      if (request.method === 'GET' && path === '/actions/list') {
+        const body = JSON.stringify({ actions: ['chat','probe_identity'] });
         return withBaseHeaders(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }), cid);
       }
       

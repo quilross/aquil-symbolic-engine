@@ -1,64 +1,27 @@
-name = "signal-q"
-main = "index.js"
-compatibility_date = "2025-08-01"
-routes = []
-account_id = "b07412f2f2389e8b537051bc092f3376"
+name = "signal_q"
+main = "worker/index.js"
+compatibility_date = "2024-12-01"
+workers_dev = false
 
-[observability]
-enabled = true
-
-[[kv_namespaces]]
-binding = "SIGNAL_KV"
-id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
-
-[[durable_objects.bindings]]
-name = "USER_STATE"
-class_name = "UserState"
-
-[[durable_objects.bindings]]
-name = "MEMORY"
-class_name = "MemoryDO"
-
-[[migrations]]
-tag = "v1"
-new_classes = ["UserState"]
-
-[[migrations]]
-tag = "v2"
-new_classes = ["MemoryDO"]
-
-[ai]
-binding = "AI"
-
-[observability.logs]
-enabled = true
+routes = [
+  { pattern = "signal-q.me", custom_domain = true }
+]
 
 [vars]
-APP_VERSION = "v6.1"
-WORKER_NAME = "signal-q"
-USER_TOKEN = "test-token"
-ADMIN_TOKEN = "test-admin-token"
+FALLBACK_APP_VERSION = "v6.1"
+
+[durable_objects]
+bindings = [
+  { name = "MEMORY", class_name = "MemoryDO" }
+]
+
+[[migrations]]
+tag = "v1-memory"
+new_classes = ["MemoryDO"]
 
 [env.production]
-name = "signal-q-prod"
-vars = { NODE_ENV = "production" }
-
-[env.production.kv_namespaces]
-binding = "SIGNAL_KV"
-id = "cb01f3bf664a4feb9a3ec29fd86cd43e"
-
-[[env.production.durable_objects.bindings]]
-name = "USER_STATE"
-class_name = "UserState"
-
-[[env.production.durable_objects.bindings]]
-name = "MEMORY"
-class_name = "MemoryDO"
-
-[env.production.ai]
-binding = "AI"
-
-[env.production.observability.logs]
-enabled = true
-
+[env.production.durable_objects]
+bindings = [
+  { name = "MEMORY", class_name = "MemoryDO" }
+]
 

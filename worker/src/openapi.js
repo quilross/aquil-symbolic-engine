@@ -197,18 +197,12 @@ paths:
         '401':
           description: Unauthorized - Bearer token required
   /actions/list:
-    post:
+    get:
       operationId: listActions
       summary: List all available public actions
       description: Returns a comprehensive list of all available public actions for dynamic discovery by GPT plugins and automation tools.
       security:
         - bearerAuth: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenericInput'
       responses:
         '200':
           description: Array of available public actions
@@ -218,10 +212,8 @@ paths:
                 $ref: '#/components/schemas/ActionsListResponse'
               example:
                 actions:
-                  - list
+                  - chat
                   - probe_identity
-                  - recalibrate_state
-                  - trigger_deploy
         '401':
           description: Unauthorized - Bearer token required
 components:

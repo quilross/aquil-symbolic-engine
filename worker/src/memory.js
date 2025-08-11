@@ -1,57 +1,29 @@
-// Memory Durable Object for storing per-user Gene Key state history
-// Persists conversation symbolic tone progression over time
+function json(data, init = {}) {
+  const headers = new Headers(init.headers || {});
+  headers.set('content-type', 'application/json; charset=utf-8');
+  return new Response(JSON.stringify(data), { ...init, headers });
+}
 
 export class MemoryDO {
   constructor(state, env) {
     this.state = state;
     this.env = env;
   }
-
   async fetch(request) {
     const url = new URL(request.url);
-    const method = request.method;
-
-    try {
-      switch (method) {
-        case 'GET': {
-          // Return the entire memory log as JSON
-          const stored = await this.state.storage.list();
-          const history = Array.from(stored.values());
-          
-          return new Response(JSON.stringify(history, null, 2), {
-            status: 200,
-            headers: {
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*'
-            }
-          });
-        }
-
-        case 'PUT': {
-          // Append a new entry to the memory log
-          try {
-            const entry = await request.json();
-            const timestamp = Date.now();
-            const record = {
-              timestamp,
-              ...entry
-            };
-            
-            // Use timestamp as key for chronological ordering
-            await this.state.storage.put(timestamp.toString(), record);
-            
-            return new Response(null, { status: 204 });
-          } catch (parseError) {
-            return new Response('Invalid JSON body', { status: 400 });
-          }
-        }
-
-        default:
-          return new Response('Method not allowed', { status: 405 });
-      }
-    } catch (error) {
-      console.error('MemoryDO error:', error);
-      return new Response('Internal server error', { status: 500 });
+    const method = request.method.toUpperCase();
+    if (method === 'POST' && url.pathname === '/append') {
+      const body = await request.json().catch(() => ({}));
+      const entry = { ...body, ts: Date.now() };
+      await this.state.storage.put(`m:${entry.user}:${entry.ts}`, entry);
+      return new Response(null, { status: 204 });
     }
+    if (method === 'GET' && url.pathname.startsWith('/read/')) {
+      const user = url.pathname.split('/read/')[1];
+      const list = await this.state.storage.list({ prefix: `m:${user}:` });
+      const items = [...list.values()].sort((a,b) => a.ts - b.ts);
+      return json({ user, items });
+    }
+    return new Response('Not Found', { status: 404 });
   }
 }
