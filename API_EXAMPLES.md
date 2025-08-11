@@ -6,7 +6,7 @@
 
 ```bash
 # Get version information
-curl https://signal_q.catnip-pieces1.workers.dev/version
+curl https://signal-q.me/version
 
 # Expected response:
 {
@@ -22,7 +22,7 @@ curl https://signal_q.catnip-pieces1.workers.dev/version
 ```bash
 # Health check with USER token
 curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/system/health
+  https://signal-q.me/system/health
 
 # Expected response:
 {
@@ -40,7 +40,7 @@ curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
 # Admin reset with ADMIN token
 curl -X POST \
   -H "Authorization: Bearer $SIGNALQ_ADMIN_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/admin/reset
+  https://signal-q.me/admin/reset
 
 # Expected response:
 {
@@ -57,14 +57,14 @@ curl -X POST \
 curl -X POST \
   -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   -H "Content-Type: application/json" \
-  https://signal_q.catnip-pieces1.workers.dev/actions/list
+  https://signal-q.me/actions/list
 
 # Probe identity
 curl -X POST \
   -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"context": "testing"}' \
-  https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity
+  https://signal-q.me/actions/probe_identity
 ```
 
 ## 🔧 JavaScript SDK Examples
@@ -77,7 +77,7 @@ const SignalQClient = require('./sdk/signal-q-client.js');
 
 // Create client instance
 const client = new SignalQClient({
-  baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+  baseUrl: 'https://signal-q.me',
   token: process.env.SIGNALQ_API_TOKEN
 });
 
@@ -107,7 +107,7 @@ async function basicExample() {
 ```javascript
 async function advancedExample() {
   const client = new SignalQClient({
-    baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+    baseUrl: 'https://signal-q.me',
     token: process.env.SIGNALQ_API_TOKEN,
     timeout: 10000 // 10 second timeout
   });
@@ -156,7 +156,7 @@ async function advancedExample() {
     <script>
         async function testAPI() {
             const client = new SignalQClient({
-                baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+                baseUrl: 'https://signal-q.me',
                 token: '$SIGNALQ_API_TOKEN'
             });
             
@@ -192,7 +192,7 @@ async function advancedExample() {
 ```javascript
 async function errorHandlingExample() {
   const client = new SignalQClient({
-    baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+    baseUrl: 'https://signal-q.me',
     token: 'invalid_token'
   });
 
@@ -256,7 +256,7 @@ class SignalQClient:
 # Usage example
 def main():
     client = SignalQClient(
-        base_url='https://signal_q.catnip-pieces1.workers.dev',
+        base_url='https://signal-q.me',
         token='$SIGNALQ_API_TOKEN'
     )
     
@@ -295,7 +295,7 @@ if __name__ == '__main__':
 #!/bin/bash
 # health-check.sh - Comprehensive API health verification
 
-BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
+BASE_URL="https://signal-q.me"
 TOKEN="$SIGNALQ_API_TOKEN"
 
 echo "🏥 Signal Q Health Check"
@@ -349,7 +349,7 @@ echo -e "\n🎉 All health checks passed!"
 #!/bin/bash
 # batch-operations.sh - Perform multiple API operations
 
-BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
+BASE_URL="https://signal-q.me"
 TOKEN="$SIGNALQ_API_TOKEN"
 
 echo "🔄 Batch Operations"

@@ -7,7 +7,7 @@
 | Symptom | Likely Cause | Test | Fix |
 |---------|-------------|------|-----|
 | `ECONNREFUSED` connecting to localhost:8788 | Dev server not running | `curl localhost:8788/version` | `npm run dev:fallback` |
-| Timeout connecting to *.workers.dev | Firewall/proxy blocking | `curl -m 5 https://signal_q.catnip-pieces1.workers.dev/version` | Use `npm run dev:fallback` or configure proxy |
+| Timeout connecting to *.workers.dev | Firewall/proxy blocking | `curl -m 5 https://signal-q.me/version` | Use `npm run dev:fallback` or configure proxy |
 | Port 8788 already in use | Another process using port | `lsof -i :8788` | Test runner auto-detects available port |
 | Can't reach Cloudflare endpoints | Corporate firewall | `curl -m 5 https://sparrow.cloudflare.com` | Use local development mode |
 
@@ -94,7 +94,7 @@
 2. **Test Health Endpoint**
    ```bash
    curl -H "Authorization: Bearer $TOKEN" \
-     https://signal_q.catnip-pieces1.workers.dev/system/health
+     https://signal-q.me/system/health
    ```
 
 3. **Check Recent Deployments**
@@ -117,7 +117,7 @@
 2. **Test with Known Good Token**
    ```bash
    curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-     https://signal_q.catnip-pieces1.workers.dev/system/health
+     https://signal-q.me/system/health
    ```
 
 3. **Reset Secrets if Compromised**
@@ -138,14 +138,14 @@
    ```bash
    curl -H "X-User-Id: test-recovery-$(date +%s)" \
      -H "Authorization: Bearer $TOKEN" \
-     https://signal_q.catnip-pieces1.workers.dev/identity-nodes
+     https://signal-q.me/identity-nodes
    ```
 
 3. **Admin Reset (Last Resort)**
    ```bash
    curl -X POST \
      -H "Authorization: Bearer $ADMIN_TOKEN" \
-     https://signal_q.catnip-pieces1.workers.dev/admin/reset
+     https://signal-q.me/admin/reset
    ```
 
 ## 🔍 Diagnostic Commands
@@ -155,7 +155,7 @@
 #!/bin/bash
 # comprehensive-health-check.sh
 
-BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
+BASE_URL="https://signal-q.me"
 TOKEN="$SIGNALQ_API_TOKEN"
 
 echo "🔍 Signal Q Health Diagnostic"
@@ -185,7 +185,7 @@ echo "🌐 Testing network connectivity..."
 
 # Test basic connectivity
 echo "1. Basic connectivity:"
-curl -m 5 -s https://signal_q.catnip-pieces1.workers.dev/version && echo "✅ Production accessible" || echo "❌ Production blocked"
+curl -m 5 -s https://signal-q.me/version && echo "✅ Production accessible" || echo "❌ Production blocked"
 
 # Test Cloudflare infrastructure  
 echo "2. Cloudflare endpoints:"
@@ -233,7 +233,7 @@ echo "🏁 Validation complete"
 ### CORS Problems
 ```javascript
 // Test CORS in browser
-fetch('https://signal_q.catnip-pieces1.workers.dev/version')
+fetch('https://signal-q.me/version')
   .then(r => r.json())
   .then(console.log)
   .catch(console.error);
@@ -243,7 +243,7 @@ fetch('https://signal_q.catnip-pieces1.workers.dev/version')
 ```javascript
 // Debug SDK connection
 const client = new SignalQClient({
-  baseUrl: 'https://signal_q.catnip-pieces1.workers.dev',
+  baseUrl: 'https://signal-q.me',
   token: '$SIGNALQ_API_TOKEN'
 });
 

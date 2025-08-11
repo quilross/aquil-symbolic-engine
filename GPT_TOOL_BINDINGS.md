@@ -1,16 +1,16 @@
 # Signal Q GPT Tool Bindings
 
-This document defines the GPT tool bindings for all Signal Q actions. These should be configured in the GPT tool namespace `signal_q_catnip_pieces1_workers_dev__jit_plugin`.
+This document defines the GPT tool bindings for all Signal Q actions. These should be configured in the GPT tool namespace `signal_q_me__jit_plugin`.
 
 ## Tool Definitions
 
 ### 1. Version Tool (No Auth)
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.version`
+**Tool Name**: `signal_q_me__jit_plugin.version`
 
 ```json
 {
   "method": "GET",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/version",
+  "url": "https://signal-q.me/version",
   "headers": {
     "Content-Type": "application/json"
   },
@@ -25,12 +25,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 2. System Health 
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.systemHealth`
+**Tool Name**: `signal_q_me__jit_plugin.systemHealth`
 
 ```json
 {
   "method": "POST", 
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/system_health",
+  "url": "https://signal-q.me/actions/system_health",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -48,12 +48,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 3. List Actions
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.listActions`
+**Tool Name**: `signal_q_me__jit_plugin.listActions`
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/list", 
+  "url": "https://signal-q.me/actions/list", 
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -68,12 +68,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 4. Probe Identity
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.probeIdentity`
+**Tool Name**: `signal_q_me__jit_plugin.probeIdentity`
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/probe_identity",
+  "url": "https://signal-q.me/actions/probe_identity",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -95,12 +95,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 5. Recalibrate State
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.recalibrateState`
+**Tool Name**: `signal_q_me__jit_plugin.recalibrateState`
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/recalibrate_state",
+  "url": "https://signal-q.me/actions/recalibrate_state",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
     "Content-Type": "application/json"
@@ -118,12 +118,12 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
 ```
 
 ### 6. Trigger Deploy (Admin Required)
-**Tool Name**: `signal_q_catnip_pieces1_workers_dev__jit_plugin.triggerDeploy`
+**Tool Name**: `signal_q_me__jit_plugin.triggerDeploy`
 
 ```json
 {
   "method": "POST",
-  "url": "https://signal_q.catnip-pieces1.workers.dev/actions/deploy",
+  "url": "https://signal-q.me/actions/trigger_deploy",
   "headers": {
     "Authorization": "Bearer {SIGNALQ_ADMIN_TOKEN}",
     "Content-Type": "application/json"
@@ -166,13 +166,13 @@ You can test these bindings manually:
 
 ```bash
 # Test version (no auth)
-curl https://signal_q.catnip-pieces1.workers.dev/version
+curl https://signal-q.me/version
 
 # Test system health
 curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/actions/system_health
+  https://signal-q.me/actions/system_health
 
 # Test deploy (may require admin token)
 curl -X POST -H "Authorization: Bearer $SIGNALQ_ADMIN_TOKEN" \
-  https://signal_q.catnip-pieces1.workers.dev/actions/deploy
+  https://signal-q.me/actions/trigger_deploy
 ```

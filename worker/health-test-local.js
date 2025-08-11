@@ -6,8 +6,8 @@
  */
 
 const BASE_URL = 'http://localhost:8788';
-const USER_TOKEN = 'dev-placeholder';
-const ADMIN_TOKEN = 'dev-admin-placeholder';
+const USER_TOKEN = 'test-token';
+const ADMIN_TOKEN = 'test-admin-token';
 
 console.log('🏥 Health Endpoint Test Suite (Local Dev Server)\n');
 console.log(`🌐 API Base: ${BASE_URL}`);

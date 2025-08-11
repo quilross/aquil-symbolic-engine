@@ -78,8 +78,8 @@ const EXCLUDE_PATTERNS = [
 const WHITELIST_PATTERNS = [
   'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h', // Dev token from .env.example
   'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2', // Dev admin token from .env.example
-  'your-api-token-here',
-  'your-account-id-here',
+  'sample-api-token',
+  'sample-account-id',
   'example-key-123',
   'test-token-456'
 ];

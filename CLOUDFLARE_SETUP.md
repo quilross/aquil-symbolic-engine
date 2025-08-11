@@ -38,8 +38,8 @@ Set up the following secrets in your GitHub repository:
 |-------------|-------|-------------|
 | `CLOUDFLARE_API_TOKEN` | Your API token from step 1 | For Wrangler authentication |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Account ID | Found in Cloudflare dashboard |
-| `SIGNALQ_API_TOKEN_PROD` | `sq_live_<random>` | Production user API token |
-| `SIGNALQ_ADMIN_TOKEN_PROD` | `sq_admin_<random>` | Production admin API token |
+| `SIGNALQ_API_TOKEN_PROD` | `sq_live_random` | Production user API token |
+| `SIGNALQ_ADMIN_TOKEN_PROD` | `sq_admin_random` | Production admin API token |
 
 ### Generate Secure Tokens
 Use these commands to generate secure tokens:
@@ -54,7 +54,7 @@ echo "sq_admin_$(openssl rand -hex 20)"
 ## 3. Domain Configuration (Optional)
 
 ### Option A: Use Workers.dev Subdomain (Easiest)
-Your API will be available at: `https://signal-q.your-subdomain.workers.dev`
+Your API will be available at: `https://signal-q.me`
 - No additional setup required
 - Ready to use immediately after deployment
 
@@ -72,7 +72,7 @@ Your API will be available at: `https://signal-q.your-subdomain.workers.dev`
 2. Click on your deployed worker
 3. Go to Settings → Triggers
 4. Click "Add Custom Domain"
-5. Enter your subdomain (e.g., `api.yourdomain.com`)
+5. Enter your subdomain (e.g., `signal-q.me`)
 6. Save the configuration
 
 #### SSL/TLS Settings
@@ -143,8 +143,8 @@ wrangler secret put SIGNALQ_ADMIN_TOKEN
 
 ### OpenAPI Specification URL
 Use your deployed worker's OpenAPI endpoint:
-- **Production**: `https://your-worker.workers.dev/openapi.yaml`
-- **Custom Domain**: `https://api.yourdomain.com/openapi.yaml`
+- **Production**: `https://signal-q.me/openapi.yaml`
+- **Custom Domain**: `https://signal-q.me/openapi.yaml`
 
 ### GPT Configuration
 1. Go to https://chat.openai.com/gpts/editor
@@ -159,19 +159,19 @@ Use your deployed worker's OpenAPI endpoint:
 ### Test Endpoints
 ```bash
 # Health check (public)
-curl https://your-worker.workers.dev/system/health
+curl https://signal-q.me/system/health
 
 # Version info (public)  
-curl https://your-worker.workers.dev/version
+curl https://signal-q.me/version
 
 # Chat with Gene Keys (authenticated)
-curl -X POST https://your-worker.workers.dev/actions/chat \
+curl -X POST https://signal-q.me/actions/chat \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"message": "I feel overwhelmed", "user": "test_user"}'
 
 # Memory retrieval (public)
-curl https://your-worker.workers.dev/memory/test_user
+curl https://signal-q.me/memory/test_user
 ```
 
 ## 8. Monitoring & Troubleshooting

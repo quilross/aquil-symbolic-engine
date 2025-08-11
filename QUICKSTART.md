@@ -35,8 +35,8 @@ Test the live production API:
 
 ```bash
 # 1. Set environment variables (5 seconds)
-export BASE_URL="https://signal_q.catnip-pieces1.workers.dev"
-export SIGNALQ_API_TOKEN="your_production_token_here"
+export BASE_URL="https://signal-q.me"
+export SIGNALQ_API_TOKEN="prod-token"
 
 # 2. Test health endpoint (10 seconds)
 curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" "$BASE_URL/system/health"
@@ -127,7 +127,7 @@ npm run validate  # Security scan + dependency audit
 curl http://localhost:8788/version
 
 # Test production (no auth required)
-curl https://signal_q.catnip-pieces1.workers.dev/version
+curl https://signal-q.me/version
 ```
 
 ## 📚 Next Steps

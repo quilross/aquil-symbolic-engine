@@ -25,7 +25,7 @@ function demoAPI() {
   console.log('🚀 Signal Q API Demo (Manual Testing)\n');
   
   const BASE_URL = 'http://localhost:8788';
-  const TOKEN = 'dev-placeholder';
+  const TOKEN = 'test-token';
   
   let success = 0;
   let total = 0;

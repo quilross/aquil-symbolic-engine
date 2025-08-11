@@ -36,8 +36,8 @@ enabled = true
 [vars]
 APP_VERSION = "v6.1"
 WORKER_NAME = "signal-q"
-USER_TOKEN = "dev-placeholder"
-ADMIN_TOKEN = "dev-placeholder"
+USER_TOKEN = "test-token"
+ADMIN_TOKEN = "test-admin-token"
 
 [env.production]
 name = "signal-q-prod"

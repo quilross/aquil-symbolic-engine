@@ -46,21 +46,21 @@
 ### Task 7: GPT Tool Binding
 - **Status**: ✅ Complete
 - **Documentation**: `GPT_TOOL_BINDINGS.md`
-- **Namespace**: `signal_q_catnip_pieces1_workers_dev__jit_plugin`
+- **Namespace**: `signal_q_me__jit_plugin`
 - **Actions Exported**: 
   - `systemHealth` → POST /actions/system_health
   - `listActions` → POST /actions/list
   - `probeIdentity` → POST /actions/probe_identity
   - `recalibrateState` → POST /actions/recalibrate_state
-  - `triggerDeploy` → POST /actions/deploy (admin required)
+  - `triggerDeploy` → POST /actions/trigger_deploy (admin required)
   - `version` → GET /version (no auth)
 
 ### Task 8: README Standardization
 - **Status**: ✅ Complete
 - **Token Cleanup**: All `sq_live_*` → `$SIGNALQ_API_TOKEN`, `sq_admin_*` → `$SIGNALQ_ADMIN_TOKEN`
-- **Production URL**: Standardized to `https://signal_q.catnip-pieces1.workers.dev`
+- **Production URL**: Standardized to `https://signal-q.me`
 - **Legacy Note**: Added deprecation notice for GET /system/health
-- **Codespaces Quickstart**: Updated with proper placeholder usage
+- **Codespaces Quickstart**: Updated with proper test token usage
 
 ## 🔍 Validation Test Results
 
@@ -76,7 +76,7 @@ curl /actions/probe_identity | jq -e '.analysis and (.analysis.stability|type=="
 curl /actions/recalibrate_state | jq -e '.state=="recalibrated" and .identity_key and .dominant_emotion and .timestamp'
 
 # Deploy action
-curl /actions/deploy | jq -e '.deployment=="triggered" and .timestamp'
+curl /actions/trigger_deploy | jq -e '.deployment=="triggered" and .timestamp'
 
 # Version endpoint
 curl /version | jq -e '.version and .gitSha and .buildTime and .environment'
@@ -91,7 +91,7 @@ npx swagger-cli validate worker/src/openapi-core.json
 ### Token Cleanup Verification
 ```bash
 grep -r "sq_live_\|sq_admin_" *.md
-# ✅ No matches found - all tokens replaced with placeholders
+# ✅ No matches found - all tokens replaced with test tokens
 ```
 
 ### Local Testing Results
@@ -107,7 +107,7 @@ curl -X POST -H "Authorization: Bearer invalid" http://localhost:8789/actions/sy
 
 **All acceptance criteria met:**
 - ✅ All workflows will be green (preview+prod validation, uptime, OpenAPI)
-- ✅ All five actions callable by GPT via signal_q_catnip_pieces1_workers_dev__jit_plugin namespace
+- ✅ All five actions callable by GPT via signal_q_me__jit_plugin namespace
 - ✅ Zero manual validation required from maintainer
 - ✅ Complete automation from CI to uptime monitoring to GPT integration
 

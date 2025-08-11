@@ -9,7 +9,7 @@ info:
 
 # ── WHERE THE GPT WILL CALL ─────────────────────────────────────────────
 servers:
-  - url: https://c.catnip-pieces1.workers.dev/v1            # ← put YOUR worker sub-domain here
+  - url: https://signal-q.me/v1            # Signal Q Worker endpoint
     description: Cloudflare Worker (token-gated)
 
 # ── GLOBAL SECURITY (Bearer token) ─────────────────────────────────────
@@ -349,3 +349,4 @@ paths:
       responses:
         '200':
           description: Ritual action executed
+

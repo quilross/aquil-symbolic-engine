@@ -16,7 +16,7 @@ async function demoSDK() {
   // Create client instance
   const client = new SignalQClient({
     baseUrl: process.env.SIGNALQ_BASE_URL || 'http://localhost:8788', // Use local dev server
-    token: process.env.SIGNALQ_API_TOKEN || 'dev-placeholder',
+    token: process.env.SIGNALQ_API_TOKEN || 'test-token',
     timeout: 10000
   });
 

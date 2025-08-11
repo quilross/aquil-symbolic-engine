@@ -3,8 +3,8 @@
 // Signal Q API Testing Script for GPT Integration
 // This script helps test your Signal Q deployment
 
-const API_BASE = 'https://signal_q.catnip-pieces1.workers.dev';
-const API_TOKEN = process.env.SIGNALQ_API_TOKEN || 'dev-placeholder';
+const API_BASE = 'https://signal-q.me';
+const API_TOKEN = process.env.SIGNALQ_API_TOKEN || 'test-token';
 
 async function makeRequest(endpoint, method = 'GET', body = null) {
   const url = `${API_BASE}${endpoint}`;
