@@ -1,6 +1,5 @@
 # Signal Q Operations Guide
 
-
 Signal Q is a Cloudflare Worker that exposes a minimal API for version info, health checks, actions, and per-user memory storage. This repository holds all code and specs needed to develop, deploy, and operate the service.
 
 ## Quickstart
@@ -37,3 +36,5 @@ Signal Q is a Cloudflare Worker that exposes a minimal API for version info, hea
 - 401 errors: missing or wrong Bearer token
 - Durable Object migration errors: check binding `MEMORY` and migration tag `v1-memory`
 - CORS: verify OPTIONS preflight allows origin, headers, and methods
+- Replicate GPT Actions ingestion: `SIGNALQ_API_TOKEN=... node scripts/forensics.mjs`
+
