@@ -1,0 +1,43 @@
+name: Deploy Worker
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+        if: ${{ hashFiles('package-lock.json') != '' }}
+      - name: Wrangler Auth
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; fi
+          echo "Auth OK"
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      - name: Smoke tests
+        run: |
+          set -e
+          curl -sSf https://signal-q.me/system/health | jq .
+          curl -sSf https://signal-q.me/version | jq .
+          curl -sSf https://signal-q.me/openapi.yaml > /dev/null
+          curl -sSf -H "Authorization: Bearer $SIGNALQ_API_TOKEN" https://signal-q.me/actions/list | jq .
+        env:
+          SIGNALQ_API_TOKEN: ${{ secrets.SIGNALQ_API_TOKEN }}
