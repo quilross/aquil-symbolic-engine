@@ -37,3 +37,4 @@ Signal Q is a Cloudflare Worker that exposes a minimal API for version info, hea
 - Durable Object migration errors: check binding `MEMORY` and migration tag `v1-memory`
 - CORS: verify OPTIONS preflight allows origin, headers, and methods
 - Replicate GPT Actions ingestion: `SIGNALQ_API_TOKEN=... node scripts/forensics.mjs`
+
