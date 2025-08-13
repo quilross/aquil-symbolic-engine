@@ -1,0 +1,24 @@
+{
+  "name": "signalhaven-worker",
+  "version": "1.0.1",
+  "private": true,
+  "type": "module",
+  "module": "index.ts",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "smoke": "bash ../scripts/smoke.sh",
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240729.0",
+    "typescript": "^5.5.4",
+    "wrangler": "^3.80.0",
+    "@types/uuid": "^9.0.7"
+  },
+  "dependencies": {
+    "itty-router": "^4.0.23",
+    "uuid": "^9.0.1",
+    "zod": "^3.23.8"
+  }
+}

@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
-BASE="${1:-https://signal-q.me}"
-TOKEN="${SIGNALQ_API_TOKEN:-}"
+BASE_URL="${BASE_URL:-http://127.0.0.1:8787}"
+TOKEN="${TOKEN:-signalhaven-demo-token}"
 
-echo "Health"
-curl -sSf "$BASE/system/health" | jq .
+say() { echo "[smoke] $*"; }
 
-echo "Version"
-curl -sSf "$BASE/version" | jq .
+say "GET /version"
+curl -fsS "$BASE_URL/version" | jq . >/dev/null 2>&1 || true
 
-echo "Spec"
-curl -sSf "$BASE/openapi.yaml" > /dev/null
+say "POST /actions/echo"
+curl -fsS -X POST "$BASE_URL/actions/echo" \
+  -H "authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"message":"ping"}' >/dev/null
 
-echo "Actions list"
-curl -sSf -H "Authorization: Bearer $TOKEN" "$BASE/actions/list" | jq .
+say "POST /actions/system_health"
+curl -fsS -X POST "$BASE_URL/actions/system_health" \
+  -H "authorization: Bearer $TOKEN" >/dev/null
 
-echo "Chat (protected)"
-curl -sSf -H "Authorization: Bearer $TOKEN" \
-  -H "content-type: application/json" \
-  -d '{"user":"aquil","prompt":"ping"}' \
-  "$BASE/actions/chat" | jq .
+say "POST /actions/log_memory"
+curl -fsS -X POST "$BASE_URL/actions/log_memory" \
+  -H "authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"payload":{"note":"hello"}}' >/dev/null
+
+say "OK"

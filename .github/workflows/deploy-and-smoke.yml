@@ -1,0 +1,64 @@
+name: Deploy and Smoke
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ensure scripts are executable
+        run: |
+          chmod +x ../scripts/*.sh || true
+      - name: Check for merge-conflict markers (fail-fast)
+        run: |
+          ../scripts/check-merge-markers.sh
+      - name: Install deps
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Launch local worker
+        run: |
+          nohup npx wrangler dev --local > /tmp/w.out 2>&1 &
+          echo $! > /tmp/w.pid
+          sleep 4
+      - name: Smoke tests
+        run: |
+          BASE_URL=http://127.0.0.1:8787 TOKEN=signalhaven-demo-token bash ../scripts/smoke.sh
+      - name: Teardown
+        if: always()
+        run: |
+          kill $(cat /tmp/w.pid) || true
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    if: ${{ secrets.CF_API_TOKEN != '' && secrets.CF_ACCOUNT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install deps
+        run: npm ci
+      - name: Write Wrangler config & lock CORS for prod
+        run: |
+          echo "account_id = \"${{ secrets.CF_ACCOUNT_ID }}\"" >> wrangler.toml
+          sed -i 's/AUTH_DISABLED = \"true\"/AUTH_DISABLED = \"false\"/' wrangler.toml
+          echo "ADMIN_TOKENS = \"${{ secrets.ADMIN_TOKENS }}\"" >> wrangler.toml
+          echo "CORS_ORIGIN = \"https://chat.openai.com\"" >> wrangler.toml
+      - name: Deploy via Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: npx wrangler deploy

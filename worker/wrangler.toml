@@ -1,29 +1,18 @@
-name = "signal_q"
-main = "worker/index.js"
-
-compatibility_date = "2025-08-01"
-
-workers_dev = false
-
-routes = [
-  { pattern = "signal-q.me", custom_domain = true }
-]
+name = "signalhaven-worker"
+main = "index.ts"
+compatibility_date = "2024-08-01"
 
 [vars]
-FALLBACK_APP_VERSION = "v6.1"
+AUTH_DISABLED = "true"
+ADMIN_TOKENS = "signalhaven-demo-token"
+BASE_URL = "http://127.0.0.1:8787"
+CORS_ORIGIN = "*"
 
 [durable_objects]
 bindings = [
-  { name = "MEMORY", class_name = "MemoryDO" }
+  { name = "MEMORY_DO", class_name = "MemoryDO" }
 ]
 
 [[migrations]]
-tag = "v1-memory"
+tag = "v1"
 new_classes = ["MemoryDO"]
-
-[env.production]
-[env.production.durable_objects]
-bindings = [
-  { name = "MEMORY", class_name = "MemoryDO" }
-]
-
