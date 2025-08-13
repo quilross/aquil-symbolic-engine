@@ -88,4 +88,4 @@ router.get('/memory/:id', async (req, env: Env) => { const a = await requireAuth
 router.get('/openapi.yaml', () => yaml(OPENAPI_YAML))
 router.all('*', () => problem(404, 'Not Found'))
 
-export default { async fetch(request: Request, env: Env, ctx: ExecutionContext) { try { const res = await router.handle(request, env, ctx); if (!res) return problem(404, 'Not Found'); return withCors(env, res) } catch (err: any) { const cid = uuidv4(); return problem(500, 'Internal Server Error', String(err?.message || err), cid) } } }
+export default { async fetch(request: Request, env: Env, ctx: ExecutionContext) { try { const res = await router.handle(request, env, ctx); if (!res) return problem(404, 'Not Found'); return withCors(env, res) } catch (err: any) { const cid = uuidv4(); console.error('Unhandled error:', err); return problem(500, 'Internal Server Error', 'An unexpected error occurred', cid) } } }
