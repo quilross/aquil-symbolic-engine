@@ -32,7 +32,7 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
   "method": "POST", 
   "url": "https://signal-q.me/actions/system_health",
   "headers": {
-    "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
+    "Authorization": "Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h",
     "Content-Type": "application/json"
   },
   "body": {},
@@ -55,7 +55,7 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
   "method": "POST",
   "url": "https://signal-q.me/actions/list", 
   "headers": {
-    "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
+    "Authorization": "Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h",
     "Content-Type": "application/json"
   },
   "body": {},
@@ -75,7 +75,7 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
   "method": "POST",
   "url": "https://signal-q.me/actions/probe_identity",
   "headers": {
-    "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
+    "Authorization": "Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h",
     "Content-Type": "application/json"
   }, 
   "body": {},
@@ -102,7 +102,7 @@ This document defines the GPT tool bindings for all Signal Q actions. These shou
   "method": "POST",
   "url": "https://signal-q.me/actions/recalibrate_state",
   "headers": {
-    "Authorization": "Bearer {SIGNALQ_API_TOKEN}",
+    "Authorization": "Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h",
     "Content-Type": "application/json"
   },
   "body": {},
@@ -157,7 +157,7 @@ For error responses, look for the correlationId field to help with debugging.
 ## Environment Variables
 
 The GPT runtime should inject these tokens from secrets:
-- `{SIGNALQ_API_TOKEN}` - For regular user actions
+- `sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h` - For regular user actions
 - `{SIGNALQ_ADMIN_TOKEN}` - For admin actions like deploy
 
 ## Testing Tools

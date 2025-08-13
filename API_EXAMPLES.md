@@ -21,7 +21,7 @@ curl https://signal-q.me/version
 
 ```bash
 # Health check with USER token
-curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+curl -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   https://signal-q.me/system/health
 
 # Expected response:
@@ -55,13 +55,13 @@ curl -X POST \
 ```bash
 # List all available actions
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   -H "Content-Type: application/json" \
   https://signal-q.me/actions/list
 
 # Probe identity
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+  -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" \
   -H "Content-Type: application/json" \
   -d '{"context": "testing"}' \
   https://signal-q.me/actions/probe_identity
@@ -78,7 +78,7 @@ const SignalQClient = require('./sdk/signal-q-client.js');
 // Create client instance
 const client = new SignalQClient({
   baseUrl: 'https://signal-q.me',
-  token: process.env.SIGNALQ_API_TOKEN
+  token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
 });
 
 // Basic operations
@@ -108,7 +108,7 @@ async function basicExample() {
 async function advancedExample() {
   const client = new SignalQClient({
     baseUrl: 'https://signal-q.me',
-    token: process.env.SIGNALQ_API_TOKEN,
+    token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h',
     timeout: 10000 // 10 second timeout
   });
 
@@ -157,7 +157,7 @@ async function advancedExample() {
         async function testAPI() {
             const client = new SignalQClient({
                 baseUrl: 'https://signal-q.me',
-                token: '$SIGNALQ_API_TOKEN'
+                token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
             });
             
             const output = document.getElementById('output');
@@ -257,7 +257,7 @@ class SignalQClient:
 def main():
     client = SignalQClient(
         base_url='https://signal-q.me',
-        token='$SIGNALQ_API_TOKEN'
+        token='sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
     )
     
     try:
@@ -296,7 +296,7 @@ if __name__ == '__main__':
 # health-check.sh - Comprehensive API health verification
 
 BASE_URL="https://signal-q.me"
-TOKEN="$SIGNALQ_API_TOKEN"
+TOKEN="sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
 
 echo "🏥 Signal Q Health Check"
 echo "======================="
@@ -350,7 +350,7 @@ echo -e "\n🎉 All health checks passed!"
 # batch-operations.sh - Perform multiple API operations
 
 BASE_URL="https://signal-q.me"
-TOKEN="$SIGNALQ_API_TOKEN"
+TOKEN="sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h"
 
 echo "🔄 Batch Operations"
 echo "=================="
@@ -395,7 +395,7 @@ describe('Signal Q API', () => {
   beforeEach(() => {
     client = new SignalQClient({
       baseUrl: process.env.TEST_BASE_URL || 'http://localhost:8788',
-      token: '$SIGNALQ_API_TOKEN'
+      token: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h'
     });
   });
 
