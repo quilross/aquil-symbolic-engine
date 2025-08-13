@@ -6,7 +6,7 @@
 ## Authentication
 - Type: API Key (Bearer)
 - Header: `Authorization`
-- Value: `Bearer {{SIGNALQ_API_TOKEN}}`
+- Value: `Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h`
 
 ## Test Sequence
 1. `GET /system/health`
