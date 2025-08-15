@@ -58,7 +58,7 @@ function demoAPI() {
     console.log('   const health = await client.health();');
   } else {
     console.log('❌ Some tests failed. Make sure the dev server is running:');
-    console.log('   npm run dev:fallback');
+    console.log('   npm run dev');
   }
 }
 
@@ -80,6 +80,6 @@ try {
     });
   } catch (error) {
     console.log('❌ Could not start dev server automatically');
-    console.log('📝 Please run manually: npm run dev:fallback');
+    console.log('📝 Please run manually: npm run dev');
   }
 }
