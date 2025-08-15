@@ -82,7 +82,7 @@ async function testCloudflareConnectivity() {
  * @param {string[]} args - Command line arguments
  * @param {boolean} useLocal - Whether to use local mode
  */
-function runWrangler(args, useLocal = false) {
+function runWrangler(args, useLocal = false, isRetry = false) {
   const command = args[0] || 'dev';
   let wranglerArgs = [command];
 
@@ -100,9 +100,16 @@ function runWrangler(args, useLocal = false) {
     if (!wranglerArgs.includes('--port') && !wranglerArgs.some(arg => arg.startsWith('--port='))) {
       wranglerArgs.push('--port', '8788');
     }
-    
+
     console.log('🏠 Using local development mode (firewall-safe)');
   } else if (command === 'dev') {
+    // Use remote mode when connectivity is available
+    if (!wranglerArgs.includes('--remote')) {
+      wranglerArgs.push('--remote');
+    }
+    if (!wranglerArgs.includes('--port') && !wranglerArgs.some(arg => arg.startsWith('--port='))) {
+      wranglerArgs.push('--port', '8787');
+    }
     console.log('☁️ Using cloud development mode');
   }
 
@@ -118,7 +125,12 @@ function runWrangler(args, useLocal = false) {
 
   // Handle process exit
   wranglerProcess.on('exit', (code) => {
-    process.exit(code);
+    if (code !== 0 && command === 'dev' && !useLocal && !isRetry) {
+      console.log('⚠️ Remote dev failed, falling back to local mode...');
+      runWrangler(args, true, true);
+    } else {
+      process.exit(code);
+    }
   });
 
   // Handle termination signals

@@ -11,6 +11,24 @@ Signal Q is a Cloudflare Worker that exposes a minimal API for version info, hea
 - `wrangler secret put SIGNALQ_API_TOKEN`
 - `wrangler secret put SIGNALQ_ADMIN_TOKEN`
 
+## Workers AI Gateway
+Set these to enable `/actions/chat` to call Cloudflare Workers AI via the Gateway's OpenAI-compatible [Chat Completions](https://developers.cloudflare.com/ai-gateway/chat-completion/) endpoint:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_GATEWAY_ID`
+- `CLOUDFLARE_MODEL_ID` (for example `@cf/meta/llama-2-7b-chat-int8`)
+- `wrangler secret put CLOUDFLARE_API_TOKEN`
+
+The worker posts prompts to:
+
+```
+https://gateway.ai.cloudflare.com/v1/${CLOUDFLARE_ACCOUNT_ID}/${CLOUDFLARE_GATEWAY_ID}/chat/completions
+```
+
+and expects an OpenAI-style response, falling back to an echo reply if the request fails.
+
+If any are missing the chat action falls back to echo responses.
+
 ## Durable Objects
 - Binding name: `MEMORY`
 - Migration tag: `v1-memory`
