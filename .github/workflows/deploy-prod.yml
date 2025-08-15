@@ -36,7 +36,7 @@ jobs:
         run: |
           set -e
           curl -fsS -X POST https://signal-q.me/actions/list \
-            -H "authorization: Bearer ${{ secrets.API_TOKEN }}" \
+            -H "authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN }}" \
             -H "x-correlation-id: ci-smoke-$$" \
             -H "content-type: application/json" \
             -d '{}' -o /dev/null
@@ -105,7 +105,7 @@ jobs:
           test_endpoint "Version Check" "200" curl -fsSI https://signal-q.me/version
           test_endpoint "OpenAPI Spec" "200" curl -fsSI https://signal-q.me/openapi.yaml
           test_endpoint "Actions List (OPTIONS)" "204" curl -fsSI -X OPTIONS https://signal-q.me/actions/list
-          test_endpoint "Actions List (POST with Auth)" "200" curl -fsSI -X POST https://signal-q.me/actions/list -H "authorization: Bearer ${{ secrets.API_TOKEN }}" -H "content-type: application/json" -d '{}'
+          test_endpoint "Actions List (POST with Auth)" "200" curl -fsSI -X POST https://signal-q.me/actions/list -H "authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN }}" -H "content-type: application/json" -d '{}'
           
           echo "## Summary" >> $GITHUB_STEP_SUMMARY
           echo "🎉 All readiness checks passed successfully!" >> $GITHUB_STEP_SUMMARY
