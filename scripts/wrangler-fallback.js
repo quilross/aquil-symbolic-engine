@@ -19,7 +19,9 @@ const execAsync = promisify(exec);
 // Cloudflare endpoints to test for connectivity
 const CLOUDFLARE_ENDPOINTS = [
   'sparrow.cloudflare.com',
-  'workers.cloudflare.com'
+  'workers.cloudflare.com',
+  // Cloudflare API endpoint used for route management
+  'api.cloudflare.com'
 ];
 
 // Default timeout for connectivity tests (5 seconds)

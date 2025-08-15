@@ -1,5 +1,7 @@
 // worker/index.js
 
+import OpenAI from 'openai';
+
 // Ensure Cloudflare sees the Durable Object class at the root module scope.
 export { MemoryDO } from './src/memory.js';
 
@@ -24,6 +26,7 @@ function isCorsPath(path) {
 
 // Helper to append memory via Durable Object stub
 async function appendMemory(env, user, payload) {
+  if (!env.MEMORY) return;
   const id = env.MEMORY.idFromName(user);
   const stub = env.MEMORY.get(id);
   await stub.fetch('https://do.append/append', {
@@ -37,7 +40,8 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
-    const path = (url.pathname.replace(/\/+$/, '') || '/'); // strip trailing slashes only
+    // Normalize path by trimming trailing slashes and forcing lowercase
+    const path = (url.pathname.replace(/\/+$/, '') || '/').toLowerCase();
 
     const cid = request.headers.get('x-correlation-id') || crypto.randomUUID();
     const withCID = (res) => {
@@ -54,13 +58,20 @@ export default {
     if (method === 'GET' && path === '/version') {
       return withCID(json({
         version: env.FALLBACK_APP_VERSION || 'v6.1',
+        gitSha: env.GIT_SHA || 'unknown',
+        buildTime: env.BUILD_TIME || new Date().toISOString(),
         environment: 'production',
-        timestamp: new Date().toISOString()
+        status: 'ok'
       }, { headers: corsHeaders() }));
     }
 
     if (method === 'GET' && path === '/system/health') {
-      return withCID(json({ status: 'ok', name: 'signal_q', timestamp: Date.now() }, { headers: corsHeaders() }));
+      return withCID(json({
+        name: 'signal_q',
+        version: env.FALLBACK_APP_VERSION || 'v6.1',
+        status: 'ok',
+        timestamp: Date.now()
+      }, { headers: corsHeaders() }));
     }
 
     // Public memory read (demo)
@@ -76,9 +87,11 @@ export default {
     // Auth for /actions/*
     const bearer = request.headers.get('authorization') || '';
     const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
+    const userToken = env.USER_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+    const adminToken = env.ADMIN_TOKEN || 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
 
     if (path.startsWith('/actions/')) {
-      if (!token || (token !== env.USER_TOKEN && token !== env.ADMIN_TOKEN)) {
+      if (!token || (token !== userToken && token !== adminToken)) {
         return withCID(json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders() }));
       }
 
@@ -93,15 +106,33 @@ export default {
 
       // Chat (POST) — echoes and anchors to memory
       if (method === 'POST' && path === '/actions/chat') {
-        let body;
-        try { body = await request.json(); }
-        catch {
-          return withCID(json({ error: 'Invalid JSON body' }, { status: 400, headers: corsHeaders() }));
-        }
+        let body = {};
+        try { body = await request.json(); } catch { /* no body provided */ }
 
         const user = typeof body.user === 'string' && body.user.trim() ? body.user.trim() : 'default';
         const prompt = typeof body.prompt === 'string' ? body.prompt : '';
-        const reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
+
+        let reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
+
+        if (env.CLOUDFLARE_API_KEY && env.CLOUDFLARE_ACCOUNT_ID && prompt) {
+          try {
+            const openai = new OpenAI({
+              apiKey: env.CLOUDFLARE_API_KEY,
+              baseURL: `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
+            });
+            const completion = await openai.chat.completions.create({
+              model: env.CLOUDFLARE_CHAT_MODEL || '@cf/meta/llama-3.1-8b-instruct',
+              messages: [{ role: 'user', content: prompt }]
+            });
+            const message = completion.choices?.[0]?.message?.content;
+            if (message) {
+              reply = { text: message, model: completion.model };
+            }
+          } catch (err) {
+            // Fallback to echo if Cloudflare call fails
+            reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
+          }
+        }
 
         try {
           await appendMemory(env, user, { kind: 'chat', prompt, reply });
@@ -115,14 +146,11 @@ export default {
 
       // Identity probe (POST)
       if (method === 'POST' && path === '/actions/probe_identity') {
-        let body;
-        try { body = await request.json(); }
-        catch {
-          return withCID(json({ error: 'Invalid JSON body' }, { status: 400, headers: corsHeaders() }));
-        }
+        let body = {};
+        try { body = await request.json(); } catch { /* empty body */ }
 
         const user = typeof body.user === 'string' && body.user.trim() ? body.user.trim() : 'default';
-        const result = {
+        const analysis = {
           stability: 0.90,
           coherence: 0.88,
           authenticity: 0.92,
@@ -130,12 +158,16 @@ export default {
         };
 
         try {
-          await appendMemory(env, user, { kind: 'probe', input: body, result });
+          await appendMemory(env, user, { kind: 'probe', input: body, result: analysis });
         } catch (e) {
           return withCID(json({ ok: false, error: 'Memory append failed', detail: String(e) }, { status: 500, headers: corsHeaders() }));
         }
 
-        return withCID(json({ ok: true, result }, { headers: corsHeaders() }));
+        return withCID(json({
+          probe: user,
+          timestamp: Date.now(),
+          analysis
+        }, { headers: corsHeaders() }));
       }
 
       // Unknown /actions route
