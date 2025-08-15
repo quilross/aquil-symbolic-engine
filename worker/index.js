@@ -1,5 +1,7 @@
 // worker/index.js
 
+import OpenAI from 'openai';
+
 // Ensure Cloudflare sees the Durable Object class at the root module scope.
 export { MemoryDO } from './src/memory.js';
 
@@ -85,8 +87,8 @@ export default {
     // Auth for /actions/*
     const bearer = request.headers.get('authorization') || '';
     const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
-    const userToken = env.USER_TOKEN || 'test-token';
-    const adminToken = env.ADMIN_TOKEN || 'test-admin-token';
+    const userToken = env.USER_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+    const adminToken = env.ADMIN_TOKEN || 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
 
     if (path.startsWith('/actions/')) {
       if (!token || (token !== userToken && token !== adminToken)) {
@@ -109,7 +111,28 @@ export default {
 
         const user = typeof body.user === 'string' && body.user.trim() ? body.user.trim() : 'default';
         const prompt = typeof body.prompt === 'string' ? body.prompt : '';
-        const reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
+
+        let reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
+
+        if (env.CLOUDFLARE_API_KEY && env.CLOUDFLARE_ACCOUNT_ID && prompt) {
+          try {
+            const openai = new OpenAI({
+              apiKey: env.CLOUDFLARE_API_KEY,
+              baseURL: `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
+            });
+            const completion = await openai.chat.completions.create({
+              model: env.CLOUDFLARE_CHAT_MODEL || '@cf/meta/llama-3.1-8b-instruct',
+              messages: [{ role: 'user', content: prompt }]
+            });
+            const message = completion.choices?.[0]?.message?.content;
+            if (message) {
+              reply = { text: message, model: completion.model };
+            }
+          } catch (err) {
+            // Fallback to echo if Cloudflare call fails
+            reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
+          }
+        }
 
         try {
           await appendMemory(env, user, { kind: 'chat', prompt, reply });
