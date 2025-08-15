@@ -7,8 +7,8 @@
   "scripts": {
     "test": "./test-runner.sh",
     "test:vitest": "vitest run",
-    "dev": "cd worker && npx wrangler dev index.js --remote --port 8787",
-    "dev:fallback": "node scripts/wrangler-fallback.js dev",
+    "dev": "node scripts/wrangler-fallback.js dev",
+    "dev:remote": "cd worker && npx wrangler dev index.js --remote --port 8787",
     "deploy": "cd worker && npx wrangler deploy",
     "secret-scan": "node scripts/secret-scan.cjs",
     "secret-scan:install": "node scripts/secret-scan.cjs install",
@@ -31,7 +31,6 @@
     "wrangler": "^4.0.0"
   },
   "dependencies": {
-    "node-fetch": "^3.3.2",
-    "openai": "^4.47.1"
+    "node-fetch": "^3.3.2"
   }
 }

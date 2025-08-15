@@ -1,7 +1,5 @@
 // worker/index.js
 
-import OpenAI from 'openai';
-
 // Ensure Cloudflare sees the Durable Object class at the root module scope.
 export { MemoryDO } from './src/memory.js';
 
@@ -114,19 +112,21 @@ export default {
 
         let reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
 
-        if (env.CLOUDFLARE_API_KEY && env.CLOUDFLARE_ACCOUNT_ID && prompt) {
+        if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_GATEWAY_ID && env.CLOUDFLARE_MODEL_ID && prompt) {
           try {
-            const openai = new OpenAI({
-              apiKey: env.CLOUDFLARE_API_KEY,
-              baseURL: `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`
+            const endpoint = `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/${env.CLOUDFLARE_GATEWAY_ID}/workers-ai/${env.CLOUDFLARE_MODEL_ID}`;
+            const r = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'authorization': `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+                'content-type': 'application/json'
+              },
+              body: JSON.stringify({ input: prompt })
             });
-            const completion = await openai.chat.completions.create({
-              model: env.CLOUDFLARE_CHAT_MODEL || '@cf/meta/llama-3.1-8b-instruct',
-              messages: [{ role: 'user', content: prompt }]
-            });
-            const message = completion.choices?.[0]?.message?.content;
-            if (message) {
-              reply = { text: message, model: completion.model };
+            const data = await r.json();
+            const text = data.result?.text;
+            if (text) {
+              reply = { text, model: env.CLOUDFLARE_MODEL_ID };
             }
           } catch (err) {
             // Fallback to echo if Cloudflare call fails
