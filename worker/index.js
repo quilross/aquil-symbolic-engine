@@ -85,8 +85,8 @@ export default {
     // Auth for /actions/*
     const bearer = request.headers.get('authorization') || '';
     const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
-    const userToken = env.USER_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
-    const adminToken = env.ADMIN_TOKEN || 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
+    const userToken = env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+    const adminToken = env.SIGNALQ_ADMIN_TOKEN || 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
 
     if (path.startsWith('/actions/')) {
       if (!token || (token !== userToken && token !== adminToken)) {
@@ -114,26 +114,22 @@ export default {
 
         if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_GATEWAY_ID && env.CLOUDFLARE_MODEL_ID && prompt) {
           try {
-            const endpoint = `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/${env.CLOUDFLARE_GATEWAY_ID}/chat/completions`;
+            const endpoint = `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/${env.CLOUDFLARE_GATEWAY_ID}/workers-ai/${env.CLOUDFLARE_MODEL_ID}`;
             const r = await fetch(endpoint, {
               method: 'POST',
               headers: {
                 'authorization': `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
                 'content-type': 'application/json'
               },
-              body: JSON.stringify({
-                model: env.CLOUDFLARE_MODEL_ID,
-                messages: [{ role: 'user', content: prompt }]
-              })
+              body: JSON.stringify({ prompt })
             });
             const data = await r.json();
-            const text = data.choices?.[0]?.message?.content;
+            const text = data.result?.response;
             if (text) {
               reply = { text, model: env.CLOUDFLARE_MODEL_ID };
             }
           } catch (err) {
             // Fallback to echo if Cloudflare call fails
-            reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
           }
         }
 

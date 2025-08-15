@@ -12,20 +12,29 @@ Signal Q is a Cloudflare Worker that exposes a minimal API for version info, hea
 - `wrangler secret put SIGNALQ_ADMIN_TOKEN`
 
 ## Workers AI Gateway
-Set these to enable `/actions/chat` to call Cloudflare Workers AI via the Gateway's OpenAI-compatible [Chat Completions](https://developers.cloudflare.com/ai-gateway/chat-completion/) endpoint:
+Set these to enable `/actions/chat` to call Cloudflare Workers AI via the Gateway:
 
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_GATEWAY_ID`
-- `CLOUDFLARE_MODEL_ID` (for example `@cf/meta/llama-2-7b-chat-int8`)
+- `CLOUDFLARE_ACCOUNT_ID` (e.g. `b07412f2f2389e8b537051bc092f3376`)
+- `CLOUDFLARE_GATEWAY_ID` (e.g. `ark-ai`)
+- `CLOUDFLARE_MODEL_ID` (e.g. `@cf/meta/llama-3.1-8b-instruct`)
 - `wrangler secret put CLOUDFLARE_API_TOKEN`
 
 The worker posts prompts to:
 
 ```
-https://gateway.ai.cloudflare.com/v1/${CLOUDFLARE_ACCOUNT_ID}/${CLOUDFLARE_GATEWAY_ID}/chat/completions
+https://gateway.ai.cloudflare.com/v1/${CLOUDFLARE_ACCOUNT_ID}/${CLOUDFLARE_GATEWAY_ID}/workers-ai/${CLOUDFLARE_MODEL_ID}
 ```
 
-and expects an OpenAI-style response, falling back to an echo reply if the request fails.
+Example curl request:
+
+```
+curl https://gateway.ai.cloudflare.com/v1/b07412f2f2389e8b537051bc092f3376/ark-ai/workers-ai/@cf/meta/llama-3.1-8b-instruct \
+  --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  --header 'Content-Type: application/json' \
+  --data '{"prompt": "What is Cloudflare?"}'
+```
+
+The worker falls back to an echo reply if the request fails.
 
 If any are missing the chat action falls back to echo responses.
 
