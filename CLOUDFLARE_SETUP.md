@@ -47,15 +47,21 @@ wrangler login
 The login opens a browser window and stores your API credentials locally.
 
 ## 4. Configure secrets
-Set the API token used by the worker for authenticated requests:
+Set the worker tokens and Cloudflare AI gateway credentials:
 ```bash
 wrangler secret put SIGNALQ_API_TOKEN
+wrangler secret put SIGNALQ_ADMIN_TOKEN
+wrangler secret put CLOUDFLARE_API_TOKEN
 ```
-Export the same token locally so the deploy script can perform a health check:
+Export the related environment variables so the deploy script and `/actions/chat` can access them:
 ```bash
-export SIGNALQ_API_TOKEN=<your token>
+export SIGNALQ_API_TOKEN=<your user token>
+export SIGNALQ_ADMIN_TOKEN=<your admin token>
+export CLOUDFLARE_ACCOUNT_ID=<your Cloudflare account ID>
+export CLOUDFLARE_GATEWAY_ID=<your AI Gateway ID>
+export CLOUDFLARE_MODEL_ID=@cf/meta/llama-3.1-8b-instruct
 ```
-The worker reads the secret at runtime and the environment variable is only used during deployment.
+The worker reads the secrets at runtime; the environment variables are only used during deployment or local testing.
 
 ## 5. Deploy the worker
 From the project root run the deploy script:
@@ -74,8 +80,8 @@ routes = [
 ```
 Update the pattern if you want to use a different domain. The domain must exist in your Cloudflare account and have a DNS record pointing at Workers.
 
-If your project uses CI/CD you can deploy non-interactively by setting the `CF_API_TOKEN` and
-`CF_ACCOUNT_ID` environment variables before running `wrangler deploy`.
+If your project uses CI/CD you can deploy non-interactively by setting the `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` environment variables before running `wrangler deploy`.
 
 ## 7. Verify deployment
 After deployment you can run the smoke tests:
