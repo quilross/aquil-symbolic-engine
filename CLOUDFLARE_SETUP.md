@@ -59,7 +59,7 @@ export SIGNALQ_API_TOKEN=<your user token>
 export SIGNALQ_ADMIN_TOKEN=<your admin token>
 export CLOUDFLARE_ACCOUNT_ID=<your Cloudflare account ID>
 export CLOUDFLARE_GATEWAY_ID=<your AI Gateway ID>
-export CLOUDFLARE_MODEL_ID=@cf/meta/llama-3.1-8b-instruct
+export CLOUDFLARE_MODEL_ID=@cf/meta/llama-2-7b-chat-int8
 ```
 The worker reads the secrets at runtime; the environment variables are only used during deployment or local testing.
 

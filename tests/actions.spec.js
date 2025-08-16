@@ -1,5 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import worker from '../worker/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const LOG_PATH = path.join(__dirname, '..', 'memory', 'log.json');
 
 async function call(path, init = {}) {
   const url = `https://example.test${path}`;
@@ -25,7 +32,11 @@ describe('actions API', () => {
   });
 
   describe('chat', () => {
-    it('echoes the provided prompt', async () => {
+    beforeEach(async () => {
+      await fs.rm(LOG_PATH, { force: true });
+    });
+
+    it('echoes the provided prompt and logs interaction', async () => {
       const res = await call('/actions/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -35,6 +46,10 @@ describe('actions API', () => {
       const data = await res.json();
       expect(data.ok).toBe(true);
       expect(data.reply.text).toBe('ACK: hello');
+      const logRaw = await fs.readFile(LOG_PATH, 'utf8');
+      const log = JSON.parse(logRaw);
+      expect(log.length).toBe(1);
+      expect(log[0].input).toBe('hello');
     });
 
     it('rejects requests without valid token', async () => {
