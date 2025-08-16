@@ -14,9 +14,9 @@ Signal Q is a Cloudflare Worker that exposes a minimal API for version info, hea
 ## Workers AI Gateway
 Set these to enable `/actions/chat` to call Cloudflare Workers AI via the Gateway:
 
-- `CLOUDFLARE_ACCOUNT_ID` (e.g. `b07412f2f2389e8b537051bc092f3376`)
-- `CLOUDFLARE_GATEWAY_ID` (e.g. `ark-ai`)
-- `CLOUDFLARE_MODEL_ID` (e.g. `@cf/meta/llama-3.1-8b-instruct`)
+- `CLOUDFLARE_ACCOUNT_ID` (e.g. `acme-123456`)
+- `CLOUDFLARE_GATEWAY_ID` (e.g. `gateway-abcdef`)
+- `CLOUDFLARE_MODEL_ID` (e.g. `@cf/meta/llama-2-7b-chat-int8`)
 - `wrangler secret put CLOUDFLARE_API_TOKEN`
 
 The worker posts prompts to:
@@ -28,10 +28,10 @@ https://gateway.ai.cloudflare.com/v1/${CLOUDFLARE_ACCOUNT_ID}/${CLOUDFLARE_GATEW
 Example curl request:
 
 ```
-curl https://gateway.ai.cloudflare.com/v1/b07412f2f2389e8b537051bc092f3376/ark-ai/workers-ai/@cf/meta/llama-3.1-8b-instruct \
+curl https://gateway.ai.cloudflare.com/v1/acme-123456/gateway-abcdef/workers-ai/@cf/meta/llama-2-7b-chat-int8 \
   --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
   --header 'Content-Type: application/json' \
-  --data '{"prompt": "What is Cloudflare?"}'
+  --data '{"input": "What is Cloudflare?"}'
 ```
 
 The worker falls back to an echo reply if the request fails.

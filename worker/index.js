@@ -34,6 +34,28 @@ async function appendMemory(env, user, payload) {
   });
 }
 
+// Local file-based memory log for Node.js environments
+async function appendLog(entry) {
+  try {
+    if (typeof process === 'undefined' || !process.versions?.node) return;
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const logPath = path.join(__dirname, '..', 'memory', 'log.json');
+    await fs.mkdir(path.dirname(logPath), { recursive: true });
+    let items = [];
+    try {
+      const existing = await fs.readFile(logPath, 'utf8');
+      items = JSON.parse(existing);
+      if (!Array.isArray(items)) items = [];
+    } catch {}
+    items.push(entry);
+    await fs.writeFile(logPath, JSON.stringify(items, null, 2));
+  } catch {}
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -111,6 +133,7 @@ export default {
         const prompt = typeof body.prompt === 'string' ? body.prompt : '';
 
         let reply = { text: `ACK: ${prompt}`.trim(), model: 'signal-q:echo' };
+        let data;
 
         if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_GATEWAY_ID && env.CLOUDFLARE_MODEL_ID && prompt) {
           try {
@@ -121,10 +144,10 @@ export default {
                 'authorization': `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
                 'content-type': 'application/json'
               },
-              body: JSON.stringify({ prompt })
+              body: JSON.stringify({ input: prompt })
             });
-            const data = await r.json();
-            const text = data.result?.response;
+            data = await r.json();
+            const text = data.result?.text;
             if (text) {
               reply = { text, model: env.CLOUDFLARE_MODEL_ID };
             }
@@ -139,6 +162,8 @@ export default {
           // If memory fails, still surface a clear error with correlation id
           return withCID(json({ ok: false, error: 'Memory append failed', detail: String(e) }, { status: 500, headers: corsHeaders() }));
         }
+
+        await appendLog({ timestamp: Date.now(), input: prompt, output: data || reply });
 
         return withCID(json({ ok: true, reply }, { headers: corsHeaders() }));
       }

@@ -51,4 +51,7 @@ build/
 tmp/
 temp/
 
+# Memory logs
+memory/log.json
+
 
