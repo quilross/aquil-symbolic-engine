@@ -7,7 +7,7 @@
  * Usage:
  *   node scripts/test-contract.js
  *   node scripts/test-contract.js --base https://signal-q.me --token abc123
- *   BASE_URL=https://signal-q.me SIGNALQ_API_TOKEN=abc123 node scripts/test-contract.js
+ *   BASE_URL=https://signal-q.me API_TOKEN=abc123 node scripts/test-contract.js
  */
 
 // Parse command line arguments
@@ -30,7 +30,7 @@ function parseArgs() {
 
 const cliArgs = parseArgs();
 const BASE_URL = cliArgs.base || process.env.BASE_URL || 'http://localhost:8787';
-const TOKEN = cliArgs.token || process.env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+const TOKEN = cliArgs.token || process.env.API_TOKEN || '';
 
 console.log('🧪 Running Signal Q Contract Tests');
 console.log(`📡 Base URL: ${BASE_URL}`);

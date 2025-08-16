@@ -37,7 +37,7 @@ async function runSmokeTest() {
   // Check if API token is provided
   if (!TOKEN) {
     console.log(`${colors.red}❌ Error: TOKEN environment variable is required${colors.reset}`);
-    console.log('Example: export TOKEN=$SIGNALQ_API_TOKEN');
+    console.log('Example: export TOKEN=$API_TOKEN');
     process.exit(1);
   }
 

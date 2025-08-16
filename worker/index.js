@@ -85,8 +85,8 @@ export default {
     // Auth for /actions/*
     const bearer = request.headers.get('authorization') || '';
     const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : null;
-    const userToken = env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
-    const adminToken = env.SIGNALQ_ADMIN_TOKEN || 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
+    const userToken = env.SIGNALQ_API_TOKEN || '';
+    const adminToken = env.SIGNALQ_ADMIN_TOKEN || '';
 
     if (path.startsWith('/actions/')) {
       if (!token || (token !== userToken && token !== adminToken)) {

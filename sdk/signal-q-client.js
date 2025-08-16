@@ -5,7 +5,7 @@
  * @example
  * const client = new SignalQClient({
  *   baseUrl: 'https://signal-q.me',
- *   token: process.env.SIGNALQ_API_TOKEN
+ *   token: process.env.API_TOKEN
  * });
  * 
  * const health = await client.health();

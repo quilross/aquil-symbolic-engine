@@ -13,6 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -38,6 +40,8 @@ jobs:
       matrix:
         env: [preview, production]
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -120,7 +124,7 @@ jobs:
         run: |
           echo "📋 Testing /actions/list endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/list" | jq -e '.actions and (.actions|index("list")!=null) and (.actions|index("trigger_deploy")!=null) and (.actions|index("probe_identity")!=null)'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" "$BASE_URL/actions/list" | jq -e '.actions and (.actions|index("list")!=null) and (.actions|index("trigger_deploy")!=null) and (.actions|index("probe_identity")!=null)'; then
               echo "✅ Actions list test passed"
               break
             else
@@ -138,7 +142,7 @@ jobs:
         run: |
           echo "🔍 Testing /actions/probe_identity endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/probe_identity" -H "Content-Type: application/json" -d '{}' | jq -e '.who'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" "$BASE_URL/actions/probe_identity" -H "Content-Type: application/json" -d '{}' | jq -e '.who'; then
               echo "✅ Probe identity test passed"
               break
             else
@@ -156,7 +160,7 @@ jobs:
         run: |
           echo "🔄 Testing /actions/recalibrate_state endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/recalibrate_state" -H "Content-Type: application/json" -d '{}' | jq -e '.state=="recalibrated" and .identity_key and .dominant_emotion and .timestamp'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" "$BASE_URL/actions/recalibrate_state" -H "Content-Type: application/json" -d '{}' | jq -e '.state=="recalibrated" and .identity_key and .dominant_emotion and .timestamp'; then
               echo "✅ Recalibrate state test passed"
               break
             else
@@ -174,7 +178,7 @@ jobs:
         run: |
           echo "🚀 Testing /actions/trigger_deploy endpoint..."
           for attempt in 1 2; do
-            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN_PROD }}" "$BASE_URL/actions/trigger_deploy" -H "Content-Type: application/json" -d '{"env":"production"}' | jq -e '.deployment=="triggered" and .timestamp'; then
+            if curl -sSf -X POST -H "Authorization: Bearer ${{ secrets.API_TOKEN_ADMIN }}" "$BASE_URL/actions/trigger_deploy" -H "Content-Type: application/json" -d '{"env":"production"}' | jq -e '.deployment=="triggered" and .timestamp'; then
               echo "✅ Deploy action test passed"
               break
             else

@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -60,7 +62,7 @@ jobs:
       - name: Run contract tests
         env:
           BASE_URL: http://localhost:8787
-          SIGNALQ_API_TOKEN: dev-placeholder
+          API_TOKEN: dev-placeholder
         run: node scripts/test-contract.js
 
       - name: Stop development server
@@ -77,6 +79,8 @@ jobs:
     environment: staging
 
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -111,7 +115,7 @@ jobs:
       - name: Staging smoke test
         run: |
           STAGING_URL="https://signal_q_staging.catnip-pieces1.workers.dev"
-          TOKEN="${{ secrets.SIGNALQ_API_TOKEN_STAGING || 'dev-placeholder' }}"
+          TOKEN="${{ secrets.API_TOKEN || 'dev-placeholder' }}"
           
           echo "🧪 Testing staging deployment..."
           
@@ -136,6 +140,8 @@ jobs:
     environment: production
 
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -170,7 +176,7 @@ jobs:
       - name: Production smoke test
         run: |
           PROD_URL="https://signal_q.catnip-pieces1.workers.dev"
-          TOKEN="${{ secrets.SIGNALQ_API_TOKEN_PROD || 'dev-placeholder' }}"
+          TOKEN="${{ secrets.API_TOKEN || 'dev-placeholder' }}"
           
           echo "🚀 Testing production deployment..."
           
@@ -210,8 +216,10 @@ jobs:
 
   codespaces-compatibility:
     runs-on: ubuntu-latest
-    
+
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - name: Checkout code
         uses: actions/checkout@v2
         

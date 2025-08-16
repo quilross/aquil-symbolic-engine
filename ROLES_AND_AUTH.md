@@ -4,14 +4,14 @@
 
 Signal Q API uses Bearer token authentication with two role levels:
 
-- **USER** (`$SIGNALQ_API_TOKEN*`): Standard API access for most operations
-- **ADMIN** (`$SIGNALQ_ADMIN_TOKEN*`): Administrative operations and elevated permissions
+- **USER** (`$API_TOKEN*`): Standard API access for most operations
+- **ADMIN** (`$API_TOKEN_ADMIN*`): Administrative operations and elevated permissions
 
 ## 👥 Role Definitions
 
-### USER Role (`$SIGNALQ_API_TOKEN*`)
-**Token Pattern:** `$SIGNALQ_API_TOKEN[32-char-alphanumeric]`  
-**Example:** `$SIGNALQ_API_TOKEN`
+### USER Role (`$API_TOKEN*`)
+**Token Pattern:** `$API_TOKEN[32-char-alphanumeric]`
+**Example:** `$API_TOKEN`
 
 **Permitted Operations:**
 - ✅ `/system/health` - Health monitoring
@@ -21,9 +21,9 @@ Signal Q API uses Bearer token authentication with two role levels:
 - ✅ Data logging and retrieval
 - ❌ `/admin/*` - Administrative operations (403 Forbidden)
 
-### ADMIN Role (`$SIGNALQ_ADMIN_TOKEN*`)
-**Token Pattern:** `$SIGNALQ_ADMIN_TOKEN[32-char-alphanumeric]`  
-**Example:** `$SIGNALQ_ADMIN_TOKEN`
+### ADMIN Role (`$API_TOKEN_ADMIN*`)
+**Token Pattern:** `$API_TOKEN_ADMIN[32-char-alphanumeric]`
+**Example:** `$API_TOKEN_ADMIN`
 
 **Permitted Operations:**
 - ✅ All USER role operations
@@ -105,7 +105,7 @@ curl -H "Authorization: Bearer invalid_token_123" \
 **User Token on Admin Endpoint:**
 ```bash
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+  -H "Authorization: Bearer $API_TOKEN" \
   https://signal-q.me/admin/reset
 ```
 
@@ -155,7 +155,7 @@ if (!token) {
   );
 }
 
-if (token !== SIGNALQ_ADMIN_TOKEN) {
+if (token !== API_TOKEN_ADMIN) {
   return createProblemResponse(
     'Insufficient Permissions',
     'This endpoint requires admin privileges. User tokens are not permitted.',
@@ -169,12 +169,12 @@ if (token !== SIGNALQ_ADMIN_TOKEN) {
 ### Valid Requests
 ```bash
 # USER token - health check
-curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+curl -H "Authorization: Bearer $API_TOKEN" \
   https://signal-q.me/system/health
 
 # ADMIN token - reset operation
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_ADMIN_TOKEN" \
+  -H "Authorization: Bearer $API_TOKEN_ADMIN" \
   https://signal-q.me/admin/reset
 ```
 
@@ -189,7 +189,7 @@ curl -H "Authorization: Bearer invalid_token" \
 
 # Test 403 - user token on admin endpoint
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+  -H "Authorization: Bearer $API_TOKEN" \
   https://signal-q.me/admin/reset
 ```
 
@@ -209,7 +209,7 @@ The SDK automatically handles problem+json errors:
 ```javascript
 const client = new SignalQClient({
   baseUrl: 'https://signal-q.me',
-  token: '$SIGNALQ_API_TOKEN'
+  token: '$API_TOKEN'
 });
 
 try {

@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions: { contents: read }
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '18' }
@@ -24,26 +26,23 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Hit /system/health
+      - name: Strict shell
+        run: set -euo pipefail
+      - name: GET /version
         run: |
-          set -e
-          curl -fsS https://signal-q.me/system/health -H "x-correlation-id: ci-smoke-$$" -o /dev/null
-      - name: Hit /version
+          code=$(curl -sS -o out.json -w "%{http_code}" https://signal-q.me/version)
+          jq '{version:.version?, ts:.timestamp?}' out.json || true
+          test "$code" -ge 200 -a "$code" -lt 300
+      - name: POST /actions/system_health
+        env:
+          API_TOKEN: ${{ secrets.API_TOKEN }}
         run: |
-          set -e
-          curl -fsS https://signal-q.me/version -H "x-correlation-id: ci-smoke-$$" -o /dev/null
-      - name: POST /actions/list with Bearer
-        run: |
-          set -e
-          curl -fsS -X POST https://signal-q.me/actions/list \
-            -H "authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN }}" \
-            -H "x-correlation-id: ci-smoke-$$" \
-            -H "content-type: application/json" \
-            -d '{}' -o /dev/null
+          code=$(curl -sS -o out.json -w "%{http_code}" -X POST https://signal-q.me/actions/system_health -H "Authorization: Bearer $API_TOKEN")
+          jq '{status:.status?, ts:.timestamp?}' out.json || true
+          test "$code" -ge 200 -a "$code" -lt 300
       - name: Fetch /openapi.yaml and validate
         run: |
-          set -e
-          curl -fsS https://signal-q.me/openapi.yaml -o openapi.yaml
+          curl -sS https://signal-q.me/openapi.yaml -o openapi.yaml
           npx -y @apidevtools/swagger-cli validate openapi.yaml
 
   readiness-check:
@@ -51,6 +50,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
+      - name: Strict shell
+        run: set -euo pipefail
       - name: Post-deploy ingestion readiness summary
         run: |
           echo "# 🚀 Post-Deploy Readiness Check" >> $GITHUB_STEP_SUMMARY
@@ -105,7 +106,8 @@ jobs:
           test_endpoint "Version Check" "200" curl -fsSI https://signal-q.me/version
           test_endpoint "OpenAPI Spec" "200" curl -fsSI https://signal-q.me/openapi.yaml
           test_endpoint "Actions List (OPTIONS)" "204" curl -fsSI -X OPTIONS https://signal-q.me/actions/list
-          test_endpoint "Actions List (POST with Auth)" "200" curl -fsSI -X POST https://signal-q.me/actions/list -H "authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN }}" -H "content-type: application/json" -d '{}'
+          test_endpoint "Actions List (POST with Auth)" "200" curl -fsSI -X POST https://signal-q.me/actions/list -H "authorization: Bearer ${{ secrets.API_TOKEN }}" -H "content-type: application/json" -d '{}'
+          test_endpoint "Trigger Deploy" "200 202" curl -fsSI -X POST https://signal-q.me/actions/trigger_deploy -H "authorization: Bearer ${{ secrets.API_TOKEN_ADMIN }}" -H "content-type: application/json" -d '{}'
           
           echo "## Summary" >> $GITHUB_STEP_SUMMARY
           echo "🎉 All readiness checks passed successfully!" >> $GITHUB_STEP_SUMMARY

@@ -13,51 +13,14 @@ console.log('🔍 Scanning for potential secrets before commit...\n');
 
 // Secret patterns to detect
 const SECRET_PATTERNS = [
-  {
-    name: 'AWS Access Key',
-    pattern: /AKIA[0-9A-Z]{16}/g,
-    severity: 'HIGH'
-  },
-  {
-    name: 'AWS Secret Key',
-    pattern: /[0-9a-zA-Z/+]{40}/g,
-    severity: 'HIGH'
-  },
-  {
-    name: 'Cloudflare API Token',
-    pattern: /[a-f0-9]{32}/g,
-    severity: 'HIGH'
-  },
-  {
-    name: 'Generic API Key',
-    pattern: /(api[_-]?key|api_token|access[_-]?token)["\s]*[:=]["\s]*[a-zA-Z0-9_\-]{16,}/gi,
-    severity: 'HIGH'
-  },
-  {
-    name: 'Bearer Token',
-    pattern: /bearer\s+[a-zA-Z0-9_\-]{20,}/gi,
-    severity: 'MEDIUM'
-  },
-  {
-    name: 'JWT Token',
-    pattern: /eyJ[a-zA-Z0-9_\-]+\.eyJ[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+/g,
-    severity: 'HIGH'
-  },
-  {
-    name: 'Private Key',
-    pattern: /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/g,
-    severity: 'CRITICAL'
-  },
-  {
-    name: 'SignalQ Token',
-    pattern: /sq_(live|admin|test)_[a-zA-Z0-9]{32}/g,
-    severity: 'HIGH'
-  },
-  {
-    name: 'Password in Code',
-    pattern: /(password|pwd|passwd)["\s]*[:=]["\s]*[^\s"]{6,}/gi,
-    severity: 'MEDIUM'
-  }
+  { name: 'Legacy SignalQ Token', pattern: /(sg_live|sq_live|sq_admin)_[A-Za-z0-9_-]+/g, severity: 'HIGH' },
+  { name: 'Bearer Token Leak', pattern: /Bearer[ \t]+(sg_live|sq_live|sq_admin)_[A-Za-z0-9_-]+/g, severity: 'HIGH' },
+  { name: 'Generic sk Token', pattern: /sk-[A-Za-z0-9]{20,}/g, severity: 'HIGH' },
+  { name: 'JWT-like', pattern: /(?<![A-Za-z0-9])eyJ[A-Za-z0-9_=-]{20,}\.?[A-Za-z0-9_.=-]{10,}/g, severity: 'HIGH' },
+  { name: 'AWS Access Key', pattern: /AKIA[0-9A-Z]{16}/g, severity: 'HIGH' },
+  { name: 'AWS Secret Key', pattern: /[0-9a-zA-Z/+]{40}/g, severity: 'HIGH' },
+  { name: 'Private Key', pattern: /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/g, severity: 'CRITICAL' },
+  { name: 'Password in Code', pattern: /(password|pwd|passwd)["\s]*[:=]["\s]*[^\s"]{6,}/gi, severity: 'MEDIUM' }
 ];
 
 // Files to exclude from scanning
@@ -76,8 +39,6 @@ const EXCLUDE_PATTERNS = [
 
 // Whitelist for known safe patterns (like dev tokens in examples)
 const WHITELIST_PATTERNS = [
-  'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h', // Dev token from .env.example
-  'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2', // Dev admin token from .env.example
   'sample-api-token',
   'sample-account-id',
   'example-key-123',

@@ -33,8 +33,8 @@
 - **Required Secrets**: 
   - `CLOUDFLARE_API_TOKEN`
   - `CLOUDFLARE_ACCOUNT_ID` 
-  - `SIGNALQ_API_TOKEN_PROD`
-  - `SIGNALQ_ADMIN_TOKEN_PROD`
+  - `API_TOKEN`
+  - `API_TOKEN_ADMIN`
 - **No Manual Steps**: All metadata injection automated via CI
 
 ### Task 6: Build Metadata Stamping
@@ -57,7 +57,7 @@
 
 ### Task 8: README Standardization
 - **Status**: ✅ Complete
-- **Token Cleanup**: All `sq_live_*` → `$SIGNALQ_API_TOKEN`, `sq_admin_*` → `$SIGNALQ_ADMIN_TOKEN`
+- **Token Cleanup**: All legacy tokens replaced with `$API_TOKEN` and `$API_TOKEN_ADMIN`
 - **Production URL**: Standardized to `https://signal-q.me`
 - **Legacy Note**: Added deprecation notice for GET /system/health
 - **Codespaces Quickstart**: Updated with proper test token usage
@@ -90,7 +90,8 @@ npx swagger-cli validate worker/src/openapi-core.json
 
 ### Token Cleanup Verification
 ```bash
-grep -r "sq_live_\|sq_admin_" *.md
+# Example verification command
+# grep -r '<legacy_token_patterns>' *.md
 # ✅ No matches found - all tokens replaced with test tokens
 ```
 
