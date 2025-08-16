@@ -4,7 +4,7 @@
 // This script helps test your Signal Q deployment
 
 const API_BASE = 'https://signal-q.me';
-const API_TOKEN = process.env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+const API_TOKEN = process.env.SIGNALQ_API_TOKEN || '';
 
 async function makeRequest(endpoint, method = 'GET', body = null) {
   const url = `${API_BASE}${endpoint}`;
@@ -47,7 +47,7 @@ async function makeRequest(endpoint, method = 'GET', body = null) {
 async function testBasicEndpoints() {
   console.log('🚀 Signal Q API Testing Suite\n');
   console.log(`🌐 API Base: ${API_BASE}`);
-  console.log(`🔑 Using Token: ${API_TOKEN.substring(0, 20)}...`);
+  console.log(`🔑 Using Token: ${API_TOKEN ? API_TOKEN.substring(0, 20) + '...' : '[missing]'}`);
   
   // Test endpoints that should work
   const tests = [

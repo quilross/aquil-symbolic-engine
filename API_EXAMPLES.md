@@ -21,7 +21,7 @@ curl https://signal-q.me/version
 
 ```bash
 # Health check with USER token
-curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+curl -H "Authorization: Bearer $API_TOKEN" \
   https://signal-q.me/system/health
 
 # Expected response:
@@ -39,7 +39,7 @@ curl -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
 ```bash
 # Admin reset with ADMIN token
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_ADMIN_TOKEN" \
+  -H "Authorization: Bearer $API_TOKEN_ADMIN" \
   https://signal-q.me/admin/reset
 
 # Expected response:
@@ -55,13 +55,13 @@ curl -X POST \
 ```bash
 # List all available actions
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+  -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
   https://signal-q.me/actions/list
 
 # Probe identity
 curl -X POST \
-  -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+  -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"context": "testing"}' \
   https://signal-q.me/actions/probe_identity
@@ -78,7 +78,7 @@ const SignalQClient = require('./sdk/signal-q-client.js');
 // Create client instance
   const client = new SignalQClient({
     baseUrl: 'https://signal-q.me',
-    token: process.env.SIGNALQ_API_TOKEN
+    token: process.env.API_TOKEN
   });
 
 // Basic operations
@@ -108,7 +108,7 @@ async function basicExample() {
 async function advancedExample() {
     const client = new SignalQClient({
       baseUrl: 'https://signal-q.me',
-      token: process.env.SIGNALQ_API_TOKEN,
+      token: process.env.API_TOKEN,
       timeout: 10000 // 10 second timeout
     });
 
@@ -157,7 +157,7 @@ async function advancedExample() {
         async function testAPI() {
               const client = new SignalQClient({
                   baseUrl: 'https://signal-q.me',
-                  token: process.env.SIGNALQ_API_TOKEN
+                  token: process.env.API_TOKEN
               });
             
             const output = document.getElementById('output');
@@ -258,7 +258,7 @@ class SignalQClient:
 def main():
     client = SignalQClient(
         base_url='https://signal-q.me',
-        token=os.environ.get('SIGNALQ_API_TOKEN')
+        token=os.environ.get('API_TOKEN')
     )
     
     try:
@@ -297,7 +297,7 @@ if __name__ == '__main__':
 # health-check.sh - Comprehensive API health verification
 
 BASE_URL="https://signal-q.me"
-TOKEN="$SIGNALQ_API_TOKEN"
+TOKEN="$API_TOKEN"
 
 echo "🏥 Signal Q Health Check"
 echo "======================="
@@ -351,7 +351,7 @@ echo -e "\n🎉 All health checks passed!"
 # batch-operations.sh - Perform multiple API operations
 
 BASE_URL="https://signal-q.me"
-TOKEN="$SIGNALQ_API_TOKEN"
+TOKEN="$API_TOKEN"
 
 echo "🔄 Batch Operations"
 echo "=================="
@@ -396,7 +396,7 @@ describe('Signal Q API', () => {
   beforeEach(() => {
     client = new SignalQClient({
       baseUrl: process.env.TEST_BASE_URL || 'http://localhost:8788',
-      token: process.env.SIGNALQ_API_TOKEN
+      token: process.env.API_TOKEN
     });
   });
 

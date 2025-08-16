@@ -16,7 +16,7 @@ If the GPT builder refuses the runtime URL, use the raw GitHub URL:
 ### 3. Authentication Setup
 - Auth Method: API Key
 - Auth Type: HTTP Bearer
-- Header: Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h
+- Header: Authorization: Bearer $API_TOKEN
 
 ### 4. Test Endpoints
 Test these key endpoints in order:
@@ -50,7 +50,7 @@ If you get a parse error when importing the OpenAPI spec:
 - Ensure Bearer token format: `Authorization: Bearer <token>`
 - Test with a simple curl command first:
   ```bash
-  curl -X POST -H "Authorization: Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h" https://signal-q.me/actions/list
+  curl -X POST -H "Authorization: Bearer $API_TOKEN" https://signal-q.me/actions/list
   ```
 
 ### Connection Issues

@@ -28,7 +28,7 @@ https://gateway.ai.cloudflare.com/v1/${CLOUDFLARE_ACCOUNT_ID}/${CLOUDFLARE_GATEW
 Example curl request:
 
 ```
-curl https://gateway.ai.cloudflare.com/v1/b07412f2f2389e8b537051bc092f3376/ark-ai/workers-ai/@cf/meta/llama-3.1-8b-instruct \
+curl https://gateway.ai.cloudflare.com/v1/<ACCOUNT_ID>/ark-ai/workers-ai/@cf/meta/llama-3.1-8b-instruct \
   --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
   --header 'Content-Type: application/json' \
   --data '{"prompt": "What is Cloudflare?"}'
@@ -63,5 +63,5 @@ If any are missing the chat action falls back to echo responses.
 - 401 errors: missing or wrong Bearer token
 - Durable Object migration errors: check binding `MEMORY` and migration tag `v1-memory`
 - CORS: verify OPTIONS preflight allows origin, headers, and methods
-- Replicate GPT Actions ingestion: `SIGNALQ_API_TOKEN=... node scripts/forensics.mjs`
+- Replicate GPT Actions ingestion: `API_TOKEN=... node scripts/forensics.mjs`
 

@@ -6,13 +6,13 @@
  */
 
 const BASE_URL = 'http://localhost:8788';
-const USER_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
-const ADMIN_TOKEN = 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
+const USER_TOKEN = process.env.SIGNALQ_API_TOKEN || '';
+const ADMIN_TOKEN = process.env.SIGNALQ_ADMIN_TOKEN || '';
 
 console.log('🏥 Health Endpoint Test Suite (Local Dev Server)\n');
 console.log(`🌐 API Base: ${BASE_URL}`);
-console.log(`🔑 User Token: ${USER_TOKEN.substring(0, 15)}...`);
-console.log(`👑 Admin Token: ${ADMIN_TOKEN.substring(0, 18)}...\n`);
+console.log(`🔑 User Token: ${USER_TOKEN ? USER_TOKEN.substring(0, 15) + '...' : '[missing]'}`);
+console.log(`👑 Admin Token: ${ADMIN_TOKEN ? ADMIN_TOKEN.substring(0, 18) + '...' : '[missing]'}\n`);
 
 const results = [];
 

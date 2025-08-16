@@ -4,11 +4,11 @@ import worker from '../worker/index.js';
 async function call(path, init = {}) {
   const url = `https://example.test${path}`;
   const headers = new Headers(init.headers || {});
-  if (!headers.get('authorization')) headers.set('authorization', 'Bearer sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h');
+  if (!headers.get('authorization')) headers.set('authorization', `Bearer ${process.env.API_TOKEN || 'test-user-token'}`);
   const req = new Request(url, { method: init.method || 'GET', headers, body: init.body });
   const env = {
-    USER_TOKEN: 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h',
-    ADMIN_TOKEN: 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2'
+    USER_TOKEN: process.env.API_TOKEN || 'test-user-token',
+    ADMIN_TOKEN: process.env.API_TOKEN_ADMIN || 'test-admin-token'
   };
 
   return worker.fetch(req, env, {});
