@@ -26,17 +26,25 @@ jobs:
     steps:
       - name: Hit /system/health
         run: |
-          set -e
+          set -euo pipefail
           curl -fsS https://signal-q.me/system/health -H "x-correlation-id: ci-smoke-$$" -o /dev/null
       - name: Hit /version
         run: |
-          set -e
+          set -euo pipefail
           curl -fsS https://signal-q.me/version -H "x-correlation-id: ci-smoke-$$" -o /dev/null
-      - name: POST /actions/list with Bearer
+      - name: POST /actions/system_health with Bearer
         run: |
-          set -e
-          curl -fsS -X POST https://signal-q.me/actions/list \
-            -H "authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN }}" \
+          set -euo pipefail
+          curl -fsS -X POST https://signal-q.me/actions/system_health \
+            -H "authorization: Bearer ${{ secrets.API_TOKEN }}" \
+            -H "x-correlation-id: ci-smoke-$$" \
+            -H "content-type: application/json" \
+            -d '{}' -o /dev/null
+      - name: POST /actions/trigger_deploy with admin token
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST https://signal-q.me/actions/trigger_deploy \
+            -H "authorization: Bearer ${{ secrets.API_TOKEN_ADMIN }}" \
             -H "x-correlation-id: ci-smoke-$$" \
             -H "content-type: application/json" \
             -d '{}' -o /dev/null
@@ -105,7 +113,9 @@ jobs:
           test_endpoint "Version Check" "200" curl -fsSI https://signal-q.me/version
           test_endpoint "OpenAPI Spec" "200" curl -fsSI https://signal-q.me/openapi.yaml
           test_endpoint "Actions List (OPTIONS)" "204" curl -fsSI -X OPTIONS https://signal-q.me/actions/list
-          test_endpoint "Actions List (POST with Auth)" "200" curl -fsSI -X POST https://signal-q.me/actions/list -H "authorization: Bearer ${{ secrets.SIGNALQ_API_TOKEN }}" -H "content-type: application/json" -d '{}'
+          test_endpoint "Actions List (POST with Auth)" "200" curl -fsSI -X POST https://signal-q.me/actions/list -H "authorization: Bearer ${{ secrets.API_TOKEN }}" -H "content-type: application/json" -d '{}'
+          test_endpoint "System Health Action" "200" curl -fsSI -X POST https://signal-q.me/actions/system_health -H "authorization: Bearer ${{ secrets.API_TOKEN }}" -H "content-type: application/json" -d '{}'
+          test_endpoint "Trigger Deploy" "200" curl -fsSI -X POST https://signal-q.me/actions/trigger_deploy -H "authorization: Bearer ${{ secrets.API_TOKEN_ADMIN }}" -H "content-type: application/json" -d '{}'
           
           echo "## Summary" >> $GITHUB_STEP_SUMMARY
           echo "🎉 All readiness checks passed successfully!" >> $GITHUB_STEP_SUMMARY

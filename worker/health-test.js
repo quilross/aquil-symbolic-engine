@@ -6,8 +6,8 @@
  */
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:8788';
-const USER_TOKEN = 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
-const ADMIN_TOKEN = 'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2';
+const USER_TOKEN = process.env.API_TOKEN || 'user-token';
+const ADMIN_TOKEN = process.env.API_TOKEN_ADMIN || 'admin-token';
 
 console.log('🏥 Health Endpoint Test Suite\n');
 console.log(`🌐 API Base: ${BASE_URL}`);
@@ -247,7 +247,7 @@ async function printSummary() {
     console.log('✅ The /system/health endpoint is working correctly!');
     console.log('\n🔗 Ready for CustomGPT Integration:');
     console.log(`   Base URL: ${BASE_URL}`);
-    console.log(`   Bearer Token: ${USER_TOKEN}`);
+    console.log(`   Bearer Token: ${USER_TOKEN.substring(0, 4)}...`);
     console.log(`   Schema File: worker/openapi-core.yaml`);
   } else {
     console.log('\n⚠️  DEPLOYMENT STATUS: NEEDS ATTENTION');

@@ -4,7 +4,7 @@
 // This script helps test your Signal Q deployment
 
 const API_BASE = 'https://signal-q.me';
-const API_TOKEN = process.env.SIGNALQ_API_TOKEN || 'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h';
+const API_TOKEN = process.env.API_TOKEN || 'user-token';
 
 async function makeRequest(endpoint, method = 'GET', body = null) {
   const url = `${API_BASE}${endpoint}`;
@@ -150,7 +150,7 @@ async function main() {
     
     console.log('\n🎯 For GPT Integration:');
     console.log(`Base URL: ${API_BASE}`);
-    console.log(`Auth Header: Authorization: Bearer ${API_TOKEN}`);
+    console.log('Auth Header: Authorization: Bearer [REDACTED]');
     console.log('Content-Type: application/json');
     console.log('\n📚 Key Endpoints for GPT:');
     console.log('- GET /gene-key-guidance - Get Gene Key insights');

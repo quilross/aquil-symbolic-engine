@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 const BASE = process.env.BASE || 'https://signal-q.me';
-const TOKEN = process.env.SIGNALQ_API_TOKEN || '';
+const TOKEN = process.env.API_TOKEN || '';
 
 function log(title, obj){ console.log(`\n=== ${title} ===`); console.dir(obj, {depth: 5}); }
 
