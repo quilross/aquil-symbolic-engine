@@ -49,14 +49,14 @@ The login opens a browser window and stores your API credentials locally.
 ## 4. Configure secrets
 Set the worker tokens and Cloudflare AI gateway credentials:
 ```bash
-wrangler secret put SIGNALQ_API_TOKEN
-wrangler secret put SIGNALQ_ADMIN_TOKEN
+wrangler secret put API_TOKEN
+wrangler secret put API_TOKEN_ADMIN
 wrangler secret put CLOUDFLARE_API_TOKEN
 ```
 Export the related environment variables so the deploy script and `/actions/chat` can access them:
 ```bash
-export SIGNALQ_API_TOKEN=<your user token>
-export SIGNALQ_ADMIN_TOKEN=<your admin token>
+export API_TOKEN=<your user token>
+export API_TOKEN_ADMIN=<your admin token>
 export CLOUDFLARE_ACCOUNT_ID=<your Cloudflare account ID>
 export CLOUDFLARE_GATEWAY_ID=<your AI Gateway ID>
 export CLOUDFLARE_MODEL_ID=@cf/meta/llama-3.1-8b-instruct
@@ -69,7 +69,7 @@ From the project root run the deploy script:
 cd worker
 ./deploy.sh
 ```
-The script calls `wrangler deploy`, provisions the durable object defined in `wrangler.toml`, and performs a quick health check against the live endpoint. It exits early if `SIGNALQ_API_TOKEN` isn't set or if `jq` is missing.
+The script calls `wrangler deploy`, provisions the durable object defined in `wrangler.toml`, and performs a quick health check against the live endpoint. It exits early if `API_TOKEN` isn't set or if `jq` is missing.
 
 ## 6. Custom domain
 `worker/wrangler.toml` already maps the worker to the `signal-q.me` domain:
@@ -90,7 +90,7 @@ npm test
 ```
 To manually verify an endpoint:
 ```bash
-curl -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+curl -X POST -H "Authorization: Bearer $API_TOKEN" \
   https://signal-q.me/actions/system_health
 ```
 A successful response returns JSON containing a status of `healthy`.

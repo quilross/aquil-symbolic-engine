@@ -50,7 +50,22 @@ const SECRET_PATTERNS = [
   },
   {
     name: 'SignalQ Token',
-    pattern: /sq_(live|admin|test)_[a-zA-Z0-9]{32}/g,
+    pattern: /(sg_live|sq_live|sq_admin)_[A-Za-z0-9_-]+/g,
+    severity: 'HIGH'
+  },
+  {
+    name: 'Bearer SignalQ Token',
+    pattern: /Bearer[ \t]+(sg_live|sq_live|sq_admin)_[A-Za-z0-9_-]+/g,
+    severity: 'HIGH'
+  },
+  {
+    name: 'OpenAI Key',
+    pattern: /sk-[A-Za-z0-9]{20,}/g,
+    severity: 'HIGH'
+  },
+  {
+    name: 'JWT Token',
+    pattern: /(?<![A-Za-z0-9])eyJ[A-Za-z0-9_=-]{20,}\.?[A-Za-z0-9_.=-]{10,}/g,
     severity: 'HIGH'
   },
   {
@@ -76,8 +91,6 @@ const EXCLUDE_PATTERNS = [
 
 // Whitelist for known safe patterns (like dev tokens in examples)
 const WHITELIST_PATTERNS = [
-  'sq_live_7k9m2n8p4x6w1z5q3r7t9v2b4c6d8f0h', // Dev token from .env.example
-  'sq_admin_9x7c5v1b3n6m8k2q4w7e9r5t3y8u1o6p2', // Dev admin token from .env.example
   'sample-api-token',
   'sample-account-id',
   'example-key-123',

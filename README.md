@@ -8,8 +8,8 @@ Signal Q is a Cloudflare Worker that exposes a minimal API for version info, hea
 3. `npx wrangler deploy`
 
 ## Secrets
-- `wrangler secret put SIGNALQ_API_TOKEN`
-- `wrangler secret put SIGNALQ_ADMIN_TOKEN`
+- `wrangler secret put API_TOKEN`
+- `wrangler secret put API_TOKEN_ADMIN`
 
 ## Workers AI Gateway
 Set these to enable `/actions/chat` to call Cloudflare Workers AI via the Gateway:
@@ -63,5 +63,5 @@ If any are missing the chat action falls back to echo responses.
 - 401 errors: missing or wrong Bearer token
 - Durable Object migration errors: check binding `MEMORY` and migration tag `v1-memory`
 - CORS: verify OPTIONS preflight allows origin, headers, and methods
-- Replicate GPT Actions ingestion: `SIGNALQ_API_TOKEN=... node scripts/forensics.mjs`
+- Replicate GPT Actions ingestion: `API_TOKEN=... node scripts/forensics.mjs`
 

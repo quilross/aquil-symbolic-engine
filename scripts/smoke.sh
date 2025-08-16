@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 BASE="${1:-https://signal-q.me}"
-TOKEN="${SIGNALQ_API_TOKEN:-}"
+TOKEN="${API_TOKEN:-}"
 
 echo "Health"
 curl -sSf "$BASE/system/health" | jq .

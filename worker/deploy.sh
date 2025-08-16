@@ -16,8 +16,8 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 # Ensure API token is set
-if [[ -z "${SIGNALQ_API_TOKEN:-}" ]]; then
-  echo "❌ SIGNALQ_API_TOKEN is not set. Export it before deploying."
+if [[ -z "${API_TOKEN:-}" ]]; then
+  echo "❌ API_TOKEN is not set. Export it before deploying."
   exit 1
 fi
 
@@ -33,7 +33,7 @@ wrangler deploy
 
 # Test deployment
 echo "🧪 Testing deployment..."
-curl -s -X POST -H "Authorization: Bearer $SIGNALQ_API_TOKEN" \
+curl -s -X POST -H "Authorization: Bearer $API_TOKEN" \
   https://signal-q.me/actions/system_health | jq .status
 
 echo "✅ Deploy complete! Your API is live at:"
