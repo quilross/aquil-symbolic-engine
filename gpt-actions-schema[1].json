@@ -1,0 +1,291 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Aquil Symbolic Engine API",
+    "description": "Personal AI Wisdom Builder & Trust Reinforcement System",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://signal-q.me",
+      "description": "Aquil's personal AI domain"
+    }
+  ],
+  "paths": {
+    "/api/trust/check-in": {
+      "post": {
+        "summary": "Trust Building Check-In Session",
+        "description": "Personal trust-building companion for standing tall in the world",
+        "operationId": "trustCheckIn",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_state": {
+                    "type": "string",
+                    "description": "How are you feeling about trusting yourself right now?"
+                  },
+                  "trust_level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "Trust level 1-10"
+                  },
+                  "specific_situation": {
+                    "type": "string",
+                    "description": "Specific situation where you're questioning self-trust"
+                  },
+                  "body_sensations": {
+                    "type": "string", 
+                    "description": "What is your body telling you?"
+                  }
+                },
+                "required": ["current_state"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Personalized trust guidance with exercises"
+          }
+        }
+      }
+    },
+    "/api/media/extract-wisdom": {
+      "post": {
+        "summary": "Transform Media into Personal Wisdom",
+        "description": "Extract wisdom from TV, movies, books, podcasts, music",
+        "operationId": "extractMediaWisdom",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "media_type": {
+                    "type": "string",
+                    "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
+                    "description": "Type of content consumed"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Title of the content"
+                  },
+                  "your_reaction": {
+                    "type": "string",
+                    "description": "Your personal reaction, thoughts, or feelings"
+                  },
+                  "content_summary": {
+                    "type": "string",
+                    "description": "Brief summary (optional)"
+                  }
+                },
+                "required": ["media_type", "title", "your_reaction"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wisdom extraction with growth insights"
+          }
+        }
+      }
+    },
+    "/api/somatic/session": {
+      "post": {
+        "summary": "Body Wisdom & Somatic Healing Session", 
+        "description": "Connect with your body's intelligence for trust building",
+        "operationId": "somaticHealingSession",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body_state": {
+                    "type": "string",
+                    "description": "How is your body feeling? Any tension or sensations?"
+                  },
+                  "emotions": {
+                    "type": "string",
+                    "description": "What emotions are you experiencing?"
+                  },
+                  "intention": {
+                    "type": "string", 
+                    "description": "What would you like to work with in this session?"
+                  }
+                },
+                "required": ["body_state", "emotions", "intention"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Personalized somatic healing session"
+          }
+        }
+      }
+    },
+    "/api/wisdom/synthesize": {
+      "post": {
+        "summary": "Multi-Framework Wisdom Synthesis",
+        "description": "Guidance from Human Design, Gene Keys, astrology, somatic wisdom",
+        "operationId": "synthesizeWisdom",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "life_situation": {
+                    "type": "string",
+                    "description": "Your current life situation"
+                  },
+                  "specific_question": {
+                    "type": "string",
+                    "description": "Specific question or decision you're facing"
+                  },
+                  "frameworks_requested": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["human_design", "gene_keys", "astrology", "somatic_wisdom", "all"]
+                    }
+                  }
+                },
+                "required": ["life_situation", "specific_question"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Synthesized wisdom from multiple frameworks"
+          }
+        }
+      }
+    },
+    "/api/patterns/recognize": {
+      "post": {
+        "summary": "Pattern Recognition & Growth Insights",
+        "description": "Identify patterns in your trust journey and growth",
+        "operationId": "recognizePatterns",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object", 
+                "properties": {
+                  "area_of_focus": {
+                    "type": "string",
+                    "enum": ["trust_building", "media_consumption", "body_awareness", "overall_growth"]
+                  },
+                  "recent_experiences": {
+                    "type": "string",
+                    "description": "Recent experiences you've been navigating"
+                  },
+                  "recurring_themes": {
+                    "type": "string", 
+                    "description": "Any recurring themes you've noticed"
+                  }
+                },
+                "required": ["area_of_focus", "recent_experiences"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pattern analysis with growth recommendations"
+          }
+        }
+      }
+    },
+    "/api/standing-tall/practice": {
+      "post": {
+        "summary": "Standing Tall Practice Session",
+        "description": "Stand tall in the world instead of shrinking",
+        "operationId": "standingTallPractice",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "situation": {
+                    "type": "string",
+                    "description": "Situation where you tend to shrink instead of standing tall"
+                  },
+                  "fears_concerns": {
+                    "type": "string",
+                    "description": "Fears or concerns around standing in your power"
+                  },
+                  "desired_outcome": {
+                    "type": "string",
+                    "description": "How would you like to show up?"
+                  },
+                  "past_successes": {
+                    "type": "string",
+                    "description": "Times when you did stand tall successfully"
+                  }
+                },
+                "required": ["situation", "desired_outcome"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Standing tall practices with confidence building"
+          }
+        }
+      }
+    },
+    "/api/wisdom/daily-synthesis": {
+      "get": {
+        "summary": "Daily Wisdom Compilation",
+        "description": "Your personalized daily wisdom and growth insights",
+        "operationId": "getDailySynthesis",
+        "parameters": [
+          {
+            "name": "period", 
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["today", "week", "month"],
+              "default": "today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personalized wisdom compilation"
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "summary": "System Health Check",
+        "description": "Check if Aquil is running and responsive",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "System status and available endpoints"
+          }
+        }
+      }
+    }
+  }
+}
