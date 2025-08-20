@@ -1,0 +1,44 @@
+{
+  "name": "aquil-symbolic-engine",
+  "version": "2.0.0",
+  "description": "Personal AI Wisdom Builder & Trust Reinforcement System",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --env production",
+    "setup": "node setup.js",
+    "tail": "wrangler tail",
+    "db:init": "wrangler d1 execute AQUIL_DB --file=schema.sql --env production",
+    "db:migrate": "wrangler d1 migrations apply AQUIL_DB --env production",
+    "types": "wrangler types"
+  },
+  "keywords": [
+    "personal-ai",
+    "trust-building", 
+    "wisdom-extraction",
+    "somatic-healing",
+    "standing-tall",
+    "symbolic-engine",
+    "aquil",
+    "human-design",
+    "gene-keys",
+    "astrology"
+  ],
+  "author": "Aquil Signal-Q",
+  "license": "Personal",
+  "dependencies": {
+    "itty-router": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0", 
+    "wrangler": "^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/aquil-symbolic-engine.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

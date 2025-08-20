@@ -1,0 +1,46 @@
+name = "aquil-symbolic-engine"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[env.production]
+name = "aquil-prod"
+route = { pattern = "signal-q.me/*", zone_name = "signal-q.me" }
+
+# D1 Database for structured wisdom data
+[[env.production.d1_databases]]
+binding = "AQUIL_DB"
+database_name = "aquil-wisdom-db"
+database_id = "REPLACE_WITH_ACTUAL_DATABASE_ID"
+
+# KV Storage for sessions and temporary data
+[[env.production.kv_namespaces]]
+binding = "AQUIL_MEMORIES"
+id = "REPLACE_WITH_ACTUAL_KV_ID"
+preview_id = "REPLACE_WITH_ACTUAL_KV_PREVIEW_ID"
+
+# Environment variables
+[env.production.vars]
+ENVIRONMENT = "production"
+API_VERSION = "v2"
+DOMAIN = "signal-q.me"
+
+# Scheduled tasks for daily wisdom synthesis
+[[env.production.triggers]]
+cron = ["0 7 * * *", "0 19 * * *"]  # Morning and evening wisdom synthesis
+
+# Development environment
+[env.development]
+name = "aquil-dev"
+
+[[env.development.d1_databases]]
+binding = "AQUIL_DB"
+database_name = "aquil-wisdom-db-dev"
+database_id = "REPLACE_WITH_DEV_DATABASE_ID"
+
+[[env.development.kv_namespaces]]
+binding = "AQUIL_MEMORIES"
+id = "REPLACE_WITH_DEV_KV_ID"
+
+[env.development.vars]
+ENVIRONMENT = "development"
+API_VERSION = "v2"
