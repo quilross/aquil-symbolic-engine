@@ -1,8 +1,8 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "info": {
     "title": "Aquil Symbolic Engine API",
-    "description": "Personal AI Wisdom Builder & Trust Reinforcement System",
+    "description": "Personal AI Wisdom Builder & Trust Reinforcement System - Standing tall in the world, rooted in internal trust",
     "version": "2.0.0"
   },
   "servers": [
@@ -11,39 +11,129 @@
       "description": "Aquil's personal AI domain"
     }
   ],
+  "components": {
+    "schemas": {
+      "TrustCheckInRequest": {
+        "type": "object",
+        "properties": {
+          "current_state": {
+            "type": "string",
+            "description": "How are you feeling about trusting yourself right now?"
+          },
+          "trust_level": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Trust level 1-10"
+          },
+          "specific_situation": {
+            "type": "string",
+            "description": "Specific situation where you're questioning self-trust"
+          },
+          "body_sensations": {
+            "type": "string",
+            "description": "What is your body telling you?"
+          }
+        },
+        "required": ["current_state"]
+      },
+      "MediaWisdomRequest": {
+        "type": "object",
+        "properties": {
+          "media_type": {
+            "type": "string",
+            "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
+            "description": "Type of content consumed"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the content"
+          },
+          "your_reaction": {
+            "type": "string",
+            "description": "Your personal reaction, thoughts, or feelings"
+          },
+          "content_summary": {
+            "type": "string",
+            "description": "Brief summary (optional)"
+          }
+        },
+        "required": ["media_type", "title", "your_reaction"]
+      },
+      "SomaticSessionRequest": {
+        "type": "object",
+        "properties": {
+          "body_state": {
+            "type": "string",
+            "description": "How is your body feeling? Any tension or sensations?"
+          },
+          "emotions": {
+            "type": "string",
+            "description": "What emotions are you experiencing?"
+          },
+          "intention": {
+            "type": "string",
+            "description": "What would you like to work with in this session?"
+          }
+        },
+        "required": ["body_state", "emotions", "intention"]
+      }
+    }
+  },
   "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "System Health Check",
+        "description": "Check if Aquil is running and responsive",
+        "operationId": "healthCheck",
+        "x-openai": {
+          "description": "Check system health and available endpoints"
+        },
+        "responses": {
+          "200": {
+            "description": "System status and available endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string"},
+                    "version": {"type": "string"},
+                    "message": {"type": "string"},
+                    "timestamp": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/trust/check-in": {
       "post": {
         "summary": "Trust Building Check-In Session",
         "description": "Personal trust-building companion for standing tall in the world",
         "operationId": "trustCheckIn",
+        "x-openai": {
+          "description": "Use this when the user wants to check in on their trust levels, explore self-trust, or work on building internal confidence. Perfect for reflection and trust-building exercises."
+        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "current_state": {
-                    "type": "string",
-                    "description": "How are you feeling about trusting yourself right now?"
-                  },
-                  "trust_level": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 10,
-                    "description": "Trust level 1-10"
-                  },
-                  "specific_situation": {
-                    "type": "string",
-                    "description": "Specific situation where you're questioning self-trust"
-                  },
-                  "body_sensations": {
-                    "type": "string", 
-                    "description": "What is your body telling you?"
+                "$ref": "#/components/schemas/TrustCheckInRequest"
+              },
+              "examples": {
+                "basic_checkin": {
+                  "summary": "Basic trust check-in",
+                  "value": {
+                    "current_state": "I'm feeling uncertain about a decision I need to make",
+                    "trust_level": 6,
+                    "specific_situation": "Career change decision",
+                    "body_sensations": "Tight chest, butterflies in stomach"
                   }
-                },
-                "required": ["current_state"]
+                }
               }
             }
           }
@@ -60,32 +150,26 @@
         "summary": "Transform Media into Personal Wisdom",
         "description": "Extract wisdom from TV, movies, books, podcasts, music",
         "operationId": "extractMediaWisdom",
+        "x-openai": {
+          "description": "Use this when the user mentions watching, reading, or consuming any media content and wants to extract personal growth insights from it. Great for turning entertainment into wisdom."
+        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "media_type": {
-                    "type": "string",
-                    "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
-                    "description": "Type of content consumed"
-                  },
-                  "title": {
-                    "type": "string",
-                    "description": "Title of the content"
-                  },
-                  "your_reaction": {
-                    "type": "string",
-                    "description": "Your personal reaction, thoughts, or feelings"
-                  },
-                  "content_summary": {
-                    "type": "string",
-                    "description": "Brief summary (optional)"
+                "$ref": "#/components/schemas/MediaWisdomRequest"
+              },
+              "examples": {
+                "book_wisdom": {
+                  "summary": "Extracting wisdom from a book",
+                  "value": {
+                    "media_type": "book",
+                    "title": "Atomic Habits",
+                    "your_reaction": "I resonated with the idea of small changes creating big results",
+                    "content_summary": "Book about building good habits through small incremental changes"
                   }
-                },
-                "required": ["media_type", "title", "your_reaction"]
+                }
               }
             }
           }
@@ -99,30 +183,28 @@
     },
     "/api/somatic/session": {
       "post": {
-        "summary": "Body Wisdom & Somatic Healing Session", 
+        "summary": "Body Wisdom & Somatic Healing Session",
         "description": "Connect with your body's intelligence for trust building",
         "operationId": "somaticHealingSession",
+        "x-openai": {
+          "description": "Use this when the user wants to work with body sensations, emotions, or needs somatic healing practices. Perfect for connecting with body wisdom and releasing tension."
+        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "body_state": {
-                    "type": "string",
-                    "description": "How is your body feeling? Any tension or sensations?"
-                  },
-                  "emotions": {
-                    "type": "string",
-                    "description": "What emotions are you experiencing?"
-                  },
-                  "intention": {
-                    "type": "string", 
-                    "description": "What would you like to work with in this session?"
+                "$ref": "#/components/schemas/SomaticSessionRequest"
+              },
+              "examples": {
+                "tension_release": {
+                  "summary": "Working with body tension",
+                  "value": {
+                    "body_state": "Shoulders feel tight and raised, jaw is clenched",
+                    "emotions": "Stress and overwhelm",
+                    "intention": "Release tension and feel more grounded"
                   }
-                },
-                "required": ["body_state", "emotions", "intention"]
+                }
               }
             }
           }
@@ -139,6 +221,9 @@
         "summary": "Multi-Framework Wisdom Synthesis",
         "description": "Guidance from Human Design, Gene Keys, astrology, somatic wisdom",
         "operationId": "synthesizeWisdom",
+        "x-openai": {
+          "description": "Use this when the user has a specific life question or decision and wants integrated guidance from multiple wisdom frameworks like Human Design, Gene Keys, astrology, and somatic wisdom."
+        },
         "requestBody": {
           "required": true,
           "content": {
@@ -179,12 +264,15 @@
         "summary": "Pattern Recognition & Growth Insights",
         "description": "Identify patterns in your trust journey and growth",
         "operationId": "recognizePatterns",
+        "x-openai": {
+          "description": "Use this to analyze patterns in the user's growth journey, recurring themes, or to celebrate progress over time. Great for reflection and recognizing evolution."
+        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object", 
+                "type": "object",
                 "properties": {
                   "area_of_focus": {
                     "type": "string",
@@ -195,7 +283,7 @@
                     "description": "Recent experiences you've been navigating"
                   },
                   "recurring_themes": {
-                    "type": "string", 
+                    "type": "string",
                     "description": "Any recurring themes you've noticed"
                   }
                 },
@@ -216,6 +304,9 @@
         "summary": "Standing Tall Practice Session",
         "description": "Stand tall in the world instead of shrinking",
         "operationId": "standingTallPractice",
+        "x-openai": {
+          "description": "Use this when the user mentions feeling small, shrinking, lacking confidence, or wanting to practice standing in their power. Perfect for building authentic empowerment."
+        },
         "requestBody": {
           "required": true,
           "content": {
@@ -257,9 +348,12 @@
         "summary": "Daily Wisdom Compilation",
         "description": "Your personalized daily wisdom and growth insights",
         "operationId": "getDailySynthesis",
+        "x-openai": {
+          "description": "Use this to provide daily wisdom compilation, morning insights, or when the user wants their personalized wisdom summary."
+        },
         "parameters": [
           {
-            "name": "period", 
+            "name": "period",
             "in": "query",
             "schema": {
               "type": "string",
@@ -271,18 +365,6 @@
         "responses": {
           "200": {
             "description": "Personalized wisdom compilation"
-          }
-        }
-      }
-    },
-    "/api/health": {
-      "get": {
-        "summary": "System Health Check",
-        "description": "Check if Aquil is running and responsive",
-        "operationId": "healthCheck",
-        "responses": {
-          "200": {
-            "description": "System status and available endpoints"
           }
         }
       }
