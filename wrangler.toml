@@ -10,13 +10,13 @@ route = { pattern = "signal-q.me/*", zone_name = "signal-q.me" }
 [[env.production.d1_databases]]
 binding = "AQUIL_DB"
 database_name = "aquil-wisdom-db"
-database_id = "REPLACE_WITH_ACTUAL_DATABASE_ID"
+database_id = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
 
 # KV Storage for sessions and temporary data
 [[env.production.kv_namespaces]]
 binding = "AQUIL_MEMORIES"
-id = "REPLACE_WITH_ACTUAL_KV_ID"
-preview_id = "REPLACE_WITH_ACTUAL_KV_PREVIEW_ID"
+id = "633c8059669c4b73bb5ca78d2efdb5db"
+preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
 
 # Environment variables
 [env.production.vars]
@@ -35,11 +35,11 @@ name = "aquil-dev"
 [[env.development.d1_databases]]
 binding = "AQUIL_DB"
 database_name = "aquil-wisdom-db-dev"
-database_id = "REPLACE_WITH_DEV_DATABASE_ID"
+database_id = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
 
 [[env.development.kv_namespaces]]
 binding = "AQUIL_MEMORIES"
-id = "REPLACE_WITH_DEV_KV_ID"
+id = "633c8059669c4b73bb5ca78d2efdb5db"
 
 [env.development.vars]
 ENVIRONMENT = "development"
