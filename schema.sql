@@ -146,3 +146,24 @@ INSERT OR REPLACE INTO user_profile (
     '{"communication_style": "direct_comprehensive", "frameworks": ["human_design", "gene_keys", "astrology", "somatic_wisdom"], "focus_areas": ["internal_trust", "standing_tall", "media_wisdom", "body_awareness"]}',
     'Build unshakeable internal trust as my primary navigation system and stand tall in the world instead of shrinking'
 );
+
+    -- Generic event log for chat messages, metrics, errors, etc.
+    CREATE TABLE IF NOT EXISTS event_log (
+        id TEXT PRIMARY KEY,
+        ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+        type TEXT NOT NULL,
+        who TEXT,
+        level TEXT,
+        session_id TEXT,
+        tags TEXT,
+        idx1 TEXT,
+        idx2 TEXT,
+        payload TEXT NOT NULL
+    );
+
+    -- Basic indexes to speed up queries
+    CREATE INDEX IF NOT EXISTS idx_event_ts    ON event_log(ts DESC);
+    CREATE INDEX IF NOT EXISTS idx_event_type  ON event_log(type);
+    CREATE INDEX IF NOT EXISTS idx_event_session ON event_log(session_id);
+    CREATE INDEX IF NOT EXISTS idx_event_who   ON event_log(who);
+    CREATE INDEX IF NOT EXISTS idx_event_level ON event_log(level);

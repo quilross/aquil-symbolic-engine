@@ -11,129 +11,107 @@
       "description": "Aquil's personal AI domain"
     }
   ],
-  "components": {
-    "schemas": {
-      "TrustCheckInRequest": {
-        "type": "object",
-        "properties": {
-          "current_state": {
-            "type": "string",
-            "description": "How are you feeling about trusting yourself right now?"
-          },
-          "trust_level": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 10,
-            "description": "Trust level 1-10"
-          },
-          "specific_situation": {
-            "type": "string",
-            "description": "Specific situation where you're questioning self-trust"
-          },
-          "body_sensations": {
-            "type": "string",
-            "description": "What is your body telling you?"
-          }
-        },
-        "required": ["current_state"]
-      },
-      "MediaWisdomRequest": {
-        "type": "object",
-        "properties": {
-          "media_type": {
-            "type": "string",
-            "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
-            "description": "Type of content consumed"
-          },
-          "title": {
-            "type": "string",
-            "description": "Title of the content"
-          },
-          "your_reaction": {
-            "type": "string",
-            "description": "Your personal reaction, thoughts, or feelings"
-          },
-          "content_summary": {
-            "type": "string",
-            "description": "Brief summary (optional)"
-          }
-        },
-        "required": ["media_type", "title", "your_reaction"]
-      },
-      "SomaticSessionRequest": {
-        "type": "object",
-        "properties": {
-          "body_state": {
-            "type": "string",
-            "description": "How is your body feeling? Any tension or sensations?"
-          },
-          "emotions": {
-            "type": "string",
-            "description": "What emotions are you experiencing?"
-          },
-          "intention": {
-            "type": "string",
-            "description": "What would you like to work with in this session?"
-          }
-        },
-        "required": ["body_state", "emotions", "intention"]
-      }
-    }
-  },
   "paths": {
-    "/api/health": {
-      "get": {
-        "summary": "System Health Check",
-        "description": "Check if Aquil is running and responsive",
-        "operationId": "healthCheck",
-        "x-openai": {
-          "description": "Check system health and available endpoints"
-        },
-        "responses": {
-          "200": {
-            "description": "System status and available endpoints",
+      "/api/log": {
+        "post": {
+            "summary": "Automatic Log Data or Event (GPT can use anytime)",
+            "description": "Automatically log any data, message, or event for context continuity, metrics, or error tracking. This action is available for GPT to use at any time, without restriction, for flexible and autonomous logging.",
+          "operationId": "logDataOrEvent",
+          "requestBody": {
+            "required": true,
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {"type": "string"},
-                    "version": {"type": "string"},
-                    "message": {"type": "string"},
-                    "timestamp": {"type": "string"}
-                  }
+                    "type": { "type": "string", "description": "Type of log (e.g. chat_message, metric, error, context, etc.)" },
+                    "who": { "type": "string", "description": "Who or what generated the log (user, assistant, system, etc.)" },
+                    "level": { "type": "string", "description": "Severity or importance (info, warning, error, etc.)" },
+                    "session_id": { "type": "string", "description": "Session or conversation identifier" },
+                    "tags": { "type": "array", "items": { "type": "string" }, "description": "Tags for filtering and context (optional)" },
+                    "idx1": { "type": "string", "description": "Custom index field 1 (optional)" },
+                    "idx2": { "type": "string", "description": "Custom index field 2 (optional)" },
+                    "payload": { "type": "object", "description": "Main log data, can be any JSON object or string" }
+                  },
+                  "required": ["type", "payload"]
                 }
               }
             }
+          },
+          "responses": {
+            "200": { "description": "Log entry created with unique id" }
           }
         }
-      }
-    },
+      },
+      "/api/logs": {
+        "get": {
+            "summary": "Automatic Retrieve Logs or Data Entries (GPT can use anytime)",
+            "description": "Automatically retrieve logs for context, continuity, or analysis. This action is available for GPT to use at any time, including at the start of every conversation for frame of reference, and for ongoing autonomous retrieval.",
+          "operationId": "retrieveLogsOrDataEntries",
+          "parameters": [
+            { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 200 }, "description": "Max number of logs to retrieve" },
+            { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Type of log to filter (optional)" },
+            { "name": "who", "in": "query", "schema": { "type": "string" }, "description": "Who generated the log (optional)" },
+            { "name": "level", "in": "query", "schema": { "type": "string" }, "description": "Log level to filter (optional)" },
+            { "name": "session_id", "in": "query", "schema": { "type": "string" }, "description": "Session or conversation id (optional)" },
+            { "name": "tag", "in": "query", "schema": { "type": "string" }, "description": "Tag to filter (optional)" },
+            { "name": "since", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Start time (optional)" },
+            { "name": "until", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "End time (optional)" },
+            { "name": "idx1", "in": "query", "schema": { "type": "string" }, "description": "Custom index field 1 (optional)" },
+            { "name": "idx2", "in": "query", "schema": { "type": "string" }, "description": "Custom index field 2 (optional)" }
+          ],
+          "responses": {
+            "200": { "description": "Array of log entries matching filters" }
+          }
+        }
+      },
+      "/api/session-init": {
+        "get": {
+            "summary": "Automatic Retrieve Recent Logs for Session Initialization (GPT can use anytime)",
+            "description": "Automatically retrieve the most recent logs at the start of a new conversation to provide continuity and frame of reference. This action is available for GPT to use at any time, for autonomous session bootstrapping and context gathering.",
+          "operationId": "retrieveRecentSessionLogs",
+          "parameters": [
+            { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 7, "minimum": 1, "maximum": 200 }, "description": "Number of recent logs to retrieve (default 7)" },
+            { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Type of log to filter (optional)" },
+            { "name": "session_id", "in": "query", "schema": { "type": "string" }, "description": "Session or conversation id (optional)" }
+          ],
+          "responses": {
+            "200": { "description": "Array of recent log entries for session initialization" }
+          }
+        }
+      },
     "/api/trust/check-in": {
       "post": {
         "summary": "Trust Building Check-In Session",
         "description": "Personal trust-building companion for standing tall in the world",
         "operationId": "trustCheckIn",
-        "x-openai": {
-          "description": "Use this when the user wants to check in on their trust levels, explore self-trust, or work on building internal confidence. Perfect for reflection and trust-building exercises."
-        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustCheckInRequest"
-              },
-              "examples": {
-                "basic_checkin": {
-                  "summary": "Basic trust check-in",
-                  "value": {
-                    "current_state": "I'm feeling uncertain about a decision I need to make",
-                    "trust_level": 6,
-                    "specific_situation": "Career change decision",
-                    "body_sensations": "Tight chest, butterflies in stomach"
+                "type": "object",
+                "properties": {
+                  "current_state": {
+                    "type": "string",
+                    "description": "How are you feeling about trusting yourself right now?"
+                  },
+                  "trust_level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "Trust level 1-10"
+                  },
+                  "specific_situation": {
+                    "type": "string",
+                    "description": "Specific situation where you're questioning self-trust"
+                  },
+                  "body_sensations": {
+                    "type": "string", 
+                    "description": "What is your body telling you?"
                   }
-                }
+                },
+                "required": ["current_state"]
               }
             }
           }
@@ -150,26 +128,32 @@
         "summary": "Transform Media into Personal Wisdom",
         "description": "Extract wisdom from TV, movies, books, podcasts, music",
         "operationId": "extractMediaWisdom",
-        "x-openai": {
-          "description": "Use this when the user mentions watching, reading, or consuming any media content and wants to extract personal growth insights from it. Great for turning entertainment into wisdom."
-        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MediaWisdomRequest"
-              },
-              "examples": {
-                "book_wisdom": {
-                  "summary": "Extracting wisdom from a book",
-                  "value": {
-                    "media_type": "book",
-                    "title": "Atomic Habits",
-                    "your_reaction": "I resonated with the idea of small changes creating big results",
-                    "content_summary": "Book about building good habits through small incremental changes"
+                "type": "object",
+                "properties": {
+                  "media_type": {
+                    "type": "string",
+                    "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
+                    "description": "Type of content consumed"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Title of the content"
+                  },
+                  "your_reaction": {
+                    "type": "string",
+                    "description": "Your personal reaction, thoughts, or feelings"
+                  },
+                  "content_summary": {
+                    "type": "string",
+                    "description": "Brief summary (optional)"
                   }
-                }
+                },
+                "required": ["media_type", "title", "your_reaction"]
               }
             }
           }

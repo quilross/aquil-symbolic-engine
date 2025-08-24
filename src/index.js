@@ -42,6 +42,7 @@ router.get('/api/health', async () => {
   }), { headers: corsHeaders });
 });
 
+// ...existing code...
 // Trust Building Check-In - FULLY FUNCTIONAL
 router.post('/api/trust/check-in', async (request) => {
   try {
@@ -120,7 +121,7 @@ router.post('/api/trust/check-in', async (request) => {
 router.post('/api/media/extract-wisdom', async (request) => {
   try {
     const data = await request.json();
-    const { media_type, title, your_reaction, content_summary } = data;
+    const { media_type, title, your_reaction } = data;
     
     const result = {
       session_id: `media_${Date.now()}`,
@@ -716,6 +717,80 @@ router.get('/api/wisdom/daily-synthesis', async (request) => {
 });
 
 // Welcome page
+// ...existing code...
+// -----------------------------------------------------------------------------
+// Event Logging Helpers (D1 only)
+// -----------------------------------------------------------------------------
+
+async function logEvent(env, event) {
+  if (!event?.type || event?.payload == null) {
+    throw new Error('type and payload are required');
+  }
+  const id = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  const payloadStr = typeof event.payload === 'string'
+    ? event.payload
+    : JSON.stringify(event.payload);
+  const tagsCsv = Array.isArray(event.tags) ? event.tags.join(',') : (event.tags || null);
+
+  await env.AQUIL_DB.prepare(
+    `INSERT INTO event_log (id, type, who, level, session_id, tags, idx1, idx2, payload)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    id,
+    event.type,
+    event.who || null,
+    event.level || null,
+    event.session_id || null,
+    tagsCsv,
+    event.idx1 || null,
+    event.idx2 || null,
+    payloadStr
+  ).run();
+  return id;
+}
+
+async function getEvents(env, opts = {}) {
+  const {
+    limit,
+    type,
+    who,
+    level,
+    session_id,
+    tag,
+    since,
+    until,
+    idx1,
+    idx2
+  } = opts;
+
+  const lim = Math.max(1, Math.min(200, parseInt(limit) || 20));
+  const where = [];
+  const params = [];
+
+  if (type)      { where.push('type = ?'); params.push(type); }
+  if (who)       { where.push('who = ?'); params.push(who); }
+  if (level)     { where.push('level = ?'); params.push(level); }
+  if (session_id){ where.push('session_id = ?'); params.push(session_id); }
+  if (idx1)      { where.push('idx1 = ?'); params.push(idx1); }
+  if (idx2)      { where.push('idx2 = ?'); params.push(idx2); }
+  if (tag)       { where.push(`(',' || IFNULL(tags,'') || ',') LIKE ?`); params.push(`%,${tag},%`); }
+  if (since)     { where.push('ts >= ?'); params.push(since); }
+  if (until)     { where.push('ts <= ?'); params.push(until); }
+
+  const sql = `
+    SELECT id, ts, type, who, level, session_id, tags, idx1, idx2, payload
+      FROM event_log
+     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+     ORDER BY ts DESC
+     LIMIT ?
+  `;
+  params.push(lim);
+  const { results } = await env.AQUIL_DB.prepare(sql).bind(...params).all();
+  return results || [];
+}
+
+// Welcome page for root path
+// ...existing code...
 router.get('/', async () => {
   return new Response(`
 <!DOCTYPE html>
@@ -800,7 +875,58 @@ router.options('*', () => {
   });
 });
 
+// ...existing code...
 // Catch all
+// ...existing code...
+// -----------------------------------------------------------------------------
+// Generic Logging Routes
+// -----------------------------------------------------------------------------
+
+// Write a new event (POST /api/log)
+router.post('/api/log', async (request, env) => {
+  try {
+    const body = await request.json();
+    const id = await logEvent(env, body);
+    return new Response(JSON.stringify({ status: 'ok', id }), { headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('Log error:', err);
+    return new Response(JSON.stringify({ error: 'Log failed', details: String(err?.message || err) }), {
+      status: 400,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+    });
+  }
+});
+
+// Retrieve events with filters (GET /api/logs)
+// Query: limit, type, who, level, session_id, tag, since, until, idx1, idx2
+router.get('/api/logs', async (request, env) => {
+  try {
+    const url  = new URL(request.url);
+    const opts = Object.fromEntries(url.searchParams.entries());
+    const events = await getEvents(env, opts);
+    return new Response(JSON.stringify({ events }), { headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('Get events error:', err);
+    return new Response(JSON.stringify({ error: 'Retrieval failed' }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
+  }
+});
+
+// Recent 7 events (GET /api/session-init)
+router.get('/api/session-init', async (request, env) => {
+  try {
+    const url = new URL(request.url);
+    if (!url.searchParams.get('limit')) url.searchParams.set('limit', '7');
+    const opts = Object.fromEntries(url.searchParams.entries());
+    const events = await getEvents(env, opts);
+    return new Response(JSON.stringify({ events }), { headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('Session init error:', err);
+    return new Response(JSON.stringify({ error: 'Retrieval failed' }), { status: 500, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
+  }
+});
+
+// Catch all - helpful message
+// ...existing code...
 router.all('*', () => new Response(JSON.stringify({
   message: 'Aquil endpoint not found',
   available_endpoints: [
