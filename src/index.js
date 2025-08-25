@@ -4,6 +4,31 @@
  */
 
 import { Router } from 'itty-router';
+import { logMetamorphicEvent, getPhiladelphiaTime } from './ark/core.js';
+// Wrapper function that enhances your existing endpoint responses
+async function enhanceWithArk(originalResponse, context, env) {
+  try {
+    // Your original response is preserved
+    const arkEnhancement = {
+      ...originalResponse,
+      ark_version: "2.0",
+      timestamp: getPhiladelphiaTime(),
+      voice_available: true,
+      autonomous_features_active: true
+    };
+    // Log the interaction for learning
+    await logMetamorphicEvent(env, {
+      kind: 'endpoint_interaction',
+      detail: { endpoint: context.pathname, enhanced: true },
+      signal_strength: 'medium'
+    });
+    return arkEnhancement;
+  } catch (error) {
+    // If anything fails, return original response
+    console.warn('Ark enhancement failed, using original:', error);
+    return originalResponse;
+  }
+}
 
 const router = Router();
 
@@ -100,7 +125,9 @@ router.post('/api/trust/check-in', async (request) => {
       next_steps: generateNextSteps(analysis)
     };
 
-    return addCORSHeaders(new Response(JSON.stringify(result), {
+    // ARK 2.0 enhancement
+    const enhanced = await enhanceWithArk(result, request, env);
+    return addCORSHeaders(new Response(JSON.stringify(enhanced), {
       headers: { 'Content-Type': 'application/json' }
     }));
 

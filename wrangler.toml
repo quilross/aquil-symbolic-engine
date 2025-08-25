@@ -23,10 +23,30 @@ preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
 ENVIRONMENT = "production"
 API_VERSION = "v2"
 DOMAIN = "signal-q.me"
+# New ARK 2.0 variables
+ARK_VERSION = "2.0"
+TIMEZONE = "America/New_York"
+AUTO_SESSION_INIT = "true"
+VOICE_ADAPTATION = "true"
+DEFAULT_VOICE = "Mirror"
 
 # Scheduled tasks for daily wisdom synthesis
 [[env.production.triggers]]
 cron = ["0 7 * * *", "0 19 * * *"]  # Morning and evening wisdom synthesis
+
+# Add R2 binding
+[[env.production.r2_buckets]]
+binding = "AQUIL_STORAGE"
+bucket_name = "aquil-wisdom-storage"
+
+# Add Vectorize binding
+[[env.production.vectorize]]
+binding = "AQUIL_CONTEXT"
+index_name = "aquil-context-index"
+
+# Add Worker AI binding
+[env.production.ai]
+binding = "AI"
 
 # Development environment
 [env.development]
