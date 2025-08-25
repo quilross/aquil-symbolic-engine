@@ -52,7 +52,16 @@ app.post("/action/:name", (req, res) => {
 
   commitmentLogs.push(logEntry);
 
-  // TODO: Promote to D1 Vault if repeated/significant (stub)
+  // Promote to D1 Vault if repeated/significant (stub)
+  // Simulate D1 Vault as an array for now
+  if (!global.d1Vault) global.d1Vault = [];
+  const archetypeCount = commitmentLogs.filter(log => log.archetype === archetype).length;
+  if (archetypeCount >= 3) {
+    // Only promote if not already promoted
+    if (!global.d1Vault.some(entry => entry.archetype === archetype)) {
+      global.d1Vault.push({ archetype, promotedAt: new Date().toISOString() });
+    }
+  }
 
   res.status(201).json({ success: true, logEntry });
 });
