@@ -44,3 +44,10 @@ id = "633c8059669c4b73bb5ca78d2efdb5db"
 [env.development.vars]
 ENVIRONMENT = "development"
 API_VERSION = "v2"
+
+[vectorize]
+binding = "aquil_context_index"
+index_name = "aquil-context-index"
+[r2_buckets]
+binding = "ark2_symbolic_engine_r2"
+bucket_name = "ark2-symbolic-engine-r2"
