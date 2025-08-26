@@ -4,6 +4,7 @@ import {
   handleDiscoveryInquiry,
   handleRitualSuggestion,
   handleHealthCheck,
+  handleRetrieveLogs,
   handleLog,
 } from './ark/endpoints.js';
 import * as kv from './actions/kv.js';
@@ -56,6 +57,7 @@ router.get('/api/session-init', async (req, env) => addCORS(await handleSessionI
 router.post('/api/discovery/generate-inquiry', async (req, env) => addCORS(await handleDiscoveryInquiry(req, env)));
 router.post('/api/ritual/auto-suggest', async (req, env) => addCORS(await handleRitualSuggestion(req, env)));
 router.get('/api/system/health-check', async (req, env) => addCORS(await handleHealthCheck(req, env)));
+router.get('/api/logs', async (req, env) => addCORS(await handleRetrieveLogs(req, env)));
 router.post('/api/log', async (req, env) => addCORS(await handleLog(req, env)));
 
 
