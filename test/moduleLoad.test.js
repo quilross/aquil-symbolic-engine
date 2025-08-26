@@ -14,3 +14,21 @@ test('TrustBuilder module loads', async () => {
   const instance = new TrustBuilder(fakeEnv);
   assert.ok(instance);
 });
+
+test('EmotionAnalyzer module loads', async () => {
+  const { EmotionAnalyzer } = await import('../src/src-utils-emotion-analyzer.js');
+  const instance = new EmotionAnalyzer();
+  assert.ok(instance);
+});
+
+test('PatternMatcher module loads', async () => {
+  const { PatternMatcher } = await import('../src/src-utils-pattern-matcher.js');
+  const instance = new PatternMatcher();
+  assert.ok(instance);
+});
+
+test('TrustScorer module loads', async () => {
+  const { TrustScorer } = await import('../src/src-utils-trust-scorer.js');
+  const instance = new TrustScorer();
+  assert.ok(instance);
+});
