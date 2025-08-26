@@ -3,8 +3,10 @@
  * Orchestrates all wisdom systems and maintains your personal growth journey
  */
 
+
 import { AquilDatabase } from './src-utils-database.js';
 import { AquilAI } from './src-utils-ai-helpers.js';
+
 
 export class AquilCore {
   constructor(env) {
@@ -18,7 +20,7 @@ export class AquilCore {
   async initialize() {
     if (this.initialized) return;
 
-    console.log('🌱 Initializing Aquil Core System...');
+    logger.info('Initializing Aquil Core System...');
     
     // Load or create user profile
     this.userProfile = await this.db.getUserProfile();
@@ -28,7 +30,7 @@ export class AquilCore {
     }
 
     this.initialized = true;
-    console.log('✅ Aquil Core System initialized');
+    logger.info('Aquil Core System initialized');
   }
 
   async createInitialProfile() {
@@ -49,12 +51,12 @@ export class AquilCore {
     };
 
     await this.db.updateUserProfile(initialProfile);
-    console.log('✅ Initial user profile created');
+    logger.info('Initial user profile created');
   }
 
   // Daily wisdom synthesis
   async runDailySynthesis() {
-    console.log('🌅 Running daily wisdom synthesis...');
+    logger.info('Running daily wisdom synthesis...');
     
     try {
       const trustSessions = await this.db.getRecentTrustSessions(7);
@@ -64,11 +66,11 @@ export class AquilCore {
       const synthesis = await this.generateWisdomSynthesis(patterns);
       
       await this.storeWisdomCompilation(synthesis);
-      
-      console.log('✅ Daily wisdom synthesis complete');
+
+      logger.info('Daily wisdom synthesis complete');
       return synthesis;
     } catch (error) {
-      console.error('Daily synthesis error:', error);
+      logger.error('Daily synthesis error', { error: error.message });
       return null;
     }
   }
@@ -184,7 +186,7 @@ export class AquilCore {
   }
 
   async generateWisdomCompilation() {
-    console.log('📝 Generating wisdom compilation...');
+    logger.info('Generating wisdom compilation...');
     // Daily compilation logic would go here
     return { status: 'Wisdom compiled for today' };
   }
