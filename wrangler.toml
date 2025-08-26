@@ -10,7 +10,7 @@ route = { pattern = "signal-q.me/*", zone_name = "signal-q.me" }
 [[env.production.d1_databases]]
 binding = "AQUIL_DB"
 database_name = "aquil-wisdom-db"
-database_id = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
+database_id = "62d83066-2966-4510-9145-d65d520312f4"
 
 [[env.production.kv_namespaces]]
 binding = "AQUIL_MEMORIES"
@@ -52,6 +52,9 @@ database_id = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
 binding = "AQUIL_MEMORIES"
 id = "633c8059669c4b73bb5ca78d2efdb5db"
 
+# Worker AI binding
+[env.production.ai]
+binding = "AI"
 [[env.development.r2_buckets]]
 binding = "ARK2_SYMBOLIC_ENGINE_R2_DEV"
 bucket_name = "ark2-symbolic-engine-r2"
