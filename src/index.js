@@ -29,6 +29,25 @@ const addCORS = (res) => {
   return res;
 };
 
+// Helper to create simple placeholder POST endpoints
+const createJsonPlaceholder = (path) => {
+  router.post(path, async (req) => {
+    let data;
+    try {
+      data = await req.json();
+    } catch {
+      return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+        status: 400,
+        headers: cors
+      }));
+    }
+    return addCORS(new Response(JSON.stringify({ message: `${path} placeholder`, input: data }), {
+      status: 200,
+      headers: cors
+    }));
+  });
+};
+
 // CORS preflight
 router.options('*', () => new Response(null, { status: 200, headers: cors }));
 
@@ -53,7 +72,7 @@ router.post('/api/trust/check-in', async (req, env) => {
   }
   try {
     const trustBuilder = new TrustBuilder(env);
-    const result = await trustBuilder.checkIn(data);
+    const result = await trustBuilder.processCheckIn(data);
     return addCORS(new Response(JSON.stringify(result), {
       status: 200,
       headers: cors
@@ -113,7 +132,7 @@ router.post('/api/patterns/recognize', async (req, env) => {
   }
   try {
     const recognizer = new PatternRecognizer(env);
-    const result = await recognizer.recognize(data);
+    const result = await recognizer.analyzePatterns(data);
     return addCORS(new Response(JSON.stringify(result), {
       status: 200,
       headers: cors
@@ -143,7 +162,7 @@ router.post('/api/standing-tall/practice', async (req, env) => {
   }
   try {
     const standingTall = new StandingTall(env);
-    const result = await standingTall.practice(data);
+    const result = await standingTall.generatePractice(data);
     return addCORS(new Response(JSON.stringify(result), {
       status: 200,
       headers: cors
@@ -311,7 +330,7 @@ router.post('/api/ancestry/heal', async (req, env) => {
 });
 
 // Wisdom synthesis endpoint
-router.post('/api/wisdom/synthesize', async (req, env) => {
+router.post('/api/wisdom/synthesize', async (req) => {
   let data;
   try {
     data = await req.json();
@@ -321,46 +340,26 @@ router.post('/api/wisdom/synthesize', async (req, env) => {
       headers: cors
     }));
   }
-  try {
-    // Assume wisdom synthesis logic is in TrustBuilder for now
-    const trustBuilder = new TrustBuilder(env);
-    const result = await trustBuilder.synthesizeWisdom(data);
-    return addCORS(new Response(JSON.stringify(result), {
-      status: 200,
-      headers: cors
-    }));
-  } catch (error) {
-    console.error('Wisdom synthesis error:', error);
-    return addCORS(new Response(JSON.stringify({
-      error: 'Synthesis processing error',
-      message: 'Your inner wisdom is always available. Trust your body, honor your gut, accept what is, and take aligned action.'
-    }), {
-      status: 500,
-      headers: cors
-    }));
-  }
+  // Placeholder response until full wisdom synthesizer is implemented
+  return addCORS(new Response(JSON.stringify({
+    message: 'Wisdom synthesis placeholder',
+    input: data
+  }), {
+    status: 200,
+    headers: cors
+  }));
 });
 
 // Daily wisdom synthesis endpoint
-router.get('/api/wisdom/daily-synthesis', async (req, env) => {
-  try {
-    // Assume daily wisdom logic is in TrustBuilder for now
-    const trustBuilder = new TrustBuilder(env);
-    const result = await trustBuilder.dailySynthesis();
-    return addCORS(new Response(JSON.stringify(result), {
-      status: 200,
-      headers: cors
-    }));
-  } catch (error) {
-    console.error('Daily wisdom error:', error);
-    return addCORS(new Response(JSON.stringify({
-      error: 'Daily wisdom error',
-      message: 'Your wisdom journey continues even when systems are offline. Trust your inner knowing.'
-    }), {
-      status: 500,
-      headers: cors
-    }));
-  }
+router.get('/api/wisdom/daily-synthesis', async () => {
+  // Placeholder daily synthesis response
+  return addCORS(new Response(JSON.stringify({
+    message: 'Daily synthesis placeholder',
+    insights: []
+  }), {
+    status: 200,
+    headers: cors
+  }));
 });
 
 // Health endpoint
@@ -421,6 +420,21 @@ router.post('/api/somatic/session', async (req, env) => {
     }));
   }
 });
+
+// Placeholder endpoints for additional schema paths
+router.get('/api/insights', async () => addCORS(new Response(JSON.stringify({ message: '/api/insights placeholder' }), {
+  status: 200,
+  headers: cors
+})));
+
+createJsonPlaceholder('/api/feedback');
+createJsonPlaceholder('/api/dreams/interpret');
+createJsonPlaceholder('/api/energy/optimize');
+createJsonPlaceholder('/api/values/clarify');
+createJsonPlaceholder('/api/creativity/unleash');
+createJsonPlaceholder('/api/abundance/cultivate');
+createJsonPlaceholder('/api/transitions/navigate');
+createJsonPlaceholder('/api/ancestry/heal');
 
 // KV
 router.post('/kv/log', async (req, env) => addCORS(await kv.log(req, env)));
