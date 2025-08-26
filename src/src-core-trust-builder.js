@@ -3,8 +3,8 @@
  * Your personal companion for developing self-authority and inner knowing
  */
 
-import { AquilDatabase } from '../utils/database.js';
-import { AquilAI } from '../utils/ai-helpers.js';
+import { AquilDatabase } from './src-utils-database.js';
+import { AquilAI } from './src-utils-ai-helpers.js';
 
 export class TrustBuilder {
   constructor(env) {
@@ -545,7 +545,7 @@ export class TrustBuilder {
     }
 
     if (analysis.internal_vs_external === 'internal_focused') {
-      celebrations.push('🌟 You're primarily referencing your inner authority - this is sophisticated emotional intelligence');
+      celebrations.push('🌟 You\'re primarily referencing your inner authority - this is sophisticated emotional intelligence');
     }
 
     celebrations.push('🌱 You chose to do this trust check-in - this decision itself shows self-care and growth commitment');

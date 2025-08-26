@@ -3,9 +3,10 @@
  * Orchestrates all wisdom systems and maintains your personal growth journey
  */
 
-import { AquilDatabase } from '../utils/database.js';
-import { AquilAI } from '../utils/ai-helpers.js';
-import { logger } from '../utils/logger.js';
+
+import { AquilDatabase } from './src-utils-database.js';
+import { AquilAI } from './src-utils-ai-helpers.js';
+
 
 export class AquilCore {
   constructor(env) {
