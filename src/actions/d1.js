@@ -1,24 +1,30 @@
 import { send, readJSON } from '../utils/http.js';
 
-// Retrieve recent logs from D1, prioritizing metamorphic_logs with
-// fallback to the legacy event_log table.
+async function tableExists(db, name) {
+  const row = await db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+    .bind(name)
+    .first();
+  return !!row;
+}
+
+// Retrieve recent logs from D1, checking for available tables before querying.
 export async function getLogs(env, limit = 10) {
   if (!env.AQUIL_DB) {
     return { error: 'D1 binding not available' };
   }
 
   try {
-    // Preferred modern table
-    const { results } = await env.AQUIL_DB
-      .prepare(
-        'SELECT id, timestamp, kind, detail FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?'
-      )
-      .bind(limit)
-      .all();
-    return results;
-  } catch (primaryErr) {
-    try {
-      // Fallback to legacy event_log structure
+    if (await tableExists(env.AQUIL_DB, 'metamorphic_logs')) {
+      const { results } = await env.AQUIL_DB
+        .prepare(
+          'SELECT id, timestamp, kind, detail FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?'
+        )
+        .bind(limit)
+        .all();
+      return results;
+    }
+    if (await tableExists(env.AQUIL_DB, 'event_log')) {
       const { results } = await env.AQUIL_DB
         .prepare(
           'SELECT id, ts AS timestamp, type AS kind, payload AS detail FROM event_log ORDER BY ts DESC LIMIT ?'
@@ -26,9 +32,10 @@ export async function getLogs(env, limit = 10) {
         .bind(limit)
         .all();
       return results;
-    } catch (secondaryErr) {
-      return { error: 'Unable to fetch logs', message: String(secondaryErr) };
     }
+    return [];
+  } catch (e) {
+    return { error: 'Unable to fetch logs', message: String(e) };
   }
 }
 

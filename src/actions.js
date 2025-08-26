@@ -14,7 +14,9 @@ const QUERY_MAP = {
     method: 'first'
   },
   insertLog: {
-    sql: 'INSERT INTO metamorphic_logs (id, kind, detail) VALUES (?, ?, ?)',
+    // Use the existing event_log table to avoid D1 errors when
+    // metamorphic_logs is not present in the schema.
+    sql: 'INSERT INTO event_log (id, type, payload) VALUES (?, ?, ?)',
     paramTypes: ['string', 'string', 'string'],
     method: 'run'
   }
