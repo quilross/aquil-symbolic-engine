@@ -3,10 +3,10 @@
  * Helping you stand tall in the world instead of shrinking
  */
 
-import { AquilDatabase } from '../utils/database.js';
-import { AquilAI } from '../utils/ai-helpers.js';
+import { AquilDatabase } from './src-utils-database.js';
+import { AquilAI } from './src-utils-ai-helpers.js';
 
-export class StandingTallCoach {
+export class StandingTall {
   constructor(env) {
     this.env = env;
     this.db = new AquilDatabase(env);

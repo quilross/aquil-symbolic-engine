@@ -3,8 +3,8 @@
  * Connect with your body's intelligence for trust building and standing tall
  */
 
-import { AquilDatabase } from '../utils/database.js';
-import { AquilAI } from '../utils/ai-helpers.js';
+import { AquilDatabase } from './src-utils-database.js';
+import { AquilAI } from './src-utils-ai-helpers.js';
 
 export class SomaticHealer {
   constructor(env) {

@@ -1,3 +1,13 @@
+// Stub for logs endpoint
+export async function getLogs(env) {
+  // Example: fetch last 10 logs from D1
+  try {
+    const results = await env.DB.prepare('SELECT * FROM logs ORDER BY timestamp DESC LIMIT 10').all();
+    return results.results || [];
+  } catch (e) {
+    return { error: 'Unable to fetch logs', message: String(e) };
+  }
+}
 const send = (status, data) => new Response(JSON.stringify(data), {
   status,
   headers: { 'content-type': 'application/json' }
