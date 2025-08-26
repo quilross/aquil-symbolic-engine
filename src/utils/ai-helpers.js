@@ -3,9 +3,9 @@
  * Orchestrates specialized analyzers for trust, emotion, and pattern work
  */
 
-import { EmotionAnalyzer } from './src-utils-emotion-analyzer.js';
-import { PatternMatcher } from './src-utils-pattern-matcher.js';
-import { TrustScorer } from './src-utils-trust-scorer.js';
+import { EmotionAnalyzer } from './emotion-analyzer.js';
+import { PatternMatcher } from './pattern-matcher.js';
+import { TrustScorer } from './trust-scorer.js';
 
 export class AquilAI {
   constructor() {
