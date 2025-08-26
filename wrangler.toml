@@ -1,78 +1,88 @@
-
 name = "aquil-symbolic-engine"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"] # allows Node-style modules if needed
 
+# ----------------------------------------------------
+# 🚀 Production Environment
+# ----------------------------------------------------
 [env.production]
 name = "aquil-prod"
 route = { pattern = "signal-q.me/*", zone_name = "signal-q.me" }
 
 [[env.production.d1_databases]]
-binding = "AQUIL_DB"
+binding       = "AQUIL_DB"
 database_name = "aquil-wisdom-db"
-database_id = "62d83066-2966-4510-9145-d65d520312f4"
+database_id   = "62d83066-2966-4510-9145-d65d520312f4"
 
 [[env.production.kv_namespaces]]
 binding = "AQUIL_MEMORIES"
-id = "633c8059669c4b73bb5ca78d2efdb5db"
+id      = "633c8059669c4b73bb5ca78d2efdb5db"
 preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
 
 [[env.production.r2_buckets]]
-binding = "AQUIL_STORAGE"
+binding     = "AQUIL_STORAGE"
 bucket_name = "aquil-wisdom-storage"
 
 [[env.production.vectorize]]
-binding = "AQUIL_CONTEXT"
+binding   = "AQUIL_CONTEXT"
 index_name = "aquil-context-index"
 
 [[env.production.services]]
-binding = "AI_GATEWAY_PROD"
-service = "aquil-gateway"
+binding     = "AI_GATEWAY_PROD"
+service     = "aquil-gateway"
 environment = "production"
 
+[env.production.ai]
+binding = "AI"
+
 [env.production.vars]
-VECTOR_API_KEY = "<your-vector-key>"
-ARK_VERSION = "2.0"
-TIMEZONE = "America/New_York"
+VECTOR_API_KEY   = "<your-vector-key>"
+ARK_VERSION      = "2.0"
+TIMEZONE         = "America/New_York"
 AUTO_SESSION_INIT = "true"
 VOICE_ADAPTATION = "true"
 
+# Scheduled triggers (morning + evening ritual syncs)
 [[env.production.triggers]]
 crons = ["0 7 * * *", "0 19 * * *"]
 
+# ----------------------------------------------------
+# 🧪 Development Environment
+# ----------------------------------------------------
 [env.development]
 name = "aquil-dev"
 
 [[env.development.d1_databases]]
-binding = "AQUIL_DB"
+binding       = "AQUIL_DB"
 database_name = "aquil-wisdom-db-dev"
-database_id = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
+database_id   = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
 
 [[env.development.kv_namespaces]]
 binding = "AQUIL_MEMORIES"
-id = "633c8059669c4b73bb5ca78d2efdb5db"
+id      = "633c8059669c4b73bb5ca78d2efdb5db"
 
-# Worker AI binding
-[env.production.ai]
-binding = "AI"
 [[env.development.r2_buckets]]
-binding = "ARK2_SYMBOLIC_ENGINE_R2_DEV"
+binding     = "ARK2_SYMBOLIC_ENGINE_R2_DEV"
 bucket_name = "ark2-symbolic-engine-r2"
 
 [[env.development.vectorize]]
-binding = "AQUIL_CONTEXT"
+binding   = "AQUIL_CONTEXT"
 index_name = "aquil-context-index-dev"
 
 [[env.development.services]]
-binding = "AI_GATEWAY_DEV"
-service = "aquil-gateway-dev"
+binding     = "AI_GATEWAY_DEV"
+service     = "aquil-gateway-dev"
 environment = "development"
 
+[env.development.ai]
+binding = "AI"
+
 [env.development.vars]
-ENVIRONMENT = "development"
-API_VERSION = "v2"
-VECTOR_API_KEY = "<your-dev-vector-key>"
-ARK_VERSION = "2.0"
-TIMEZONE = "America/New_York"
+ENVIRONMENT     = "development"
+API_VERSION     = "v2"
+VECTOR_API_KEY  = "<your-dev-vector-key>"
+ARK_VERSION     = "2.0"
+TIMEZONE        = "America/New_York"
 AUTO_SESSION_INIT = "true"
 VOICE_ADAPTATION = "true"
