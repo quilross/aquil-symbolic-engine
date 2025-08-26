@@ -1,3 +1,186 @@
+// Manifest endpoint for GPT action discovery
+import { ARK_MANIFEST } from './ark/endpoints.js';
+router.get('/api/manifest', async () => {
+    return addCORSHeaders(new Response(JSON.stringify(ARK_MANIFEST), {
+        headers: { 'Content-Type': 'application/json' }
+    }));
+});
+// Retrieve logs endpoint for GPT and context
+router.get('/api/logs', async (req, env) => {
+    const { searchParams } = new URL(req.url);
+    const limit = parseInt(searchParams.get('limit')) || 20;
+    const type = searchParams.get('type');
+    const who = searchParams.get('who');
+    const level = searchParams.get('level');
+    const session_id = searchParams.get('session_id');
+    const tag = searchParams.get('tag');
+
+    let query = 'SELECT * FROM metamorphic_logs';
+    const conditions = [];
+    const params = [];
+    if (type) { conditions.push('kind = ?'); params.push(type); }
+    if (who) { conditions.push('voice = ?'); params.push(who); }
+    if (level) { conditions.push('signal_strength = ?'); params.push(level); }
+    if (session_id) { conditions.push('session_id = ?'); params.push(session_id); }
+    if (tag) { conditions.push('tags LIKE ?'); params.push(`%${tag}%`); }
+    if (conditions.length) query += ' WHERE ' + conditions.join(' AND ');
+    query += ' ORDER BY timestamp DESC LIMIT ?';
+    params.push(limit);
+
+    let logs = [];
+    if (env.AQUIL_DB) {
+        try {
+            const result = await env.AQUIL_DB.prepare(query).bind(...params).all();
+            logs = result.results || [];
+        } catch (err) {
+            logs = [];
+        }
+    }
+    return addCORSHeaders(new Response(JSON.stringify(logs)));
+});
+
+// Session-init endpoint for GPT continuity
+router.get('/api/session-init', async (req, env) => {
+    const { searchParams } = new URL(req.url);
+    const limit = parseInt(searchParams.get('limit')) || 7;
+    const type = searchParams.get('type');
+    let query = 'SELECT * FROM metamorphic_logs';
+    const conditions = [];
+    const params = [];
+    if (type) { conditions.push('kind = ?'); params.push(type); }
+    if (conditions.length) query += ' WHERE ' + conditions.join(' AND ');
+    query += ' ORDER BY timestamp DESC LIMIT ?';
+    params.push(limit);
+
+    let logs = [];
+    if (env.AQUIL_DB) {
+        try {
+            const result = await env.AQUIL_DB.prepare(query).bind(...params).all();
+            logs = result.results || [];
+        } catch (err) {
+            logs = [];
+        }
+    }
+    return addCORSHeaders(new Response(JSON.stringify(logs)));
+});
+// ARK Logging Handlers (moved from endpoints.js)
+// Unified handler for ARK endpoints (for src/index.js)
+
+// Session Init with AI-crafted opening
+export async function handleSessionInit(request, env) {
+    const sessionId = generateId();
+    // Retrieve logs (omitted for brevity—use your existing logic)
+    const continuity = /* fetched & merged logs */ [];
+
+    // AI-generated Mirror opening
+    let mirrorOpening;
+    try {
+        const prompt = `Weave these continuity events into a grounding Mirror opening: ${JSON.stringify(continuity)}`;
+        const aiResp = await aiCall(env, '@cf/meta/llama-2-7b-chat-int8', [
+            { role: 'user', content: prompt }
+        ]);
+        mirrorOpening = aiResp.response;
+    } catch {
+        mirrorOpening = continuity.length
+            ? `I recall our journey through: ${continuity.map(e => e.kind).join(', ')}. How are you today?`
+            : 'I’m here with you in this moment. What’s alive for you right now?';
+    }
+
+    // Log initiation
+    await logMetamorphicEvent(env, {
+        kind: 'session_init',
+        detail: { continuity_count: continuity.length },
+        session_id: sessionId,
+        voice: 'mirror'
+    });
+
+    return new Response(
+        JSON.stringify({
+            session_id: sessionId,
+            continuity,
+            opening: mirrorOpening,
+            voice: 'mirror',
+            timestamp: getPhiladelphiaTime()
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+    );
+}
+
+// Discovery Inquiry with AI
+export async function handleDiscoveryInquiry(request, env) {
+    const { context = {}, session_id } = await request.json();
+    const voice = selectOptimalVoice(context.input || '', context);
+    let question;
+    try {
+        const prompt = `As Ark’s ${voice} voice, ask a Socratic question about: ${JSON.stringify(context)}`;
+        const aiResp = await aiCall(env, '@cf/meta/llama-2-7b-chat-int8', [
+            { role: 'user', content: prompt }
+        ]);
+        question = aiResp.response;
+    } catch {
+        question = 'What emerges when you explore this topic?';
+    }
+    await logMetamorphicEvent(env, {
+        kind: 'discovery_inquiry',
+        detail: { question },
+        session_id,
+        voice
+    });
+    return new Response(
+        JSON.stringify({ inquiry: question, voice_used: voice }),
+        { headers: { 'Content-Type': 'application/json' } }
+    );
+}
+
+// Ritual Suggestion with AI
+export async function handleRitualSuggestion(request, env) {
+    const { context = {}, session_id } = await request.json();
+    let ritual;
+    try {
+        const prompt = `Recommend a ritual for this context: ${JSON.stringify(context)}`;
+        const aiResp = await aiCall(env, '@cf/meta/llama-2-7b-chat-int8', [
+            { role: 'user', content: prompt }
+        ]);
+        ritual = JSON.parse(aiResp.response);
+    } catch {
+        ritual = {
+            name: 'Gentle Pause',
+            instructions: ['Take three deep breaths', 'Ground in the present moment'],
+            purpose: 'Reset and refocus'
+        };
+    }
+    await logMetamorphicEvent(env, {
+        kind: 'ritual_suggestion',
+        detail: { ritual },
+        session_id,
+        voice: 'strategist'
+    });
+    return new Response(JSON.stringify({ suggestion: ritual }), {
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
+// Health Check
+export async function handleHealthCheck(request, env) {
+    const health = await performHealthChecks(env);
+    return new Response(JSON.stringify({ ...health, timestamp: getPhiladelphiaTime() }), {
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
+// Logging
+export async function handleLog(request, env) {
+    const body = await request.json();
+    const id = await logMetamorphicEvent(env, {
+        kind: body.type,
+        detail: body.payload,
+        session_id: body.session_id,
+        voice: body.who
+    });
+    return new Response(JSON.stringify({ status: 'ok', id }), {
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
 /**
  * Aquil Symbolic Engine - Personal AI Wisdom System
  * Complete implementation with ARK 2.0 enhancements integrated
@@ -447,29 +630,33 @@ router.post('/api/feedback', async (req, env) => {
 });
 
 // Catch-all for unknown endpoints
-router.all('*', () =>
-    addCORSHeaders(new Response(JSON.stringify({
-        message: 'Endpoint not found',
-        ark_version: '2.0',
-        available_endpoints: [
-            'GET /api/health - System status',
-            'GET /api/session-init - Initialize with continuity',
-            'POST /api/log - Enhanced logging',
-            'GET /api/voice/system-status - Voice system info',
-            'POST /api/discovery/generate-inquiry - Socratic questions',
-            'POST /api/patterns/expose-contradictions - Surface tensions',
-            'POST /api/ritual/auto-suggest - Proactive ritual suggestions',
-            'GET /api/system/health-check - Detailed health status',
-            'POST /api/trust/check-in - Trust building sessions',
-            'POST /api/media/extract-wisdom - Media wisdom extraction',
-            'POST /api/somatic/session - Body intelligence practices',
-            'POST /api/wisdom/synthesize - Multi-framework integration',
-            'POST /api/patterns/recognize - Pattern analysis',
-            'POST /api/standing-tall/practice - Confidence building'
-        ]
-    }), { status: 404 })
-);
-
+router.all('*', () => {
+    return addCORSHeaders(
+        new Response(
+            JSON.stringify({
+                message: 'Endpoint not found',
+                ark_version: '2.0',
+                available_endpoints: [
+                    'GET /api/health - System status',
+                    'GET /api/session-init - Initialize with continuity',
+                    'POST /api/log - Enhanced logging',
+                    'GET /api/voice/system-status - Voice system info',
+                    'POST /api/discovery/generate-inquiry - Socratic questions',
+                    'POST /api/patterns/expose-contradictions - Surface tensions',
+                    'POST /api/ritual/auto-suggest - Proactive ritual suggestions',
+                    'GET /api/system/health-check - Detailed health status',
+                    'POST /api/trust/check-in - Trust building sessions',
+                    'POST /api/media/extract-wisdom - Media wisdom extraction',
+                    'POST /api/somatic/session - Body intelligence practices',
+                    'POST /api/wisdom/synthesize - Multi-framework integration',
+                    'POST /api/patterns/recognize - Pattern analysis',
+                    'POST /api/standing-tall/practice - Confidence building'
+                ]
+            }),
+            { status: 404 }
+        )
+    );
+});
 export default {
     async fetch(request, env, ctx) {
         return router.handle(request, env, ctx);

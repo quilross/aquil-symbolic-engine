@@ -1,3 +1,64 @@
+// Manifest for GPT: describes all available actions and storage usage
+export const ARK_MANIFEST = [
+  {
+    name: 'handleSessionInit',
+    path: '/api/session-init',
+    description: 'Session initialization with continuity and AI-crafted opening',
+    storage: ['D1', 'Worker AI'],
+    logs: true
+  },
+  {
+    name: 'handleDiscoveryInquiry',
+    path: '/api/discovery/generate-inquiry',
+    description: 'Generate Socratic questions using AI and log inquiry',
+    storage: ['D1', 'Worker AI'],
+    logs: true
+  },
+  {
+    name: 'handleRitualSuggestion',
+    path: '/api/ritual/auto-suggest',
+    description: 'Suggest rituals using AI and log suggestion',
+    storage: ['D1', 'Worker AI'],
+    logs: true
+  },
+  {
+    name: 'handleHealthCheck',
+    path: '/api/system/health-check',
+    description: 'Perform health checks and log results',
+    storage: ['D1'],
+    logs: true
+  },
+  {
+    name: 'handleLog',
+    path: '/api/log',
+    description: 'General logging endpoint for events and feedback',
+    storage: ['D1', 'KV'],
+    logs: true
+  }
+];
+
+// ...existing code...
+// Unified handler for ARK endpoints (for src/index.js)
+export async function handleArkEndpoints(request, env) {
+  // Example: route based on request URL
+  const url = new URL(request.url);
+  if (url.pathname.includes('session-init')) {
+    return handleSessionInit(request, env);
+  }
+  if (url.pathname.includes('discovery')) {
+    return handleDiscoveryInquiry(request, env);
+  }
+  if (url.pathname.includes('ritual')) {
+    return handleRitualSuggestion(request, env);
+  }
+  if (url.pathname.includes('health-check')) {
+    return handleHealthCheck(request, env);
+  }
+  if (url.pathname.includes('log')) {
+    return handleLog(request, env);
+  }
+  return new Response('Not found', { status: 404 });
+}
 import {
   getPhiladelphiaTime,
   generateId,
@@ -139,9 +200,7 @@ export default {
 };
 // File: src/index.js
 
-javascript
 import { Router } from 'itty-router';
-import endpoints from './ark/endpoints.js';
 
 const router = Router();
 const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
@@ -159,12 +218,3 @@ router.post('/api/log', (req, env) => addCORS(endpoints.handleLog(req, env)));
 
 // Existing ARK and legacy endpoints follow...
 
-export default {
-  async fetch(req, env, ctx) {
-    try {
-      return await router.handle(req, env, ctx);
-    } catch (e) {
-      return addCORS(new Response(JSON.stringify({ error: e.message }), { status: 500 }));
-    }
-  }
-};
