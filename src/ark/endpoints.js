@@ -40,22 +40,27 @@ export const ARK_MANIFEST = [
 // ...existing code...
 // Unified handler for ARK endpoints (for src/index.js)
 export async function handleArkEndpoints(request, env) {
-  // Example: route based on request URL
+  // Route based on request URL for all ARK endpoints
   const url = new URL(request.url);
-  if (url.pathname.includes('session-init')) {
+  if (url.pathname === '/api/session-init' || url.pathname.startsWith('/api/voice')) {
     return handleSessionInit(request, env);
   }
-  if (url.pathname.includes('discovery')) {
+  if (url.pathname === '/api/discovery/generate-inquiry' || url.pathname.startsWith('/api/discovery')) {
     return handleDiscoveryInquiry(request, env);
   }
-  if (url.pathname.includes('ritual')) {
+  if (url.pathname === '/api/ritual/auto-suggest' || url.pathname.startsWith('/api/ritual')) {
     return handleRitualSuggestion(request, env);
   }
-  if (url.pathname.includes('health-check')) {
+  if (url.pathname === '/api/system/health-check' || url.pathname.startsWith('/api/system/health-check')) {
     return handleHealthCheck(request, env);
   }
-  if (url.pathname.includes('log')) {
+  if (url.pathname === '/api/log' || url.pathname.startsWith('/api/log')) {
     return handleLog(request, env);
+  }
+  if (url.pathname === '/api/patterns/expose-contradictions') {
+    // If you have a handler for contradictions, call it here
+    // return handleExposeContradictions(request, env);
+    return new Response(JSON.stringify({ message: 'Contradictions endpoint not yet implemented.' }), { status: 501 });
   }
   return new Response('Not found', { status: 404 });
 }
