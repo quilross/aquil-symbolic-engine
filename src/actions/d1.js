@@ -4,7 +4,7 @@ import { send, readJSON } from '../utils/http.js';
 export async function getLogs(env) {
   // Example: fetch last 10 logs from D1
   try {
-    const results = await env.DB.prepare('SELECT * FROM logs ORDER BY timestamp DESC LIMIT 10').all();
+    const results = await env.AQUIL_DB.prepare('SELECT * FROM logs ORDER BY timestamp DESC LIMIT 10').all();
     return results.results || [];
   } catch (e) {
     return { error: 'Unable to fetch logs', message: String(e) };
@@ -18,7 +18,7 @@ export async function exec(req, env) {
   if (!['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE'].includes(op))
     return send(400, { error: 'unsupported statement' });
   try {
-    const stmt = env.DB.prepare(sql);
+    const stmt = env.AQUIL_DB.prepare(sql);
     const result = params.length ? await stmt.bind(...params).all() : await stmt.all();
     return send(200, { result });
   } catch (e) {
