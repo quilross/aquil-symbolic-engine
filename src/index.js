@@ -1,3 +1,14 @@
+import { Router } from 'itty-router';
+const router = Router();
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json'
+};
+
+// ...existing code...
+
 // AI model invocation endpoint (Worker AI or Gateway)
 router.post('/api/ai/invoke', async (req, env) => {
     try {
@@ -27,14 +38,7 @@ router.post('/api/gateway/invoke', async (req, env) => {
         return addCORSHeaders(new Response(JSON.stringify({ error: 'Gateway invocation error', details: err.message }), { status: 500 }));
     }
 });
-import { Router } from 'itty-router';
-const router = Router();
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Content-Type': 'application/json'
-};
+// ...existing code...
 
 function addCORSHeaders(response) {
     Object.entries(corsHeaders).forEach(([k, v]) => response.headers.set(k, v));
