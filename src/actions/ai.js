@@ -1,11 +1,4 @@
-const send = (status, data) => new Response(JSON.stringify(data), {
-  status,
-  headers: { 'content-type': 'application/json' }
-});
-
-const readJSON = async (req) => {
-  try { return await req.json(); } catch { return {}; }
-};
+import { send, readJSON } from '../utils/http.js';
 
 export async function embed(req, env) {
   const { text, model = '@cf/baai/bge-small-en-v1.5' } = await readJSON(req);
