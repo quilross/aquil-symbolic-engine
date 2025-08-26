@@ -1,8 +1,7 @@
 export default {
     async fetch(req, env, ctx) {
         const url = new URL(req.url);
-
-        const send = (status, data) =>
+    }
             new Response(JSON.stringify(data), {
                 status,
                 headers: { 'content-type': 'application/json' }
@@ -19,15 +18,7 @@ export default {
         };
 
 
-        // Delegate log/retrieve endpoints to unified actions.js
-        // Import the handler
-        try {
-            const { handleActions } = await import('./actions.js');
-            const handled = await handleActions(req, env);
-            if (handled) return handled;
-        } catch (e) {
-            // If import fails, continue to legacy handling
-        }
+    // TODO: Restore legacy log/retrieve endpoint logic here
 
         return send(404, { error: 'not_found' });
     }
