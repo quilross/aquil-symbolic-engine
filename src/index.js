@@ -16,6 +16,11 @@ import { TrustBuilder } from './src-core-trust-builder.js';
 import { MediaWisdomExtractor } from './src-core-media-wisdom.js';
 import { PatternRecognizer } from './src-core-pattern-recognizer.js';
 import { StandingTall } from './src-core-standing-tall.js';
+import { ValuesClarifier } from './src-core-values-clarifier.js';
+import { CreativityUnleasher } from './src-core-creativity-unleasher.js';
+import { AbundanceCultivator } from './src-core-abundance-cultivator.js';
+import { TransitionNavigator } from './src-core-transition-navigator.js';
+import { AncestryHealer } from './src-core-ancestry-healer.js';
 
 const router = Router();
 const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
@@ -148,6 +153,156 @@ router.post('/api/standing-tall/practice', async (req, env) => {
     return addCORS(new Response(JSON.stringify({
       error: 'Standing tall processing error',
       message: 'Your inherent dignity and worth are never in question. Stand tall because you belong here.'
+    }), {
+      status: 500,
+      headers: cors
+    }));
+  }
+});
+
+// Values clarification endpoint
+router.post('/api/values/clarify', async (req, env) => {
+  let data;
+  try {
+    data = await req.json();
+  } catch {
+    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: cors
+    }));
+  }
+  try {
+    const clarifier = new ValuesClarifier(env);
+    const result = await clarifier.clarify(data);
+    return addCORS(new Response(JSON.stringify(result), {
+      status: 200,
+      headers: cors
+    }));
+  } catch (error) {
+    console.error('Values clarify error:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: 'Values clarification error',
+      message: 'Your values are steady guides even in uncertain times.'
+    }), {
+      status: 500,
+      headers: cors
+    }));
+  }
+});
+
+// Creativity unleashing endpoint
+router.post('/api/creativity/unleash', async (req, env) => {
+  let data;
+  try {
+    data = await req.json();
+  } catch {
+    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: cors
+    }));
+  }
+  try {
+    const unleasher = new CreativityUnleasher(env);
+    const result = await unleasher.unleash(data);
+    return addCORS(new Response(JSON.stringify(result), {
+      status: 200,
+      headers: cors
+    }));
+  } catch (error) {
+    console.error('Creativity unleash error:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: 'Creativity unleashing error',
+      message: 'Creative flow is always within you, ready to emerge.'
+    }), {
+      status: 500,
+      headers: cors
+    }));
+  }
+});
+
+// Abundance cultivation endpoint
+router.post('/api/abundance/cultivate', async (req, env) => {
+  let data;
+  try {
+    data = await req.json();
+  } catch {
+    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: cors
+    }));
+  }
+  try {
+    const cultivator = new AbundanceCultivator(env);
+    const result = await cultivator.cultivate(data);
+    return addCORS(new Response(JSON.stringify(result), {
+      status: 200,
+      headers: cors
+    }));
+  } catch (error) {
+    console.error('Abundance cultivation error:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: 'Abundance cultivation error',
+      message: 'Abundance begins with a mindset of possibility.'
+    }), {
+      status: 500,
+      headers: cors
+    }));
+  }
+});
+
+// Transition navigation endpoint
+router.post('/api/transitions/navigate', async (req, env) => {
+  let data;
+  try {
+    data = await req.json();
+  } catch {
+    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: cors
+    }));
+  }
+  try {
+    const navigator = new TransitionNavigator(env);
+    const result = await navigator.navigate(data);
+    return addCORS(new Response(JSON.stringify(result), {
+      status: 200,
+      headers: cors
+    }));
+  } catch (error) {
+    console.error('Transition navigation error:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: 'Transition navigation error',
+      message: 'Every transition carries seeds of renewal and growth.'
+    }), {
+      status: 500,
+      headers: cors
+    }));
+  }
+});
+
+// Ancestry healing endpoint
+router.post('/api/ancestry/heal', async (req, env) => {
+  let data;
+  try {
+    data = await req.json();
+  } catch {
+    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: cors
+    }));
+  }
+  try {
+    const healer = new AncestryHealer(env);
+    const result = await healer.heal(data);
+    return addCORS(new Response(JSON.stringify(result), {
+      status: 200,
+      headers: cors
+    }));
+  } catch (error) {
+    console.error('Ancestry healing error:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: 'Ancestry healing error',
+      message: 'You carry your ancestors\' strength as you heal old patterns.'
     }), {
       status: 500,
       headers: cors
