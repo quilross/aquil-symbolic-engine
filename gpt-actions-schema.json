@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Aquil Symbolic Engine API",
-    "description": "Personal AI Wisdom Builder & Trust Reinforcement System - Standing tall in the world, rooted in internal trust",
+    "description": "Complete Personal AI Wisdom Builder & ARK Action Framework - Standing tall in the world, rooted in internal trust",
     "version": "2.0.0"
   },
   "servers": [
@@ -14,9 +14,10 @@
   "paths": {
     "/api/log": {
       "post": {
-        "summary": "Automatic Log Data or Event (GPT can use anytime)",
-        "description": "Automatically log any data, message, or event for context continuity, metrics, or error tracking. This action is available for GPT to use at any time, without restriction, for flexible and autonomous logging.",
+        "summary": "Log any data or conversation event",
+        "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, or any meaningful moment. TRIGGER: Anytime user shares something worth remembering or system needs to track context.",
         "operationId": "logDataOrEvent",
+        "x-openai-isConsequential": false,
         "requestBody": {
           "required": true,
           "content": {
@@ -24,66 +25,65 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "description": "Type of log (e.g. chat_message, metric, error, context, etc.)" },
-                  "who": { "type": "string", "description": "Who or what generated the log (user, assistant, system, etc.)" },
-                  "level": { "type": "string", "description": "Severity or importance (info, warning, error, etc.)" },
-                  "session_id": { "type": "string", "description": "Session or conversation identifier" },
-                  "tags": { "type": "array", "items": { "type": "string" }, "description": "Tags for filtering and context (optional)" },
-                  "idx1": { "type": "string", "description": "Custom index field 1 (optional)" },
-                  "idx2": { "type": "string", "description": "Custom index field 2 (optional)" },
-                  "payload": { "type": "object", "description": "Main log data, can be any JSON object or string" }
+                  "type": { "type": "string", "description": "chat_message, insight, breakthrough, context, reflection, etc." },
+                  "who": { "type": "string", "description": "user, assistant, system" },
+                  "level": { "type": "string", "description": "info, warning, error, highlight" },
+                  "session_id": { "type": "string", "description": "Current conversation identifier" },
+                  "tags": { "type": "array", "items": { "type": "string" }, "description": "Tags like 'trust', 'wisdom', 'body', 'media', etc." },
+                  "idx1": { "type": "string", "description": "Custom index field 1" },
+                  "idx2": { "type": "string", "description": "Custom index field 2" },
+                  "payload": { "type": "object", "description": "The actual content to log" }
                 },
                 "required": ["type", "payload"]
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Log entry created with unique id" }
+          "200": { "description": "Log entry created successfully" }
         }
       }
     },
-      "/api/logs": {
-        "get": {
-            "summary": "Automatic Retrieve Logs or Data Entries (GPT can use anytime)",
-            "description": "Automatically retrieve logs for context, continuity, or analysis. This action is available for GPT to use at any time, including at the start of every conversation for frame of reference, and for ongoing autonomous retrieval.",
-          "operationId": "retrieveLogsOrDataEntries",
-          "parameters": [
-            { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 200 }, "description": "Max number of logs to retrieve" },
-            { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Type of log to filter (optional)" },
-            { "name": "who", "in": "query", "schema": { "type": "string" }, "description": "Who generated the log (optional)" },
-            { "name": "level", "in": "query", "schema": { "type": "string" }, "description": "Log level to filter (optional)" },
-            { "name": "session_id", "in": "query", "schema": { "type": "string" }, "description": "Session or conversation id (optional)" },
-            { "name": "tag", "in": "query", "schema": { "type": "string" }, "description": "Tag to filter (optional)" },
-            { "name": "since", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Start time (optional)" },
-            { "name": "until", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "End time (optional)" },
-            { "name": "idx1", "in": "query", "schema": { "type": "string" }, "description": "Custom index field 1 (optional)" },
-            { "name": "idx2", "in": "query", "schema": { "type": "string" }, "description": "Custom index field 2 (optional)" }
-          ],
-          "responses": {
-            "200": { "description": "Array of log entries matching filters" }
-          }
+    "/api/logs": {
+      "get": {
+        "summary": "Retrieve conversation history and context",
+        "description": "Use AUTOMATICALLY to gather context at conversation start or when referencing past insights. TRIGGER: Start of new conversation, when user mentions 'remember', 'before', 'previously', or needs context.",
+        "operationId": "retrieveLogsOrDataEntries",
+        "x-openai-isConsequential": false,
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 200 }, "description": "Number of entries to retrieve" },
+          { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Filter by: chat_message, insight, breakthrough, etc." },
+          { "name": "who", "in": "query", "schema": { "type": "string" }, "description": "Filter by: user, assistant, system" },
+          { "name": "level", "in": "query", "schema": { "type": "string" }, "description": "Filter by: info, warning, error, highlight" },
+          { "name": "session_id", "in": "query", "schema": { "type": "string" }, "description": "Specific conversation ID" },
+          { "name": "tag", "in": "query", "schema": { "type": "string" }, "description": "Filter by tag: trust, wisdom, body, media, etc." }
+        ],
+        "responses": {
+          "200": { "description": "Array of matching log entries" }
         }
-      },
-      "/api/session-init": {
-        "get": {
-            "summary": "Automatic Retrieve Recent Logs for Session Initialization (GPT can use anytime)",
-            "description": "Automatically retrieve the most recent logs at the start of a new conversation to provide continuity and frame of reference. This action is available for GPT to use at any time, for autonomous session bootstrapping and context gathering.",
-          "operationId": "retrieveRecentSessionLogs",
-          "parameters": [
-            { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 7, "minimum": 1, "maximum": 200 }, "description": "Number of recent logs to retrieve (default 7)" },
-            { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Type of log to filter (optional)" },
-            { "name": "session_id", "in": "query", "schema": { "type": "string" }, "description": "Session or conversation id (optional)" }
-          ],
-          "responses": {
-            "200": { "description": "Array of recent log entries for session initialization" }
-          }
+      }
+    },
+    "/api/session-init": {
+      "get": {
+        "summary": "Initialize conversation with recent context",
+        "description": "Use AUTOMATICALLY at the very start of every new conversation to gather continuity. TRIGGER: First interaction in a new session - use this FIRST before any other action.",
+        "operationId": "retrieveRecentSessionLogs",
+        "x-openai-isConsequential": false,
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 7, "minimum": 1, "maximum": 200 }, "description": "Recent entries to load (default 7)" },
+          { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Filter recent logs by type" }
+        ],
+        "responses": {
+          "200": { "description": "Recent entries for session continuity" }
         }
-      },
+      }
+    },
     "/api/trust/check-in": {
       "post": {
-        "summary": "Trust Building Check-In Session",
-        "description": "Personal trust-building companion for standing tall in the world",
+        "summary": "Trust and self-confidence building session",
+        "description": "Use when user expresses: doubt, uncertainty, lack of confidence, questioning themselves, feeling insecure, needing validation, or explicitly asks about trust. TRIGGER PHRASES: 'I don't trust myself', 'am I making the right choice', 'I'm not sure', 'I doubt', 'feeling insecure', 'need confidence'.",
         "operationId": "trustCheckIn",
+        "x-openai-isConsequential": false,
         "requestBody": {
           "required": true,
           "content": {
@@ -91,24 +91,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "current_state": {
-                    "type": "string",
-                    "description": "How are you feeling about trusting yourself right now?"
-                  },
-                  "trust_level": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 10,
-                    "description": "Trust level 1-10"
-                  },
-                  "specific_situation": {
-                    "type": "string",
-                    "description": "Specific situation where you're questioning self-trust"
-                  },
-                  "body_sensations": {
-                    "type": "string", 
-                    "description": "What is your body telling you?"
-                  }
+                  "current_state": { "type": "string", "description": "User's current trust/confidence level description" },
+                  "trust_level": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Self-trust rating 1-10" },
+                  "specific_situation": { "type": "string", "description": "Specific scenario causing trust doubt" },
+                  "body_sensations": { "type": "string", "description": "Physical sensations related to the doubt" }
                 },
                 "required": ["current_state"]
               }
@@ -116,17 +102,16 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Personalized trust guidance with exercises"
-          }
+          "200": { "description": "Personalized trust-building guidance and exercises" }
         }
       }
     },
     "/api/media/extract-wisdom": {
       "post": {
-        "summary": "Transform Media into Personal Wisdom",
-        "description": "Extract wisdom from TV, movies, books, podcasts, music",
+        "summary": "Extract personal growth wisdom from consumed media",
+        "description": "Use when user mentions consuming ANY media content and wants to process it for growth. TRIGGER PHRASES: 'I watched', 'I read', 'I listened to', 'just finished', 'that show/book/podcast', 'reminded me of', 'made me think'. Works with TV, movies, books, podcasts, music, articles.",
         "operationId": "extractMediaWisdom",
+        "x-openai-isConsequential": false,
         "requestBody": {
           "required": true,
           "content": {
@@ -134,23 +119,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "media_type": {
-                    "type": "string",
-                    "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
-                    "description": "Type of content consumed"
-                  },
-                  "title": {
-                    "type": "string",
-                    "description": "Title of the content"
-                  },
-                  "your_reaction": {
-                    "type": "string",
-                    "description": "Your personal reaction, thoughts, or feelings"
-                  },
-                  "content_summary": {
-                    "type": "string",
-                    "description": "Brief summary (optional)"
-                  }
+                  "media_type": { "type": "string", "enum": ["tv_show", "movie", "book", "podcast", "music", "article"], "description": "Type of media consumed" },
+                  "title": { "type": "string", "description": "Name/title of the content" },
+                  "your_reaction": { "type": "string", "description": "User's personal response, feelings, thoughts about the content" },
+                  "content_summary": { "type": "string", "description": "Brief summary if needed for context" }
                 },
                 "required": ["media_type", "title", "your_reaction"]
               }
@@ -158,55 +130,16 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Wisdom extraction with growth insights"
-          }
+          "200": { "description": "Personalized wisdom extraction with growth insights" }
         }
       }
     },
     "/api/somatic/session": {
       "post": {
-        "summary": "Body Wisdom & Somatic Healing Session",
-        "description": "Connect with your body's intelligence for trust building",
+        "summary": "Body-based healing and nervous system regulation",
+        "description": "Use when user mentions PHYSICAL sensations, body tension, stress symptoms, or wants body-based healing. TRIGGER: 'tight shoulders', 'chest feels', 'can't breathe', 'tense', 'help me relax', 'release tension'.",
         "operationId": "somaticHealingSession",
-        "x-openai": {
-          "description": "Use this when the user wants to work with body sensations, emotions, or needs somatic healing practices. Perfect for connecting with body wisdom and releasing tension."
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SomaticSessionRequest"
-              },
-              "examples": {
-                "tension_release": {
-                  "summary": "Working with body tension",
-                  "value": {
-                    "body_state": "Shoulders feel tight and raised, jaw is clenched",
-                    "emotions": "Stress and overwhelm",
-                    "intention": "Release tension and feel more grounded"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Personalized somatic healing session"
-          }
-        }
-      }
-    },
-    "/api/wisdom/synthesize": {
-      "post": {
-        "summary": "Multi-Framework Wisdom Synthesis",
-        "description": "Guidance from Human Design, Gene Keys, astrology, somatic wisdom",
-        "operationId": "synthesizeWisdom",
-        "x-openai": {
-          "description": "Use this when the user has a specific life question or decision and wants integrated guidance from multiple wisdom frameworks like Human Design, Gene Keys, astrology, and somatic wisdom."
-        },
+        "x-openai-isConsequential": false,
         "requestBody": {
           "required": true,
           "content": {
@@ -214,20 +147,39 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "life_situation": {
-                    "type": "string",
-                    "description": "Your current life situation"
-                  },
-                  "specific_question": {
-                    "type": "string",
-                    "description": "Specific question or decision you're facing"
-                  },
+                  "body_state": { "type": "string", "description": "Current physical sensations, tension, or body state" },
+                  "emotions": { "type": "string", "description": "Emotions connected to the body sensations" },
+                  "intention": { "type": "string", "description": "What the user wants to achieve (release, grounding, etc.)" }
+                },
+                "required": ["body_state", "emotions", "intention"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Guided somatic healing practices and exercises" }
+        }
+      }
+    },
+    "/api/wisdom/synthesize": {
+      "post": {
+        "summary": "Multi-framework wisdom for life decisions",
+        "description": "Use when user has a SPECIFIC life decision and wants integrated guidance from wisdom systems. TRIGGER: 'what should I do', 'help me decide', 'I need guidance', 'human design perspective'.",
+        "operationId": "synthesizeWisdom",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "life_situation": { "type": "string", "description": "Current life context and circumstances" },
+                  "specific_question": { "type": "string", "description": "The exact decision or question needing guidance" },
                   "frameworks_requested": {
                     "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": ["human_design", "gene_keys", "astrology", "somatic_wisdom", "all"]
-                    }
+                    "items": { "type": "string", "enum": ["human_design", "gene_keys", "astrology", "somatic_wisdom", "all"] },
+                    "description": "Which wisdom frameworks to consult (default: all)"
                   }
                 },
                 "required": ["life_situation", "specific_question"]
@@ -236,20 +188,16 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Synthesized wisdom from multiple frameworks"
-          }
+          "200": { "description": "Integrated wisdom from multiple frameworks" }
         }
       }
     },
     "/api/patterns/recognize": {
       "post": {
-        "summary": "Pattern Recognition & Growth Insights",
-        "description": "Identify patterns in your trust journey and growth",
+        "summary": "Identify recurring patterns and growth trends",
+        "description": "Use when user wants to ANALYZE recurring themes, behaviors, or growth patterns over time. TRIGGER PHRASES: 'I keep doing', 'this always happens', 'I notice a pattern', 'why do I', 'same thing keeps happening', 'how have I grown', 'looking back', 'I see a trend'.",
         "operationId": "recognizePatterns",
-        "x-openai": {
-          "description": "Use this to analyze patterns in the user's growth journey, recurring themes, or to celebrate progress over time. Great for reflection and recognizing evolution."
-        },
+        "x-openai-isConsequential": false,
         "requestBody": {
           "required": true,
           "content": {
@@ -257,18 +205,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "area_of_focus": {
-                    "type": "string",
-                    "enum": ["trust_building", "media_consumption", "body_awareness", "overall_growth"]
-                  },
-                  "recent_experiences": {
-                    "type": "string",
-                    "description": "Recent experiences you've been navigating"
-                  },
-                  "recurring_themes": {
-                    "type": "string",
-                    "description": "Any recurring themes you've noticed"
-                  }
+                  "area_of_focus": { "type": "string", "enum": ["trust_building", "media_consumption", "body_awareness", "overall_growth"], "description": "Main area for pattern analysis" },
+                  "recent_experiences": { "type": "string", "description": "Recent examples of the pattern or experiences" },
+                  "recurring_themes": { "type": "string", "description": "What keeps repeating or showing up" }
                 },
                 "required": ["area_of_focus", "recent_experiences"]
               }
@@ -276,20 +215,16 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Pattern analysis with growth recommendations"
-          }
+          "200": { "description": "Pattern analysis with growth insights and recommendations" }
         }
       }
     },
     "/api/standing-tall/practice": {
       "post": {
-        "summary": "Standing Tall Practice Session",
-        "description": "Stand tall in the world instead of shrinking",
+        "summary": "Confidence and personal power practices",
+        "description": "Use when user mentions feeling SMALL, powerless, or wanting to be more confident/assertive. TRIGGER PHRASES: 'I feel small', 'shrinking', 'can't speak up', 'intimidated', 'need confidence', 'stand in my power', 'be more assertive', 'afraid to', 'people please', 'not showing up fully'.",
         "operationId": "standingTallPractice",
-        "x-openai": {
-          "description": "Use this when the user mentions feeling small, shrinking, lacking confidence, or wanting to practice standing in their power. Perfect for building authentic empowerment."
-        },
+        "x-openai-isConsequential": false,
         "requestBody": {
           "required": true,
           "content": {
@@ -297,22 +232,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "situation": {
-                    "type": "string",
-                    "description": "Situation where you tend to shrink instead of standing tall"
-                  },
-                  "fears_concerns": {
-                    "type": "string",
-                    "description": "Fears or concerns around standing in your power"
-                  },
-                  "desired_outcome": {
-                    "type": "string",
-                    "description": "How would you like to show up?"
-                  },
-                  "past_successes": {
-                    "type": "string",
-                    "description": "Times when you did stand tall successfully"
-                  }
+                  "situation": { "type": "string", "description": "Specific situation where user feels small or powerless" },
+                  "fears_concerns": { "type": "string", "description": "What holds them back from standing tall" },
+                  "desired_outcome": { "type": "string", "description": "How they want to show up instead" },
+                  "past_successes": { "type": "string", "description": "Times they successfully stood in their power" }
                 },
                 "required": ["situation", "desired_outcome"]
               }
@@ -320,98 +243,279 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Standing tall practices with confidence building"
-          }
+          "200": { "description": "Personalized confidence-building practices and power reclamation" }
         }
       }
     },
     "/api/wisdom/daily-synthesis": {
       "get": {
-        "summary": "Daily Wisdom Compilation",
-        "description": "Your personalized daily wisdom and growth insights",
+        "summary": "Daily wisdom compilation and insights",
+        "description": "Use when user asks for daily wisdom, morning insights, or wants a summary of recent growth. TRIGGER PHRASES: 'daily wisdom', 'morning insights', 'what's my focus today', 'wisdom summary', 'recent insights', 'what should I know today'.",
         "operationId": "getDailySynthesis",
-        "x-openai": {
-          "description": "Use this to provide daily wisdom compilation, morning insights, or when the user wants their personalized wisdom summary."
-        },
+        "x-openai-isConsequential": false,
         "parameters": [
           {
             "name": "period",
             "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": ["today", "week", "month"],
-              "default": "today"
-            }
+            "schema": { "type": "string", "enum": ["today", "week", "month"], "default": "today" },
+            "description": "Time period for wisdom compilation"
           }
         ],
         "responses": {
-          "200": {
-            "description": "Personalized wisdom compilation"
-          }
+          "200": { "description": "Personalized daily wisdom and growth focus" }
         }
       }
     },
     "/api/insights": {
-        "get": {
-          "summary": "Personal Growth & Wisdom Insights",
-          "description": "Summarizes your personal growth, trust trends, and wisdom highlights. GPT: Use this to provide the user with a summary of their progress, patterns, and key insights. Designed for self-reflection and review.",
-          "operationId": "getPersonalInsights",
-          "responses": {
-            "200": {
-              "description": "Summary of personal insights and growth patterns",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "insights": { "type": "object" }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/api/feedback": {
-        "post": {
-          "summary": "Submit Feedback or Notes",
-          "description": "Submit feedback, notes, or suggestions for system improvement. GPT: Use this to let the user leave notes, ideas, or feedback for future upgrades. This endpoint is for personal journaling and system improvement.",
-          "operationId": "submitFeedback",
-          "requestBody": {
-            "required": true,
+      "get": {
+        "summary": "Personal growth summary and progress review",
+        "description": "Use when user wants to review their OVERALL progress, growth trends, or life insights summary. TRIGGER PHRASES: 'how am I doing', 'my progress', 'growth summary', 'insights about me', 'what have I learned', 'how have I changed', 'personal review'.",
+        "operationId": "getPersonalInsights",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Comprehensive personal growth insights and patterns",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": { "type": "string", "description": "Feedback, note, or suggestion" },
-                    "type": { "type": "string", "description": "Type of feedback (optional)", "default": "general" }
-                  },
-                  "required": ["message"]
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Feedback received confirmation",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "success": { "type": "boolean" },
-                      "message": { "type": "string" },
-                      "type": { "type": "string" },
-                      "received_at": { "type": "string", "format": "date-time" }
-                    }
+                    "insights": { "type": "object", "description": "Personal growth insights and trends" }
                   }
                 }
               }
             }
           }
+        }
+      }
+    },
+    "/api/feedback": {
+      "post": {
+        "summary": "Submit personal notes, ideas, or system feedback",
+        "description": "Use when user wants to leave notes for later, record ideas, or give feedback about the system. TRIGGER PHRASES: 'remember this', 'note to self', 'save this idea', 'feedback about', 'suggestion for', 'this could be better', 'I want to remember'.",
+        "operationId": "submitFeedback",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": { "type": "string", "description": "The feedback, note, or idea to save" },
+                  "type": { "type": "string", "description": "Type: note, idea, feedback, suggestion", "default": "general" }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback/note saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "type": { "type": "string" },
+                    "received_at": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dreams/interpret": {
+      "post": {
+        "summary": "Interpret dreams and symbolic imagery",
+        "description": "Use when user shares a dream and wants archetypal or symbolic insights. TRIGGER PHRASES: 'I dreamed', 'my dream', 'interpret my dream', 'dream meaning', 'strange dream', 'recurring dream'.",
+        "operationId": "interpretDream",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dream_text": { "type": "string", "description": "Description of the dream or dream symbols" },
+                  "emotions_felt": { "type": "string", "description": "Emotions experienced during or after the dream" },
+                  "recurring": { "type": "boolean", "description": "Whether this is a recurring dream theme" }
+                },
+                "required": ["dream_text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Symbolic dream interpretation with personal insights" }
+        }
+      }
+    },
+    "/api/energy/optimize": {
+      "post": {
+        "summary": "Optimize personal energy and vitality",
+        "description": "Use when user mentions energy levels, fatigue, or wanting vitality optimization. TRIGGER PHRASES: 'tired', 'exhausted', 'low energy', 'drained', 'need energy', 'feeling sluggish', 'vitality'.",
+        "operationId": "optimizeEnergy",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_energy": { "type": "string", "description": "Current energy state and levels" },
+                  "energy_drains": { "type": "string", "description": "What depletes your energy" },
+                  "energy_goals": { "type": "string", "description": "What energy state you want to achieve" }
+                },
+                "required": ["current_energy"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Personalized energy optimization strategies" }
+        }
+      }
+    },
+    "/api/values/clarify": {
+      "post": {
+        "summary": "Clarify and prioritize core values",
+        "description": "Use when user wants to identify, clarify, or rank personal values for decision-making. TRIGGER PHRASES: 'my values', 'what matters to me', 'clarify values', 'core values', 'priorities', 'what's important'.",
+        "operationId": "clarifyValues",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "values_list": { "type": "array", "items": { "type": "string" }, "description": "List of potential or current values" },
+                  "life_context": { "type": "string", "description": "Current life situation for values clarification" },
+                  "decision_context": { "type": "string", "description": "Specific decision or choice requiring values clarity" }
+                },
+                "required": ["values_list"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Clarified and prioritized values with decision framework" }
+        }
+      }
+    },
+    "/api/creativity/unleash": {
+      "post": {
+        "summary": "Unleash creativity and overcome blocks",
+        "description": "Use when user feels creatively blocked or wants creative inspiration and breakthrough. TRIGGER PHRASES: 'creative block', 'stuck creatively', 'need inspiration', 'creative breakthrough', 'artistic block', 'can't create'.",
+        "operationId": "unleashCreativity",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "block_description": { "type": "string", "description": "Description of the creative block or challenge" },
+                  "creative_medium": { "type": "string", "description": "Art form or creative medium (writing, visual art, music, etc.)" },
+                  "desired_outcome": { "type": "string", "description": "What creative breakthrough you're seeking" }
+                },
+                "required": ["block_description"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Creative breakthrough exercises and inspiration" }
+        }
+      }
+    },
+    "/api/abundance/cultivate": {
+      "post": {
+        "summary": "Cultivate abundance and prosperity mindset",
+        "description": "Use when user discusses money, wealth, scarcity, or abundance mindset issues. TRIGGER PHRASES: 'money problems', 'financial stress', 'abundance', 'prosperity', 'wealth mindset', 'scarcity', 'money blocks'.",
+        "operationId": "cultivateAbundance",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "money_mindset": { "type": "string", "description": "Current relationship and beliefs about money" },
+                  "abundance_blocks": { "type": "string", "description": "What blocks abundance in your life" },
+                  "financial_goals": { "type": "string", "description": "Abundance and financial aspirations" }
+                },
+                "required": ["money_mindset"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Abundance cultivation practices and mindset shifts" }
+        }
+      }
+    },
+    "/api/transitions/navigate": {
+      "post": {
+        "summary": "Navigate major life transitions",
+        "description": "Use when user faces or discusses major life changes, transitions, or new phases. TRIGGER PHRASES: 'life transition', 'major change', 'new chapter', 'life phase', 'big change', 'transition period', 'moving to'.",
+        "operationId": "navigateTransitions",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transition_type": { "type": "string", "description": "Type of transition (career, relationship, location, life stage, etc.)" },
+                  "current_challenges": { "type": "string", "description": "Current difficulties or concerns with the transition" },
+                  "desired_support": { "type": "string", "description": "What kind of support or guidance you need" }
+                },
+                "required": ["transition_type"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Transition navigation strategies and support practices" }
+        }
+      }
+    },
+    "/api/ancestry/heal": {
+      "post": {
+        "summary": "Heal ancestral and family patterns",
+        "description": "Use when user explores family dynamics, ancestral patterns, or generational healing. TRIGGER PHRASES: 'family patterns', 'ancestral healing', 'generational trauma', 'family dynamics', 'inherited patterns', 'lineage healing'.",
+        "operationId": "healAncestry",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "family_pattern": { "type": "string", "description": "Specific family or ancestral pattern to address" },
+                  "generational_theme": { "type": "string", "description": "Recurring theme across generations" },
+                  "healing_intention": { "type": "string", "description": "What you want to heal or transform" }
+                },
+                "required": ["family_pattern"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Ancestral healing practices and family pattern transformation" }
         }
       }
     }
