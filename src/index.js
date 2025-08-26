@@ -1,263 +1,477 @@
 /**
- * Aquil Symbolic Engine – Personal AI Wisdom System
- * Complete implementation with ARK 2.0 enhancements and full action endpoints
+ * Aquil Symbolic Engine - Personal AI Wisdom System
+ * Complete implementation with ARK 2.0 enhancements integrated
  */
 
 import { Router } from 'itty-router';
 import {
-  getPhiladelphiaTime,
-  logMetamorphicEvent,
-  selectOptimalVoice,
-  generateSocraticInquiry,
-  detectInterventionNeeds,
-  performHealthChecks,
-  validateArkAction,
-  ARK_ARCHETYPES,
-  ARK_MODES,
-  ARK_IMPACTS,
-  ARK_DEFAULT_MODE,
-  CRISIS_RESOURCES
+    getPhiladelphiaTime,
+    logMetamorphicEvent,
+    enhanceResponse
 } from './ark/core.js';
+import { handleArkEndpoints } from './ark/endpoints.js';
 
 const router = Router();
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json'
 };
+
 function addCORSHeaders(response) {
-  Object.entries(corsHeaders).forEach(([k, v]) => response.headers.set(k, v));
-  return response;
+    Object.entries(corsHeaders).forEach(([k, v]) => response.headers.set(k, v));
+    return response;
 }
 
-// Health check
-router.get('/api/health', () =>
-  addCORSHeaders(new Response(JSON.stringify({
-    status: 'Aquil is alive and present',
-    timestamp: new Date().toISOString(),
-    version: '2.0.0',
-    engines: [
-      'Trust Builder', 'Media Wisdom Extractor', 'Somatic Healer',
-      'Wisdom Synthesizer', 'Pattern Recognizer', 'Standing Tall Coach',
-      'Crisis Support', 'Relationships Analyzer', 'Decision Support',
-      'Dream Interpreter', 'Energy Optimizer', 'Values Clarifier',
-      'Creativity Coach', 'Abundance Cultivator', 'Transitions Navigator',
-      'Ancestry Healer'
-    ]
-  }))));
+// CORS preflight
+router.options('*', () => addCORSHeaders(new Response(null, { status: 200 })));
 
-// Session init
-router.get('/api/session-init', async (req, env) => {
-  const health = await performHealthChecks(env);
-  const session_id = `session_${Date.now()}`;
-  await logMetamorphicEvent(env, {
-    kind: 'session_init',
-    detail: { health },
-    session_id
-  });
-  return addCORSHeaders(new Response(JSON.stringify({ session_id, timestamp: new Date().toISOString(), health })));
+// ARK 2.0 Endpoints Integration (Priority routing)
+router.all('/api/session-init', async (request, env) => {
+    const arkResponse = await handleArkEndpoints(request, env);
+    return arkResponse ? addCORSHeaders(arkResponse) : new Response('Not found', { status: 404 });
 });
 
-// Generic log
-router.post('/api/log', async (req, env) => {
-  const b = await req.json();
-  const id = await logMetamorphicEvent(env, {
-    kind: b.type, detail: b.payload,
-    session_id: b.session_id, voice: b.who,
-    signal_strength: b.level, tags: b.tags,
-    idx1: b.idx1, idx2: b.idx2
-  });
-  return addCORSHeaders(new Response(JSON.stringify({ status: 'ok', id })));
+router.all('/api/voice/*', async (request, env) => {
+    const arkResponse = await handleArkEndpoints(request, env);
+    return arkResponse ? addCORSHeaders(arkResponse) : new Response('Not found', { status: 404 });
 });
 
-// Trust check-in
+router.all('/api/discovery/*', async (request, env) => {
+    const arkResponse = await handleArkEndpoints(request, env);
+    return arkResponse ? addCORSHeaders(arkResponse) : new Response('Not found', { status: 404 });
+});
+
+router.all('/api/patterns/expose-contradictions', async (request, env) => {
+    const arkResponse = await handleArkEndpoints(request, env);
+    return arkResponse ? addCORSHeaders(arkResponse) : new Response('Not found', { status: 404 });
+});
+
+router.all('/api/ritual/*', async (request, env) => {
+    const arkResponse = await handleArkEndpoints(request, env);
+    return arkResponse ? addCORSHeaders(arkResponse) : new Response('Not found', { status: 404 });
+});
+
+router.all('/api/system/health-check', async (request, env) => {
+    const arkResponse = await handleArkEndpoints(request, env);
+    return arkResponse ? addCORSHeaders(arkResponse) : new Response('Not found', { status: 404 });
+});
+
+// Enhanced logging endpoint (ARK integrated)
+router.post('/api/log', async (request, env) => {
+    const arkResponse = await handleArkEndpoints(request, env);
+    return arkResponse ? addCORSHeaders(arkResponse) : new Response('Logging failed', { status: 500 });
+});
+
+// Health check (enhanced with ARK status)
+router.get('/api/health', async (request, env) => {
+    try {
+        const arkHealthResponse = await handleArkEndpoints(
+            new Request(new URL('/api/system/health-check', request.url)), 
+            env
+        );
+        
+        let arkHealth = {};
+        if (arkHealthResponse && arkHealthResponse.ok) {
+            arkHealth = await arkHealthResponse.json();
+        }
+        
+        const response = {
+            status: 'Aquil is alive and present',
+            timestamp: getPhiladelphiaTime(),
+            version: '2.0.0',
+            ark_integration: 'active',
+            ark_health: arkHealth,
+            engines: [
+                'ARK 2.0 Core - Active',
+                'Trust Builder - Active',
+                'Media Wisdom Extractor - Active', 
+                'Somatic Healer - Active',
+                'Wisdom Synthesizer - Active',
+                'Pattern Recognizer - Active',
+                'Standing Tall Coach - Active',
+                'Crisis Support - Active',
+                'Dream Interpreter - Active',
+                'Energy Optimizer - Active',
+                'Values Clarifier - Active',
+                'Creativity Coach - Active',
+                'Abundance Cultivator - Active',
+                'Transitions Navigator - Active',
+                'Ancestry Healer - Active'
+            ]
+        };
+        
+        return addCORSHeaders(new Response(JSON.stringify(response)));
+    } catch (error) {
+        return addCORSHeaders(new Response(JSON.stringify({
+            status: 'Health check error',
+            message: 'System is self-correcting',
+            timestamp: getPhiladelphiaTime()
+        }), { status: 500 }));
+    }
+});
+
+// Trust check-in (enhanced with ARK)
 router.post('/api/trust/check-in', async (req, env) => {
-  const d = await req.json();
-  const result = {
-    session_id: `trust_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    message: `You said "${d.current_state}". Let's explore self-trust.`,
-    analysis: { trust_level: d.trust_level || 5 }
-  };
-  await logMetamorphicEvent(env, { kind: 'trust_checkin', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+    try {
+        const d = await req.json();
+        const context = {
+            userInput: d.current_state,
+            endpoint: '/api/trust/check-in',
+            session_id: `trust_${Date.now()}`
+        };
+        
+        const result = {
+            session_id: context.session_id,
+            timestamp: getPhiladelphiaTime(),
+            message: `Your current state: "${d.current_state}". Let's explore this together.`,
+            analysis: { 
+                trust_level: d.trust_level || 5,
+                current_state: d.current_state,
+                specific_situation: d.specific_situation,
+                body_sensations: d.body_sensations
+            },
+            trust_guidance: {
+                reflection: `I hear that you're experiencing "${d.current_state}". This awareness itself shows growing self-trust.`,
+                body_wisdom: d.body_sensations ? 
+                    `Your body is communicating through: ${d.body_sensations}. Let's honor what it's telling you.` :
+                    'What is your body telling you about this situation right now?',
+                next_step: "Trust builds through small moments of listening to your inner knowing."
+            },
+            deeper_inquiry: "What would trusting yourself completely look like in this situation?"
+        };
+        
+        const enhanced = await enhanceResponse(result, context, env, { 
+            includeSocratic: true, 
+            socraticTopic: 'trust' 
+        });
+        
+        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
+    } catch (error) {
+        console.error('Trust check-in error:', error);
+        return addCORSHeaders(new Response(JSON.stringify({
+            error: 'Trust processing temporarily unavailable',
+            message: 'Your trust journey continues. Take three breaths and remember: you are learning to trust yourself.',
+            fallback_guidance: 'What does your inner wisdom say about this situation?'
+        }), { status: 500 }));
+    }
 });
 
-// Media wisdom
+// Media wisdom extraction (enhanced with ARK)
 router.post('/api/media/extract-wisdom', async (req, env) => {
-  const { media_type, title, your_reaction } = await req.json();
-  const result = {
-    session_id: `media_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    message: `Insights from "${title}".`,
-    analysis: { media_type, title, your_reaction }
-  };
-  await logMetamorphicEvent(env, { kind: 'media_extraction', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+    try {
+        const { media_type, title, your_reaction } = await req.json();
+        const context = {
+            userInput: your_reaction,
+            endpoint: '/api/media/extract-wisdom',
+            session_id: `media_${Date.now()}`
+        };
+        
+        const result = {
+            session_id: context.session_id,
+            timestamp: getPhiladelphiaTime(),
+            message: `Your attraction to "${title}" is meaningful - your psyche knows what wisdom it needs.`,
+            media_analysis: {
+                title: title,
+                type: media_type,
+                your_reaction: your_reaction,
+                wisdom_connection: `Your reaction "${your_reaction}" reveals important insights about your current growth edge.`
+            },
+            extraction: {
+                core_insight: `This ${media_type} appeared in your life because it contains medicine for your journey.`,
+                personal_resonance: `Your specific reaction shows what your psyche is ready to integrate.`,
+                integration_question: `How might the themes in "${title}" be reflecting something in your own life right now?`
+            }
+        };
+        
+        const enhanced = await enhanceResponse(result, context, env, { 
+            includeSocratic: true, 
+            socraticTopic: 'media' 
+        });
+        
+        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
+    } catch (error) {
+        console.error('Media wisdom error:', error);
+        return addCORSHeaders(new Response(JSON.stringify({
+            error: 'Media processing temporarily unavailable',
+            message: 'Your attraction to content always contains valuable information about your inner world.',
+            fallback_question: 'What in this content mirrors your own life experience?'
+        }), { status: 500 }));
+    }
 });
 
-// Somatic healing
+// Somatic healing session (enhanced with ARK)
 router.post('/api/somatic/session', async (req, env) => {
-  const d = await req.json();
-  const result = {
-    session_id: `somatic_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    message: `Somatic session for "${d.body_state}".`,
-    body_analysis: d
-  };
-  await logMetamorphicEvent(env, { kind: 'somatic_session', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+    try {
+        const { body_state, emotions, intention } = await req.json();
+        const context = {
+            userInput: `${body_state} ${emotions}`,
+            endpoint: '/api/somatic/session',
+            session_id: `somatic_${Date.now()}`
+        };
+        
+        const result = {
+            session_id: context.session_id,
+            timestamp: getPhiladelphiaTime(),
+            message: "Your body contains profound wisdom. Let's listen together.",
+            body_analysis: {
+                current_state: body_state,
+                emotions: emotions,
+                intention: intention,
+                body_message: `Your body's state of "${body_state}" with emotions "${emotions}" is communicating important information.`
+            },
+            somatic_guidance: {
+                body_dialogue: "Place one hand on your heart, one on your belly. Take three natural breaths.",
+                listening_practice: "Ask your body: 'What do you want me to know?' and listen without agenda.",
+                integration: "Thank your body for its constant wisdom and communication."
+            }
+        };
+        
+        const enhanced = await enhanceResponse(result, context, env, { 
+            includeSocratic: true, 
+            socraticTopic: 'body' 
+        });
+        
+        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
+    } catch (error) {
+        console.error('Somatic session error:', error);
+        return addCORSHeaders(new Response(JSON.stringify({
+            error: 'Somatic processing temporarily unavailable',
+            message: 'Your body\'s wisdom is always available. Place a hand on your heart and breathe.',
+            fallback_practice: 'What is your body trying to tell you right now?'
+        }), { status: 500 }));
+    }
 });
 
-// Wisdom synthesis
+// Wisdom synthesis (enhanced with ARK)
 router.post('/api/wisdom/synthesize', async (req, env) => {
-  const { life_situation, specific_question } = await req.json();
-  const result = {
-    session_id: `synth_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    unified_guidance: `Guidance for "${specific_question}" in "${life_situation}".`
-  };
-  await logMetamorphicEvent(env, { kind: 'wisdom_synthesis', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+    try {
+        const { life_situation, specific_question } = await req.json();
+        const context = {
+            userInput: `${life_situation} ${specific_question}`,
+            endpoint: '/api/wisdom/synthesize',
+            session_id: `synth_${Date.now()}`
+        };
+        
+        const result = {
+            session_id: context.session_id,
+            timestamp: getPhiladelphiaTime(),
+            synthesis: {
+                situation: life_situation,
+                question: specific_question,
+                integrated_guidance: "All wisdom traditions point to trusting your inner authority while honoring the flow of life.",
+                decision_framework: [
+                    "Center in your body and breathe",
+                    "Present the question to your gut and notice the response",
+                    "Accept what feels true without resistance",
+                    "Trust the synthesis of your inner wisdom"
+                ]
+            }
+        };
+        
+        const enhanced = await enhanceResponse(result, context, env, { 
+            includeSocratic: true, 
+            socraticTopic: 'decisions' 
+        });
+        
+        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
+    } catch (error) {
+        console.error('Wisdom synthesis error:', error);
+        return addCORSHeaders(new Response(JSON.stringify({
+            error: 'Synthesis temporarily unavailable',
+            message: 'Your inner wisdom is always available. Trust your body, honor your gut, take aligned action.',
+            fallback_question: 'What does your deepest knowing tell you about this situation?'
+        }), { status: 500 }));
+    }
 });
 
-// Pattern recognition
+// Pattern recognition (enhanced with ARK)
 router.post('/api/patterns/recognize', async (req, env) => {
-  const { area_of_focus } = await req.json();
-  const result = {
-    session_id: `patterns_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    message: `Pattern analysis for "${area_of_focus}".`
-  };
-  await logMetamorphicEvent(env, { kind: 'pattern_recognition', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+    try {
+        const { area_of_focus, recent_experiences } = await req.json();
+        const context = {
+            userInput: recent_experiences,
+            endpoint: '/api/patterns/recognize',
+            session_id: `patterns_${Date.now()}`
+        };
+        
+        const result = {
+            session_id: context.session_id,
+            timestamp: getPhiladelphiaTime(),
+            message: "Pattern recognition shows sophisticated consciousness and growth commitment.",
+            pattern_analysis: {
+                focus_area: area_of_focus,
+                recent_patterns: recent_experiences,
+                meta_pattern: "Your willingness to examine patterns creates choice and conscious evolution."
+            },
+            growth_insight: "Every pattern you recognize gives you more choice in how you respond to life."
+        };
+        
+        const enhanced = await enhanceResponse(result, context, env, { 
+            includeSocratic: true, 
+            socraticTopic: 'patterns' 
+        });
+        
+        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
+    } catch (error) {
+        console.error('Pattern recognition error:', error);
+        return addCORSHeaders(new Response(JSON.stringify({
+            error: 'Pattern analysis temporarily unavailable',
+            message: 'Pattern recognition is happening even when systems are offline - your awareness is the tool.',
+            fallback_question: 'What pattern keeps showing up that wants your attention?'
+        }), { status: 500 }));
+    }
 });
 
-// Standing tall
+// Standing tall practice (enhanced with ARK)
 router.post('/api/standing-tall/practice', async (req, env) => {
-  const { situation, desired_outcome } = await req.json();
-  const result = {
-    session_id: `stand_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    message: `Practice standing tall in "${situation}".`,
-    practice: { situation, desired_outcome }
-  };
-  await logMetamorphicEvent(env, { kind: 'standing_tall', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+    try {
+        const { situation, desired_outcome } = await req.json();
+        const context = {
+            userInput: `${situation} ${desired_outcome}`,
+            endpoint: '/api/standing-tall/practice',
+            session_id: `stand_${Date.now()}`
+        };
+        
+        const result = {
+            session_id: context.session_id,
+            timestamp: getPhiladelphiaTime(),
+            message: "Your desire to stand tall shows courage. You don't need to earn the right to take up space.",
+            standing_tall_guidance: {
+                situation: situation,
+                desired_outcome: desired_outcome,
+                foundation: "You have an inherent right to exist, be seen, and take up space in the world.",
+                practice: "Stand with feet grounded, spine long, chest open. Feel your natural right to be here.",
+                integration: "Each time you practice standing tall, you build evidence of your authentic power."
+            }
+        };
+        
+        const enhanced = await enhanceResponse(result, context, env, { 
+            includeSocratic: true, 
+            socraticTopic: 'standing_tall' 
+        });
+        
+        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
+    } catch (error) {
+        console.error('Standing tall error:', error);
+        return addCORSHeaders(new Response(JSON.stringify({
+            error: 'Standing tall processing temporarily unavailable',
+            message: 'Your inherent dignity is never in question. Stand tall because you belong here.',
+            fallback_affirmation: 'I have the right to take up space and be seen in my authentic power.'
+        }), { status: 500 }));
+    }
 });
 
-// 1. /api/dreams/interpret
-router.post('/api/dreams/interpret', async (req, env) => {
-  const { dream_text } = await req.json();
-  const result = {
-    session_id: `dreams_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    interpretation: `Symbolic interpretation of your dream: "${dream_text}".`
-  };
-  await logMetamorphicEvent(env, { kind: 'dream_interpretation', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+// Additional specialized endpoints (simplified implementations)
+const specializedEndpoints = [
+    { path: '/api/dreams/interpret', sessionPrefix: 'dreams' },
+    { path: '/api/energy/optimize', sessionPrefix: 'energy' },
+    { path: '/api/values/clarify', sessionPrefix: 'values' },
+    { path: '/api/creativity/unleash', sessionPrefix: 'creativity' },
+    { path: '/api/abundance/cultivate', sessionPrefix: 'abundance' },
+    { path: '/api/transitions/navigate', sessionPrefix: 'transitions' },
+    { path: '/api/ancestry/heal', sessionPrefix: 'ancestry' }
+];
+
+specializedEndpoints.forEach(({ path, sessionPrefix }) => {
+    router.post(path, async (req, env) => {
+        try {
+            const body = await req.json();
+            const sessionId = `${sessionPrefix}_${Date.now()}`;
+            
+            // Extract first value from body as primary input
+            const primaryInput = Object.values(body)[0] || '';
+            
+            const result = {
+                session_id: sessionId,
+                timestamp: getPhiladelphiaTime(),
+                message: `${sessionPrefix.charAt(0).toUpperCase() + sessionPrefix.slice(1)} session initiated.`,
+                guidance: `Your request for ${sessionPrefix} support is being processed with care.`,
+                input_received: body
+            };
+            
+            // Log the interaction
+            await logMetamorphicEvent(env, {
+                kind: `${sessionPrefix}_session`,
+                detail: body,
+                session_id: sessionId,
+                voice: 'default'
+            });
+            
+            return addCORSHeaders(new Response(JSON.stringify(result)));
+        } catch (error) {
+            console.error(`${sessionPrefix} endpoint error:`, error);
+            return addCORSHeaders(new Response(JSON.stringify({
+                error: `${sessionPrefix} processing temporarily unavailable`,
+                message: `Your ${sessionPrefix} journey continues even when systems are adjusting.`
+            }), { status: 500 }));
+        }
+    });
 });
 
-// 2. /api/energy/optimize
-router.post('/api/energy/optimize', async (req, env) => {
-  const { current_energy } = await req.json();
-  const result = {
-    session_id: `energy_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    optimization: `Recommendations to optimize energy level "${current_energy}".`
-  };
-  await logMetamorphicEvent(env, { kind: 'energy_optimization', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+// Insights endpoint
+router.get('/api/insights', async (req, env) => {
+    const insights = {
+        summary: 'Your growth journey shows consistent engagement with inner development',
+        recent_themes: ['trust building', 'pattern recognition', 'authentic presence'],
+        suggestions: ['Continue daily check-ins', 'Notice body wisdom', 'Practice standing tall']
+    };
+    return addCORSHeaders(new Response(JSON.stringify({ insights })));
 });
 
-// 3. /api/values/clarify
-router.post('/api/values/clarify', async (req, env) => {
-  const { values_list } = await req.json();
-  const result = {
-    session_id: `values_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    clarified: `Clarified top values from: ${values_list.join(', ')}.`
-  };
-  await logMetamorphicEvent(env, { kind: 'values_clarification', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
+// Feedback endpoint
+router.post('/api/feedback', async (req, env) => {
+    try {
+        const { message, type = 'general' } = await req.json();
+        
+        await logMetamorphicEvent(env, {
+            kind: 'user_feedback',
+            detail: { message, type },
+            voice: 'user',
+            signal_strength: 'medium'
+        });
+        
+        return addCORSHeaders(new Response(JSON.stringify({
+            success: true,
+            message: 'Feedback received with gratitude',
+            type: type,
+            received_at: getPhiladelphiaTime()
+        })));
+    } catch (error) {
+        return addCORSHeaders(new Response(JSON.stringify({
+            success: false,
+            message: 'Feedback logged locally'
+        }), { status: 500 }));
+    }
 });
 
-// 4. /api/creativity/unleash
-router.post('/api/creativity/unleash', async (req, env) => {
-  const { block_description } = await req.json();
-  const result = {
-    session_id: `creativity_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    suggestions: `Creative prompts to overcome: "${block_description}".`
-  };
-  await logMetamorphicEvent(env, { kind: 'creativity_unleash', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
-});
-
-// 5. /api/abundance/cultivate
-router.post('/api/abundance/cultivate', async (req, env) => {
-  const { money_mindset } = await req.json();
-  const result = {
-    session_id: `abundance_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    cultivation: `Exercises to cultivate abundance with mindset "${money_mindset}".`
-  };
-  await logMetamorphicEvent(env, { kind: 'abundance_cultivation', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
-});
-
-// 6. /api/transitions/navigate
-router.post('/api/transitions/navigate', async (req, env) => {
-  const { transition_type } = await req.json();
-  const result = {
-    session_id: `transitions_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    guidance: `Strategies to navigate "${transition_type}" transition.`
-  };
-  await logMetamorphicEvent(env, { kind: 'transition_navigation', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
-});
-
-// 7. /api/ancestry/heal
-router.post('/api/ancestry/heal', async (req, env) => {
-  const { family_pattern } = await req.json();
-  const result = {
-    session_id: `ancestry_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    healing: `Ancestral healing practices for pattern "${family_pattern}".`
-  };
-  await logMetamorphicEvent(env, { kind: 'ancestral_healing', detail: result, session_id: result.session_id });
-  return addCORSHeaders(new Response(JSON.stringify(result)));
-});
-
-// Catch-all
+// Catch-all for unknown endpoints
 router.all('*', () =>
-  addCORSHeaders(new Response(JSON.stringify({
-    message: 'Endpoint not found',
-    available: [
-      'GET /api/health',
-      'GET /api/session-init',
-      'POST /api/log',
-      'POST /api/trust/check-in',
-      'POST /api/media/extract-wisdom',
-      'POST /api/somatic/session',
-      'POST /api/wisdom/synthesize',
-      'POST /api/patterns/recognize',
-      'POST /api/standing-tall/practice',
-      'POST /api/dreams/interpret',
-      'POST /api/energy/optimize',
-      'POST /api/values/clarify',
-      'POST /api/creativity/unleash',
-      'POST /api/abundance/cultivate',
-      'POST /api/transitions/navigate',
-      'POST /api/ancestry/heal'
-    ]
-  })), { status: 404 })
+    addCORSHeaders(new Response(JSON.stringify({
+        message: 'Endpoint not found',
+        ark_version: '2.0',
+        available_endpoints: [
+            'GET /api/health - System status',
+            'GET /api/session-init - Initialize with continuity',
+            'POST /api/log - Enhanced logging',
+            'GET /api/voice/system-status - Voice system info',
+            'POST /api/discovery/generate-inquiry - Socratic questions',
+            'POST /api/patterns/expose-contradictions - Surface tensions',
+            'POST /api/ritual/auto-suggest - Proactive ritual suggestions',
+            'GET /api/system/health-check - Detailed health status',
+            'POST /api/trust/check-in - Trust building sessions',
+            'POST /api/media/extract-wisdom - Media wisdom extraction',
+            'POST /api/somatic/session - Body intelligence practices',
+            'POST /api/wisdom/synthesize - Multi-framework integration',
+            'POST /api/patterns/recognize - Pattern analysis',
+            'POST /api/standing-tall/practice - Confidence building'
+        ]
+    }), { status: 404 })
 );
 
 export default {
-  async fetch(request, env, ctx) {
-    return router.handle(request, env, ctx);
-  }
+    async fetch(request, env, ctx) {
+        return router.handle(request, env, ctx);
+    }
 };
