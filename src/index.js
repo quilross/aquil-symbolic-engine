@@ -31,3 +31,8 @@ export default {
   fetch: (request, env, ctx) => router.handle(request, env, ctx),
 };
 
+export default {
+  fetch(request, env, ctx) {
+    return router.handle(request, env, ctx).catch((err) => send(500, err));
+  }
+};
