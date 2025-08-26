@@ -48,7 +48,7 @@ router.post('/api/trust/check-in', async (request, env) => {
   }
   try {
     const trustBuilder = new TrustBuilder(env);
-    const result = await trustBuilder.processCheckIn(data);
+    const result = await trustBuilder.checkIn(data);
 
     return addCORSHeaders(new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
