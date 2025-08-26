@@ -34,7 +34,6 @@
                     "payload": { "type": "object", "description": "Main log data, can be any JSON object or string" }
                   },
                   "required": ["type", "payload"]
-                }
               }
             }
           },
@@ -349,6 +348,69 @@
         "responses": {
           "200": {
             "description": "Personalized wisdom compilation"
+          }
+        }
+      }
+    },
+    "/api/insights": {
+        "get": {
+          "summary": "Personal Growth & Wisdom Insights",
+          "description": "Summarizes your personal growth, trust trends, and wisdom highlights. GPT: Use this to provide the user with a summary of their progress, patterns, and key insights. Designed for self-reflection and review.",
+          "operationId": "getPersonalInsights",
+          "responses": {
+            "200": {
+              "description": "Summary of personal insights and growth patterns",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "insights": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/feedback": {
+        "post": {
+          "summary": "Submit Feedback or Notes",
+          "description": "Submit feedback, notes, or suggestions for system improvement. GPT: Use this to let the user leave notes, ideas, or feedback for future upgrades. This endpoint is for personal journaling and system improvement.",
+          "operationId": "submitFeedback",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "description": "Feedback, note, or suggestion" },
+                    "type": { "type": "string", "description": "Type of feedback (optional)", "default": "general" }
+                  },
+                  "required": ["message"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Feedback received confirmation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": { "type": "boolean" },
+                      "message": { "type": "string" },
+                      "type": { "type": "string" },
+                      "received_at": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

@@ -1331,3 +1331,38 @@ function generatePersonalizedDailyGuidance(period) {
     growth_edge: 'Each conscious choice builds evidence of your capacity for self-directed growth'
   };
 }
+
+/**
+ * GET /api/insights
+ * Summarizes your personal growth, trust trends, and wisdom highlights.
+ * GPT: Use this to provide the user with a summary of their progress, patterns, and key insights. This endpoint is designed for self-reflection and review.
+ */
+router.get('/api/insights', async (request, env) => {
+  // Example: Aggregate trust levels, wisdom synthesis, and growth patterns
+  // In production, replace with real data aggregation from logs/db
+  const insights = {
+    trust_trend: 'Consistently improving',
+    wisdom_highlights: ['Media wisdom extraction', 'Somatic healing progress'],
+    growth_patterns: ['Standing tall more often', 'Recognizing recurring themes'],
+    last_check_in: 'You reported feeling confident and ready.',
+    suggestions: ['Continue daily check-ins', 'Reflect on recent wisdom synthesis']
+  };
+  return new Response(JSON.stringify({ insights }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+});
+
+/**
+ * POST /api/feedback
+ * Submit feedback, notes, or suggestions for system improvement.
+ * GPT: Use this to let the user leave notes, ideas, or feedback for future upgrades. This endpoint is for personal journaling and system improvement.
+ * Body: { message: string, type?: string }
+ */
+router.post('/api/feedback', async (request, env) => {
+  const { message, type = 'general' } = await request.json();
+  // In production, store feedback in persistent storage
+  // For now, just echo back
+  return new Response(JSON.stringify({ success: true, message, type, received_at: new Date().toISOString() }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+});
