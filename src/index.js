@@ -1,176 +1,37 @@
-import { Router } from 'itty-router';
-const router = Router();
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Content-Type': 'application/json'
+export default {
+    async fetch(req, env, ctx) {
+        const url = new URL(req.url);
+
+        const send = (status, data) =>
+            new Response(JSON.stringify(data), {
+                status,
+                headers: { 'content-type': 'application/json' }
+            });
+
+        // --- Auth: Bearer token ---
+        // const auth = req.headers.get('authorization') || '';
+        // const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+        // if (!token || token !== env.SECRET_API_KEY) return send(401, { error: 'unauthorized' });
+
+        // Helper: try to parse JSON body
+        const readJSON = async () => {
+            try { return await req.json(); } catch { return {}; }
+        };
+
+
+        // Delegate log/retrieve endpoints to unified actions.js
+        // Import the handler
+        try {
+            const { handleActions } = await import('./actions.js');
+            const handled = await handleActions(req, env);
+            if (handled) return handled;
+        } catch (e) {
+            // If import fails, continue to legacy handling
+        }
+
+        return send(404, { error: 'not_found' });
+    }
 };
-
-// ...existing code...
-
-// AI model invocation endpoint (Worker AI or Gateway)
-router.post('/api/ai/invoke', async (req, env) => {
-    try {
-        const { model, messages } = await req.json();
-        const client = env.AI || env.AI_GATEWAY;
-        if (!client) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'AI binding not found' }), { status: 500 }));
-        }
-        const result = await client.run(model, { messages });
-        return addCORSHeaders(new Response(JSON.stringify({ result })));
-    } catch (err) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'AI invocation error', details: err.message }), { status: 500 }));
-    }
-});
-
-// Gateway invocation endpoint (explicit)
-router.post('/api/gateway/invoke', async (req, env) => {
-    try {
-        const { model, messages } = await req.json();
-        const client = env.AI_GATEWAY;
-        if (!client) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'AI_GATEWAY binding not found' }), { status: 500 }));
-        }
-        const result = await client.run(model, { messages });
-        return addCORSHeaders(new Response(JSON.stringify({ result })));
-    } catch (err) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Gateway invocation error', details: err.message }), { status: 500 }));
-    }
-});
-// ...existing code...
-
-function addCORSHeaders(response) {
-    Object.entries(corsHeaders).forEach(([k, v]) => response.headers.set(k, v));
-    return response;
-}
-
-// KV logging and retrieval endpoints
-router.post('/api/kv/log', async (req, env) => {
-    const { key, value } = await req.json();
-    if (!key || value === undefined) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key or value' }), { status: 400 }));
-    }
-    await env.AQUIL_MEMORIES.put(key, JSON.stringify(value));
-    return addCORSHeaders(new Response(JSON.stringify({ success: true })));
-});
-
-router.get('/api/kv/retrieve', async (req, env) => {
-    try {
-        const { searchParams } = new URL(req.url);
-        const key = searchParams.get('key');
-        if (!key) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
-        }
-        const value = await env.AQUIL_MEMORIES.get(key);
-        if (value === null || value === undefined) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'Key not found', key }), { status: 404 }));
-        }
-        return addCORSHeaders(new Response(JSON.stringify({ key, value })));
-    } catch (err) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Retrieval error', details: err.message }), { status: 500 }));
-    }
-});
-
-// R2 logging and retrieval endpoints
-router.post('/api/r2/log', async (req, env) => {
-    const { key, data } = await req.json();
-    if (!key || !data) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key or data' }), { status: 400 }));
-    }
-    const object = await env.AQUIL_STORAGE.put(key, new Blob([data]));
-    return addCORSHeaders(new Response(JSON.stringify({ success: true, object })));
-});
-
-router.get('/api/r2/retrieve', async (req, env) => {
-    try {
-        const { searchParams } = new URL(req.url);
-        const key = searchParams.get('key');
-        if (!key) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
-        }
-        const object = await env.AQUIL_STORAGE.get(key);
-        if (!object) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'Object not found', key }), { status: 404 }));
-        }
-        let data = null;
-        try {
-            data = await object.text();
-        } catch (err) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'Failed to read object', details: err.message }), { status: 500 }));
-        }
-        return addCORSHeaders(new Response(JSON.stringify({ key, data })));
-    } catch (err) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Retrieval error', details: err.message }), { status: 500 }));
-    }
-});
-
-// Vectorize logging and retrieval endpoints
-router.post('/api/vectorize/log', async (req, env) => {
-    const { id, vector, metadata } = await req.json();
-    if (!id || !vector) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing id or vector' }), { status: 400 }));
-    }
-    await env.AQUIL_CONTEXT.upsert([{ id, values: vector, metadata }]);
-    return addCORSHeaders(new Response(JSON.stringify({ success: true })));
-});
-
-router.get('/api/vectorize/retrieve', async (req, env) => {
-    try {
-        const { searchParams } = new URL(req.url);
-        const id = searchParams.get('id');
-        if (!id) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 }));
-        }
-        const result = await env.AQUIL_CONTEXT.query({ ids: [id] });
-        if (!result || !result.matches || result.matches.length === 0) {
-            return addCORSHeaders(new Response(JSON.stringify({ error: 'Vector not found', id }), { status: 404 }));
-        }
-        return addCORSHeaders(new Response(JSON.stringify(result)));
-    } catch (err) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Retrieval error', details: err.message }), { status: 500 }));
-    }
-});
-// Manifest endpoint for GPT action discovery
-import { ARK_MANIFEST, handleArkEndpoints } from './ark/endpoints.js';
-router.get('/api/manifest', async () => {
-    return addCORSHeaders(new Response(JSON.stringify(ARK_MANIFEST), {
-        headers: { 'Content-Type': 'application/json' }
-    }));
-});
-// Retrieve logs endpoint for GPT and context
-router.get('/api/logs', async (req, env) => {
-    const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get('limit')) || 20;
-    const type = searchParams.get('type');
-    const who = searchParams.get('who');
-    const level = searchParams.get('level');
-    const session_id = searchParams.get('session_id');
-    const tag = searchParams.get('tag');
-
-    let query = 'SELECT * FROM metamorphic_logs';
-    const conditions = [];
-    const params = [];
-    if (type) { conditions.push('kind = ?'); params.push(type); }
-    if (who) { conditions.push('voice = ?'); params.push(who); }
-    if (level) { conditions.push('signal_strength = ?'); params.push(level); }
-    if (session_id) { conditions.push('session_id = ?'); params.push(session_id); }
-    if (tag) { conditions.push('tags LIKE ?'); params.push(`%${tag}%`); }
-    if (conditions.length) query += ' WHERE ' + conditions.join(' AND ');
-    query += ' ORDER BY timestamp DESC LIMIT ?';
-    params.push(limit);
-
-    let logs = [];
-    if (env.AQUIL_DB) {
-        try {
-            const result = await env.AQUIL_DB.prepare(query).bind(...params).all();
-            logs = result.results || [];
-        } catch (err) {
-            logs = [];
-        }
-    }
-    return addCORSHeaders(new Response(JSON.stringify(logs)));
-});
 
 // Session-init endpoint for GPT continuity
 router.get('/api/session-init', async (req, env) => {
@@ -185,113 +46,6 @@ router.get('/api/session-init', async (req, env) => {
     query += ' ORDER BY timestamp DESC LIMIT ?';
     params.push(limit);
 
-    let logs = [];
-    if (env.AQUIL_DB) {
-        try {
-            const result = await env.AQUIL_DB.prepare(query).bind(...params).all();
-            logs = result.results || [];
-        } catch (err) {
-            logs = [];
-        }
-    }
-    return addCORSHeaders(new Response(JSON.stringify(logs)));
-});
-// ARK Logging Handlers (moved from endpoints.js)
-// Unified handler for ARK endpoints (for src/index.js)
-
-// Session Init with AI-crafted opening
-export async function handleSessionInit(request, env) {
-    const sessionId = generateId();
-    // Retrieve logs (omitted for brevity—use your existing logic)
-    const continuity = /* fetched & merged logs */ [];
-
-    // AI-generated Mirror opening
-    let mirrorOpening;
-    try {
-        const prompt = `Weave these continuity events into a grounding Mirror opening: ${JSON.stringify(continuity)}`;
-        const aiResp = await aiCall(env, '@cf/meta/llama-2-7b-chat-int8', [
-            { role: 'user', content: prompt }
-        ]);
-        mirrorOpening = aiResp.response;
-    } catch {
-        mirrorOpening = continuity.length
-            ? `I recall our journey through: ${continuity.map(e => e.kind).join(', ')}. How are you today?`
-            : 'I’m here with you in this moment. What’s alive for you right now?';
-    }
-
-    // Log initiation
-    await logMetamorphicEvent(env, {
-        kind: 'session_init',
-        detail: { continuity_count: continuity.length },
-        session_id: sessionId,
-        voice: 'mirror'
-    });
-
-    return new Response(
-        JSON.stringify({
-            session_id: sessionId,
-            continuity,
-            opening: mirrorOpening,
-            voice: 'mirror',
-            timestamp: getPhiladelphiaTime()
-        }),
-        { headers: { 'Content-Type': 'application/json' } }
-    );
-}
-
-// Discovery Inquiry with AI
-export async function handleDiscoveryInquiry(request, env) {
-    const { context = {}, session_id } = await request.json();
-    const voice = selectOptimalVoice(context.input || '', context);
-    let question;
-    try {
-        const prompt = `As Ark’s ${voice} voice, ask a Socratic question about: ${JSON.stringify(context)}`;
-        const aiResp = await aiCall(env, '@cf/meta/llama-2-7b-chat-int8', [
-            { role: 'user', content: prompt }
-        ]);
-        question = aiResp.response;
-    } catch {
-        question = 'What emerges when you explore this topic?';
-    }
-    await logMetamorphicEvent(env, {
-        kind: 'discovery_inquiry',
-        detail: { question },
-        session_id,
-        voice
-    });
-    return new Response(
-        JSON.stringify({ inquiry: question, voice_used: voice }),
-        { headers: { 'Content-Type': 'application/json' } }
-    );
-}
-
-// Ritual Suggestion with AI
-export async function handleRitualSuggestion(request, env) {
-    const { context = {}, session_id } = await request.json();
-    let ritual;
-    try {
-        const prompt = `Recommend a ritual for this context: ${JSON.stringify(context)}`;
-        const aiResp = await aiCall(env, '@cf/meta/llama-2-7b-chat-int8', [
-            { role: 'user', content: prompt }
-        ]);
-        ritual = JSON.parse(aiResp.response);
-    } catch {
-        ritual = {
-            name: 'Gentle Pause',
-            instructions: ['Take three deep breaths', 'Ground in the present moment'],
-            purpose: 'Reset and refocus'
-        };
-    }
-    await logMetamorphicEvent(env, {
-        kind: 'ritual_suggestion',
-        detail: { ritual },
-        session_id,
-        voice: 'strategist'
-    });
-    return new Response(JSON.stringify({ suggestion: ritual }), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
 
 // Health Check
 export async function handleHealthCheck(request, env) {
@@ -448,90 +202,10 @@ router.post('/api/trust/check-in', async (req, env) => {
             socraticTopic: 'trust' 
         });
         
-        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
-    } catch (error) {
-        console.error('Trust check-in error:', error);
-        return addCORSHeaders(new Response(JSON.stringify({
-            error: 'Trust processing temporarily unavailable',
-            message: 'Your trust journey continues. Take three breaths and remember: you are learning to trust yourself.',
-            fallback_guidance: 'What does your inner wisdom say about this situation?'
-        }), { status: 500 }));
-    }
-});
-
-// Media wisdom extraction (enhanced with ARK)
-router.post('/api/media/extract-wisdom', async (req, env) => {
-    try {
-        const { media_type, title, your_reaction } = await req.json();
-        const context = {
-            userInput: your_reaction,
-            endpoint: '/api/media/extract-wisdom',
-            session_id: `media_${Date.now()}`
-        };
-        
-        const result = {
-            session_id: context.session_id,
-            timestamp: getPhiladelphiaTime(),
-            message: `Your attraction to "${title}" is meaningful - your psyche knows what wisdom it needs.`,
-            media_analysis: {
-                title: title,
-                type: media_type,
-                your_reaction: your_reaction,
-                wisdom_connection: `Your reaction "${your_reaction}" reveals important insights about your current growth edge.`
-            },
-            extraction: {
-                core_insight: `This ${media_type} appeared in your life because it contains medicine for your journey.`,
-                personal_resonance: `Your specific reaction shows what your psyche is ready to integrate.`,
                 integration_question: `How might the themes in "${title}" be reflecting something in your own life right now?`
             }
         };
         
-        const enhanced = await enhanceResponse(result, context, env, { 
-            includeSocratic: true, 
-            socraticTopic: 'media' 
-        });
-        
-        return addCORSHeaders(new Response(JSON.stringify(enhanced)));
-    } catch (error) {
-        console.error('Media wisdom error:', error);
-        return addCORSHeaders(new Response(JSON.stringify({
-            error: 'Media processing temporarily unavailable',
-            message: 'Your attraction to content always contains valuable information about your inner world.',
-            fallback_question: 'What in this content mirrors your own life experience?'
-        }), { status: 500 }));
-    }
-});
-
-// Somatic healing session (enhanced with ARK)
-router.post('/api/somatic/session', async (req, env) => {
-    try {
-        const { body_state, emotions, intention } = await req.json();
-        const context = {
-            userInput: `${body_state} ${emotions}`,
-            endpoint: '/api/somatic/session',
-            session_id: `somatic_${Date.now()}`
-        };
-        
-        const result = {
-            session_id: context.session_id,
-            timestamp: getPhiladelphiaTime(),
-            message: "Your body contains profound wisdom. Let's listen together.",
-            body_analysis: {
-                current_state: body_state,
-                emotions: emotions,
-                intention: intention,
-                body_message: `Your body's state of "${body_state}" with emotions "${emotions}" is communicating important information.`
-            },
-            somatic_guidance: {
-                body_dialogue: "Place one hand on your heart, one on your belly. Take three natural breaths.",
-                listening_practice: "Ask your body: 'What do you want me to know?' and listen without agenda.",
-                integration: "Thank your body for its constant wisdom and communication."
-            }
-        };
-        
-        const enhanced = await enhanceResponse(result, context, env, { 
-            includeSocratic: true, 
-            socraticTopic: 'body' 
         });
         
         return addCORSHeaders(new Response(JSON.stringify(enhanced)));
@@ -775,8 +449,4 @@ router.all('*', () => {
         )
     );
 });
-export default {
-    async fetch(request, env, ctx) {
-        return router.handle(request, env, ctx);
-    }
-};
+// ...existing code...
