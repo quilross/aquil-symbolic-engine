@@ -25,22 +25,54 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "description": "chat_message, insight, breakthrough, context, reflection, etc." },
-                  "who": { "type": "string", "description": "user, assistant, system" },
-                  "level": { "type": "string", "description": "info, warning, error, highlight" },
-                  "session_id": { "type": "string", "description": "Current conversation identifier" },
-                  "tags": { "type": "array", "items": { "type": "string" }, "description": "Tags like 'trust', 'wisdom', 'body', 'media', etc." },
-                  "idx1": { "type": "string", "description": "Custom index field 1" },
-                  "idx2": { "type": "string", "description": "Custom index field 2" },
-                  "payload": { "type": "object", "description": "The actual content to log" }
+                  "type": {
+                    "type": "string",
+                    "description": "chat_message, insight, breakthrough, context, reflection, etc."
+                  },
+                  "who": {
+                    "type": "string",
+                    "description": "user, assistant, system"
+                  },
+                  "level": {
+                    "type": "string",
+                    "description": "info, warning, error, highlight"
+                  },
+                  "session_id": {
+                    "type": "string",
+                    "description": "Current conversation identifier"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Tags like 'trust', 'wisdom', 'body', 'media', etc."
+                  },
+                  "idx1": {
+                    "type": "string",
+                    "description": "Custom index field 1"
+                  },
+                  "idx2": {
+                    "type": "string",
+                    "description": "Custom index field 2"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "description": "The actual content to log"
+                  }
                 },
-                "required": ["type", "payload"]
+                "required": [
+                  "type",
+                  "payload"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Log entry created successfully" }
+          "200": {
+            "description": "Log entry created successfully"
+          }
         }
       }
     },
@@ -51,15 +83,62 @@
         "operationId": "retrieveLogsOrDataEntries",
         "x-openai-isConsequential": false,
         "parameters": [
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 200 }, "description": "Number of entries to retrieve" },
-          { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Filter by: chat_message, insight, breakthrough, etc." },
-          { "name": "who", "in": "query", "schema": { "type": "string" }, "description": "Filter by: user, assistant, system" },
-          { "name": "level", "in": "query", "schema": { "type": "string" }, "description": "Filter by: info, warning, error, highlight" },
-          { "name": "session_id", "in": "query", "schema": { "type": "string" }, "description": "Specific conversation ID" },
-          { "name": "tag", "in": "query", "schema": { "type": "string" }, "description": "Filter by tag: trust, wisdom, body, media, etc." }
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Number of entries to retrieve"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by: chat_message, insight, breakthrough, etc."
+          },
+          {
+            "name": "who",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by: user, assistant, system"
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by: info, warning, error, highlight"
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Specific conversation ID"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by tag: trust, wisdom, body, media, etc."
+          }
         ],
         "responses": {
-          "200": { "description": "Array of matching log entries" }
+          "200": {
+            "description": "Array of matching log entries"
+          }
         }
       }
     },
@@ -70,11 +149,30 @@
         "operationId": "retrieveRecentSessionLogs",
         "x-openai-isConsequential": false,
         "parameters": [
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 7, "minimum": 1, "maximum": 200 }, "description": "Recent entries to load (default 7)" },
-          { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Filter recent logs by type" }
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "minimum": 1,
+              "maximum": 200
+            },
+            "description": "Recent entries to load (default 7)"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter recent logs by type"
+          }
         ],
         "responses": {
-          "200": { "description": "Recent entries for session continuity" }
+          "200": {
+            "description": "Recent entries for session continuity"
+          }
         }
       }
     },
@@ -91,18 +189,36 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "current_state": { "type": "string", "description": "User's current trust/confidence level description" },
-                  "trust_level": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Self-trust rating 1-10" },
-                  "specific_situation": { "type": "string", "description": "Specific scenario causing trust doubt" },
-                  "body_sensations": { "type": "string", "description": "Physical sensations related to the doubt" }
+                  "current_state": {
+                    "type": "string",
+                    "description": "User's current trust/confidence level description"
+                  },
+                  "trust_level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "Self-trust rating 1-10"
+                  },
+                  "specific_situation": {
+                    "type": "string",
+                    "description": "Specific scenario causing trust doubt"
+                  },
+                  "body_sensations": {
+                    "type": "string",
+                    "description": "Physical sensations related to the doubt"
+                  }
                 },
-                "required": ["current_state"]
+                "required": [
+                  "current_state"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Personalized trust-building guidance and exercises" }
+          "200": {
+            "description": "Personalized trust-building guidance and exercises"
+          }
         }
       }
     },
@@ -119,18 +235,44 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "media_type": { "type": "string", "enum": ["tv_show", "movie", "book", "podcast", "music", "article"], "description": "Type of media consumed" },
-                  "title": { "type": "string", "description": "Name/title of the content" },
-                  "your_reaction": { "type": "string", "description": "User's personal response, feelings, thoughts about the content" },
-                  "content_summary": { "type": "string", "description": "Brief summary if needed for context" }
+                  "media_type": {
+                    "type": "string",
+                    "enum": [
+                      "tv_show",
+                      "movie",
+                      "book",
+                      "podcast",
+                      "music",
+                      "article"
+                    ],
+                    "description": "Type of media consumed"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Name/title of the content"
+                  },
+                  "your_reaction": {
+                    "type": "string",
+                    "description": "User's personal response, feelings, thoughts about the content"
+                  },
+                  "content_summary": {
+                    "type": "string",
+                    "description": "Brief summary if needed for context"
+                  }
                 },
-                "required": ["media_type", "title", "your_reaction"]
+                "required": [
+                  "media_type",
+                  "title",
+                  "your_reaction"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Personalized wisdom extraction with growth insights" }
+          "200": {
+            "description": "Personalized wisdom extraction with growth insights"
+          }
         }
       }
     },
@@ -147,17 +289,32 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "body_state": { "type": "string", "description": "Current physical sensations, tension, or body state" },
-                  "emotions": { "type": "string", "description": "Emotions connected to the body sensations" },
-                  "intention": { "type": "string", "description": "What the user wants to achieve (release, grounding, etc.)" }
+                  "body_state": {
+                    "type": "string",
+                    "description": "Current physical sensations, tension, or body state"
+                  },
+                  "emotions": {
+                    "type": "string",
+                    "description": "Emotions connected to the body sensations"
+                  },
+                  "intention": {
+                    "type": "string",
+                    "description": "What the user wants to achieve (release, grounding, etc.)"
+                  }
                 },
-                "required": ["body_state", "emotions", "intention"]
+                "required": [
+                  "body_state",
+                  "emotions",
+                  "intention"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Guided somatic healing practices and exercises" }
+          "200": {
+            "description": "Guided somatic healing practices and exercises"
+          }
         }
       }
     },
@@ -174,21 +331,41 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "life_situation": { "type": "string", "description": "Current life context and circumstances" },
-                  "specific_question": { "type": "string", "description": "The exact decision or question needing guidance" },
+                  "life_situation": {
+                    "type": "string",
+                    "description": "Current life context and circumstances"
+                  },
+                  "specific_question": {
+                    "type": "string",
+                    "description": "The exact decision or question needing guidance"
+                  },
                   "frameworks_requested": {
                     "type": "array",
-                    "items": { "type": "string", "enum": ["human_design", "gene_keys", "astrology", "somatic_wisdom", "all"] },
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "human_design",
+                        "gene_keys",
+                        "astrology",
+                        "somatic_wisdom",
+                        "all"
+                      ]
+                    },
                     "description": "Which wisdom frameworks to consult (default: all)"
                   }
                 },
-                "required": ["life_situation", "specific_question"]
+                "required": [
+                  "life_situation",
+                  "specific_question"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Integrated wisdom from multiple frameworks" }
+          "200": {
+            "description": "Integrated wisdom from multiple frameworks"
+          }
         }
       }
     },
@@ -205,17 +382,37 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "area_of_focus": { "type": "string", "enum": ["trust_building", "media_consumption", "body_awareness", "overall_growth"], "description": "Main area for pattern analysis" },
-                  "recent_experiences": { "type": "string", "description": "Recent examples of the pattern or experiences" },
-                  "recurring_themes": { "type": "string", "description": "What keeps repeating or showing up" }
+                  "area_of_focus": {
+                    "type": "string",
+                    "enum": [
+                      "trust_building",
+                      "media_consumption",
+                      "body_awareness",
+                      "overall_growth"
+                    ],
+                    "description": "Main area for pattern analysis"
+                  },
+                  "recent_experiences": {
+                    "type": "string",
+                    "description": "Recent examples of the pattern or experiences"
+                  },
+                  "recurring_themes": {
+                    "type": "string",
+                    "description": "What keeps repeating or showing up"
+                  }
                 },
-                "required": ["area_of_focus", "recent_experiences"]
+                "required": [
+                  "area_of_focus",
+                  "recent_experiences"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Pattern analysis with growth insights and recommendations" }
+          "200": {
+            "description": "Pattern analysis with growth insights and recommendations"
+          }
         }
       }
     },
@@ -232,18 +429,35 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "situation": { "type": "string", "description": "Specific situation where user feels small or powerless" },
-                  "fears_concerns": { "type": "string", "description": "What holds them back from standing tall" },
-                  "desired_outcome": { "type": "string", "description": "How they want to show up instead" },
-                  "past_successes": { "type": "string", "description": "Times they successfully stood in their power" }
+                  "situation": {
+                    "type": "string",
+                    "description": "Specific situation where user feels small or powerless"
+                  },
+                  "fears_concerns": {
+                    "type": "string",
+                    "description": "What holds them back from standing tall"
+                  },
+                  "desired_outcome": {
+                    "type": "string",
+                    "description": "How they want to show up instead"
+                  },
+                  "past_successes": {
+                    "type": "string",
+                    "description": "Times they successfully stood in their power"
+                  }
                 },
-                "required": ["situation", "desired_outcome"]
+                "required": [
+                  "situation",
+                  "desired_outcome"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Personalized confidence-building practices and power reclamation" }
+          "200": {
+            "description": "Personalized confidence-building practices and power reclamation"
+          }
         }
       }
     },
@@ -257,130 +471,22 @@
           {
             "name": "period",
             "in": "query",
-            "schema": { "type": "string", "enum": ["today", "week", "month"], "default": "today" },
+            "schema": {
+              "type": "string",
+              "enum": [
+                "today",
+                "week",
+                "month"
+              ],
+              "default": "today"
+            },
             "description": "Time period for wisdom compilation"
           }
         ],
         "responses": {
-          "200": { "description": "Personalized daily wisdom and growth focus" }
-        }
-      }
-    },
-    "/api/insights": {
-      "get": {
-        "summary": "Personal growth summary and progress review",
-        "description": "Use when user wants to review their OVERALL progress, growth trends, or life insights summary. TRIGGER PHRASES: 'how am I doing', 'my progress', 'growth summary', 'insights about me', 'what have I learned', 'how have I changed', 'personal review'.",
-        "operationId": "getPersonalInsights",
-        "x-openai-isConsequential": false,
-        "responses": {
           "200": {
-            "description": "Comprehensive personal growth insights and patterns",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "insights": { "type": "object", "description": "Personal growth insights and trends" }
-                  }
-                }
-              }
-            }
+            "description": "Personalized daily wisdom and growth focus"
           }
-        }
-      }
-    },
-    "/api/feedback": {
-      "post": {
-        "summary": "Submit personal notes, ideas, or system feedback",
-        "description": "Use when user wants to leave notes for later, record ideas, or give feedback about the system. TRIGGER PHRASES: 'remember this', 'note to self', 'save this idea', 'feedback about', 'suggestion for', 'this could be better', 'I want to remember'.",
-        "operationId": "submitFeedback",
-        "x-openai-isConsequential": false,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "message": { "type": "string", "description": "The feedback, note, or idea to save" },
-                  "type": { "type": "string", "description": "Type: note, idea, feedback, suggestion", "default": "general" }
-                },
-                "required": ["message"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Feedback/note saved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" },
-                    "type": { "type": "string" },
-                    "received_at": { "type": "string", "format": "date-time" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/dreams/interpret": {
-      "post": {
-        "summary": "Interpret dreams and symbolic imagery",
-        "description": "Use when user shares a dream and wants archetypal or symbolic insights. TRIGGER PHRASES: 'I dreamed', 'my dream', 'interpret my dream', 'dream meaning', 'strange dream', 'recurring dream'.",
-        "operationId": "interpretDream",
-        "x-openai-isConsequential": false,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "dream_text": { "type": "string", "description": "Description of the dream or dream symbols" },
-                  "emotions_felt": { "type": "string", "description": "Emotions experienced during or after the dream" },
-                  "recurring": { "type": "boolean", "description": "Whether this is a recurring dream theme" }
-                },
-                "required": ["dream_text"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Symbolic dream interpretation with personal insights" }
-        }
-      }
-    },
-    "/api/energy/optimize": {
-      "post": {
-        "summary": "Optimize personal energy and vitality",
-        "description": "Use when user mentions energy levels, fatigue, or wanting vitality optimization. TRIGGER PHRASES: 'tired', 'exhausted', 'low energy', 'drained', 'need energy', 'feeling sluggish', 'vitality'.",
-        "operationId": "optimizeEnergy",
-        "x-openai-isConsequential": false,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "current_energy": { "type": "string", "description": "Current energy state and levels" },
-                  "energy_drains": { "type": "string", "description": "What depletes your energy" },
-                  "energy_goals": { "type": "string", "description": "What energy state you want to achieve" }
-                },
-                "required": ["current_energy"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Personalized energy optimization strategies" }
         }
       }
     },
@@ -397,17 +503,33 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "values_list": { "type": "array", "items": { "type": "string" }, "description": "List of potential or current values" },
-                  "life_context": { "type": "string", "description": "Current life situation for values clarification" },
-                  "decision_context": { "type": "string", "description": "Specific decision or choice requiring values clarity" }
+                  "values_list": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of potential or current values"
+                  },
+                  "life_context": {
+                    "type": "string",
+                    "description": "Current life situation for values clarification"
+                  },
+                  "decision_context": {
+                    "type": "string",
+                    "description": "Specific decision or choice requiring values clarity"
+                  }
                 },
-                "required": ["values_list"]
+                "required": [
+                  "values_list"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Clarified and prioritized values with decision framework" }
+          "200": {
+            "description": "Clarified and prioritized values with decision framework"
+          }
         }
       }
     },
@@ -424,17 +546,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "block_description": { "type": "string", "description": "Description of the creative block or challenge" },
-                  "creative_medium": { "type": "string", "description": "Art form or creative medium (writing, visual art, music, etc.)" },
-                  "desired_outcome": { "type": "string", "description": "What creative breakthrough you're seeking" }
+                  "block_description": {
+                    "type": "string",
+                    "description": "Description of the creative block or challenge"
+                  },
+                  "creative_medium": {
+                    "type": "string",
+                    "description": "Art form or creative medium (writing, visual art, music, etc.)"
+                  },
+                  "desired_outcome": {
+                    "type": "string",
+                    "description": "What creative breakthrough you're seeking"
+                  }
                 },
-                "required": ["block_description"]
+                "required": [
+                  "block_description"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Creative breakthrough exercises and inspiration" }
+          "200": {
+            "description": "Creative breakthrough exercises and inspiration"
+          }
         }
       }
     },
@@ -451,17 +586,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "money_mindset": { "type": "string", "description": "Current relationship and beliefs about money" },
-                  "abundance_blocks": { "type": "string", "description": "What blocks abundance in your life" },
-                  "financial_goals": { "type": "string", "description": "Abundance and financial aspirations" }
+                  "money_mindset": {
+                    "type": "string",
+                    "description": "Current relationship and beliefs about money"
+                  },
+                  "abundance_blocks": {
+                    "type": "string",
+                    "description": "What blocks abundance in your life"
+                  },
+                  "financial_goals": {
+                    "type": "string",
+                    "description": "Abundance and financial aspirations"
+                  }
                 },
-                "required": ["money_mindset"]
+                "required": [
+                  "money_mindset"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Abundance cultivation practices and mindset shifts" }
+          "200": {
+            "description": "Abundance cultivation practices and mindset shifts"
+          }
         }
       }
     },
@@ -478,17 +626,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "transition_type": { "type": "string", "description": "Type of transition (career, relationship, location, life stage, etc.)" },
-                  "current_challenges": { "type": "string", "description": "Current difficulties or concerns with the transition" },
-                  "desired_support": { "type": "string", "description": "What kind of support or guidance you need" }
+                  "transition_type": {
+                    "type": "string",
+                    "description": "Type of transition (career, relationship, location, life stage, etc.)"
+                  },
+                  "current_challenges": {
+                    "type": "string",
+                    "description": "Current difficulties or concerns with the transition"
+                  },
+                  "desired_support": {
+                    "type": "string",
+                    "description": "What kind of support or guidance you need"
+                  }
                 },
-                "required": ["transition_type"]
+                "required": [
+                  "transition_type"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Transition navigation strategies and support practices" }
+          "200": {
+            "description": "Transition navigation strategies and support practices"
+          }
         }
       }
     },
@@ -505,17 +666,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "family_pattern": { "type": "string", "description": "Specific family or ancestral pattern to address" },
-                  "generational_theme": { "type": "string", "description": "Recurring theme across generations" },
-                  "healing_intention": { "type": "string", "description": "What you want to heal or transform" }
+                  "family_pattern": {
+                    "type": "string",
+                    "description": "Specific family or ancestral pattern to address"
+                  },
+                  "generational_theme": {
+                    "type": "string",
+                    "description": "Recurring theme across generations"
+                  },
+                  "healing_intention": {
+                    "type": "string",
+                    "description": "What you want to heal or transform"
+                  }
                 },
-                "required": ["family_pattern"]
+                "required": [
+                  "family_pattern"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Ancestral healing practices and family pattern transformation" }
+          "200": {
+            "description": "Ancestral healing practices and family pattern transformation"
+          }
         }
       }
     }
