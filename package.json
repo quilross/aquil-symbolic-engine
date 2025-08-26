@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
+    "ajv": "^8.17.1",
     "wrangler": "^4.31.0"
   },
   "repository": {
