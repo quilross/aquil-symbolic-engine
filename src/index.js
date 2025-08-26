@@ -1,26 +1,33 @@
+import { Router } from 'itty-router';
+import {
+  handleSessionInit,
+  handleDiscoveryInquiry,
+  handleRitualSuggestion,
+  handleHealthCheck,
+  handleLog,
+} from './ark/endpoints.js';
+
+const router = Router();
+const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
+const addCORS = (res) => {
+  Object.entries(cors).forEach(([k, v]) => res.headers.set(k, v));
+  return res;
+};
+
+// CORS preflight
+router.options('*', () => new Response(null, { status: 200, headers: cors }));
+
+// ARK endpoints
+router.get('/api/session-init', async (req, env) => addCORS(await handleSessionInit(req, env)));
+router.post('/api/discovery/generate-inquiry', async (req, env) => addCORS(await handleDiscoveryInquiry(req, env)));
+router.post('/api/ritual/auto-suggest', async (req, env) => addCORS(await handleRitualSuggestion(req, env)));
+router.get('/api/system/health-check', async (req, env) => addCORS(await handleHealthCheck(req, env)));
+router.post('/api/log', async (req, env) => addCORS(await handleLog(req, env)));
+
+// Fallback for unknown routes
+router.all('*', () => addCORS(new Response('Not found', { status: 404 })));
+
 export default {
-    async fetch(req, env, ctx) {
-        const url = new URL(req.url);
-    }
-            new Response(JSON.stringify(data), {
-                status,
-                headers: { 'content-type': 'application/json' }
-            });
-
-        // --- Auth: Bearer token ---
-        // const auth = req.headers.get('authorization') || '';
-        // const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-        // if (!token || token !== env.SECRET_API_KEY) return send(401, { error: 'unauthorized' });
-
-        // Helper: try to parse JSON body
-        const readJSON = async () => {
-            try { return await req.json(); } catch { return {}; }
-        };
-
-
-    // TODO: Restore legacy log/retrieve endpoint logic here
-
-        return send(404, { error: 'not_found' });
-    }
-    };
+  fetch: (request, env, ctx) => router.handle(request, env, ctx),
+};
 
