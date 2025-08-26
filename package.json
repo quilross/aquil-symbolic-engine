@@ -11,7 +11,8 @@
     "tail": "wrangler tail",
     "db:init": "wrangler d1 execute AQUIL_DB --file=schema.sql --env production",
     "db:migrate": "wrangler d1 migrations apply AQUIL_DB --env production",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "test": "node --test \"test/**/*.test.js\""
   },
   "keywords": [
     "personal-ai",
