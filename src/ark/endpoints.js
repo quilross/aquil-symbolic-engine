@@ -57,11 +57,6 @@ export async function handleArkEndpoints(request, env) {
   if (url.pathname === '/api/log' || url.pathname.startsWith('/api/log')) {
     return handleLog(request, env);
   }
-  if (url.pathname === '/api/patterns/expose-contradictions') {
-    // If you have a handler for contradictions, call it here
-    // return handleExposeContradictions(request, env);
-    return new Response(JSON.stringify({ message: 'Contradictions endpoint not yet implemented.' }), { status: 501 });
-  }
   return new Response('Not found', { status: 404 });
 }
 import {
@@ -78,11 +73,37 @@ async function aiCall(env, model, messages) {
   return client.run(model, { messages });
 }
 
+// Retrieve recent continuity logs from the database
+async function fetchContinuityLogs(env, limit = 5) {
+  if (!env.AQUIL_DB) return [];
+
+  const parse = (val) => {
+    try { return JSON.parse(val); } catch { return val; }
+  };
+
+  try {
+    const { results } = await env.AQUIL_DB
+      .prepare('SELECT id, timestamp, kind, detail FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?')
+      .bind(limit)
+      .all();
+    return results.map(r => ({ ...r, detail: parse(r.detail) }));
+  } catch {
+    try {
+      const { results } = await env.AQUIL_DB
+        .prepare('SELECT id, ts as timestamp, type as kind, payload as detail FROM event_log ORDER BY ts DESC LIMIT ?')
+        .bind(limit)
+        .all();
+      return results.map(r => ({ ...r, detail: parse(r.detail) }));
+    } catch {
+      return [];
+    }
+  }
+}
+
 // Session Init with AI-crafted opening
 export async function handleSessionInit(request, env) {
   const sessionId = generateId();
-  // Retrieve logs (omitted for brevity—use your existing logic)
-  const continuity = /* fetched & merged logs */ [];
+  const continuity = await fetchContinuityLogs(env);
 
   // AI-generated Mirror opening
   let mirrorOpening;
