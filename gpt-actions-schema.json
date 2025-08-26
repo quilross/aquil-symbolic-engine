@@ -12,36 +12,36 @@
     }
   ],
   "paths": {
-      "/api/log": {
-        "post": {
-            "summary": "Automatic Log Data or Event (GPT can use anytime)",
-            "description": "Automatically log any data, message, or event for context continuity, metrics, or error tracking. This action is available for GPT to use at any time, without restriction, for flexible and autonomous logging.",
-          "operationId": "logDataOrEvent",
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "type": { "type": "string", "description": "Type of log (e.g. chat_message, metric, error, context, etc.)" },
-                    "who": { "type": "string", "description": "Who or what generated the log (user, assistant, system, etc.)" },
-                    "level": { "type": "string", "description": "Severity or importance (info, warning, error, etc.)" },
-                    "session_id": { "type": "string", "description": "Session or conversation identifier" },
-                    "tags": { "type": "array", "items": { "type": "string" }, "description": "Tags for filtering and context (optional)" },
-                    "idx1": { "type": "string", "description": "Custom index field 1 (optional)" },
-                    "idx2": { "type": "string", "description": "Custom index field 2 (optional)" },
-                    "payload": { "type": "object", "description": "Main log data, can be any JSON object or string" }
-                  },
-                  "required": ["type", "payload"]
-              }
+    "/api/log": {
+      "post": {
+        "summary": "Automatic Log Data or Event (GPT can use anytime)",
+        "description": "Automatically log any data, message, or event for context continuity, metrics, or error tracking. This action is available for GPT to use at any time, without restriction, for flexible and autonomous logging.",
+        "operationId": "logDataOrEvent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "description": "Type of log (e.g. chat_message, metric, error, context, etc.)" },
+                  "who": { "type": "string", "description": "Who or what generated the log (user, assistant, system, etc.)" },
+                  "level": { "type": "string", "description": "Severity or importance (info, warning, error, etc.)" },
+                  "session_id": { "type": "string", "description": "Session or conversation identifier" },
+                  "tags": { "type": "array", "items": { "type": "string" }, "description": "Tags for filtering and context (optional)" },
+                  "idx1": { "type": "string", "description": "Custom index field 1 (optional)" },
+                  "idx2": { "type": "string", "description": "Custom index field 2 (optional)" },
+                  "payload": { "type": "object", "description": "Main log data, can be any JSON object or string" }
+                },
+                "required": ["type", "payload"]
             }
-          },
-          "responses": {
-            "200": { "description": "Log entry created with unique id" }
           }
+        },
+        "responses": {
+          "200": { "description": "Log entry created with unique id" }
         }
-      },
+      }
+    },
       "/api/logs": {
         "get": {
             "summary": "Automatic Retrieve Logs or Data Entries (GPT can use anytime)",
