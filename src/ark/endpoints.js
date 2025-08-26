@@ -1,3 +1,11 @@
+import {
+  getPhiladelphiaTime,
+  generateId,
+  logMetamorphicEvent,
+  selectOptimalVoice,
+  performHealthChecks,
+} from './core.js';
+
 // Manifest for GPT: describes all available actions and storage usage
 export const ARK_MANIFEST = [
   {
@@ -36,35 +44,6 @@ export const ARK_MANIFEST = [
     logs: true
   }
 ];
-
-// ...existing code...
-// Unified handler for ARK endpoints (for src/index.js)
-export async function handleArkEndpoints(request, env) {
-  // Route based on request URL for all ARK endpoints
-  const url = new URL(request.url);
-  if (url.pathname === '/api/session-init' || url.pathname.startsWith('/api/voice')) {
-    return handleSessionInit(request, env);
-  }
-  if (url.pathname === '/api/discovery/generate-inquiry' || url.pathname.startsWith('/api/discovery')) {
-    return handleDiscoveryInquiry(request, env);
-  }
-  if (url.pathname === '/api/ritual/auto-suggest' || url.pathname.startsWith('/api/ritual')) {
-    return handleRitualSuggestion(request, env);
-  }
-  if (url.pathname === '/api/system/health-check' || url.pathname.startsWith('/api/system/health-check')) {
-    return handleHealthCheck(request, env);
-  }
-  if (url.pathname === '/api/log' || url.pathname.startsWith('/api/log')) {
-    return handleLog(request, env);
-  }
-  return new Response('Not found', { status: 404 });
-}
-import {
-  getPhiladelphiaTime,
-  generateId,
-  logMetamorphicEvent,
-  selectOptimalVoice,
-} from './core.js';
 
 // Helper to call Worker AI (supports both env.AI and env.AI_GATEWAY)
 async function aiCall(env, model, messages) {
@@ -240,32 +219,4 @@ export async function handleLog(request, env) {
     headers: { 'Content-Type': 'application/json' }
   });
 }
-
-// Main export
-export default {
-  handleSessionInit,
-  handleDiscoveryInquiry,
-  handleRitualSuggestion,
-  handleHealthCheck,
-  handleLog
-};
-// File: src/index.js
-
-import { Router } from 'itty-router';
-
-const router = Router();
-const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
-const addCORS = res => (Object.entries(cors).forEach(([k,v])=>res.headers.set(k,v))||res);
-
-// CORS preflight
-router.options('*', () => new Response(null, { status: 200, headers: cors }));
-
-// ARK endpoints
-router.get('/api/session-init', (req, env) => addCORS(endpoints.handleSessionInit(req, env)));
-router.post('/api/discovery/generate-inquiry', (req, env) => addCORS(endpoints.handleDiscoveryInquiry(req, env)));
-router.post('/api/ritual/auto-suggest', (req, env) => addCORS(endpoints.handleRitualSuggestion(req, env)));
-router.get('/api/system/health-check', (req, env) => addCORS(endpoints.handleHealthCheck(req, env)));
-router.post('/api/log', (req, env) => addCORS(endpoints.handleLog(req, env)));
-
-// Existing ARK and legacy endpoints follow...
 

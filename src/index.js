@@ -1,25 +1,35 @@
 import { Router } from 'itty-router';
-import { handleArkEndpoints } from './ark/endpoints.js';
-
-/**
- * Helper to create JSON responses.
- * If an Error is passed, its message is wrapped in `{ error: message }`.
- */
-export function send(status, data) {
-  const payload = data instanceof Error ? { error: data.message } : data;
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { 'content-type': 'application/json' }
-  });
-}
+import {
+  handleSessionInit,
+  handleDiscoveryInquiry,
+  handleRitualSuggestion,
+  handleHealthCheck,
+  handleLog,
+} from './ark/endpoints.js';
 
 const router = Router();
+const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
+const addCORS = (res) => {
+  Object.entries(cors).forEach(([k, v]) => res.headers.set(k, v));
+  return res;
+};
 
-// Mount ARK endpoints under /api
-router.all('/api/*', (request, env) => handleArkEndpoints(request, env));
+// CORS preflight
+router.options('*', () => new Response(null, { status: 200, headers: cors }));
 
-// Fallback for unmatched routes
-router.all('*', () => send(404, { error: 'not_found' }));
+// ARK endpoints
+router.get('/api/session-init', async (req, env) => addCORS(await handleSessionInit(req, env)));
+router.post('/api/discovery/generate-inquiry', async (req, env) => addCORS(await handleDiscoveryInquiry(req, env)));
+router.post('/api/ritual/auto-suggest', async (req, env) => addCORS(await handleRitualSuggestion(req, env)));
+router.get('/api/system/health-check', async (req, env) => addCORS(await handleHealthCheck(req, env)));
+router.post('/api/log', async (req, env) => addCORS(await handleLog(req, env)));
+
+// Fallback for unknown routes
+router.all('*', () => addCORS(new Response('Not found', { status: 404 })));
+
+export default {
+  fetch: (request, env, ctx) => router.handle(request, env, ctx),
+};
 
 export default {
   fetch(request, env, ctx) {
