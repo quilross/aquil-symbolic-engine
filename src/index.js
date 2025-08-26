@@ -387,27 +387,6 @@ router.get('/api/health', async (req, env) => {
   }));
 });
 
-// Logs endpoint
-router.get('/api/logs', async (req, env) => {
-  try {
-    // Assume logs are fetched from D1
-    const logs = await d1.getLogs(env);
-    return addCORS(new Response(JSON.stringify(logs), {
-      status: 200,
-      headers: cors
-    }));
-  } catch (error) {
-    console.error('Logs error:', error);
-    return addCORS(new Response(JSON.stringify({
-      error: 'Logs error',
-      message: 'Unable to fetch logs.'
-    }), {
-      status: 500,
-      headers: cors
-    }));
-  }
-});
-
 // Somatic healing session endpoint
 router.post('/api/somatic/session', async (req, env) => {
   let data;
@@ -486,3 +465,5 @@ export default {
     return router.handle(request, env, ctx);
   },
 };
+
+export { ARK_MANIFEST } from './ark/endpoints.js';

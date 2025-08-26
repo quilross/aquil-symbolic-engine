@@ -247,23 +247,32 @@ export async function handleRetrieveLogs(request, env) {
     };
   };
 
+  const tableExists = async (name) => {
+    const row = await env.AQUIL_DB
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+      .bind(name)
+      .first();
+    return !!row;
+  };
+
   try {
-    const { where, values } = buildWhere({
-      type: 'kind',
-      who: 'voice',
-      level: 'signal_strength',
-      session_id: 'session_id',
-      tag: 'tags'
-    });
-    const stmt = env.AQUIL_DB
-      .prepare(`SELECT id, timestamp, kind, detail FROM metamorphic_logs${where} ORDER BY timestamp DESC LIMIT ?`)
-      .bind(...values, limit);
-    const { results } = await stmt.all();
-    return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (primaryErr) {
-    try {
+    if (await tableExists('metamorphic_logs')) {
+      const { where, values } = buildWhere({
+        type: 'kind',
+        who: 'voice',
+        level: 'signal_strength',
+        session_id: 'session_id',
+        tag: 'tags'
+      });
+      const stmt = env.AQUIL_DB
+        .prepare(`SELECT id, timestamp, kind, detail FROM metamorphic_logs${where} ORDER BY timestamp DESC LIMIT ?`)
+        .bind(...values, limit);
+      const { results } = await stmt.all();
+      return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    if (await tableExists('event_log')) {
       const { where, values } = buildWhere({
         type: 'type',
         who: 'who',
@@ -278,12 +287,16 @@ export async function handleRetrieveLogs(request, env) {
       return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
         headers: { 'Content-Type': 'application/json' }
       });
-    } catch (secondaryErr) {
-      return new Response(
-        JSON.stringify({ error: 'Unable to fetch logs', message: String(secondaryErr) }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+
     }
+    return new Response(JSON.stringify([]), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: 'Unable to fetch logs', message: String(err) }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
 
