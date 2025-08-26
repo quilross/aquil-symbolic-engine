@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../src/index.js';
+import { TrustBuilder } from '../src/src-core-trust-builder.js';
 
 function createEnv() {
   return {
@@ -18,6 +19,10 @@ function createEnv() {
 
 test('trust check-in endpoint returns analysis', async () => {
   const env = createEnv();
+  TrustBuilder.prototype.processCheckIn = async function(data) {
+    if (!data.current_state) throw new Error('current_state required');
+    return { trust_analysis: {}, message: 'ok' };
+  };
   const request = new Request('http://localhost/api/trust/check-in', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

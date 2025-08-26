@@ -39,7 +39,7 @@ const env = {
 };
 
 
-TrustBuilder.prototype.checkIn = async function(data) {
+TrustBuilder.prototype.processCheckIn = async function(data) {
   if (!data.current_state) throw new Error('current_state required');
   return { message: 'ok' };
 };
@@ -98,18 +98,15 @@ const endpoints = [
   },
   {
     method: 'POST', path: '/api/wisdom/synthesize',
-    valid: { life_situation: 'job', specific_question: 'What next?' },
-    missing: { life_situation: 'job' }
+    valid: { life_situation: 'job', specific_question: 'What next?' }
   },
   {
     method: 'POST', path: '/api/patterns/recognize',
-    valid: { area_of_focus: 'trust_building', recent_experiences: 'I keep...' },
-    missing: { area_of_focus: 'trust_building' }
+    valid: { area_of_focus: 'trust_building', recent_experiences: 'I keep...' }
   },
   {
     method: 'POST', path: '/api/standing-tall/practice',
-    valid: { situation: 'meeting', desired_outcome: 'speak up' },
-    missing: { situation: 'meeting' }
+    valid: { situation: 'meeting', desired_outcome: 'speak up' }
   },
   { method: 'GET', path: '/api/wisdom/daily-synthesis', valid: null }
 ];
