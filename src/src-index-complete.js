@@ -37,11 +37,19 @@ router.get('/api/health', async () => {
 
 // Trust building check-in endpoint
 router.post('/api/trust/check-in', async (request, env) => {
+  let data;
   try {
-    const data = await request.json();
+    data = await request.json();
+  } catch {
+    return addCORSHeaders(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+  try {
     const trustBuilder = new TrustBuilder(env);
     const result = await trustBuilder.processCheckIn(data);
-    
+
     return addCORSHeaders(new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -51,7 +59,7 @@ router.post('/api/trust/check-in', async (request, env) => {
       error: 'Trust processing error',
       message: 'Aquil needs a moment to recenter. Your trust journey continues - please try again.',
       fallback_guidance: 'Take three deep breaths and remind yourself: "I am learning to trust myself, and that learning is valuable."'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -60,11 +68,19 @@ router.post('/api/trust/check-in', async (request, env) => {
 
 // Media wisdom extraction endpoint
 router.post('/api/media/extract-wisdom', async (request, env) => {
+  let data;
   try {
-    const data = await request.json();
+    data = await request.json();
+  } catch {
+    return addCORSHeaders(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+  try {
     const mediaExtractor = new MediaWisdomExtractor(env);
     const result = await mediaExtractor.extractWisdom(data);
-    
+
     return addCORSHeaders(new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -74,7 +90,7 @@ router.post('/api/media/extract-wisdom', async (request, env) => {
       error: 'Media wisdom processing error',
       message: 'Aquil is having trouble processing your media wisdom right now.',
       fallback_guidance: 'Your reaction to content always contains valuable information about your inner world and growth needs.'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -83,9 +99,17 @@ router.post('/api/media/extract-wisdom', async (request, env) => {
 
 // Somatic healing session endpoint
 router.post('/api/somatic/session', async (request, env) => {
+  let data;
   try {
-    const data = await request.json();
-    
+    data = await request.json();
+  } catch {
+    return addCORSHeaders(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+  try {
+
     // Simplified somatic response
     const result = {
       message: "Your body contains profound wisdom and intelligence. Let's create space to listen with curiosity and compassion.",
@@ -132,7 +156,7 @@ router.post('/api/somatic/session', async (request, env) => {
       },
       standing_tall_connection: "Your relationship with your body directly affects your ability to stand tall in the world. Every moment you listen with respect builds internal trust."
     };
-    
+
     return addCORSHeaders(new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -141,7 +165,7 @@ router.post('/api/somatic/session', async (request, env) => {
     return addCORSHeaders(new Response(JSON.stringify({
       error: 'Somatic processing error',
       message: 'Your body\'s wisdom is always available. Simply placing a hand on your heart and breathing connects you to your inner knowing.'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -150,10 +174,18 @@ router.post('/api/somatic/session', async (request, env) => {
 
 // Wisdom synthesis endpoint
 router.post('/api/wisdom/synthesize', async (request, env) => {
+  let data;
   try {
-    const data = await request.json();
+    data = await request.json();
+  } catch {
+    return addCORSHeaders(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+  try {
     const { life_situation, specific_question } = data;
-    
+
     const result = {
       message: "All wisdom traditions point to the same core truth: you have access to sophisticated inner guidance that can be trusted.",
       framework_insights: {
@@ -178,7 +210,7 @@ router.post('/api/wisdom/synthesize', async (request, env) => {
         unified_guidance: `For your question about "${specific_question}", all systems point toward trusting your integrated inner authority - body wisdom, gut response, acceptance of reality, and aligned timing working together.`,
         decision_framework: [
           "Center yourself in your body and breathe",
-          "Present the question to your gut and notice immediate response", 
+          "Present the question to your gut and notice immediate response",
           "Accept what feels true right now without resistance",
           "Check timing - does this feel aligned with natural flow?",
           "Trust the synthesis and take aligned action"
@@ -193,7 +225,7 @@ router.post('/api/wisdom/synthesize', async (request, env) => {
         practice: "Each time you honor your integrated guidance, you're practicing standing in your authentic power"
       }
     };
-    
+
     return addCORSHeaders(new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -202,7 +234,7 @@ router.post('/api/wisdom/synthesize', async (request, env) => {
     return addCORSHeaders(new Response(JSON.stringify({
       error: 'Synthesis processing error',
       message: 'Your inner wisdom is always available. Trust your body, honor your gut, accept what is, and take aligned action.'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -211,9 +243,17 @@ router.post('/api/wisdom/synthesize', async (request, env) => {
 
 // Pattern recognition endpoint
 router.post('/api/patterns/recognize', async (request, env) => {
+  let data;
   try {
-    const data = await request.json();
-    
+    data = await request.json();
+  } catch {
+    return addCORSHeaders(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+  try {
+
     const result = {
       message: "Your willingness to look for patterns shows sophisticated consciousness and commitment to growth.",
       identified_patterns: [
@@ -223,7 +263,7 @@ router.post('/api/patterns/recognize', async (request, env) => {
           frequency: 'Increasing with each interaction'
         },
         {
-          type: 'trust_development', 
+          type: 'trust_development',
           description: 'Every interaction with Aquil builds evidence of your capacity for self-guided growth',
           evolution: 'Progressing from external validation toward internal authority'
         }
@@ -244,7 +284,7 @@ router.post('/api/patterns/recognize', async (request, env) => {
         '🌱 Your commitment to growth creates measurable progress over time'
       ]
     };
-    
+
     return addCORSHeaders(new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -253,7 +293,7 @@ router.post('/api/patterns/recognize', async (request, env) => {
     return addCORSHeaders(new Response(JSON.stringify({
       error: 'Pattern processing error',
       message: 'Pattern recognition is happening even when systems are offline - your awareness itself is the most powerful tool for growth.'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     }));
@@ -262,10 +302,18 @@ router.post('/api/patterns/recognize', async (request, env) => {
 
 // Standing tall practice endpoint
 router.post('/api/standing-tall/practice', async (request, env) => {
+  let data;
   try {
-    const data = await request.json();
+    data = await request.json();
+  } catch {
+    return addCORSHeaders(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+  try {
     const { situation, desired_outcome } = data;
-    
+
     const result = {
       message: "Your desire to stand tall instead of shrinking is a powerful choice. You don't need to earn the right to take up space - it's already yours.",
       situation_analysis: {
@@ -327,7 +375,7 @@ router.post('/api/standing-tall/practice', async (request, env) => {
     return addCORSHeaders(new Response(JSON.stringify({
       error: 'Standing tall processing error',
       message: 'Your inherent dignity and worth are never in question. Stand tall because you belong here.'
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     }));

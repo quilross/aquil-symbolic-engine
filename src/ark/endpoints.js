@@ -120,7 +120,16 @@ export async function handleSessionInit(request, env) {
 
 // Discovery Inquiry with AI
 export async function handleDiscoveryInquiry(request, env) {
-  const { context = {}, session_id } = await request.json();
+  let data;
+  try {
+    data = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  const { context = {}, session_id } = data;
   const voice = selectOptimalVoice(context.input || '', context);
   let question;
   try {
@@ -146,7 +155,16 @@ export async function handleDiscoveryInquiry(request, env) {
 
 // Ritual Suggestion with AI
 export async function handleRitualSuggestion(request, env) {
-  const { context = {}, session_id } = await request.json();
+  let data;
+  try {
+    data = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  const { context = {}, session_id } = data;
   let ritual;
   try {
     const prompt = `Recommend a ritual for this context: ${JSON.stringify(context)}`;
@@ -182,7 +200,15 @@ export async function handleHealthCheck(request, env) {
 
 // Logging
 export async function handleLog(request, env) {
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
   const id = await logMetamorphicEvent(env, {
     kind: body.type,
     detail: body.payload,
