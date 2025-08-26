@@ -72,6 +72,12 @@
         "responses": {
           "200": {
             "description": "Log entry created successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -138,6 +144,12 @@
         "responses": {
           "200": {
             "description": "Array of matching log entries"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -172,6 +184,12 @@
         "responses": {
           "200": {
             "description": "Recent entries for session continuity"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -218,6 +236,12 @@
         "responses": {
           "200": {
             "description": "Personalized trust-building guidance and exercises"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -272,6 +296,12 @@
         "responses": {
           "200": {
             "description": "Personalized wisdom extraction with growth insights"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -314,6 +344,12 @@
         "responses": {
           "200": {
             "description": "Guided somatic healing practices and exercises"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -365,6 +401,12 @@
         "responses": {
           "200": {
             "description": "Integrated wisdom from multiple frameworks"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -412,6 +454,12 @@
         "responses": {
           "200": {
             "description": "Pattern analysis with growth insights and recommendations"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -457,6 +505,12 @@
         "responses": {
           "200": {
             "description": "Personalized confidence-building practices and power reclamation"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -486,6 +540,201 @@
         "responses": {
           "200": {
             "description": "Personalized daily wisdom and growth focus"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/insights": {
+      "get": {
+        "summary": "Personal growth summary and progress review",
+        "description": "Use when user wants to review their OVERALL progress, growth trends, or life insights summary. TRIGGER PHRASES: 'how am I doing', 'my progress', 'growth summary', 'insights about me', 'what have I learned', 'how have I changed', 'personal review'.",
+        "operationId": "getPersonalInsights",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "Comprehensive personal growth insights and patterns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "insights": {
+                      "type": "object",
+                      "description": "Personal growth insights and trends"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/feedback": {
+      "post": {
+        "summary": "Submit personal notes, ideas, or system feedback",
+        "description": "Use when user wants to leave notes for later, record ideas, or give feedback about the system. TRIGGER PHRASES: 'remember this', 'note to self', 'save this idea', 'feedback about', 'suggestion for', 'this could be better', 'I want to remember'.",
+        "operationId": "submitFeedback",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "The feedback, note, or idea to save"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Type: note, idea, feedback, suggestion",
+                    "default": "general"
+                  }
+                },
+                "required": [
+                  "message"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback/note saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "received_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/dreams/interpret": {
+      "post": {
+        "summary": "Interpret dreams and symbolic imagery",
+        "description": "Use when user shares a dream and wants archetypal or symbolic insights. TRIGGER PHRASES: 'I dreamed', 'my dream', 'interpret my dream', 'dream meaning', 'strange dream', 'recurring dream'.",
+        "operationId": "interpretDream",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dream_text": {
+                    "type": "string",
+                    "description": "Description of the dream or dream symbols"
+                  },
+                  "emotions_felt": {
+                    "type": "string",
+                    "description": "Emotions experienced during or after the dream"
+                  },
+                  "recurring": {
+                    "type": "boolean",
+                    "description": "Whether this is a recurring dream theme"
+                  }
+                },
+                "required": [
+                  "dream_text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Symbolic dream interpretation with personal insights"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/energy/optimize": {
+      "post": {
+        "summary": "Optimize personal energy and vitality",
+        "description": "Use when user mentions energy levels, fatigue, or wanting vitality optimization. TRIGGER PHRASES: 'tired', 'exhausted', 'low energy', 'drained', 'need energy', 'feeling sluggish', 'vitality'.",
+        "operationId": "optimizeEnergy",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_energy": {
+                    "type": "string",
+                    "description": "Current energy state and levels"
+                  },
+                  "energy_drains": {
+                    "type": "string",
+                    "description": "What depletes your energy"
+                  },
+                  "energy_goals": {
+                    "type": "string",
+                    "description": "What energy state you want to achieve"
+                  }
+                },
+                "required": [
+                  "current_energy"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Personalized energy optimization strategies"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -529,6 +778,12 @@
         "responses": {
           "200": {
             "description": "Clarified and prioritized values with decision framework"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -569,6 +824,12 @@
         "responses": {
           "200": {
             "description": "Creative breakthrough exercises and inspiration"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -609,6 +870,13 @@
         "responses": {
           "200": {
             "description": "Abundance cultivation practices and mindset shifts"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+
           }
         }
       }
@@ -649,6 +917,12 @@
         "responses": {
           "200": {
             "description": "Transition navigation strategies and support practices"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -689,6 +963,131 @@
         "responses": {
           "200": {
             "description": "Ancestral healing practices and family pattern transformation"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/system/health-check": {
+      "get": {
+        "summary": "System health check",
+        "description": "Perform system health checks",
+        "operationId": "systemHealthCheck",
+        "responses": {
+          "200": {
+            "description": "Health status"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "summary": "Health endpoint",
+        "description": "Simple health status",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Health status"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/discovery/generate-inquiry": {
+      "post": {
+        "summary": "Generate discovery inquiry",
+        "description": "Generate Socratic questions based on provided context",
+        "operationId": "generateDiscoveryInquiry",
+        "requestBody": {
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Generated inquiry"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/ritual/auto-suggest": {
+      "post": {
+        "summary": "Auto-suggest rituals",
+        "description": "Suggest rituals based on context",
+        "operationId": "autoSuggestRitual",
+        "requestBody": {
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Ritual suggestion"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Malformed request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
           }
         }
       }

@@ -65,7 +65,10 @@ router.post('/api/trust/check-in', async (req, env) => {
   try {
     data = await req.json();
   } catch {
-    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+    return addCORS(new Response(JSON.stringify({
+      error: 'Malformed JSON',
+      message: 'Request body must be valid JSON.'
+    }), {
       status: 400,
       headers: cors
     }));
@@ -95,7 +98,10 @@ router.post('/api/media/extract-wisdom', async (req, env) => {
   try {
     data = await req.json();
   } catch {
-    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+    return addCORS(new Response(JSON.stringify({
+      error: 'Malformed JSON',
+      message: 'Request body must be valid JSON.'
+    }), {
       status: 400,
       headers: cors
     }));
@@ -125,7 +131,10 @@ router.post('/api/patterns/recognize', async (req, env) => {
   try {
     data = await req.json();
   } catch {
-    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+    return addCORS(new Response(JSON.stringify({
+      error: 'Malformed JSON',
+      message: 'Request body must be valid JSON.'
+    }), {
       status: 400,
       headers: cors
     }));
@@ -155,7 +164,10 @@ router.post('/api/standing-tall/practice', async (req, env) => {
   try {
     data = await req.json();
   } catch {
-    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+    return addCORS(new Response(JSON.stringify({
+      error: 'Malformed JSON',
+      message: 'Request body must be valid JSON.'
+    }), {
       status: 400,
       headers: cors
     }));
@@ -185,7 +197,10 @@ router.post('/api/values/clarify', async (req, env) => {
   try {
     data = await req.json();
   } catch {
-    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+    return addCORS(new Response(JSON.stringify({
+      error: 'Malformed JSON',
+      message: 'Request body must be valid JSON.'
+    }), {
       status: 400,
       headers: cors
     }));
@@ -397,7 +412,10 @@ router.post('/api/somatic/session', async (req, env) => {
   try {
     data = await req.json();
   } catch {
-    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), {
+    return addCORS(new Response(JSON.stringify({
+      error: 'Malformed JSON',
+      message: 'Request body must be valid JSON.'
+    }), {
       status: 400,
       headers: cors
     }));
@@ -456,7 +474,10 @@ router.post('/ai/embed', async (req, env) => addCORS(await ai.embed(req, env)));
 router.post('/ai/generate', async (req, env) => addCORS(await ai.generate(req, env)));
 
 // Fallback for unknown routes
-router.all('*', () => addCORS(new Response('Not found', { status: 404 })));
+router.all('*', () => addCORS(new Response(JSON.stringify({
+  error: 'Not found',
+  message: 'Route not found'
+}), { status: 404, headers: cors })));
 
 export default {
   fetch(request, env, ctx) {
