@@ -3,8 +3,8 @@
  * Making your TV shows, movies, books, podcasts, and music useful for standing tall
  */
 
-import { AquilDatabase } from './src-utils-database.js';
-import { AquilAI } from './src-utils-ai-helpers.js';
+import { AquilDatabase } from './utils/database.js';
+import { AquilAI } from './utils/ai-helpers.js';
 
 export class MediaWisdomExtractor {
   constructor(env) {

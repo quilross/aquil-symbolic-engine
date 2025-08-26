@@ -3,8 +3,8 @@
  * Helping you stand tall in the world instead of shrinking
  */
 
-import { AquilDatabase } from './src-utils-database.js';
-import { AquilAI } from './src-utils-ai-helpers.js';
+import { AquilDatabase } from './utils/database.js';
+import { AquilAI } from './utils/ai-helpers.js';
 
 export class StandingTall {
   constructor(env) {

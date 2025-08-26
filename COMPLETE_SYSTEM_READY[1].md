@@ -13,9 +13,9 @@ I've now created **ALL** the files needed for your fully functional Aquil system
 
 ### 💻 Application Code (4):
 6. **src-index.js** - Main application entry point (rename to `src/index.js`)
-7. **src-utils-cors.js** - CORS handling (rename to `src/utils/cors.js`)
-8. **src-utils-database.js** - Database operations (rename to `src/utils/database.js`)
-9. **src-utils-ai-helpers.js** - AI processing (rename to `src/utils/ai-helpers.js`)
+7. **src/utils/cors.js** - CORS handling
+8. **src/utils/database.js** - Database operations
+9. **src/utils/ai-helpers.js** - AI processing
 
 ### 🧠 Complete AI Engine Suite (7):
 10. **src-core-aquil-core.js** - Central orchestration (rename to `src/core/aquil-core.js`)
