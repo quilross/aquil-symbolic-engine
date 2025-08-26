@@ -1,11 +1,4 @@
-const send = (status, data) => new Response(JSON.stringify(data), {
-  status,
-  headers: { 'content-type': 'application/json' }
-});
-
-const readJSON = async (req) => {
-  try { return await req.json(); } catch { return {}; }
-};
+import { send, readJSON } from '../utils/http.js';
 
 export async function put(req, env) {
   const { key, base64, httpMetadata } = await readJSON(req);

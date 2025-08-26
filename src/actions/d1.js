@@ -1,3 +1,5 @@
+import { send, readJSON } from '../utils/http.js';
+
 // Stub for logs endpoint
 export async function getLogs(env) {
   // Example: fetch last 10 logs from D1
@@ -8,14 +10,6 @@ export async function getLogs(env) {
     return { error: 'Unable to fetch logs', message: String(e) };
   }
 }
-const send = (status, data) => new Response(JSON.stringify(data), {
-  status,
-  headers: { 'content-type': 'application/json' }
-});
-
-const readJSON = async (req) => {
-  try { return await req.json(); } catch { return {}; }
-};
 
 export async function exec(req, env) {
   const { sql, params = [] } = await readJSON(req);
