@@ -64,7 +64,6 @@ import {
   generateId,
   logMetamorphicEvent,
   selectOptimalVoice,
-  detectInterventionNeeds
 } from './core.js';
 
 // Helper to call Worker AI (supports both env.AI and env.AI_GATEWAY)

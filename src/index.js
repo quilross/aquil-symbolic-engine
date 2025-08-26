@@ -1,5 +1,82 @@
+import { Router } from 'itty-router';
+const router = Router();
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json'
+};
+
+function addCORSHeaders(response) {
+    Object.entries(corsHeaders).forEach(([k, v]) => response.headers.set(k, v));
+    return response;
+}
+
+// KV logging and retrieval endpoints
+router.post('/api/kv/log', async (req, env) => {
+    const { key, value } = await req.json();
+    if (!key || value === undefined) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key or value' }), { status: 400 }));
+    }
+    await env.AQUIL_MEMORIES.put(key, JSON.stringify(value));
+    return addCORSHeaders(new Response(JSON.stringify({ success: true })));
+});
+
+router.get('/api/kv/retrieve', async (req, env) => {
+    const { searchParams } = new URL(req.url);
+    const key = searchParams.get('key');
+    if (!key) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
+    }
+    const value = await env.AQUIL_MEMORIES.get(key);
+    return addCORSHeaders(new Response(JSON.stringify({ key, value })));
+});
+
+// R2 logging and retrieval endpoints
+router.post('/api/r2/log', async (req, env) => {
+    const { key, data } = await req.json();
+    if (!key || !data) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key or data' }), { status: 400 }));
+    }
+    const object = await env.AQUIL_STORAGE.put(key, new Blob([data]));
+    return addCORSHeaders(new Response(JSON.stringify({ success: true, object })));
+});
+
+router.get('/api/r2/retrieve', async (req, env) => {
+    const { searchParams } = new URL(req.url);
+    const key = searchParams.get('key');
+    if (!key) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
+    }
+    const object = await env.AQUIL_STORAGE.get(key);
+    let data = null;
+    if (object) {
+        data = await object.text();
+    }
+    return addCORSHeaders(new Response(JSON.stringify({ key, data })));
+});
+
+// Vectorize logging and retrieval endpoints
+router.post('/api/vectorize/log', async (req, env) => {
+    const { id, vector, metadata } = await req.json();
+    if (!id || !vector) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing id or vector' }), { status: 400 }));
+    }
+    await env.AQUIL_CONTEXT.upsert([{ id, values: vector, metadata }]);
+    return addCORSHeaders(new Response(JSON.stringify({ success: true })));
+});
+
+router.get('/api/vectorize/retrieve', async (req, env) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 }));
+    }
+    const result = await env.AQUIL_CONTEXT.query({ ids: [id] });
+    return addCORSHeaders(new Response(JSON.stringify(result)));
+});
 // Manifest endpoint for GPT action discovery
-import { ARK_MANIFEST } from './ark/endpoints.js';
+import { ARK_MANIFEST, handleArkEndpoints } from './ark/endpoints.js';
 router.get('/api/manifest', async () => {
     return addCORSHeaders(new Response(JSON.stringify(ARK_MANIFEST), {
         headers: { 'Content-Type': 'application/json' }
@@ -186,26 +263,11 @@ export async function handleLog(request, env) {
  * Complete implementation with ARK 2.0 enhancements integrated
  */
 
-import { Router } from 'itty-router';
 import {
     getPhiladelphiaTime,
     logMetamorphicEvent,
     enhanceResponse
 } from './ark/core.js';
-import { handleArkEndpoints } from './ark/endpoints.js';
-
-const router = Router();
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Content-Type': 'application/json'
-};
-
-function addCORSHeaders(response) {
-    Object.entries(corsHeaders).forEach(([k, v]) => response.headers.set(k, v));
-    return response;
-}
 
 // CORS preflight
 router.options('*', () => addCORSHeaders(new Response(null, { status: 200 })));
@@ -256,7 +318,7 @@ router.get('/api/health', async (request, env) => {
         );
         
         let arkHealth = {};
-        if (arkHealthResponse && arkHealthResponse.ok) {
+    if (arkHealthResponse?.ok) {
             arkHealth = await arkHealthResponse.json();
         }
         
@@ -564,7 +626,7 @@ specializedEndpoints.forEach(({ path, sessionPrefix }) => {
             const sessionId = `${sessionPrefix}_${Date.now()}`;
             
             // Extract first value from body as primary input
-            const primaryInput = Object.values(body)[0] || '';
+            // Removed unused variable 'primaryInput'
             
             const result = {
                 session_id: sessionId,
