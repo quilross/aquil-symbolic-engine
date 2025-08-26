@@ -1,13 +1,34 @@
 import { send, readJSON } from '../utils/http.js';
 
-// Stub for logs endpoint
-export async function getLogs(env) {
-  // Example: fetch last 10 logs from D1
+// Retrieve recent logs from D1, prioritizing metamorphic_logs with
+// fallback to the legacy event_log table.
+export async function getLogs(env, limit = 10) {
+  if (!env.AQUIL_DB) {
+    return { error: 'D1 binding not available' };
+  }
+
   try {
-    const results = await env.AQUIL_DB.prepare('SELECT * FROM logs ORDER BY timestamp DESC LIMIT 10').all();
-    return results.results || [];
-  } catch (e) {
-    return { error: 'Unable to fetch logs', message: String(e) };
+    // Preferred modern table
+    const { results } = await env.AQUIL_DB
+      .prepare(
+        'SELECT id, timestamp, kind, detail FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?'
+      )
+      .bind(limit)
+      .all();
+    return results;
+  } catch (primaryErr) {
+    try {
+      // Fallback to legacy event_log structure
+      const { results } = await env.AQUIL_DB
+        .prepare(
+          'SELECT id, ts AS timestamp, type AS kind, payload AS detail FROM event_log ORDER BY ts DESC LIMIT ?'
+        )
+        .bind(limit)
+        .all();
+      return results;
+    } catch (secondaryErr) {
+      return { error: 'Unable to fetch logs', message: String(secondaryErr) };
+    }
   }
 }
 
