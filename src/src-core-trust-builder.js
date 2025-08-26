@@ -13,7 +13,7 @@ export class TrustBuilder {
     this.ai = new AquilAI();
   }
 
-  async processCheckIn(data) {
+  async checkIn(data) {
     try {
       const analysis = await this.analyzeTrustState(data);
       const guidance = await this.generateTrustGuidance(analysis);
