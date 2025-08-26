@@ -17,7 +17,7 @@
         "summary": "Log any data or conversation event",
         "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, or any meaningful moment. TRIGGER: Anytime user shares something worth remembering or system needs to track context.",
         "operationId": "logDataOrEvent",
-        "x-openai-isConsequential": false,
+        "x-openai-isConsequential": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -83,7 +83,7 @@
         "summary": "Trust and self-confidence building session",
         "description": "Use when user expresses: doubt, uncertainty, lack of confidence, questioning themselves, feeling insecure, needing validation, or explicitly asks about trust. TRIGGER PHRASES: 'I don't trust myself', 'am I making the right choice', 'I'm not sure', 'I doubt', 'feeling insecure', 'need confidence'.",
         "operationId": "trustCheckIn",
-        "x-openai-isConsequential": false,
+        "x-openai-isConsequential": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -139,7 +139,7 @@
         "summary": "Body-based healing and nervous system regulation",
         "description": "Use when user mentions PHYSICAL sensations, body tension, stress symptoms, or wants body-based healing. TRIGGER: 'tight shoulders', 'chest feels', 'can't breathe', 'tense', 'help me relax', 'release tension'.",
         "operationId": "somaticHealingSession",
-        "x-openai-isConsequential": false,
+        "x-openai-isConsequential": true,
         "requestBody": {
           "required": true,
           "content": {
