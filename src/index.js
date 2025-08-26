@@ -1,3 +1,32 @@
+// AI model invocation endpoint (Worker AI or Gateway)
+router.post('/api/ai/invoke', async (req, env) => {
+    try {
+        const { model, messages } = await req.json();
+        const client = env.AI || env.AI_GATEWAY;
+        if (!client) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'AI binding not found' }), { status: 500 }));
+        }
+        const result = await client.run(model, { messages });
+        return addCORSHeaders(new Response(JSON.stringify({ result })));
+    } catch (err) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'AI invocation error', details: err.message }), { status: 500 }));
+    }
+});
+
+// Gateway invocation endpoint (explicit)
+router.post('/api/gateway/invoke', async (req, env) => {
+    try {
+        const { model, messages } = await req.json();
+        const client = env.AI_GATEWAY;
+        if (!client) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'AI_GATEWAY binding not found' }), { status: 500 }));
+        }
+        const result = await client.run(model, { messages });
+        return addCORSHeaders(new Response(JSON.stringify({ result })));
+    } catch (err) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Gateway invocation error', details: err.message }), { status: 500 }));
+    }
+});
 import { Router } from 'itty-router';
 const router = Router();
 const corsHeaders = {
@@ -23,13 +52,20 @@ router.post('/api/kv/log', async (req, env) => {
 });
 
 router.get('/api/kv/retrieve', async (req, env) => {
-    const { searchParams } = new URL(req.url);
-    const key = searchParams.get('key');
-    if (!key) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
+    try {
+        const { searchParams } = new URL(req.url);
+        const key = searchParams.get('key');
+        if (!key) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
+        }
+        const value = await env.AQUIL_MEMORIES.get(key);
+        if (value === null || value === undefined) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'Key not found', key }), { status: 404 }));
+        }
+        return addCORSHeaders(new Response(JSON.stringify({ key, value })));
+    } catch (err) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Retrieval error', details: err.message }), { status: 500 }));
     }
-    const value = await env.AQUIL_MEMORIES.get(key);
-    return addCORSHeaders(new Response(JSON.stringify({ key, value })));
 });
 
 // R2 logging and retrieval endpoints
@@ -43,17 +79,26 @@ router.post('/api/r2/log', async (req, env) => {
 });
 
 router.get('/api/r2/retrieve', async (req, env) => {
-    const { searchParams } = new URL(req.url);
-    const key = searchParams.get('key');
-    if (!key) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
+    try {
+        const { searchParams } = new URL(req.url);
+        const key = searchParams.get('key');
+        if (!key) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing key' }), { status: 400 }));
+        }
+        const object = await env.AQUIL_STORAGE.get(key);
+        if (!object) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'Object not found', key }), { status: 404 }));
+        }
+        let data = null;
+        try {
+            data = await object.text();
+        } catch (err) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'Failed to read object', details: err.message }), { status: 500 }));
+        }
+        return addCORSHeaders(new Response(JSON.stringify({ key, data })));
+    } catch (err) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Retrieval error', details: err.message }), { status: 500 }));
     }
-    const object = await env.AQUIL_STORAGE.get(key);
-    let data = null;
-    if (object) {
-        data = await object.text();
-    }
-    return addCORSHeaders(new Response(JSON.stringify({ key, data })));
 });
 
 // Vectorize logging and retrieval endpoints
@@ -67,13 +112,20 @@ router.post('/api/vectorize/log', async (req, env) => {
 });
 
 router.get('/api/vectorize/retrieve', async (req, env) => {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    if (!id) {
-        return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 }));
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+        if (!id) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 }));
+        }
+        const result = await env.AQUIL_CONTEXT.query({ ids: [id] });
+        if (!result || !result.matches || result.matches.length === 0) {
+            return addCORSHeaders(new Response(JSON.stringify({ error: 'Vector not found', id }), { status: 404 }));
+        }
+        return addCORSHeaders(new Response(JSON.stringify(result)));
+    } catch (err) {
+        return addCORSHeaders(new Response(JSON.stringify({ error: 'Retrieval error', details: err.message }), { status: 500 }));
     }
-    const result = await env.AQUIL_CONTEXT.query({ ids: [id] });
-    return addCORSHeaders(new Response(JSON.stringify(result)));
 });
 // Manifest endpoint for GPT action discovery
 import { ARK_MANIFEST, handleArkEndpoints } from './ark/endpoints.js';
