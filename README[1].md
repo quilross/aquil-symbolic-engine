@@ -21,7 +21,11 @@ Aquil is your personal AI companion designed specifically for your journey of bu
 **Frontend:** Custom ChatGPT with GPT Actions  
 **Database:** D1 (SQLite) + KV storage  
 **Development:** GitHub Codespaces  
-**Data Sovereignty:** Everything runs in YOUR accounts  
+**Data Sovereignty:** Everything runs in YOUR accounts
+
+### Logging Format
+
+See `LOGGING_SPEC.md` for the structure of metamorphic and event logs and examples of writing and retrieving entries.
 
 ### Core AI Engines
 
