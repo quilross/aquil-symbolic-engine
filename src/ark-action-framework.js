@@ -1,4 +1,3 @@
-
 /**
  * @openapi
  * /action/{name}:
@@ -58,7 +57,7 @@ const DEFAULT_MODE = {
   anchor: "automatic",
   break: "conditional",
   express: "invitation",
-  integrate: "intentional"
+  integrate: "intentional",
 };
 
 // Generic Action Endpoint (aligned with GPT Actions schema)
@@ -74,7 +73,7 @@ app.post("/action/:name", (req, res) => {
     level,
     session_id,
     tags = [],
-    payload
+    payload,
   } = req.body;
 
   if (!ARCHETYPES.includes(archetype)) {
@@ -102,15 +101,17 @@ app.post("/action/:name", (req, res) => {
     tags: Array.isArray(tags) ? tags : [],
     payload,
     timestamp: new Date().toISOString(),
-    metadata
+    metadata,
   };
 
   commitmentLogs.push(logEntry);
 
   // Promote to D1 Vault if repeated/significant (stub)
-  const archetypeCount = commitmentLogs.filter(log => log.archetype === archetype).length;
+  const archetypeCount = commitmentLogs.filter(
+    (log) => log.archetype === archetype,
+  ).length;
   if (archetypeCount >= 3) {
-    if (!global.d1Vault.some(entry => entry.archetype === archetype)) {
+    if (!global.d1Vault.some((entry) => entry.archetype === archetype)) {
       global.d1Vault.push({ archetype, promotedAt: new Date().toISOString() });
     }
   }
@@ -124,7 +125,7 @@ app.post("/action/batch", (req, res) => {
   if (!Array.isArray(actions)) {
     return res.status(400).json({ error: "Actions must be an array" });
   }
-  const results = actions.map(action => {
+  const results = actions.map((action) => {
     const {
       name,
       archetype,
@@ -136,9 +137,13 @@ app.post("/action/batch", (req, res) => {
       level,
       session_id,
       tags = [],
-      payload
+      payload,
     } = action;
-    if (!ARCHETYPES.includes(archetype) || !IMPACTS.includes(impact) || !payload) {
+    if (
+      !ARCHETYPES.includes(archetype) ||
+      !IMPACTS.includes(impact) ||
+      !payload
+    ) {
       return { success: false, error: "Invalid action", action };
     }
     const logEntry = {
@@ -153,7 +158,7 @@ app.post("/action/batch", (req, res) => {
       tags: Array.isArray(tags) ? tags : [],
       payload,
       timestamp: new Date().toISOString(),
-      metadata
+      metadata,
     };
     commitmentLogs.push(logEntry);
     return { success: true, logEntry };
@@ -169,10 +174,12 @@ app.get("/logs", (req, res) => {
 // Summarize Commitment Logs
 app.get("/action/summary", (req, res) => {
   const summary = {};
-  commitmentLogs.forEach(log => {
-    if (!summary[log.archetype]) summary[log.archetype] = { count: 0, impacts: {} };
+  commitmentLogs.forEach((log) => {
+    if (!summary[log.archetype])
+      summary[log.archetype] = { count: 0, impacts: {} };
     summary[log.archetype].count++;
-    summary[log.archetype].impacts[log.impact] = (summary[log.archetype].impacts[log.impact] || 0) + 1;
+    summary[log.archetype].impacts[log.impact] =
+      (summary[log.archetype].impacts[log.impact] || 0) + 1;
   });
   res.json(summary);
 });

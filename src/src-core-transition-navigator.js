@@ -8,11 +8,10 @@ export class TransitionNavigator {
   }
 
   async navigate(data) {
-    const { transition_type = '' } = data;
+    const { transition_type = "" } = data;
     return {
-      message: 'Transition guidance available.',
-      transition_type
+      message: "Transition guidance available.",
+      transition_type,
     };
   }
 }
-

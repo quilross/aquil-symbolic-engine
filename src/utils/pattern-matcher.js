@@ -4,20 +4,20 @@ export class PatternMatcher {
     const themes = [];
 
     const themeMap = {
-      'authenticity': ['authentic', 'real', 'true self', 'genuine', 'honest'],
-      'boundaries': ['boundary', 'limit', 'say no', 'protect', 'space'],
-      'self_worth': ['worth', 'value', 'deserve', 'enough', 'worthy'],
-      'courage': ['courage', 'brave', 'bold', 'risk', 'fear'],
-      'relationships': ['relationship', 'connect', 'love', 'family', 'friend'],
-      'purpose': ['purpose', 'meaning', 'calling', 'mission', 'path'],
-      'healing': ['heal', 'recover', 'trauma', 'pain', 'restore'],
-      'creativity': ['create', 'art', 'express', 'imagination', 'inspire'],
-      'spirituality': ['spiritual', 'soul', 'divine', 'sacred', 'prayer'],
-      'mindfulness': ['present', 'aware', 'mindful', 'meditation', 'breath']
+      authenticity: ["authentic", "real", "true self", "genuine", "honest"],
+      boundaries: ["boundary", "limit", "say no", "protect", "space"],
+      self_worth: ["worth", "value", "deserve", "enough", "worthy"],
+      courage: ["courage", "brave", "bold", "risk", "fear"],
+      relationships: ["relationship", "connect", "love", "family", "friend"],
+      purpose: ["purpose", "meaning", "calling", "mission", "path"],
+      healing: ["heal", "recover", "trauma", "pain", "restore"],
+      creativity: ["create", "art", "express", "imagination", "inspire"],
+      spirituality: ["spiritual", "soul", "divine", "sacred", "prayer"],
+      mindfulness: ["present", "aware", "mindful", "meditation", "breath"],
     };
 
     Object.entries(themeMap).forEach(([theme, keywords]) => {
-      if (keywords.some(keyword => lowerText.includes(keyword))) {
+      if (keywords.some((keyword) => lowerText.includes(keyword))) {
         themes.push(theme);
       }
     });
@@ -30,15 +30,31 @@ export class PatternMatcher {
     const patterns = [];
 
     const shrinkingIndicators = {
-      'people_pleasing': ['please others', 'what they think', 'avoid conflict', 'keep everyone happy'],
-      'hiding': ['hide', 'invisible', 'background', 'blend in', 'not seen'],
-      'perfectionism': ['perfect', 'right way', 'mistake', 'wrong', 'flawless'],
-      'seeking_approval': ['approval', 'validation', 'acceptance', 'liked', 'permission'],
-      'minimizing': ['not important', "doesn't matter", 'small thing', 'no big deal']
+      people_pleasing: [
+        "please others",
+        "what they think",
+        "avoid conflict",
+        "keep everyone happy",
+      ],
+      hiding: ["hide", "invisible", "background", "blend in", "not seen"],
+      perfectionism: ["perfect", "right way", "mistake", "wrong", "flawless"],
+      seeking_approval: [
+        "approval",
+        "validation",
+        "acceptance",
+        "liked",
+        "permission",
+      ],
+      minimizing: [
+        "not important",
+        "doesn't matter",
+        "small thing",
+        "no big deal",
+      ],
     };
 
     Object.entries(shrinkingIndicators).forEach(([pattern, keywords]) => {
-      if (keywords.some(keyword => lowerText.includes(keyword))) {
+      if (keywords.some((keyword) => lowerText.includes(keyword))) {
         patterns.push(pattern);
       }
     });
@@ -59,14 +75,14 @@ export class PatternMatcher {
 
   generateContextualInsight(analysisType, data) {
     switch (analysisType) {
-      case 'trust_building':
+      case "trust_building":
         return this.generateTrustInsight(data);
-      case 'media_wisdom':
+      case "media_wisdom":
         return this.generateMediaInsight(data);
-      case 'somatic_healing':
+      case "somatic_healing":
         return this.generateSomaticInsight(data);
       default:
-        return 'Your awareness and willingness to explore are valuable steps in your growth journey.';
+        return "Your awareness and willingness to explore are valuable steps in your growth journey.";
     }
   }
 
@@ -74,9 +90,9 @@ export class PatternMatcher {
     if (data.trust_level >= 8) {
       return "You're operating from strong self-trust. This is your natural state - use it as a foundation for bigger challenges.";
     } else if (data.trust_level >= 6) {
-      return 'Your trust is building steadily. This is excellent progress - notice how it feels to trust yourself more.';
+      return "Your trust is building steadily. This is excellent progress - notice how it feels to trust yourself more.";
     } else {
-      return 'Trust develops gradually through practice. Every moment of awareness like this strengthens your inner authority.';
+      return "Trust develops gradually through practice. Every moment of awareness like this strengthens your inner authority.";
     }
   }
 
@@ -86,18 +102,17 @@ export class PatternMatcher {
     } else if (data.growth_themes.length > 0) {
       return `The themes of ${data.growth_themes[0]} in this content reflect active areas of your development.`;
     } else {
-      return 'Even subtle responses to content contain valuable information about your current growth needs.';
+      return "Even subtle responses to content contain valuable information about your current growth needs.";
     }
   }
 
   generateSomaticInsight(data) {
-    if (data.nervous_system_state === 'regulated') {
-      return 'A regulated nervous system creates the foundation for clear decision-making and authentic expression.';
-    } else if (data.nervous_system_state === 'activated') {
-      return 'Activation provides important information. Working with it compassionately builds nervous system resilience.';
+    if (data.nervous_system_state === "regulated") {
+      return "A regulated nervous system creates the foundation for clear decision-making and authentic expression.";
+    } else if (data.nervous_system_state === "activated") {
+      return "Activation provides important information. Working with it compassionately builds nervous system resilience.";
     } else {
-      return 'Your body is always communicating. Listening with curiosity builds the trust needed for embodied wisdom.';
+      return "Your body is always communicating. Listening with curiosity builds the trust needed for embodied wisdom.";
     }
   }
 }
-

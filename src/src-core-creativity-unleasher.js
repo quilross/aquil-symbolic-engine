@@ -8,11 +8,10 @@ export class CreativityUnleasher {
   }
 
   async unleash(data) {
-    const { block_description = '' } = data;
+    const { block_description = "" } = data;
     return {
-      message: 'Creative flow activated.',
-      block_description
+      message: "Creative flow activated.",
+      block_description,
     };
   }
 }
-

@@ -9,25 +9,25 @@
 // Map of allowed query identifiers to their prepared SQL and schemas
 const QUERY_MAP = {
   getUserProfile: {
-    sql: 'SELECT * FROM user_profile WHERE id = ?',
-    paramTypes: ['string'],
-    method: 'first'
+    sql: "SELECT * FROM user_profile WHERE id = ?",
+    paramTypes: ["string"],
+    method: "first",
   },
   insertLog: {
     // Use the existing event_log table to avoid D1 errors when
     // metamorphic_logs is not present in the schema.
-    sql: 'INSERT INTO event_log (id, type, payload) VALUES (?, ?, ?)',
-    paramTypes: ['string', 'string', 'string'],
-    method: 'run'
-  }
+    sql: "INSERT INTO event_log (id, type, payload) VALUES (?, ?, ?)",
+    paramTypes: ["string", "string", "string"],
+    method: "run",
+  },
 };
 
 function validateParams(params, schema) {
   if (!Array.isArray(params)) {
-    throw new Error('Parameters must be an array');
+    throw new Error("Parameters must be an array");
   }
   if (params.length !== schema.length) {
-    throw new Error('Incorrect number of parameters');
+    throw new Error("Incorrect number of parameters");
   }
   schema.forEach((type, idx) => {
     if (typeof params[idx] !== type) {
@@ -54,11 +54,11 @@ export async function executeWhitelistedQuery(db, id, params = []) {
   const stmt = db.prepare(def.sql).bind(...params);
 
   switch (def.method) {
-    case 'first':
+    case "first":
       return stmt.first();
-    case 'run':
+    case "run":
       return stmt.run();
-    case 'all':
+    case "all":
     default:
       return stmt.all();
   }

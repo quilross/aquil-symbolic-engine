@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS metamorphic_logs (
   detail TEXT DEFAULT '{}',
   voice_used TEXT,
   session_id TEXT,
+  tags TEXT,
   developmental_vector TEXT DEFAULT 'integration',
   voice_effectiveness REAL DEFAULT 0.0,
   intervention_stack TEXT DEFAULT '[]',

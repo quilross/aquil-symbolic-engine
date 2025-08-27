@@ -61,10 +61,7 @@
                     "description": "The actual content to log"
                   }
                 },
-                "required": [
-                  "type",
-                  "payload"
-                ]
+                "required": ["type", "payload"]
               }
             }
           }
@@ -234,9 +231,7 @@
                     "description": "Physical sensations related to the doubt"
                   }
                 },
-                "required": [
-                  "current_state"
-                ]
+                "required": ["current_state"]
               }
             }
           }
@@ -292,11 +287,7 @@
                     "description": "Brief summary if needed for context"
                   }
                 },
-                "required": [
-                  "media_type",
-                  "title",
-                  "your_reaction"
-                ]
+                "required": ["media_type", "title", "your_reaction"]
               }
             }
           }
@@ -340,11 +331,7 @@
                     "description": "What the user wants to achieve (release, grounding, etc.)"
                   }
                 },
-                "required": [
-                  "body_state",
-                  "emotions",
-                  "intention"
-                ]
+                "required": ["body_state", "emotions", "intention"]
               }
             }
           }
@@ -398,10 +385,7 @@
                     "description": "Which wisdom frameworks to consult (default: all)"
                   }
                 },
-                "required": [
-                  "life_situation",
-                  "specific_question"
-                ]
+                "required": ["life_situation", "specific_question"]
               }
             }
           }
@@ -451,10 +435,7 @@
                     "description": "What keeps repeating or showing up"
                   }
                 },
-                "required": [
-                  "area_of_focus",
-                  "recent_experiences"
-                ]
+                "required": ["area_of_focus", "recent_experiences"]
               }
             }
           }
@@ -502,10 +483,7 @@
                     "description": "Times they successfully stood in their power"
                   }
                 },
-                "required": [
-                  "situation",
-                  "desired_outcome"
-                ]
+                "required": ["situation", "desired_outcome"]
               }
             }
           }
@@ -535,11 +513,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "today",
-                "week",
-                "month"
-              ],
+              "enum": ["today", "week", "month"],
               "default": "today"
             },
             "description": "Time period for wisdom compilation"
@@ -613,9 +587,7 @@
                     "default": "general"
                   }
                 },
-                "required": [
-                  "message"
-                ]
+                "required": ["message"]
               }
             }
           }
@@ -681,9 +653,7 @@
                     "description": "Whether this is a recurring dream theme"
                   }
                 },
-                "required": [
-                  "dream_text"
-                ]
+                "required": ["dream_text"]
               }
             }
           }
@@ -727,9 +697,7 @@
                     "description": "What energy state you want to achieve"
                   }
                 },
-                "required": [
-                  "current_energy"
-                ]
+                "required": ["current_energy"]
               }
             }
           }
@@ -776,9 +744,7 @@
                     "description": "Specific decision or choice requiring values clarity"
                   }
                 },
-                "required": [
-                  "values_list"
-                ]
+                "required": ["values_list"]
               }
             }
           }
@@ -822,9 +788,7 @@
                     "description": "What creative breakthrough you're seeking"
                   }
                 },
-                "required": [
-                  "block_description"
-                ]
+                "required": ["block_description"]
               }
             }
           }
@@ -868,9 +832,7 @@
                     "description": "Abundance and financial aspirations"
                   }
                 },
-                "required": [
-                  "money_mindset"
-                ]
+                "required": ["money_mindset"]
               }
             }
           }
@@ -884,7 +846,6 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
-
           }
         }
       }
@@ -915,9 +876,7 @@
                     "description": "What kind of support or guidance you need"
                   }
                 },
-                "required": [
-                  "transition_type"
-                ]
+                "required": ["transition_type"]
               }
             }
           }
@@ -961,9 +920,7 @@
                     "description": "What you want to heal or transform"
                   }
                 },
-                "required": [
-                  "family_pattern"
-                ]
+                "required": ["family_pattern"]
               }
             }
           }
@@ -1072,10 +1029,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "error",
-          "message"
-        ]
+        "required": ["error", "message"]
       }
     },
     "responses": {

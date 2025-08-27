@@ -24,8 +24,9 @@ preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
 binding     = "AQUIL_STORAGE"
 bucket_name = "aquil-wisdom-storage"
 
+
 [[env.production.vectorize]]
-binding   = "AQUIL_CONTEXT"
+binding   = "AQUIL_VECTORIZE"
 index_name = "aquil-context-index"
 
 [[env.production.services]]
@@ -33,8 +34,9 @@ binding     = "AI_GATEWAY_PROD"
 service     = "aquil-gateway"
 environment = "production"
 
-[env.production.ai]
-binding = "AI"
+
+[[env.production.ai]]
+binding = "AQUIL_AI"
 
 [env.production.vars]
 VECTOR_API_KEY   = "<your-vector-key>"

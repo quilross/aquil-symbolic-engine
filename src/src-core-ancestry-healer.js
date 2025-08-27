@@ -8,11 +8,10 @@ export class AncestryHealer {
   }
 
   async heal(data) {
-    const { family_pattern = '' } = data;
+    const { family_pattern = "" } = data;
     return {
-      message: 'Ancestral healing initiated.',
-      family_pattern
+      message: "Ancestral healing initiated.",
+      family_pattern,
     };
   }
 }
-

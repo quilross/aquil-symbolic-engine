@@ -10,9 +10,8 @@ export class ValuesClarifier {
   async clarify(data) {
     const { values_list = [] } = data;
     return {
-      message: 'Values clarified.',
-      prioritized_values: values_list
+      message: "Values clarified.",
+      prioritized_values: values_list,
     };
   }
 }
-

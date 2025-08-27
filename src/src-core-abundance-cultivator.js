@@ -8,11 +8,10 @@ export class AbundanceCultivator {
   }
 
   async cultivate(data) {
-    const { money_mindset = '' } = data;
+    const { money_mindset = "" } = data;
     return {
-      message: 'Abundance mindset nurtured.',
-      money_mindset
+      message: "Abundance mindset nurtured.",
+      money_mindset,
     };
   }
 }
-

@@ -7,18 +7,18 @@ This repository stores long-term history in Cloudflare D1. Two tables may be pre
 
 ## Metamorphic Logs
 
-| column          | type   | description |
-|-----------------|--------|-------------|
-| `id`            | TEXT   | unique log identifier |
-| `timestamp`     | TEXT   | Philadelphia time at log creation |
-| `kind`          | TEXT   | event category (e.g. `session_init`, `insight`) |
-| `signal_strength` | TEXT | info/warning/error/highlight level |
-| `detail`        | TEXT   | JSON or string payload |
-| `session_id`    | TEXT   | related conversation id |
-| `voice`         | TEXT   | mirror/oracle/scientist/strategist |
-| `tags`          | TEXT   | comma‑separated labels |
-| `idx1`, `idx2`  | TEXT   | optional indexes |
-| `metadata`      | TEXT   | extra JSON metadata |
+| column            | type | description                                     |
+| ----------------- | ---- | ----------------------------------------------- |
+| `id`              | TEXT | unique log identifier                           |
+| `timestamp`       | TEXT | Philadelphia time at log creation               |
+| `kind`            | TEXT | event category (e.g. `session_init`, `insight`) |
+| `signal_strength` | TEXT | info/warning/error/highlight level              |
+| `detail`          | TEXT | JSON or string payload                          |
+| `session_id`      | TEXT | related conversation id                         |
+| `voice`           | TEXT | mirror/oracle/scientist/strategist              |
+| `tags`            | TEXT | comma‑separated labels                          |
+| `idx1`, `idx2`    | TEXT | optional indexes                                |
+| `metadata`        | TEXT | extra JSON metadata                             |
 
 ## Event Log Fallback
 
@@ -29,6 +29,7 @@ When `metamorphic_logs` is missing, the worker writes to `event_log` with fields
 ## API Usage
 
 ### Write a Log
+
 ```
 POST /api/log
 {
@@ -42,13 +43,14 @@ POST /api/log
 ```
 
 ### Retrieve Logs
+
 ```
 GET /api/logs?limit=20&type=insight&tag=trust
 ```
+
 Returns an array of `{ id, timestamp, kind, detail }` objects from whichever
 log table exists.
 
 Use these endpoints to capture every meaningful moment and to pull continuity
 at session start. If neither table exists, both endpoints return empty arrays
 rather than throwing missing‑table errors.
-

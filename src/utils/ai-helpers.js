@@ -3,9 +3,9 @@
  * Orchestrates specialized analyzers for trust, emotion, and pattern work
  */
 
-import { EmotionAnalyzer } from './emotion-analyzer.js';
-import { PatternMatcher } from './pattern-matcher.js';
-import { TrustScorer } from './trust-scorer.js';
+import { EmotionAnalyzer } from "./emotion-analyzer.js";
+import { PatternMatcher } from "./pattern-matcher.js";
+import { TrustScorer } from "./trust-scorer.js";
 
 export class AquilAI {
   constructor() {
@@ -73,31 +73,32 @@ export class AquilAI {
       growth_themes: themes,
       trust_relevance: trustRelevance,
       resonance_score: this.calculateResonance(your_reaction),
-      wisdom_potential: this.assessWisdomPotential(themes, emotions)
+      wisdom_potential: this.assessWisdomPotential(themes, emotions),
     };
   }
 
   generateAffirmations(analysis) {
     const affirmations = [
-      'I trust the wisdom that lives within me',
-      'My inner knowing guides me toward my highest good'
+      "I trust the wisdom that lives within me",
+      "My inner knowing guides me toward my highest good",
     ];
 
     if (analysis.trust_level >= 7) {
-      affirmations.push('I stand in my power and trust my decisions');
+      affirmations.push("I stand in my power and trust my decisions");
     } else {
-      affirmations.push('I am learning to trust myself, and that learning is valuable');
+      affirmations.push(
+        "I am learning to trust myself, and that learning is valuable",
+      );
     }
 
-    if (analysis.growth_themes.includes('authenticity')) {
-      affirmations.push('I honor my authentic self and express my truth');
+    if (analysis.growth_themes.includes("authenticity")) {
+      affirmations.push("I honor my authentic self and express my truth");
     }
 
-    if (analysis.growth_themes.includes('courage')) {
-      affirmations.push('I have the courage to be seen and heard');
+    if (analysis.growth_themes.includes("courage")) {
+      affirmations.push("I have the courage to be seen and heard");
     }
 
     return affirmations.slice(0, 4);
   }
 }
-

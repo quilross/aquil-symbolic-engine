@@ -5,14 +5,9 @@
 
 export const logger = {
   info(message, metadata = {}) {
-    console.log(
-      JSON.stringify({ level: 'info', message, ...metadata })
-    );
+    console.log(JSON.stringify({ level: "info", message, ...metadata }));
   },
   error(message, metadata = {}) {
-    console.error(
-      JSON.stringify({ level: 'error', message, ...metadata })
-    );
-  }
+    console.error(JSON.stringify({ level: "error", message, ...metadata }));
+  },
 };
-
