@@ -287,6 +287,7 @@ export async function handleRetrieveLogs(request, env) {
       return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
         headers: { 'Content-Type': 'application/json' }
       });
+
     }
     return new Response(JSON.stringify([]), {
       headers: { 'Content-Type': 'application/json' }
