@@ -57,8 +57,100 @@ router.get('/api/session-init', async (req, env) => addCORS(await handleSessionI
 router.post('/api/discovery/generate-inquiry', async (req, env) => addCORS(await handleDiscoveryInquiry(req, env)));
 router.post('/api/ritual/auto-suggest', async (req, env) => addCORS(await handleRitualSuggestion(req, env)));
 router.get('/api/system/health-check', async (req, env) => addCORS(await handleHealthCheck(req, env)));
-router.get('/api/logs', async (req, env) => addCORS(await handleRetrieveLogs(req, env)));
-router.post('/api/log', async (req, env) => addCORS(await handleLog(req, env)));
+// Unified logging endpoint
+router.post('/api/log', async (req, env) => {
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return addCORS(new Response(JSON.stringify({ error: 'Malformed JSON' }), { status: 400, headers: cors }));
+  }
+  const { type, payload, session_id, who, level, tags, storage = 'all', binary, vector } = body;
+  const results = {};
+
+  // D1 logging
+  if (storage === 'all' || (Array.isArray(storage) && storage.includes('d1')) || storage === 'd1') {
+    try {
+      await env.AQUIL_DB.prepare(
+        'INSERT INTO metamorphic_logs (timestamp, kind, detail, session_id, voice, signal_strength, tags) VALUES (?, ?, ?, ?, ?, ?, ?)' 
+      ).bind(Date.now(), type, JSON.stringify(payload), session_id, who, level, JSON.stringify(tags || [])).run();
+      results.d1 = 'ok';
+    } catch (e) { results.d1 = String(e); }
+  }
+
+  // KV logging
+  if (storage === 'all' || (Array.isArray(storage) && storage.includes('kv')) || storage === 'kv') {
+    try {
+      const key = `log_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      await env.AQUIL_MEMORIES.put(key, JSON.stringify({ type, payload, session_id, who, level, tags }), { expirationTtl: 86400 });
+      results.kv = 'ok';
+    } catch (e) { results.kv = String(e); }
+  }
+
+  // R2 logging (for binary data)
+  if ((storage === 'all' || (Array.isArray(storage) && storage.includes('r2')) || storage === 'r2') && binary) {
+    try {
+      const key = `logbin_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const bytes = Uint8Array.from(atob(binary), c => c.charCodeAt(0));
+      await env.AQUIL_STORAGE.put(key, bytes);
+      results.r2 = 'ok';
+    } catch (e) { results.r2 = String(e); }
+  }
+
+  // Vectorize logging (for embeddings)
+  if ((storage === 'all' || (Array.isArray(storage) && storage.includes('vectorize')) || storage === 'vectorize') && vector) {
+    try {
+      const id = `logvec_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      await env.AQUIL_CONTEXT.upsert([{ id, values: vector, metadata: { type, session_id, who, level, tags } }]);
+      results.vectorize = 'ok';
+    } catch (e) { results.vectorize = String(e); }
+  }
+
+  return addCORS(new Response(JSON.stringify({ status: 'ok', results }), { status: 200, headers: cors }));
+});
+
+// Unified log retrieval endpoint
+router.get('/api/logs', async (req, env) => {
+  const url = new URL(req.url);
+  const source = url.searchParams.get('source') || 'all';
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 200);
+  const results = {};
+
+  // D1 logs
+  if (source === 'all' || source.includes('d1')) {
+    try {
+      const { results: d1logs } = await env.AQUIL_DB.prepare(
+        'SELECT id, timestamp, kind, detail, session_id, voice, signal_strength, tags FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?'
+      ).bind(limit).all();
+      results.d1 = d1logs;
+    } catch (e) { results.d1 = String(e); }
+  }
+
+  // KV logs
+  if (source === 'all' || source.includes('kv')) {
+    try {
+      // No direct list API, so just a placeholder
+      results.kv = 'KV listing not implemented';
+    } catch (e) { results.kv = String(e); }
+  }
+
+  // R2 logs
+  if (source === 'all' || source.includes('r2')) {
+    try {
+      // No direct list API, so just a placeholder
+      results.r2 = 'R2 listing not implemented';
+    } catch (e) { results.r2 = String(e); }
+  }
+
+  // Vectorize logs
+  if (source === 'all' || source.includes('vectorize')) {
+    try {
+      results.vectorize = 'Vectorize listing not implemented';
+    } catch (e) { results.vectorize = String(e); }
+  }
+
+  return addCORS(new Response(JSON.stringify({ status: 'ok', results }), { status: 200, headers: cors }));
+});
 
 
 // Trust check-in endpoint
