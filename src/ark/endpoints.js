@@ -37,6 +37,13 @@ export const ARK_MANIFEST = [
     logs: true
   },
   {
+    name: 'handleRetrieveLogs',
+    path: '/api/logs',
+    description: 'Retrieve conversation history and context',
+    storage: ['D1'],
+    logs: false
+  },
+  {
     name: 'handleLog',
     path: '/api/log',
     description: 'General logging endpoint for events and feedback',
@@ -196,6 +203,100 @@ export async function handleHealthCheck(request, env) {
   return new Response(JSON.stringify({ ...health, timestamp: getPhiladelphiaTime() }), {
     headers: { 'Content-Type': 'application/json' }
   });
+}
+
+// Retrieve logs with optional filtering
+export async function handleRetrieveLogs(request, env) {
+  if (!env.AQUIL_DB) {
+    return new Response(JSON.stringify([]), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const url = new URL(request.url);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 200);
+  const filters = {
+    type: url.searchParams.get('type'),
+    who: url.searchParams.get('who'),
+    level: url.searchParams.get('level'),
+    session_id: url.searchParams.get('session_id'),
+    tag: url.searchParams.get('tag')
+  };
+
+  const parse = (val) => {
+    try { return JSON.parse(val); } catch { return val; }
+  };
+
+  const buildWhere = (map) => {
+    const clauses = [];
+    const values = [];
+    for (const key of ['type', 'who', 'level', 'session_id']) {
+      const val = filters[key];
+      if (val) {
+        clauses.push(`${map[key]} = ?`);
+        values.push(val);
+      }
+    }
+    if (filters.tag) {
+      clauses.push(`${map.tag} LIKE ?`);
+      values.push(`%${filters.tag}%`);
+    }
+    return {
+      where: clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '',
+      values
+    };
+  };
+
+  const tableExists = async (name) => {
+    const row = await env.AQUIL_DB
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+      .bind(name)
+      .first();
+    return !!row;
+  };
+
+  try {
+    if (await tableExists('metamorphic_logs')) {
+      const { where, values } = buildWhere({
+        type: 'kind',
+        who: 'voice',
+        level: 'signal_strength',
+        session_id: 'session_id',
+        tag: 'tags'
+      });
+      const stmt = env.AQUIL_DB
+        .prepare(`SELECT id, timestamp, kind, detail FROM metamorphic_logs${where} ORDER BY timestamp DESC LIMIT ?`)
+        .bind(...values, limit);
+      const { results } = await stmt.all();
+      return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    if (await tableExists('event_log')) {
+      const { where, values } = buildWhere({
+        type: 'type',
+        who: 'who',
+        level: 'level',
+        session_id: 'session_id',
+        tag: 'tags'
+      });
+      const stmt = env.AQUIL_DB
+        .prepare(`SELECT id, ts AS timestamp, type AS kind, payload AS detail FROM event_log${where} ORDER BY ts DESC LIMIT ?`)
+        .bind(...values, limit);
+      const { results } = await stmt.all();
+      return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return new Response(JSON.stringify([]), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: 'Unable to fetch logs', message: String(err) }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 }
 
 // Logging
