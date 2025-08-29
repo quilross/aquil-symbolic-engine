@@ -1,55 +1,4 @@
-// Health check endpoint
-app.get("/api/health", async (req, res) => {
-  const env = req.env || process.env;
-  const summary = { ok: true };
-  // D1: pragma user_version
-  try {
-    const { results } = await env.AQUIL_DB.prepare("PRAGMA user_version").all();
-    summary.d1 = results && results.length ? results[0].user_version : null;
-  } catch (e) {
-    summary.d1 = String(e);
-    summary.ok = false;
-  }
-  // KV: put/get throwaway key
-  try {
-    const key = `__health__${Date.now()}`;
-    await env.AQUIL_MEMORIES.put(key, "ok", { expirationTtl: 10 });
-    const val = await env.AQUIL_MEMORIES.get(key);
-    summary.kv = val === "ok";
-  } catch (e) {
-    summary.kv = String(e);
-    summary.ok = false;
-  }
-  // R2: list with prefix __health__
-  try {
-    const result = await env.AQUIL_STORAGE.list({
-      prefix: "__health__",
-      limit: 1,
-    });
-    summary.r2 = Array.isArray(result.objects);
-  } catch (e) {
-    summary.r2 = String(e);
-    summary.ok = false;
-  }
-  // AI: noop model metadata call
-  try {
-    const meta = await env.AI.run("@cf/baai/bge-small-en-v1.5", { meta: true });
-    summary.ai = !!meta;
-  } catch (e) {
-    summary.ai = String(e);
-    summary.ok = false;
-  }
-  // Vector: return index binding name
-  try {
-    summary.vector = env.AQUIL_CONTEXT
-      ? env.AQUIL_CONTEXT.constructor.name
-      : null;
-  } catch (e) {
-    summary.vector = String(e);
-    summary.ok = false;
-  }
-  res.json(summary);
-});
+// ...existing code...
 import { Router } from "itty-router";
 import {
   handleSessionInit,
@@ -63,6 +12,7 @@ import * as r2 from "./actions/r2.js";
 import * as vectorize from "./actions/vectorize.js";
 import * as ai from "./actions/ai.js";
 import { writeLog, readLogs } from "./actions/logging.js";
+import { attachLocalVectorContext } from "./utils/local-vector-context.js";
 import { SomaticHealer } from "./src-core-somatic-healer.js";
 import { TrustBuilder } from "./src-core-trust-builder.js";
 import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
@@ -771,9 +721,11 @@ router.all("*", () =>
 );
 
 export default {
-  fetch(request, env, ctx) {
+  async fetch(request, env, ctx) {
+    // Attach local vector context if missing (for local dev)
+    attachLocalVectorContext(env);
     return router.handle(request, env, ctx);
-  },
+  }
 };
 
 export { ARK_MANIFEST } from "./ark/endpoints.js";

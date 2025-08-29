@@ -1,22 +1,5 @@
 // Ensure a vector: embed text or pass through provided vector
-export async function ensureVector(env, { text, vector }) {
-  if (vector && Array.isArray(vector)) return vector;
-  if (typeof text === 'string') {
-    return await env.AI.run('@cf/baai/bge-small-en-v1.5', { text });
-  }
-  throw new Error('Must provide text or vector');
-}
-
-// Query by text: embed and query env.AQUIL_CONTEXT
-export async function queryByText(env, { text, topK = 5 }) {
-  const vector = await ensureVector(env, { text });
-  const results = await env.AQUIL_CONTEXT.query({
-    topK,
-    vector,
-    includeMetadata: true,
-  });
-  return results;
-}
+// ...existing code...
 // Ensure a vector embedding from text or vector
 export async function ensureVector(
   env,

@@ -102,7 +102,7 @@ export async function writeLog(
         id,
         Date.now(),
         type,
-        opts.level || null,
+  level || null,
         JSON.stringify(payload),
         session_id || null,
         who || null,

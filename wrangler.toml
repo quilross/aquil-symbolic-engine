@@ -7,8 +7,10 @@ compatibility_flags = ["nodejs_compat"] # allows Node-style modules if needed
 # 🚀 Production Environment
 # ----------------------------------------------------
 [env.production]
+
 name = "aquil-prod"
 route = { pattern = "signal-q.me/*", zone_name = "signal-q.me" }
+account_id = "b07412f2f2389e8b537051bc092f3376"
 
 [[env.production.d1_databases]]
 binding       = "AQUIL_DB"
@@ -39,7 +41,7 @@ environment = "production"
 binding = "AQUIL_AI"
 
 [env.production.vars]
-VECTOR_API_KEY   = "<your-vector-key>"
+VECTOR_API_KEY   = "${CLOUDFLARE_API_TOKEN}"
 ARK_VERSION      = "2.0"
 TIMEZONE         = "America/New_York"
 AUTO_SESSION_INIT = "true"
@@ -53,20 +55,24 @@ crons = ["0 7 * * *", "0 19 * * *"]
 # 🧪 Development Environment
 # ----------------------------------------------------
 [env.development]
+
 name = "aquil-dev"
+account_id = "b07412f2f2389e8b537051bc092f3376"
 
 [[env.development.d1_databases]]
-binding       = "AQUIL_DB"
+binding = "AQUIL_DB"
 database_name = "aquil-wisdom-db-dev"
-database_id   = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
+database_id = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
+preview_database_id = "ff7b029d-caf7-4879-b4c4-9ba46f1c86ff"
 
 [[env.development.kv_namespaces]]
 binding = "AQUIL_MEMORIES"
 id      = "633c8059669c4b73bb5ca78d2efdb5db"
 
 [[env.development.r2_buckets]]
-binding     = "ARK2_SYMBOLIC_ENGINE_R2_DEV"
-bucket_name = "ark2-symbolic-engine-r2"
+binding = "AQUIL_STORAGE"
+bucket_name = "aquil-wisdom-storage"
+preview_bucket_name = "aquil-wisdom-storage-dev-preview"
 
 [[env.development.vectorize]]
 binding   = "AQUIL_CONTEXT"
@@ -83,7 +89,7 @@ binding = "AI"
 [env.development.vars]
 ENVIRONMENT     = "development"
 API_VERSION     = "v2"
-VECTOR_API_KEY  = "<your-dev-vector-key>"
+VECTOR_API_KEY  = "${CLOUDFLARE_API_TOKEN}"
 ARK_VERSION     = "2.0"
 TIMEZONE        = "America/New_York"
 AUTO_SESSION_INIT = "true"

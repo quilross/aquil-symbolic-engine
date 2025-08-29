@@ -1,1 +1,7 @@
-{}
+{
+    "workbench.editor.autoLockGroups": {
+        "jsProfileVisualizer.cpuprofile.table": true
+    },
+    "workbench.editor.enablePreviewFromCodeNavigation": true,
+    "workbench.editor.enablePreviewFromQuickOpen": true
+}
