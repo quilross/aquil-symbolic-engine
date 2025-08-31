@@ -628,4 +628,423 @@ export class AquilDatabase {
       return null;
     }
   }
+
+  // Wisdom synthesis storage
+  async storeWisdomSynthesis(synthesis) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping wisdom synthesis storage");
+      return null;
+    }
+    
+    try {
+      const id = `wisdom_synthesis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO wisdom_syntheses 
+        (id, timestamp, wisdom_threads, integration_opportunities, growth_edges, celebration_moments)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          synthesis.timestamp,
+          JSON.stringify(synthesis.wisdom_threads || []),
+          JSON.stringify(synthesis.integration_opportunities || []),
+          JSON.stringify(synthesis.growth_edges || []),
+          JSON.stringify(synthesis.celebration_moments || []),
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error storing wisdom synthesis:", error);
+      return null;
+    }
+  }
+
+  // Daily synthesis storage
+  async storeDailySynthesis(synthesis) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping daily synthesis storage");
+      return null;
+    }
+    
+    try {
+      const id = `daily_synthesis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO daily_syntheses 
+        (id, date, timestamp, insights, patterns_observed, growth_moments, integration_invitations, tomorrow_intention)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          synthesis.date,
+          synthesis.timestamp,
+          JSON.stringify(synthesis.insights || []),
+          JSON.stringify(synthesis.patterns_observed || {}),
+          JSON.stringify(synthesis.growth_moments || []),
+          JSON.stringify(synthesis.integration_invitations || []),
+          synthesis.tomorrow_intention || "",
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error storing daily synthesis:", error);
+      return null;
+    }
+  }
+
+  // Get recent logs with fallback to legacy schema
+  async getRecentLogs(hours = 24) {
+    if (!this.isDatabaseAvailable()) {
+      return [];
+    }
+    
+    try {
+      const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+      
+      // Try metamorphic_logs first
+      try {
+        const results = await this.db
+          .prepare(
+            `
+          SELECT id, timestamp, kind, detail, session_id, voice, signal_strength, tags
+          FROM metamorphic_logs 
+          WHERE timestamp > ?
+          ORDER BY timestamp DESC
+        `,
+          )
+          .bind(cutoffTime)
+          .all();
+
+        return results.results?.map(row => ({
+          ...row,
+          detail: this.parseJSON(row.detail)
+        })) || [];
+      } catch {
+        // Fallback to legacy event_log
+        const results = await this.db
+          .prepare(
+            `
+          SELECT id, ts as timestamp, type as kind, payload as detail, session_id, who as voice, level as signal_strength, tags
+          FROM event_log 
+          WHERE ts > ?
+          ORDER BY ts DESC
+        `,
+          )
+          .bind(cutoffTime)
+          .all();
+
+        return results.results?.map(row => ({
+          ...row,
+          detail: this.parseJSON(row.detail)
+        })) || [];
+      }
+    } catch (error) {
+      console.error("Error getting recent logs:", error);
+      return [];
+    }
+  }
+
+  // Get user journey data
+  async getUserJourney() {
+    if (!this.isDatabaseAvailable()) {
+      return { milestones: [] };
+    }
+    
+    try {
+      // Get growth milestones
+      const milestones = await this.db
+        .prepare(
+          `
+        SELECT * FROM growth_milestones 
+        ORDER BY timestamp DESC 
+        LIMIT 10
+      `,
+        )
+        .all();
+
+      return {
+        milestones: milestones.results?.map(row => ({
+          ...row,
+          celebration: row.celebration || "Acknowledge your progress",
+          description: row.description || row.milestone_type || "Growth milestone"
+        })) || []
+      };
+    } catch (error) {
+      console.error("Error getting user journey:", error);
+      return { milestones: [] };
+    }
+  }
+
+  // Helper method to safely parse JSON
+  parseJSON(value) {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch {
+      return value;
+    }
+  }
+
+  // Commitment tracking system for behavioral change
+  async createCommitment(commitmentData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping commitment creation");
+      return null;
+    }
+    
+    try {
+      const id = `commitment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const now = new Date().toISOString();
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO commitments 
+        (id, title, description, commitment_type, status, created_at, target_date, 
+         success_metrics, support_strategies, check_in_frequency, session_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          commitmentData.title || "Personal Growth Commitment",
+          commitmentData.description || "",
+          commitmentData.commitment_type || "behavioral_change",
+          "emerging", // Initial status
+          now,
+          commitmentData.target_date || null,
+          JSON.stringify(commitmentData.success_metrics || []),
+          JSON.stringify(commitmentData.support_strategies || []),
+          commitmentData.check_in_frequency || "weekly",
+          commitmentData.session_id || null,
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error creating commitment:", error);
+      return null;
+    }
+  }
+
+  async updateCommitmentStatus(commitmentId, newStatus, progressNotes = "") {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping commitment update");
+      return false;
+    }
+    
+    try {
+      await this.db
+        .prepare(
+          `
+        UPDATE commitments 
+        SET status = ?, progress_notes = ?, updated_at = ?
+        WHERE id = ?
+      `,
+        )
+        .bind(newStatus, progressNotes, new Date().toISOString(), commitmentId)
+        .run();
+
+      return true;
+    } catch (error) {
+      console.error("Error updating commitment status:", error);
+      return false;
+    }
+  }
+
+  async getActiveCommitments() {
+    if (!this.isDatabaseAvailable()) {
+      return [];
+    }
+    
+    try {
+      const results = await this.db
+        .prepare(
+          `
+        SELECT * FROM commitments 
+        WHERE status IN ('emerging', 'developing', 'integrating')
+        ORDER BY created_at DESC
+      `,
+        )
+        .all();
+
+      return results.results?.map(row => ({
+        ...row,
+        success_metrics: this.parseJSON(row.success_metrics),
+        support_strategies: this.parseJSON(row.support_strategies)
+      })) || [];
+    } catch (error) {
+      console.error("Error getting active commitments:", error);
+      return [];
+    }
+  }
+
+  async logCommitmentProgress(commitmentId, progressData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping commitment progress log");
+      return null;
+    }
+    
+    try {
+      const id = `progress_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO commitment_progress 
+        (id, commitment_id, timestamp, progress_type, details, reflection, next_steps)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          commitmentId,
+          new Date().toISOString(),
+          progressData.progress_type || "check_in",
+          JSON.stringify(progressData.details || {}),
+          progressData.reflection || "",
+          JSON.stringify(progressData.next_steps || []),
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error logging commitment progress:", error);
+      return null;
+    }
+  }
+
+  // Enhanced metamorphic logging with breakthrough detection
+  async logBreakthrough(breakthroughData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping breakthrough log");
+      return null;
+    }
+    
+    try {
+      const id = `breakthrough_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO breakthroughs 
+        (id, timestamp, breakthrough_type, description, context, integration_plan, 
+         significance_level, related_patterns, session_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          new Date().toISOString(),
+          breakthroughData.breakthrough_type || "insight",
+          breakthroughData.description || "",
+          JSON.stringify(breakthroughData.context || {}),
+          JSON.stringify(breakthroughData.integration_plan || []),
+          breakthroughData.significance_level || "medium",
+          JSON.stringify(breakthroughData.related_patterns || []),
+          breakthroughData.session_id || null,
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error logging breakthrough:", error);
+      return null;
+    }
+  }
+
+  async getRecentBreakthroughs(days = 30) {
+    if (!this.isDatabaseAvailable()) {
+      return [];
+    }
+    
+    try {
+      const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      
+      const results = await this.db
+        .prepare(
+          `
+        SELECT * FROM breakthroughs 
+        WHERE timestamp > ?
+        ORDER BY timestamp DESC
+      `,
+        )
+        .bind(cutoffDate)
+        .all();
+
+      return results.results?.map(row => ({
+        ...row,
+        context: this.parseJSON(row.context),
+        integration_plan: this.parseJSON(row.integration_plan),
+        related_patterns: this.parseJSON(row.related_patterns)
+      })) || [];
+    } catch (error) {
+      console.error("Error getting recent breakthroughs:", error);
+      return [];
+    }
+  }
+
+  async testConnection() {
+    if (!this.isDatabaseAvailable()) {
+      throw new Error("Database binding not available");
+    }
+    
+    try {
+      // Test basic database connectivity
+      const result = await this.db.prepare('SELECT 1 as test').first();
+      if (result?.test !== 1) {
+        throw new Error("Database test query failed");
+      }
+      return true;
+    } catch (error) {
+      throw new Error(`Database connection test failed: ${error.message}`);
+    }
+  }
+
+  async storeTransformationContract(contract) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping contract storage");
+      return null;
+    }
+    
+    try {
+      await this.db
+        .prepare(
+          `
+        INSERT INTO transformation_contracts 
+        (id, timestamp, transformation_goal, current_state, desired_state, timeline, 
+         accountability_measures, milestones, support_system, tracking_methods, contract_status, progress_percentage)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          contract.id,
+          contract.timestamp,
+          contract.transformation_goal,
+          contract.current_state,
+          contract.desired_state,
+          contract.timeline,
+          JSON.stringify(contract.accountability_measures),
+          JSON.stringify(contract.milestones),
+          JSON.stringify(contract.support_system),
+          JSON.stringify(contract.tracking_methods),
+          contract.contract_status,
+          contract.progress_percentage,
+        )
+        .run();
+
+      return contract.id;
+    } catch (error) {
+      console.error("Error storing transformation contract:", error);
+      return null;
+    }
+  }
 }

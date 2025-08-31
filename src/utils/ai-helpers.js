@@ -8,10 +8,150 @@ import { PatternMatcher } from "./pattern-matcher.js";
 import { TrustScorer } from "./trust-scorer.js";
 
 export class AquilAI {
-  constructor() {
+  constructor(env = null) {
     this.emotionAnalyzer = new EmotionAnalyzer();
     this.patternMatcher = new PatternMatcher();
     this.trustScorer = new TrustScorer();
+    this.env = env;
+  }
+
+  // Worker AI integration with dual binding support
+  async callWorkerAI(model, messages, options = {}) {
+    if (!this.env) {
+      throw new Error("Environment not provided for AI calls");
+    }
+
+    const client = this.env.AI || this.env.AI_GATEWAY;
+    if (!client) {
+      throw new Error("AI binding not found - neither env.AI nor env.AI_GATEWAY available");
+    }
+
+    try {
+      const response = await client.run(model, { 
+        messages,
+        ...options 
+      });
+      return response;
+    } catch (error) {
+      console.error("Worker AI call failed:", error);
+      throw new Error(`AI service unavailable: ${error.message}`);
+    }
+  }
+
+  // Enhanced AI-powered analysis methods
+  async generatePersonalizedOpening(continuityLogs, voice = "mirror") {
+    try {
+      const prompt = this.buildOpeningPrompt(continuityLogs, voice);
+      const response = await this.callWorkerAI("@cf/meta/llama-2-7b-chat-int8", [
+        { role: "user", content: prompt }
+      ]);
+      return response.response || this.getFallbackOpening(continuityLogs, voice);
+    } catch (error) {
+      console.warn("AI opening generation failed, using fallback:", error);
+      return this.getFallbackOpening(continuityLogs, voice);
+    }
+  }
+
+  async generateSocraticQuestion(context, voice = "oracle") {
+    try {
+      const prompt = this.buildSocraticPrompt(context, voice);
+      const response = await this.callWorkerAI("@cf/meta/llama-2-7b-chat-int8", [
+        { role: "user", content: prompt }
+      ]);
+      return response.response || this.getFallbackQuestion(context, voice);
+    } catch (error) {
+      console.warn("AI question generation failed, using fallback:", error);
+      return this.getFallbackQuestion(context, voice);
+    }
+  }
+
+  async generateRitualSuggestion(context, patterns = []) {
+    try {
+      const prompt = this.buildRitualPrompt(context, patterns);
+      const response = await this.callWorkerAI("@cf/meta/llama-2-7b-chat-int8", [
+        { role: "user", content: prompt }
+      ]);
+      
+      // Try to parse as JSON, fallback to text
+      try {
+        return JSON.parse(response.response);
+      } catch {
+        return {
+          name: "AI-Suggested Practice",
+          instructions: [response.response],
+          purpose: "Support your current journey"
+        };
+      }
+    } catch (error) {
+      console.warn("AI ritual generation failed, using fallback:", error);
+      return this.getFallbackRitual(context);
+    }
+  }
+
+  buildOpeningPrompt(continuityLogs, voice) {
+    const voiceStyles = {
+      mirror: "gentle, reflective, emotionally attuned",
+      oracle: "symbolic, archetypal, wisdom-focused",
+      scientist: "analytical, systematic, precise",
+      strategist: "practical, tactical, action-oriented"
+    };
+
+    const style = voiceStyles[voice] || voiceStyles.mirror;
+    const logSummary = continuityLogs.map(log => `${log.kind}: ${log.detail}`).join("; ");
+
+    return `As ARK's ${voice} voice (${style}), create a personalized session opening that acknowledges this continuity: ${logSummary}. Keep it warm, present, and under 100 words.`;
+  }
+
+  buildSocraticPrompt(context, voice) {
+    const voiceStyles = {
+      mirror: "gentle, reflective questions that honor emotions",
+      oracle: "symbolic, archetypal questions that reveal deeper patterns",
+      scientist: "analytical questions that explore mechanisms and systems",
+      strategist: "practical questions that clarify next steps and actions"
+    };
+
+    const style = voiceStyles[voice] || voiceStyles.oracle;
+    const contextSummary = JSON.stringify(context);
+
+    return `As ARK's ${voice} voice, ask a Socratic question (${style}) about this context: ${contextSummary}. The question should guide self-discovery, not provide answers.`;
+  }
+
+  buildRitualPrompt(context, patterns) {
+    const contextSummary = JSON.stringify(context);
+    const patternSummary = patterns.map(p => p.type || p.name).join(", ");
+
+    return `Suggest a healing ritual for this context: ${contextSummary} with these patterns: ${patternSummary}. Return JSON with: name, instructions (array), purpose, timing. Keep it practical and accessible.`;
+  }
+
+  getFallbackOpening(continuityLogs, voice) {
+    if (continuityLogs.length > 0) {
+      return `I sense the continuity of our journey through ${continuityLogs.map(log => log.kind).join(", ")}. What's alive for you in this moment?`;
+    }
+    return "I'm here with you in this moment. What wants to be explored today?";
+  }
+
+  getFallbackQuestion(context, voice) {
+    const questions = {
+      mirror: "What are you feeling in your body right now about this?",
+      oracle: "What deeper pattern or wisdom is trying to emerge here?",
+      scientist: "What would help you understand this situation more clearly?",
+      strategist: "What's the next right step for you in this situation?"
+    };
+    return questions[voice] || questions.oracle;
+  }
+
+  getFallbackRitual(context) {
+    return {
+      name: "Presence and Breath",
+      instructions: [
+        "Take three slow, deep breaths",
+        "Place hand on heart and feel your heartbeat",
+        "Ask: 'What does my inner wisdom know about this?'",
+        "Trust whatever arises"
+      ],
+      purpose: "Ground in present moment awareness",
+      timing: "Whenever you need to reconnect with yourself"
+    };
   }
 
   analyzeTrustLevel(text) {
@@ -234,5 +374,17 @@ export class AquilAI {
     });
     
     return weights;
+  }
+
+  async testConnection() {
+    // Test AI service connectivity
+    try {
+      const testResponse = await this.callWorkerAI("@cf/meta/llama-2-7b-chat-int8", [
+        { role: "user", content: "Test connection" }
+      ]);
+      return testResponse !== null;
+    } catch (error) {
+      throw new Error(`AI service connection failed: ${error.message}`);
+    }
   }
 }

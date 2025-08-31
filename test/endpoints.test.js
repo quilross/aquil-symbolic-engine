@@ -46,6 +46,16 @@ function bodyFor(path) {
       return { transition_type: "career" };
     case "/api/ancestry/heal":
       return { family_pattern: "anger" };
+    case "/api/patterns/autonomous-detect":
+      return { recent_interactions: [{ content: "feeling overwhelmed" }], user_state: "stressed" };
+    case "/api/commitments/create":
+      return { title: "Daily meditation", description: "Meditate for 10 minutes daily" };
+    case "/api/socratic/question":
+      return { context: { topic: "self_discovery" }, topic: "growth", depth_level: "surface" };
+    case "/api/coaching/comb-analysis":
+      return { behavior_goal: "Exercise daily", current_situation: "Sedentary lifestyle" };
+    case "/api/contracts/create":
+      return { transformation_goal: "Become more confident", current_state: "Self-doubt", desired_state: "Self-assured" };
     default:
       return { dummy: true };
   }

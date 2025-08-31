@@ -147,23 +147,39 @@ INSERT OR REPLACE INTO user_profile (
     'Build unshakeable internal trust as my primary navigation system and stand tall in the world instead of shrinking'
 );
 
-    -- Generic event log for chat messages, metrics, errors, etc.
-    CREATE TABLE IF NOT EXISTS event_log (
-        id TEXT PRIMARY KEY,
-        ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-        type TEXT NOT NULL,
-        who TEXT,
-        level TEXT,
-        session_id TEXT,
-        tags TEXT,
-        idx1 TEXT,
-        idx2 TEXT,
-        payload TEXT NOT NULL
-    );
+-- Metamorphic event logs for unified logging system
+CREATE TABLE IF NOT EXISTS metamorphic_logs (
+    id TEXT PRIMARY KEY,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    kind TEXT NOT NULL,
+    signal_strength TEXT DEFAULT 'medium',
+    detail TEXT DEFAULT '{}',
+    session_id TEXT,
+    voice_used TEXT,
+    tags TEXT
+);
 
-    -- Basic indexes to speed up queries
-    CREATE INDEX IF NOT EXISTS idx_event_ts    ON event_log(ts DESC);
-    CREATE INDEX IF NOT EXISTS idx_event_type  ON event_log(type);
-    CREATE INDEX IF NOT EXISTS idx_event_session ON event_log(session_id);
-    CREATE INDEX IF NOT EXISTS idx_event_who   ON event_log(who);
-    CREATE INDEX IF NOT EXISTS idx_event_level ON event_log(level);
+-- Generic event log for chat messages, metrics, errors, etc.
+CREATE TABLE IF NOT EXISTS event_log (
+    id TEXT PRIMARY KEY,
+    ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+    type TEXT NOT NULL,
+    who TEXT,
+    level TEXT,
+    session_id TEXT,
+    tags TEXT,
+    idx1 TEXT,
+    idx2 TEXT,
+    payload TEXT NOT NULL
+);
+
+-- Basic indexes to speed up queries
+CREATE INDEX IF NOT EXISTS idx_metamorphic_timestamp ON metamorphic_logs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_metamorphic_session ON metamorphic_logs(session_id);
+CREATE INDEX IF NOT EXISTS idx_metamorphic_kind ON metamorphic_logs(kind);
+
+CREATE INDEX IF NOT EXISTS idx_event_ts ON event_log(ts DESC);
+CREATE INDEX IF NOT EXISTS idx_event_type ON event_log(type);
+CREATE INDEX IF NOT EXISTS idx_event_session ON event_log(session_id);
+CREATE INDEX IF NOT EXISTS idx_event_who ON event_log(who);
+CREATE INDEX IF NOT EXISTS idx_event_level ON event_log(level);
