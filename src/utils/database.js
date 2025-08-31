@@ -10,12 +10,12 @@ export class AquilDatabase {
 
   // Check if database is available
   isDatabaseAvailable() {
-    return this.db && typeof this.db.prepare === 'function';
+    return !!(this.db && typeof this.db.prepare === 'function');
   }
 
   // Check if KV store is available
   isKVAvailable() {
-    return this.kv && typeof this.kv.get === 'function';
+    return !!(this.kv && typeof this.kv.get === 'function');
   }
 
   // User profile management
@@ -415,6 +415,10 @@ export class AquilDatabase {
   // KV storage for temporary and session data
   async storeMemory(key, data, ttl = 86400) {
     // 24 hours default
+    if (!this.isKVAvailable()) {
+      return false;
+    }
+    
     try {
       await this.kv.put(key, JSON.stringify(data), { expirationTtl: ttl });
       return true;
@@ -425,6 +429,10 @@ export class AquilDatabase {
   }
 
   async getMemory(key) {
+    if (!this.isKVAvailable()) {
+      return null;
+    }
+    
     try {
       const data = await this.kv.get(key);
       return data ? JSON.parse(data) : null;
@@ -435,6 +443,10 @@ export class AquilDatabase {
   }
 
   async deleteMemory(key) {
+    if (!this.isKVAvailable()) {
+      return false;
+    }
+    
     try {
       await this.kv.delete(key);
       return true;
@@ -715,7 +727,7 @@ export class AquilDatabase {
         const results = await this.db
           .prepare(
             `
-          SELECT id, timestamp, kind, detail, session_id, voice, signal_strength, tags
+          SELECT id, timestamp, kind, detail, session_id, voice_used as voice, signal_strength, tags
           FROM metamorphic_logs 
           WHERE timestamp > ?
           ORDER BY timestamp DESC
