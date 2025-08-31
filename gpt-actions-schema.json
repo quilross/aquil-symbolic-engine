@@ -1122,6 +1122,65 @@
         }
       }
     },
+    "/api/commitments/{id}/progress": {
+      "post": {
+        "summary": "Update commitment progress",
+        "description": "Update progress on a specific commitment with reflection and insights.",
+        "operationId": "updateCommitmentProgress",
+        "x-openai-isConsequential": true,
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Commitment ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "progress_update": {
+                    "type": "string",
+                    "description": "Description of progress made"
+                  },
+                  "challenges_faced": {
+                    "type": "string",
+                    "description": "Any challenges encountered"
+                  },
+                  "insights_gained": {
+                    "type": "string",
+                    "description": "Insights or learnings from the experience"
+                  },
+                  "next_steps": {
+                    "type": "string",
+                    "description": "Planned next actions"
+                  }
+                },
+                "required": ["progress_update"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Progress updated successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
     "/api/socratic/question": {
       "post": {
         "summary": "Generate Socratic questions for self-discovery",
