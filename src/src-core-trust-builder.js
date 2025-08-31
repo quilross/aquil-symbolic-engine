@@ -14,6 +14,11 @@ export class TrustBuilder {
   }
 
   async checkIn(data) {
+    // Validate required fields
+    if (!data || !data.current_state) {
+      throw new Error("current_state required");
+    }
+    
     try {
       const analysis = await this.analyzeTrustState(data);
       const guidance = await this.generateTrustGuidance(analysis);

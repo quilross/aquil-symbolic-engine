@@ -79,6 +79,9 @@ export class SomaticHealer {
   }
 
   assessEnergyLevel(bodyState) {
+    if (!bodyState || typeof bodyState !== 'string') {
+      return 'balanced';
+    }
     const lowerText = bodyState.toLowerCase();
 
     if (
@@ -104,6 +107,9 @@ export class SomaticHealer {
   }
 
   identifyTensionPatterns(bodyState) {
+    if (!bodyState || typeof bodyState !== 'string') {
+      return [];
+    }
     const lowerText = bodyState.toLowerCase();
     const patterns = [];
 
@@ -132,6 +138,12 @@ export class SomaticHealer {
   }
 
   assessReadinessForBodyWork(bodyState, emotions) {
+    if (!bodyState || typeof bodyState !== 'string') {
+      return 'moderate';
+    }
+    if (!emotions || typeof emotions !== 'string') {
+      emotions = '';
+    }
     const lowerBodyText = bodyState.toLowerCase();
     const lowerEmotions = emotions.toLowerCase();
 
