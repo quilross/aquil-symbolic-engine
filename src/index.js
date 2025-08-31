@@ -5,6 +5,16 @@ import {
   handleRitualSuggestion,
   handleHealthCheck,
 } from "./ark/endpoints.js";
+import { 
+  arkLog, 
+  arkRetrieve, 
+  arkMemories, 
+  arkVector, 
+  arkResonance, 
+  arkStatus, 
+  arkFilter, 
+  arkAutonomous 
+} from "./ark/ark-endpoints.js";
 import * as kv from "./actions/kv.js";
 import * as d1 from "./actions/d1.js";
 import * as r2 from "./actions/r2.js";
@@ -810,6 +820,17 @@ const createJsonPlaceholder = (path) => {
   });
 };
 router.options("*", () => new Response(null, { status: 200, headers: corsHeaders }));
+
+// ARK RETRIEVAL & LOGGING ENDPOINTS - Enhanced nervous system
+router.post("/api/ark/log", async (req, env) => addCORS(await arkLog(req, env)));
+router.get("/api/ark/retrieve", async (req, env) => addCORS(await arkRetrieve(req, env)));
+router.get("/api/ark/memories", async (req, env) => addCORS(await arkMemories(req, env)));
+router.post("/api/ark/vector", async (req, env) => addCORS(await arkVector(req, env)));
+router.post("/api/ark/resonance", async (req, env) => addCORS(await arkResonance(req, env)));
+router.get("/api/ark/status", async (req, env) => addCORS(await arkStatus(req, env)));
+router.post("/api/ark/filter", async (req, env) => addCORS(await arkFilter(req, env)));
+router.post("/api/ark/autonomous", async (req, env) => addCORS(await arkAutonomous(req, env)));
+
 // Main API endpoints
 router.get("/api/session-init", async (req, env) => addCORS(await handleSessionInit(req, env)));
 router.post("/api/discovery/generate-inquiry", async (req, env) => addCORS(await handleDiscoveryInquiry(req, env)));
