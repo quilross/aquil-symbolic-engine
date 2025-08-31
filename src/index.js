@@ -79,7 +79,27 @@ router.get("/api/logs", async (req, env) => {
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 200);
   try {
     const logs = await readLogs(env, { limit });
-    return addCORS(new Response(JSON.stringify({ status: "ok", logs }), { status: 200, headers: corsHeaders }));
+    // Flatten the logs from different sources into a single array
+    const flattenedLogs = [];
+    
+    if (Array.isArray(logs.d1)) {
+      flattenedLogs.push(...logs.d1.map(log => ({ ...log, source: 'd1' })));
+    }
+    if (Array.isArray(logs.kv)) {
+      flattenedLogs.push(...logs.kv.map(log => ({ ...log, source: 'kv' })));
+    }
+    if (Array.isArray(logs.r2)) {
+      flattenedLogs.push(...logs.r2.map(log => ({ ...log, source: 'r2' })));
+    }
+    
+    // Sort by timestamp if available
+    flattenedLogs.sort((a, b) => {
+      const aTime = a.timestamp || a.created_at || 0;
+      const bTime = b.timestamp || b.created_at || 0;
+      return new Date(bTime) - new Date(aTime);
+    });
+    
+    return addCORS(new Response(JSON.stringify(flattenedLogs.slice(0, limit)), { status: 200, headers: corsHeaders }));
   } catch (e) {
     return addCORS(new Response(JSON.stringify({ status: "error", error: String(e) }), { status: 500, headers: corsHeaders }));
   }
@@ -91,7 +111,7 @@ router.post("/api/trust/check-in", async (req, env) => {
   }
   try {
     const trustBuilder = new TrustBuilder(env);
-    const result = await trustBuilder.processCheckIn(data);
+    const result = await trustBuilder.checkIn(data);
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Trust check-in error:", error);

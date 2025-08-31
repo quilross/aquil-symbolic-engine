@@ -17,6 +17,9 @@ export class TrustScorer {
   }
 
   analyzeTrustLevel(text) {
+    if (!text || typeof text !== 'string') {
+      return { score: 5, indicators: [], confidence: 'low' };
+    }
     const lowerText = text.toLowerCase();
     let trustScore = 5; // baseline
 

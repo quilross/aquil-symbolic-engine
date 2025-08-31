@@ -1,5 +1,8 @@
 export class EmotionAnalyzer {
   extractEmotions(text) {
+    if (!text || typeof text !== 'string') {
+      return [];
+    }
     const lowerText = text.toLowerCase();
     const foundEmotions = [];
 
@@ -24,6 +27,9 @@ export class EmotionAnalyzer {
   }
 
   extractBodySensations(text) {
+    if (!text || typeof text !== 'string') {
+      return [];
+    }
     const lowerText = text.toLowerCase();
     const sensations = [];
 

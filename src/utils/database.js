@@ -4,8 +4,18 @@
 
 export class AquilDatabase {
   constructor(env) {
-    this.db = env.AQUIL_DB;
-    this.kv = env.AQUIL_MEMORIES;
+    this.db = env?.AQUIL_DB;
+    this.kv = env?.AQUIL_MEMORIES;
+  }
+
+  // Check if database is available
+  isDatabaseAvailable() {
+    return this.db && typeof this.db.prepare === 'function';
+  }
+
+  // Check if KV store is available
+  isKVAvailable() {
+    return this.kv && typeof this.kv.get === 'function';
   }
 
   // User profile management
@@ -57,6 +67,11 @@ export class AquilDatabase {
 
   // Trust session storage
   async saveTrustSession(sessionData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping trust session save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
     try {
       const id = `trust_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -89,6 +104,11 @@ export class AquilDatabase {
 
   // Media wisdom storage
   async saveMediaWisdom(wisdomData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping media wisdom save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
     try {
       const id = `media_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -193,6 +213,11 @@ export class AquilDatabase {
 
   // Pattern storage
   async savePattern(patternData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping pattern save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
     try {
       const id = `pattern_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -260,6 +285,11 @@ export class AquilDatabase {
 
   // Retrieve recent data for synthesis and pattern recognition
   async getRecentTrustSessions(limit = 10) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, returning empty trust sessions");
+      return [];
+    }
+    
     try {
       const results = await this.db
         .prepare(
@@ -288,6 +318,11 @@ export class AquilDatabase {
   }
 
   async getRecentMediaWisdom(limit = 10) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, returning empty media wisdom");
+      return [];
+    }
+    
     try {
       const results = await this.db
         .prepare(
@@ -406,6 +441,191 @@ export class AquilDatabase {
     } catch (error) {
       console.error("Error deleting memory:", error);
       return false;
+    }
+  }
+
+  // Values session storage
+  async saveValuesSession(sessionData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping values session save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
+    try {
+      const id = `values_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO values_sessions 
+        (id, values_identified, prioritization_method, top_values, session_type, insights, exercises_completed, next_steps)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          JSON.stringify(sessionData.values_identified || []),
+          sessionData.prioritization_method || "combined_scoring",
+          JSON.stringify(sessionData.top_values || []),
+          sessionData.session_type || "values-clarification",
+          JSON.stringify(sessionData.insights || {}),
+          JSON.stringify(sessionData.exercises_completed || []),
+          JSON.stringify(sessionData.next_steps || []),
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error saving values session:", error);
+      return null;
+    }
+  }
+
+  // Creativity session storage
+  async saveCreativitySession(sessionData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping creativity session save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
+    try {
+      const id = `creativity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO creativity_sessions 
+        (id, block_analysis, flow_pathways, unleash_strategies, session_type, insights, creative_practices, transformation_markers)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          JSON.stringify(sessionData.block_analysis || {}),
+          JSON.stringify(sessionData.flow_pathways || {}),
+          JSON.stringify(sessionData.unleash_strategies || {}),
+          sessionData.session_type || "creativity-unleashing",
+          JSON.stringify(sessionData.insights || {}),
+          JSON.stringify(sessionData.creative_practices || {}),
+          JSON.stringify(sessionData.transformation_markers || []),
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error saving creativity session:", error);
+      return null;
+    }
+  }
+
+  // Abundance session storage
+  async saveAbundanceSession(sessionData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping abundance session save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
+    try {
+      const id = `abundance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO abundance_sessions 
+        (id, scarcity_analysis, abundance_mapping, cultivation_strategies, session_type, insights, abundance_practices, transformation_markers)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          JSON.stringify(sessionData.scarcity_analysis || {}),
+          JSON.stringify(sessionData.abundance_mapping || {}),
+          JSON.stringify(sessionData.cultivation_strategies || {}),
+          sessionData.session_type || "abundance-cultivation",
+          JSON.stringify(sessionData.insights || {}),
+          JSON.stringify(sessionData.abundance_practices || {}),
+          JSON.stringify(sessionData.transformation_markers || []),
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error saving abundance session:", error);
+      return null;
+    }
+  }
+
+  // Transition session storage
+  async saveTransitionSession(sessionData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping transition session save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
+    try {
+      const id = `transition_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO transition_sessions 
+        (id, transition_analysis, navigation_map, support_strategies, session_type, insights, transition_practices, transformation_markers)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          JSON.stringify(sessionData.transition_analysis || {}),
+          JSON.stringify(sessionData.navigation_map || {}),
+          JSON.stringify(sessionData.support_strategies || {}),
+          sessionData.session_type || "transition-navigation",
+          JSON.stringify(sessionData.insights || {}),
+          JSON.stringify(sessionData.transition_practices || {}),
+          JSON.stringify(sessionData.transformation_markers || []),
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error saving transition session:", error);
+      return null;
+    }
+  }
+
+  // Ancestry session storage
+  async saveAncestrySession(sessionData) {
+    if (!this.isDatabaseAvailable()) {
+      console.warn("Database not available, skipping ancestry session save");
+      return { id: `mock_${Date.now()}`, success: false };
+    }
+    
+    try {
+      const id = `ancestry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await this.db
+        .prepare(
+          `
+        INSERT INTO ancestry_sessions 
+        (id, ancestral_analysis, healing_map, healing_strategies, session_type, insights, ancestral_practices, transformation_markers)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        )
+        .bind(
+          id,
+          JSON.stringify(sessionData.ancestral_analysis || {}),
+          JSON.stringify(sessionData.healing_map || {}),
+          JSON.stringify(sessionData.healing_strategies || {}),
+          sessionData.session_type || "ancestral-healing",
+          JSON.stringify(sessionData.insights || {}),
+          JSON.stringify(sessionData.ancestral_practices || {}),
+          JSON.stringify(sessionData.transformation_markers || []),
+        )
+        .run();
+
+      return id;
+    } catch (error) {
+      console.error("Error saving ancestry session:", error);
+      return null;
     }
   }
 }

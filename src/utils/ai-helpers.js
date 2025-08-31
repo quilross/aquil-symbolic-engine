@@ -101,4 +101,138 @@ export class AquilAI {
 
     return affirmations.slice(0, 4);
   }
+
+  // Values-related AI methods
+  generateValuesAffirmations(prioritization) {
+    const { top_values } = prioritization;
+    const affirmations = [
+      "I honor my core values in all my choices",
+      "My values guide me toward authentic living",
+    ];
+
+    if (top_values && top_values.length > 0) {
+      affirmations.push(`I embody ${top_values[0]} in my daily life`);
+      if (top_values.length > 1) {
+        affirmations.push(`${top_values[1]} flows through my actions and decisions`);
+      }
+    }
+
+    return affirmations.slice(0, 4);
+  }
+
+  async extractValuesFromText(text, framework) {
+    // Simple keyword-based extraction
+    const extractedValues = [];
+    framework.forEach(value => {
+      if (text.toLowerCase().includes(value.toLowerCase())) {
+        extractedValues.push({
+          name: value,
+          authenticity_score: 0.8,
+          consistency_score: 0.7,
+        });
+      }
+    });
+    
+    // Add some default values if none found
+    if (extractedValues.length === 0) {
+      extractedValues.push(
+        { name: 'growth', authenticity_score: 0.6, consistency_score: 0.6 },
+        { name: 'authenticity', authenticity_score: 0.7, consistency_score: 0.7 }
+      );
+    }
+    
+    return extractedValues;
+  }
+
+  async extractImplicitValues(text) {
+    // Extract values implied by the text content
+    const implicitValues = [];
+    if (!text) return implicitValues;
+    
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('family') || lowerText.includes('relationship')) {
+      implicitValues.push({ name: 'connection', authenticity_score: 0.8 });
+    }
+    if (lowerText.includes('learn') || lowerText.includes('grow')) {
+      implicitValues.push({ name: 'growth', authenticity_score: 0.8 });
+    }
+    if (lowerText.includes('create') || lowerText.includes('art')) {
+      implicitValues.push({ name: 'creativity', authenticity_score: 0.8 });
+    }
+    
+    return implicitValues;
+  }
+
+  async identifyStressBasedValues(challenges) {
+    // Identify values revealed through stress and challenges
+    const stressValues = [];
+    if (!challenges) return stressValues;
+    
+    const lowerText = challenges.toLowerCase();
+    
+    if (lowerText.includes('money') || lowerText.includes('financial')) {
+      stressValues.push({ name: 'security', priority: 0.9 });
+    }
+    if (lowerText.includes('time') || lowerText.includes('busy')) {
+      stressValues.push({ name: 'freedom', priority: 0.8 });
+    }
+    if (lowerText.includes('health') || lowerText.includes('sick')) {
+      stressValues.push({ name: 'health', priority: 0.9 });
+    }
+    
+    return stressValues;
+  }
+
+  async analyzeExpressedValues(exploration) {
+    // Analyze explicitly expressed values
+    const expressedValues = [];
+    if (!exploration) return expressedValues;
+    
+    const valueKeywords = {
+      'authenticity': ['authentic', 'real', 'true', 'genuine'],
+      'freedom': ['free', 'independent', 'choice', 'autonomy'],
+      'connection': ['connect', 'relationship', 'community', 'love'],
+      'growth': ['grow', 'learn', 'develop', 'evolve'],
+      'creativity': ['create', 'creative', 'art', 'express'],
+    };
+    
+    const lowerText = exploration.toLowerCase();
+    
+    Object.entries(valueKeywords).forEach(([value, keywords]) => {
+      const matches = keywords.filter(keyword => lowerText.includes(keyword));
+      if (matches.length > 0) {
+        expressedValues.push({
+          name: value,
+          authenticity_score: matches.length / keywords.length,
+        });
+      }
+    });
+    
+    return expressedValues;
+  }
+
+  async calculateContextualWeights(coreValues, lifeSituation, currentGoals) {
+    // Calculate contextual weights for values based on current situation
+    const weights = {};
+    
+    coreValues.forEach(value => {
+      weights[value.name] = 0.5; // baseline
+      
+      // Adjust based on life situation
+      if (lifeSituation && lifeSituation.toLowerCase().includes('career')) {
+        if (['achievement', 'growth', 'excellence'].includes(value.name)) {
+          weights[value.name] += 0.3;
+        }
+      }
+      
+      if (lifeSituation && lifeSituation.toLowerCase().includes('relationship')) {
+        if (['connection', 'family', 'compassion'].includes(value.name)) {
+          weights[value.name] += 0.3;
+        }
+      }
+    });
+    
+    return weights;
+  }
 }
