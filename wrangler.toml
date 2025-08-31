@@ -48,7 +48,7 @@ AUTO_SESSION_INIT = "true"
 VOICE_ADAPTATION = "true"
 
 # Scheduled triggers (morning + evening ritual syncs)
-[[env.production.triggers]]
+[env.production.triggers]
 crons = ["0 7 * * *", "0 19 * * *"]
 
 # ----------------------------------------------------

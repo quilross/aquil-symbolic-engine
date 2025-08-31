@@ -18,8 +18,8 @@ export function generateId() {
 export const VOICE_SYSTEM = {
   Mirror: {
     id: "mirror",
-    purpose: "Grounding, emotional continuity",
-    style: { tone: "gentle, reflective" },
+    purpose: "Grounding, emotional continuity, somatic awareness",
+    style: { tone: "gentle, reflective, embodied" },
     triggers: [
       "emotional",
       "vulnerable",
@@ -27,12 +27,26 @@ export const VOICE_SYSTEM = {
       "feeling",
       "scared",
       "overwhelmed",
+      "body",
+      "physical",
+      "sensation",
+      "trust",
+      "self-trust"
     ],
+    preferred_endpoints: [
+      "/api/trust/check-in",
+      "/api/somatic/session", 
+      "/api/standing-tall/practice",
+      "/api/values/clarify",
+      "/api/ancestry/heal",
+      "/api/commitments/{id}/progress"
+    ],
+    metabolization_focus: "emotional_integration"
   },
   Oracle: {
     id: "oracle",
-    purpose: "Symbolic, archetypal pattern insight",
-    style: { tone: "symbolic, archetypal" },
+    purpose: "Symbolic, archetypal pattern insight, wisdom synthesis",
+    style: { tone: "symbolic, archetypal, mystical" },
     triggers: [
       "patterns",
       "deeper meaning",
@@ -40,17 +54,44 @@ export const VOICE_SYSTEM = {
       "archetypal",
       "symbolic",
       "dreams",
+      "unconscious",
+      "meaning",
+      "synthesis",
+      "integrate"
     ],
+    preferred_endpoints: [
+      "/api/dreams/interpret",
+      "/api/media/extract-wisdom",
+      "/api/wisdom/synthesize",
+      "/api/patterns/recognize",
+      "/api/values/clarify",
+      "/api/creativity/unleash",
+      "/api/abundance/cultivate",
+      "/api/transitions/navigate",
+      "/api/ancestry/heal",
+      "/api/wisdom/daily-synthesis",
+      "/api/insights"
+    ],
+    metabolization_focus: "symbolic_integration"
   },
   Scientist: {
     id: "scientist",
-    purpose: "Systems analysis, behavioral mechanics",
+    purpose: "Systems analysis, behavioral mechanics, data synthesis",
     style: { tone: "analytical, systematic, precise" },
-    triggers: ["analyze", "understand", "how does", "mechanism", "why", "data"],
+    triggers: ["analyze", "understand", "how does", "mechanism", "why", "data", "pattern", "behavior", "system"],
+    preferred_endpoints: [
+      "/api/patterns/recognize",
+      "/api/energy/optimize", 
+      "/api/insights",
+      "/api/wisdom/daily-synthesis",
+      "/api/commitments/active",
+      "/api/system/health-check"
+    ],
+    metabolization_focus: "behavioral_analysis"
   },
   Strategist: {
     id: "strategist",
-    purpose: "Tactical, practical, next-step clarity",
+    purpose: "Tactical, practical, next-step clarity, commitment tracking",
     style: { tone: "practical, tactical, clear" },
     triggers: [
       "what should I do",
@@ -59,13 +100,32 @@ export const VOICE_SYSTEM = {
       "action",
       "strategy",
       "how to",
+      "commit",
+      "goal",
+      "practice",
+      "accountability"
     ],
+    preferred_endpoints: [
+      "/api/standing-tall/practice",
+      "/api/energy/optimize",
+      "/api/creativity/unleash", 
+      "/api/abundance/cultivate",
+      "/api/transitions/navigate",
+      "/api/commitments/create",
+      "/api/commitments/active",
+      "/api/commitments/{id}/progress",
+      "/api/contracts/create",
+      "/api/ritual/auto-suggest"
+    ],
+    metabolization_focus: "action_planning"
   },
   Default: {
     id: "default",
     purpose: "Balanced, neutral, universally applicable",
     style: { tone: "balanced, clear, approachable" },
     triggers: [],
+    preferred_endpoints: ["/api/session-init", "/api/logs"],
+    metabolization_focus: "general_support"
   },
 };
 
@@ -149,13 +209,97 @@ export async function logMetamorphicEvent(env, event) {
   }
 }
 
-// Voice selection based on user input context
+// Enhanced trigger protocol system for automatic endpoint routing
+export function detectEndpointFromInput(userInput, context = {}) {
+  if (!userInput || typeof userInput !== "string") {
+    return null;
+  }
+
+  const input = userInput.toLowerCase();
+  
+  // Direct endpoint mapping based on trigger phrases
+  const endpointTriggers = {
+    "/api/dreams/interpret": [
+      "dream", "nightmare", "had a dream", "dreamed", "dreaming", 
+      "strange dream", "recurring dream", "symbolic dream"
+    ],
+    "/api/energy/optimize": [
+      "drained", "no energy", "exhausted", "tired", "fatigue", 
+      "burnout", "low energy", "feel depleted"
+    ],
+    "/api/values/clarify": [
+      "what matters", "don't know what's important", "values", 
+      "what really matters", "priority", "what's important"
+    ],
+    "/api/creativity/unleash": [
+      "creative block", "can't create", "stuck creatively", 
+      "writer's block", "no inspiration", "creative"
+    ],
+    "/api/abundance/cultivate": [
+      "money stress", "financial", "scarcity", "can't afford", 
+      "money tight", "abundance", "prosperity"
+    ],
+    "/api/transitions/navigate": [
+      "new phase", "transition", "changing", "uncertain", 
+      "moving into", "life change", "shift"
+    ],
+    "/api/ancestry/heal": [
+      "family patterns", "generational", "ancestry", "parents", 
+      "family dynamics", "inherited", "lineage"
+    ],
+    "/api/somatic/session": [
+      "body", "physical", "tension", "pain", "breathe", 
+      "embodied", "somatic", "body wisdom"
+    ],
+    "/api/standing-tall/practice": [
+      "feel small", "shrink", "confidence", "stand tall", 
+      "presence", "power", "authentic"
+    ],
+    "/api/commitments/create": [
+      "want to practice", "commit to", "goal", "accountability", 
+      "track progress", "promise myself"
+    ]
+  };
+
+  // Find matching endpoint
+  for (const [endpoint, triggers] of Object.entries(endpointTriggers)) {
+    if (triggers.some(trigger => input.includes(trigger))) {
+      return endpoint;
+    }
+  }
+
+  return null;
+}
+
+// Voice selection based on user input context with enhanced endpoint awareness
 export function selectOptimalVoice(userInput, context = {}) {
   if (!userInput || typeof userInput !== "string") {
     return "default";
   }
 
   const input = userInput.toLowerCase();
+  const detectedEndpoint = detectEndpointFromInput(userInput, context);
+
+  // If we detected a specific endpoint, prefer voices that work well with it
+  if (detectedEndpoint) {
+    const endpointVoiceMap = {
+      "/api/dreams/interpret": "oracle",
+      "/api/energy/optimize": "scientist",
+      "/api/values/clarify": "oracle",
+      "/api/creativity/unleash": "oracle",
+      "/api/abundance/cultivate": "oracle",
+      "/api/transitions/navigate": "oracle",
+      "/api/ancestry/heal": "oracle",
+      "/api/somatic/session": "mirror",
+      "/api/standing-tall/practice": "strategist",
+      "/api/commitments/create": "strategist",
+      "/api/trust/check-in": "mirror"
+    };
+    
+    if (endpointVoiceMap[detectedEndpoint]) {
+      return endpointVoiceMap[detectedEndpoint];
+    }
+  }
 
   // Check for explicit voice triggers
   for (const [voiceName, voice] of Object.entries(VOICE_SYSTEM)) {
@@ -167,12 +311,14 @@ export function selectOptimalVoice(userInput, context = {}) {
     }
   }
 
-  // Fallback logic based on emotional and content analysis
+  // Enhanced fallback logic based on emotional and content analysis
   if (
     input.includes("feel") ||
     input.includes("emotion") ||
     input.includes("hurt") ||
-    input.includes("scared")
+    input.includes("scared") ||
+    input.includes("body") ||
+    input.includes("physical")
   ) {
     return "mirror";
   }
@@ -180,7 +326,9 @@ export function selectOptimalVoice(userInput, context = {}) {
     input.includes("pattern") ||
     input.includes("meaning") ||
     input.includes("why") ||
-    input.includes("symbol")
+    input.includes("symbol") ||
+    input.includes("dream") ||
+    input.includes("wisdom")
   ) {
     return "oracle";
   }
@@ -188,7 +336,9 @@ export function selectOptimalVoice(userInput, context = {}) {
     input.includes("analyze") ||
     input.includes("understand") ||
     input.includes("how does") ||
-    input.includes("mechanism")
+    input.includes("mechanism") ||
+    input.includes("data") ||
+    input.includes("system")
   ) {
     return "scientist";
   }
@@ -196,7 +346,9 @@ export function selectOptimalVoice(userInput, context = {}) {
     input.includes("what should") ||
     input.includes("action") ||
     input.includes("next") ||
-    input.includes("plan")
+    input.includes("plan") ||
+    input.includes("commit") ||
+    input.includes("goal")
   ) {
     return "strategist";
   }
@@ -204,7 +356,88 @@ export function selectOptimalVoice(userInput, context = {}) {
   return "default";
 }
 
-// Generate Socratic questions for deeper exploration
+// Enhanced metabolization framework - maps experiences to specific API endpoints
+export function metabolizeExperience(userInput, context = {}) {
+  if (!userInput || typeof userInput !== "string") {
+    return { metabolizer: null, voice: "default", synthesis_type: "general" };
+  }
+
+  const input = userInput.toLowerCase();
+  
+  // Experience type detection and metabolizer mapping
+  const experienceMetabolizers = {
+    dreams: {
+      endpoint: "/api/dreams/interpret",
+      voice: "oracle",
+      synthesis_type: "archetypal_integration",
+      triggers: ["dream", "nightmare", "sleep", "unconscious"]
+    },
+    media: {
+      endpoint: "/api/media/extract-wisdom", 
+      voice: "oracle",
+      synthesis_type: "wisdom_extraction",
+      triggers: ["book", "article", "video", "podcast", "movie", "content"]
+    },
+    body_states: {
+      endpoint: "/api/somatic/session",
+      voice: "mirror", 
+      synthesis_type: "somatic_integration",
+      triggers: ["body", "physical", "tension", "pain", "sensation", "breathe"]
+    },
+    creative_blocks: {
+      endpoint: "/api/creativity/unleash",
+      voice: "oracle",
+      synthesis_type: "creative_liberation", 
+      triggers: ["creative", "block", "stuck", "inspiration", "art", "write"]
+    },
+    family_ancestry: {
+      endpoint: "/api/ancestry/heal",
+      voice: "oracle",
+      synthesis_type: "generational_healing",
+      triggers: ["family", "ancestry", "parents", "generational", "inherited"]
+    },
+    energy_depletion: {
+      endpoint: "/api/energy/optimize",
+      voice: "scientist", 
+      synthesis_type: "energy_restoration",
+      triggers: ["tired", "drained", "exhausted", "energy", "burnout"]
+    },
+    value_confusion: {
+      endpoint: "/api/values/clarify",
+      voice: "oracle",
+      synthesis_type: "value_alignment",
+      triggers: ["values", "what matters", "important", "priority"]
+    },
+    life_transitions: {
+      endpoint: "/api/transitions/navigate", 
+      voice: "oracle",
+      synthesis_type: "transition_wisdom",
+      triggers: ["transition", "change", "new phase", "uncertain", "shift"]
+    },
+    abundance_blocks: {
+      endpoint: "/api/abundance/cultivate",
+      voice: "oracle", 
+      synthesis_type: "abundance_consciousness",
+      triggers: ["money", "financial", "scarcity", "abundance", "prosperity"]
+    }
+  };
+
+  // Find matching metabolizer
+  for (const [type, metabolizer] of Object.entries(experienceMetabolizers)) {
+    if (metabolizer.triggers.some(trigger => input.includes(trigger))) {
+      return {
+        metabolizer: metabolizer.endpoint,
+        voice: metabolizer.voice,
+        synthesis_type: metabolizer.synthesis_type,
+        experience_type: type
+      };
+    }
+  }
+
+  return { metabolizer: null, voice: "default", synthesis_type: "general" };
+}
+
+// Generate Socratic questions for deeper exploration - expanded for new endpoints
 export function generateSocraticInquiry(topic, userContext = {}) {
   const inquiries = {
     trust: [
@@ -255,6 +488,48 @@ export function generateSocraticInquiry(topic, userContext = {}) {
       "What creative block is actually protecting you from something?",
       "How does your creativity connect to your authentic self?",
     ],
+    dreams: [
+      "What emotions did this dream evoke in you?",
+      "What symbols or images felt most significant?",
+      "How might this dream connect to your current life situation?",
+      "What is your unconscious trying to tell you through this dream?",
+    ],
+    energy: [
+      "When do you feel most energized and alive?",
+      "What activities or people drain your energy?",
+      "How does your body signal when it needs rest vs. stimulation?",
+      "What would honoring your natural energy rhythms look like?",
+    ],
+    values: [
+      "What values feel most alive and true for you right now?",
+      "When have you compromised your values and how did it feel?",
+      "What would living fully aligned with your values look like?",
+      "Which of your values is calling for more expression?",
+    ],
+    abundance: [
+      "What beliefs about money or resources did you inherit?",
+      "When have you felt truly abundant, regardless of circumstances?",
+      "What would change if you trusted that there's enough?",
+      "How does scarcity thinking show up in other areas of your life?",
+    ],
+    transitions: [
+      "What are you leaving behind in this transition?",
+      "What new part of yourself wants to emerge?",
+      "What support do you need during this change?",
+      "How can you honor both the ending and the beginning?",
+    ],
+    ancestry: [
+      "What patterns from your family lineage serve you?",
+      "What inherited patterns are ready to be transformed?",
+      "How do you want to honor your ancestors while creating your own path?",
+      "What gifts from your lineage want to be expressed through you?",
+    ],
+    commitments: [
+      "What commitment would feel most supportive right now?",
+      "How do you want to be held accountable?",
+      "What small step could you commit to today?",
+      "What would success look like for this commitment?",
+    ]
   };
 
   return inquiries[topic] || inquiries.trust;
@@ -451,7 +726,7 @@ export async function performHealthChecks(env) {
   return checks;
 }
 
-// Enhanced response wrapper with ARK 2.0 features
+// Enhanced response wrapper with ARK 2.0 features and synthesis capabilities
 export async function enhanceResponse(
   originalResponse,
   context,
@@ -465,6 +740,8 @@ export async function enhanceResponse(
       context.userInput || "",
       context,
     );
+    const metabolization = metabolizeExperience(context.userInput || "", context);
+    const detectedEndpoint = detectEndpointFromInput(context.userInput || "", context);
 
     const enhancement = {
       ...originalResponse,
@@ -474,6 +751,8 @@ export async function enhanceResponse(
       voice_system: VOICE_SYSTEM[voice] || VOICE_SYSTEM.Default,
       autonomous_features_active: true,
       session_continuity: true,
+      metabolization: metabolization,
+      suggested_endpoint: detectedEndpoint,
     };
 
     // Add intervention support if needed
@@ -486,8 +765,30 @@ export async function enhanceResponse(
     // Add Socratic inquiry for deeper exploration
     if (options.includeSocratic) {
       const topic =
-        options.socraticTopic || context.endpoint?.split("/")[2] || "trust";
+        options.socraticTopic || 
+        metabolization.experience_type ||
+        context.endpoint?.split("/")[2] || 
+        "trust";
       enhancement.deeper_inquiry = generateSocraticInquiry(topic, context);
+    }
+
+    // Add synthesis recommendations based on metabolization
+    if (metabolization.metabolizer) {
+      enhancement.synthesis_recommendation = {
+        endpoint: metabolization.metabolizer,
+        voice: metabolization.voice,
+        type: metabolization.synthesis_type,
+        rationale: `This experience appears to be ${metabolization.experience_type.replace('_', ' ')}, which would benefit from ${metabolization.synthesis_type.replace('_', ' ')}.`
+      };
+    }
+
+    // Add daily/longitudinal synthesis suggestions
+    if (options.includeSynthesis) {
+      enhancement.synthesis_options = {
+        daily: "/api/wisdom/daily-synthesis",
+        longitudinal: "/api/insights",
+        pattern_recognition: "/api/patterns/recognize"
+      };
     }
 
     // Log the enhanced interaction
@@ -500,6 +801,8 @@ export async function enhanceResponse(
           interventions_detected: interventions.needsSupport,
           user_input_length: (context.userInput || "").length,
           response_enhanced: true,
+          metabolization_type: metabolization.synthesis_type,
+          suggested_endpoint: detectedEndpoint
         },
         signal_strength: interventions.needsSupport ? "high" : "medium",
         session_id: context.session_id || null,
@@ -512,6 +815,63 @@ export async function enhanceResponse(
     console.warn("ARK enhancement failed, using original response:", error);
     return originalResponse;
   }
+}
+
+// Enhanced error handling with fallback paths for new endpoints
+export function generateEndpointFallback(endpoint, userInput, context = {}) {
+  const fallbacks = {
+    "/api/dreams/interpret": {
+      fallback_response: "I can still help you explore this dream symbolically, even without the formal archetypal mapping.",
+      alternative_approach: "Let's reflect on the emotions and imagery that stood out to you.",
+      voice: "oracle"
+    },
+    "/api/energy/optimize": {
+      fallback_response: "I can still offer some general energy restoration practices.",
+      alternative_approach: "Let's start with basic rest, movement, and boundary awareness.",
+      voice: "scientist"
+    },
+    "/api/values/clarify": {
+      fallback_response: "We can explore your values through reflection and inquiry.",
+      alternative_approach: "What feels most important and alive for you right now?",
+      voice: "oracle"
+    },
+    "/api/creativity/unleash": {
+      fallback_response: "I can still help you work with creative blocks through exploration.",
+      alternative_approach: "What wants to be expressed through you, even in small ways?",
+      voice: "oracle"
+    },
+    "/api/abundance/cultivate": {
+      fallback_response: "We can explore your relationship with abundance and scarcity.",
+      alternative_approach: "What beliefs about resources feel ready to shift?",
+      voice: "oracle"
+    },
+    "/api/transitions/navigate": {
+      fallback_response: "I can support you through this transition with presence and inquiry.",
+      alternative_approach: "What are you leaving behind, and what wants to emerge?",
+      voice: "oracle"
+    },
+    "/api/ancestry/heal": {
+      fallback_response: "We can explore family patterns through reflection and awareness.",
+      alternative_approach: "What inherited patterns are you noticing in your life?",
+      voice: "oracle"
+    },
+    "/api/commitments/create": {
+      fallback_response: "I can still help you clarify and track commitments through our conversation.",
+      alternative_approach: "What practice would feel most supportive to commit to?",
+      voice: "strategist"
+    },
+    "/api/somatic/session": {
+      fallback_response: "We can still work with body awareness through guided attention.",
+      alternative_approach: "What is your body telling you right now?",
+      voice: "mirror"
+    }
+  };
+
+  return fallbacks[endpoint] || {
+    fallback_response: "I'm here to support you through reflection and presence.",
+    alternative_approach: "Let's explore this together through conversation.",
+    voice: "mirror"
+  };
 }
 
 // ARK Action Framework Constants for symbolic action logging

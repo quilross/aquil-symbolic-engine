@@ -11,10 +11,11 @@ export const ARK_MANIFEST = [
   {
     name: "handleSessionInit",
     path: "/api/session-init",
-    description:
-      "Session initialization with continuity and AI-crafted opening",
+    description: "Session initialization with continuity and AI-crafted opening",
     storage: ["D1", "Worker AI"],
     logs: true,
+    triggers: ["start", "begin", "hello", "hi", "new session"],
+    voices: ["mirror", "oracle", "scientist", "strategist"]
   },
   {
     name: "handleDiscoveryInquiry",
@@ -22,13 +23,17 @@ export const ARK_MANIFEST = [
     description: "Generate Socratic questions using AI and log inquiry",
     storage: ["D1", "Worker AI"],
     logs: true,
+    triggers: ["question", "explore", "deeper", "inquiry", "socratic"],
+    voices: ["oracle", "scientist"]
   },
   {
     name: "handleRitualSuggestion",
     path: "/api/ritual/auto-suggest",
-    description: "Suggest rituals using AI and log suggestion",
+    description: "Suggest rituals for collapse loops, disconnection, stagnation, identity doubt, energy optimization, creative blocks, abundance",
     storage: ["D1", "Worker AI"],
     logs: true,
+    triggers: ["ritual", "practice", "ceremony", "stuck", "disconnected", "stagnant", "doubt", "drained", "blocked", "scarcity"],
+    voices: ["strategist", "oracle"]
   },
   {
     name: "handleHealthCheck",
@@ -36,6 +41,8 @@ export const ARK_MANIFEST = [
     description: "Perform health checks and log results",
     storage: ["D1"],
     logs: true,
+    triggers: ["health", "status", "check", "system"],
+    voices: ["scientist"]
   },
   {
     name: "handleRetrieveLogs",
@@ -43,6 +50,8 @@ export const ARK_MANIFEST = [
     description: "Retrieve conversation history and context",
     storage: ["D1"],
     logs: false,
+    triggers: ["history", "logs", "past", "previous", "remember"],
+    voices: ["mirror", "scientist"]
   },
   {
     name: "handleLog",
@@ -50,7 +59,180 @@ export const ARK_MANIFEST = [
     description: "General logging endpoint for events and feedback",
     storage: ["D1", "KV"],
     logs: true,
+    triggers: ["log", "record", "save", "remember"],
+    voices: ["mirror", "scientist"]
   },
+  {
+    name: "handleTrustCheckIn",
+    path: "/api/trust/check-in",
+    description: "Analyze trust patterns and provide embodied practices",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["trust", "doubt", "confidence", "self-trust", "decision", "uncertainty"],
+    voices: ["mirror", "oracle"]
+  },
+  {
+    name: "handleMediaWisdom",
+    path: "/api/media/extract-wisdom",
+    description: "Extract wisdom from books, articles, videos, podcasts",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["book", "article", "video", "podcast", "media", "content", "wisdom", "insights"],
+    voices: ["oracle", "scientist"]
+  },
+  {
+    name: "handleSomaticSession",
+    path: "/api/somatic/session",
+    description: "Generate body-based healing sessions and somatic practices",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["body", "somatic", "physical", "tension", "pain", "embodied", "sensation", "breathe"],
+    voices: ["mirror", "oracle"]
+  },
+  {
+    name: "handleWisdomSynthesis",
+    path: "/api/wisdom/synthesize",
+    description: "Synthesize insights from multiple experiences and patterns",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["synthesize", "integrate", "wisdom", "insights", "patterns", "meaning"],
+    voices: ["oracle", "scientist"]
+  },
+  {
+    name: "handlePatternRecognition",
+    path: "/api/patterns/recognize",
+    description: "Recognize behavioral and emotional patterns across experiences",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["pattern", "recurring", "habit", "behavior", "cycle", "repeat"],
+    voices: ["scientist", "oracle"]
+  },
+  {
+    name: "handleStandingTall",
+    path: "/api/standing-tall/practice",
+    description: "Generate practices for confidence, authenticity, and personal power",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["confidence", "power", "authentic", "small", "shrink", "stand tall", "presence"],
+    voices: ["strategist", "mirror"]
+  },
+  {
+    name: "handleDreamInterpretation",
+    path: "/api/dreams/interpret",
+    description: "Interpret dreams using archetypal and symbolic analysis",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["dream", "nightmare", "sleep", "unconscious", "symbolic", "archetypal"],
+    voices: ["oracle"]
+  },
+  {
+    name: "handleEnergyOptimization",
+    path: "/api/energy/optimize",
+    description: "Optimize energy levels through lifestyle and somatic practices",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["energy", "tired", "drained", "exhausted", "fatigue", "vitality", "burnout"],
+    voices: ["scientist", "strategist"]
+  },
+  {
+    name: "handleValuesClarification",
+    path: "/api/values/clarify",
+    description: "Clarify core values and align decisions with authentic self",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["values", "what matters", "important", "priority", "authentic", "align"],
+    voices: ["oracle", "mirror"]
+  },
+  {
+    name: "handleCreativityUnleashing",
+    path: "/api/creativity/unleash",
+    description: "Overcome creative blocks and unleash authentic expression",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["creative", "block", "stuck", "express", "art", "write", "create", "inspiration"],
+    voices: ["oracle", "strategist"]
+  },
+  {
+    name: "handleAbundanceCultivation",
+    path: "/api/abundance/cultivate",
+    description: "Transform scarcity mindset and cultivate abundance consciousness",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["money", "abundance", "scarcity", "financial", "wealth", "prosperity", "lack"],
+    voices: ["oracle", "strategist"]
+  },
+  {
+    name: "handleTransitionNavigation",
+    path: "/api/transitions/navigate",
+    description: "Navigate life transitions with wisdom and support",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["transition", "change", "moving", "new phase", "uncertain", "shift", "transform"],
+    voices: ["oracle", "strategist"]
+  },
+  {
+    name: "handleAncestryHealing",
+    path: "/api/ancestry/heal",
+    description: "Heal ancestral patterns and family dynamics",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["family", "ancestry", "generational", "parents", "lineage", "inherited", "ancestral"],
+    voices: ["oracle", "mirror"]
+  },
+  {
+    name: "handleCommitmentCreation",
+    path: "/api/commitments/create",
+    description: "Create trackable commitments with accountability",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["commit", "promise", "goal", "practice", "accountability", "track"],
+    voices: ["strategist"]
+  },
+  {
+    name: "handleActiveCommitments",
+    path: "/api/commitments/active",
+    description: "Retrieve active commitments and progress tracking",
+    storage: ["D1"],
+    logs: false,
+    triggers: ["commitments", "progress", "active", "tracking", "goals"],
+    voices: ["strategist", "scientist"]
+  },
+  {
+    name: "handleCommitmentProgress",
+    path: "/api/commitments/{id}/progress",
+    description: "Log progress on specific commitments",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["progress", "update", "commitment", "check-in"],
+    voices: ["strategist", "mirror"]
+  },
+  {
+    name: "handleContractCreation",
+    path: "/api/contracts/create",
+    description: "Create formal contracts with self or others",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["contract", "agreement", "formal", "commitment", "accountability"],
+    voices: ["strategist"]
+  },
+  {
+    name: "handleDailySynthesis",
+    path: "/api/wisdom/daily-synthesis",
+    description: "Generate daily wisdom synthesis and compass",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["daily", "synthesis", "compass", "today", "morning", "evening"],
+    voices: ["oracle", "scientist"]
+  },
+  {
+    name: "handleInsights",
+    path: "/api/insights",
+    description: "Generate longitudinal insights and growth patterns",
+    storage: ["D1"],
+    logs: true,
+    triggers: ["insights", "growth", "progress", "patterns", "trajectory"],
+    voices: ["scientist", "oracle"]
+  }
 ];
 
 // Helper to call Worker AI (supports both env.AI and env.AI_GATEWAY)
