@@ -6,7 +6,7 @@
 export const AUTONOMOUS_TRIGGERS = {
   keywords: {
     // Financial/abundance triggers should be checked first to avoid wellbeing overlap
-    abundance: ["money", "broke", "wealth", "scarcity", "prosperity", "charging", "rates", "financial", "income", "expensive", "afford", "budget", "salary", "payment", "worried about money"],
+    abundance: ["money", "broke", "wealth", "scarcity", "prosperity", "charging", "rates", "financial", "income", "expensive", "afford", "budget", "salary", "payment", "worried about money", "financial stress", "money stress", "broke and stressed"],
     transitions: ["new job", "move", "change", "transition", "phase", "chapter", "ending", "beginning", "shift", "transform", "relocating", "starting", "leaving", "moving"],
     wellbeing: ["doubt", "uncertain", "insecure", "anxious", "overwhelm", "worried", "fear", "scared", "panic", "nervous", "uneasy", "stressed"],
     somatic: ["body", "tight", "shoulders", "chest", "tense", "pain", "breath", "breathing", "headache", "stomach", "muscle"],
@@ -37,24 +37,33 @@ export async function detectTriggers(text, env) {
   const lowerText = text.toLowerCase();
   const matches = [];
   
-  // Find all matches with their confidence scores
+  // Find all matches with their confidence scores and phrase length weighting
   for (const [action, keywords] of Object.entries(AUTONOMOUS_TRIGGERS.keywords)) {
     const matchedKeywords = keywords.filter(keyword => lowerText.includes(keyword));
     if (matchedKeywords.length > 0) {
+      // Calculate average phrase length to prioritize compound phrases
+      const avgPhraseLength = matchedKeywords.reduce((sum, keyword) => sum + keyword.split(' ').length, 0) / matchedKeywords.length;
+      
       matches.push({
         action, 
         keywords: matchedKeywords,
         trigger_type: 'keyword',
         confidence: matchedKeywords.length / keywords.length,
-        matchCount: matchedKeywords.length
+        matchCount: matchedKeywords.length,
+        avgPhraseLength: avgPhraseLength,
+        // Boost score for longer phrases and specific financial terms
+        adjustedScore: (matchedKeywords.length / keywords.length) * avgPhraseLength
       });
     }
   }
   
   if (matches.length === 0) return null;
   
-  // Sort by confidence (highest first), then by match count
+  // Sort by adjusted score (prioritizes compound phrases), then confidence, then match count
   matches.sort((a, b) => {
+    if (b.adjustedScore !== a.adjustedScore) {
+      return b.adjustedScore - a.adjustedScore;
+    }
     if (b.confidence !== a.confidence) {
       return b.confidence - a.confidence;
     }

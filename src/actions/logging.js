@@ -228,7 +228,7 @@ export async function writeLog(
 
 // Enhanced logging for autonomous actions
 export async function writeAutonomousLog(env, data) {
-  const { action, trigger_keywords, trigger_phrase, user_state, response } = data;
+  const { action, trigger_keywords, trigger_phrase, user_state, response, session_id, level } = data;
   
   const autonomousLogData = {
     type: 'autonomous_action',
@@ -241,9 +241,9 @@ export async function writeAutonomousLog(env, data) {
       timestamp: new Date().toISOString(),
       autonomous: true
     },
-    session_id: data.session_id || crypto.randomUUID(),
+    session_id: session_id || crypto.randomUUID(),
     who: 'system',
-    level: 'info',
+    level: level || 'info',
     tags: ['autonomous', action, ...(trigger_keywords || [])],
     textOrVector: `Autonomous action: ${action}. Triggered by: ${trigger_phrase || 'system'}. Keywords: ${(trigger_keywords || []).join(', ')}`
   };
@@ -254,22 +254,40 @@ export async function writeAutonomousLog(env, data) {
 // Read logs with autonomous filtering
 export async function readAutonomousLogs(env, opts = {}) {
   const limit = Math.min(parseInt(opts.limit || '20', 10), 200);
+  const filters = opts.filters || {};
   const results = {};
 
-  // D1 - Filter for autonomous actions
+  // D1 - Filter for autonomous actions with additional filters
   try {
-    const { results: d1logs } = await env.AQUIL_DB.prepare(
-      `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags 
+    let query = `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags 
        FROM metamorphic_logs 
-       WHERE kind = 'autonomous_action' OR tags LIKE '%autonomous%'
-       ORDER BY timestamp DESC LIMIT ?`
-    ).bind(limit).all();
+       WHERE (kind = 'autonomous_action' OR tags LIKE '%autonomous%')`;
+    const params = [];
+    
+    // Add additional filters
+    if (filters.type) {
+      query += ` AND kind = ?`;
+      params.push(filters.type);
+    }
+    if (filters.session_id) {
+      query += ` AND session_id = ?`;
+      params.push(filters.session_id);
+    }
+    if (filters.level) {
+      query += ` AND signal_strength = ?`;
+      params.push(filters.level);
+    }
+    
+    query += ` ORDER BY timestamp DESC LIMIT ?`;
+    params.push(limit);
+    
+    const { results: d1logs } = await env.AQUIL_DB.prepare(query).bind(...params).all();
     results.d1 = d1logs;
   } catch (e) {
     results.d1 = String(e);
   }
 
-  // KV - Look for autonomous logs
+  // KV - Look for autonomous logs with filtering
   try {
     const kvList = await env.AQUIL_MEMORIES.list({ prefix: 'autonomous_action:' });
     const autonomousLogs = [];
@@ -278,7 +296,17 @@ export async function readAutonomousLogs(env, opts = {}) {
       try {
         const logData = await env.AQUIL_MEMORIES.get(key.name);
         if (logData) {
-          autonomousLogs.push(JSON.parse(logData));
+          const parsedLog = JSON.parse(logData);
+          
+          // Apply filters if provided
+          let includeLog = true;
+          if (filters.type && parsedLog.type !== filters.type) includeLog = false;
+          if (filters.session_id && parsedLog.session_id !== filters.session_id) includeLog = false;
+          if (filters.level && parsedLog.level !== filters.level) includeLog = false;
+          
+          if (includeLog) {
+            autonomousLogs.push(parsedLog);
+          }
         }
       } catch (e) {
         console.error('Error reading autonomous log from KV:', e);
