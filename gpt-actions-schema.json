@@ -1376,5 +1376,27 @@
         }
       }
     }
-  }
+  },
+  "x-openai-conversation-starters": [
+    "I had a recurring dream about my childhood home.",
+    "I feel so drained today, no energy at all.",
+    "I don't know what really matters to me right now.",
+    "I keep hitting a creative block when writing.",
+    "Money feels tight and stressful right now.",
+    "I'm moving into a new phase of life and feel uncertain.",
+    "I keep repeating patterns from my family.",
+    "My body feels tense and I can't relax.",
+    "I feel small and powerless in meetings.",
+    "I don't trust my own decisions anymore.",
+    "I want to practice meditation for the next month.",
+    "I keep repeating the same mistakes.",
+    "I just read a book that really moved me.",
+    "Help me make sense of everything happening.",
+    "I'm feeling overwhelmed and need grounding.",
+    "What does this dream mean symbolically?",
+    "I want to analyze my behavioral patterns.",
+    "What should I do next in this situation?",
+    "What does my body need today?",
+    "Help me synthesize today's experiences."
+  ]
 }
