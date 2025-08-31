@@ -32,9 +32,11 @@
     "itty-router": "^5.0.22"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.0.0",
+    "@cloudflare/workers-types": "^4.20250831.0",
     "ajv": "^8.17.1",
-    "wrangler": "^4.33.0"
+    "axios": "^1.11.0",
+    "node-fetch": "^3.3.2",
+    "wrangler": "^4.33.1"
   },
   "repository": {
     "type": "git",

@@ -1015,6 +1015,269 @@
           }
         }
       }
+    },
+    "/api/patterns/autonomous-detect": {
+      "post": {
+        "summary": "Autonomous pattern detection and ritual suggestion",
+        "description": "Automatically detect behavioral patterns and suggest healing rituals. Use when user shows signs of recurring patterns or needs intervention.",
+        "operationId": "autonomousPatternDetect",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recent_interactions": {
+                    "type": "array",
+                    "description": "Recent user interactions for pattern analysis"
+                  },
+                  "user_state": {
+                    "type": "string",
+                    "description": "Current user emotional/mental state"
+                  },
+                  "context": {
+                    "type": "object",
+                    "description": "Additional context for pattern detection"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pattern detection results with ritual suggestions"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/commitments/create": {
+      "post": {
+        "summary": "Create behavioral change commitment",
+        "description": "Create and track commitments for personal growth and behavioral change.",
+        "operationId": "createCommitment",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title of the commitment"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Detailed description of the commitment"
+                  },
+                  "commitment_type": {
+                    "type": "string",
+                    "description": "Type of commitment (behavioral_change, habit_formation, etc.)"
+                  },
+                  "target_date": {
+                    "type": "string",
+                    "description": "Target completion date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Commitment created successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/commitments/active": {
+      "get": {
+        "summary": "Get active commitments",
+        "description": "Retrieve all active behavioral change commitments.",
+        "operationId": "getActiveCommitments",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "List of active commitments"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/socratic/question": {
+      "post": {
+        "summary": "Generate Socratic questions for self-discovery",
+        "description": "Generate deep, thoughtful questions to guide self-discovery and insight. Use when user needs guidance for reflection.",
+        "operationId": "socraticQuestion",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": {
+                    "type": "object",
+                    "description": "Context for question generation"
+                  },
+                  "topic": {
+                    "type": "string",
+                    "description": "Topic area (self_discovery, relationships, purpose, growth)"
+                  },
+                  "depth_level": {
+                    "type": "string",
+                    "description": "Question depth (surface, deep, archetypal)"
+                  },
+                  "voice_preference": {
+                    "type": "string",
+                    "description": "Preferred voice (mirror, oracle, scientist, strategist)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Socratic questions and integration practices"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/coaching/comb-analysis": {
+      "post": {
+        "summary": "COM-B model behavioral analysis",
+        "description": "Analyze behavior change using Capability, Opportunity, Motivation framework. Use for systematic behavior change planning.",
+        "operationId": "combAnalysis",
+        "x-openai-isConsequential": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "behavior_goal": {
+                    "type": "string",
+                    "description": "Target behavior to achieve"
+                  },
+                  "current_situation": {
+                    "type": "string",
+                    "description": "Current behavioral patterns and situation"
+                  },
+                  "context": {
+                    "type": "object",
+                    "description": "Additional context for analysis"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "COM-B analysis with intervention recommendations"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/monitoring/metrics": {
+      "get": {
+        "summary": "Get system monitoring metrics",
+        "description": "Retrieve comprehensive system health and performance metrics for production monitoring.",
+        "operationId": "getMonitoringMetrics",
+        "x-openai-isConsequential": false,
+        "responses": {
+          "200": {
+            "description": "System metrics and health status"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/contracts/create": {
+      "post": {
+        "summary": "Create transformation contract",
+        "description": "Create a structured transformation contract with milestones, support systems, and tracking methods.",
+        "operationId": "createTransformationContract",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transformation_goal": {
+                    "type": "string",
+                    "description": "Clear statement of transformation goal"
+                  },
+                  "current_state": {
+                    "type": "string",
+                    "description": "Description of current state"
+                  },
+                  "desired_state": {
+                    "type": "string",
+                    "description": "Description of desired future state"
+                  },
+                  "timeline": {
+                    "type": "string",
+                    "description": "Expected timeline for transformation"
+                  },
+                  "accountability_measures": {
+                    "type": "array",
+                    "description": "Specific accountability measures"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transformation contract created with milestones and support system"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
     }
   },
   "components": {

@@ -98,7 +98,7 @@ export async function handleSessionInit(request, env) {
   const sessionId = generateId();
   const continuity = await fetchContinuityLogs(env);
 
-  // AI-generated Mirror opening
+  // AI-generated Mirror opening with enhanced integration
   let mirrorOpening;
   try {
     const prompt = `Weave these continuity events into a grounding Mirror opening: ${JSON.stringify(continuity)}`;
