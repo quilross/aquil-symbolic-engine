@@ -270,7 +270,7 @@ router.all("*", () => addCORS(new Response(JSON.stringify({ error: "Not found", 
 export default {
   async fetch(request, env, ctx) {
     attachLocalVectorContext(env);
-    return router.handle(request, env, ctx);
+    return router.fetch(request, env, ctx);
   }
 };
 export { ARK_MANIFEST } from "./ark/endpoints.js";

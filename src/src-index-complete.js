@@ -648,7 +648,7 @@ router.all(
 
 export default {
   async fetch(request, env, ctx) {
-    return router.handle(request, env, ctx).catch((err) => {
+    return router.fetch(request, env, ctx).catch((err) => {
       console.error("Aquil system error:", err);
       return new Response(
         JSON.stringify({
