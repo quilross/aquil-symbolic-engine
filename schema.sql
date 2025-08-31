@@ -173,13 +173,45 @@ CREATE TABLE IF NOT EXISTS event_log (
     payload TEXT NOT NULL
 );
 
--- Basic indexes to speed up queries
+-- Enhanced indexes for optimal query performance
 CREATE INDEX IF NOT EXISTS idx_metamorphic_timestamp ON metamorphic_logs(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_metamorphic_session ON metamorphic_logs(session_id);
 CREATE INDEX IF NOT EXISTS idx_metamorphic_kind ON metamorphic_logs(kind);
+CREATE INDEX IF NOT EXISTS idx_metamorphic_voice ON metamorphic_logs(voice_used);
+CREATE INDEX IF NOT EXISTS idx_metamorphic_signal ON metamorphic_logs(signal_strength);
 
+-- Composite indexes for common query patterns
+CREATE INDEX IF NOT EXISTS idx_metamorphic_kind_timestamp ON metamorphic_logs(kind, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_metamorphic_session_timestamp ON metamorphic_logs(session_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_metamorphic_autonomous ON metamorphic_logs(kind, timestamp DESC) WHERE kind = 'autonomous_action';
+
+-- Event log indexes (fallback table)
 CREATE INDEX IF NOT EXISTS idx_event_ts ON event_log(ts DESC);
 CREATE INDEX IF NOT EXISTS idx_event_type ON event_log(type);
 CREATE INDEX IF NOT EXISTS idx_event_session ON event_log(session_id);
 CREATE INDEX IF NOT EXISTS idx_event_who ON event_log(who);
 CREATE INDEX IF NOT EXISTS idx_event_level ON event_log(level);
+CREATE INDEX IF NOT EXISTS idx_event_type_ts ON event_log(type, ts DESC);
+CREATE INDEX IF NOT EXISTS idx_event_session_ts ON event_log(session_id, ts DESC);
+
+-- Wisdom and growth tracking indexes
+CREATE INDEX IF NOT EXISTS idx_trust_sessions_timestamp ON trust_sessions(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_trust_sessions_type ON trust_sessions(session_type);
+CREATE INDEX IF NOT EXISTS idx_media_wisdom_timestamp ON media_wisdom(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_media_wisdom_type ON media_wisdom(media_type);
+CREATE INDEX IF NOT EXISTS idx_somatic_sessions_timestamp ON somatic_sessions(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_wisdom_synthesis_timestamp ON wisdom_synthesis(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_wisdom_synthesis_type ON wisdom_synthesis(synthesis_type);
+CREATE INDEX IF NOT EXISTS idx_growth_patterns_type_timestamp ON growth_patterns(pattern_type, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_wisdom_compilation_date ON wisdom_compilation(date DESC);
+
+-- Standing tall and trust building indexes
+CREATE INDEX IF NOT EXISTS idx_trust_exercises_timestamp ON trust_exercises(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_trust_exercises_type ON trust_exercises(exercise_type);
+CREATE INDEX IF NOT EXISTS idx_standing_tall_timestamp ON standing_tall_sessions(timestamp DESC);
+
+-- Performance optimization: Partial indexes for frequently accessed data
+CREATE INDEX IF NOT EXISTS idx_recent_metamorphic ON metamorphic_logs(timestamp DESC) 
+  WHERE timestamp > datetime('now', '-7 days');
+CREATE INDEX IF NOT EXISTS idx_recent_events ON event_log(ts DESC) 
+  WHERE ts > datetime('now', '-7 days');

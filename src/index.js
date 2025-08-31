@@ -44,6 +44,28 @@ import {
   AUTONOMOUS_TRIGGERS 
 } from "./utils/autonomy.js";
 
+// Enhanced utilities for better error handling and responses
+import { 
+  handleError, 
+  createErrorResponse, 
+  withErrorHandling,
+  handleHealthCheckError 
+} from "./utils/error-handler.js";
+import { 
+  createSuccessResponse,
+  createSimpleErrorResponse,
+  handleCORSPreflight,
+  addCORSToResponse,
+  createAutonomousResponse,
+  createHealthResponse,
+  extractSessionId,
+  createWisdomResponse,
+  createPatternResponse,
+  createSessionInitResponse,
+  createCommitmentResponse,
+  createFallbackResponse
+} from "./utils/response-helpers.js";
+
 // Dream interpretation helpers
 function interpretSymbol(symbol) {
   const symbolMeanings = {
@@ -819,7 +841,8 @@ const createJsonPlaceholder = (path) => {
     );
   });
 };
-router.options("*", () => new Response(null, { status: 200, headers: corsHeaders }));
+// Handle CORS preflight requests with new utility
+router.options("*", () => handleCORSPreflight());
 
 // ARK RETRIEVAL & LOGGING ENDPOINTS - Enhanced nervous system
 router.post("/api/ark/log", async (req, env) => addCORS(await arkLog(req, env)));

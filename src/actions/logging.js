@@ -226,27 +226,49 @@ export async function writeLog(
   return status;
 }
 
-// Enhanced logging for autonomous actions
+// Enhanced logging for autonomous actions with improved traceability
 export async function writeAutonomousLog(env, data) {
   const { action, trigger_keywords, trigger_phrase, user_state, response, session_id, level } = data;
+
   
   const autonomousLogData = {
     type: 'autonomous_action',
     payload: {
+      trace_id: traceId,
       action,
       trigger_keywords: trigger_keywords || [],
       trigger_phrase: trigger_phrase || '',
       user_state: user_state || 'unknown',
       response_summary: response?.message || 'No response',
+      confidence_score: confidence || null,
+      target_endpoint: endpoint || null,
       timestamp: new Date().toISOString(),
-      autonomous: true
+      autonomous: true,
+      processing_time_ms: data.processing_time_ms || null,
+      success: data.success !== false, // Default to true unless explicitly false
+      error_details: data.error || null
     },
     session_id: session_id || crypto.randomUUID(),
     who: 'system',
     level: level || 'info',
     tags: ['autonomous', action, ...(trigger_keywords || [])],
     textOrVector: `Autonomous action: ${action}. Triggered by: ${trigger_phrase || 'system'}. Keywords: ${(trigger_keywords || []).join(', ')}`
+
   };
+
+  // Also store in KV with enhanced structure for quick autonomous queries
+  try {
+    await env.AQUIL_MEMORIES.put(
+      `autonomous_${traceId}`,
+      JSON.stringify({
+        ...autonomousLogData.payload,
+        full_log_id: autonomousLogData.session_id
+      }),
+      { expirationTtl: 86400 * 7 } // 7 days for autonomous actions
+    );
+  } catch (kvError) {
+    console.warn('Failed to store autonomous log in KV:', kvError);
+  }
 
   return await writeLog(env, autonomousLogData);
 }
@@ -321,40 +343,120 @@ export async function readAutonomousLogs(env, opts = {}) {
   return results;
 }
 
-// Get autonomous action statistics
+// Enhanced autonomous action statistics with better analytics
 export async function getAutonomousStats(env, timeframe = '24h') {
   try {
-    const hoursBack = timeframe === '24h' ? 24 : timeframe === '7d' ? 168 : 24;
-    const cutoffTime = Date.now() - (hoursBack * 60 * 60 * 1000);
-    
-    const { results } = await env.AQUIL_DB.prepare(
-      `SELECT kind, COUNT(*) as count, tags
-       FROM metamorphic_logs 
-       WHERE (kind = 'autonomous_action' OR tags LIKE '%autonomous%') 
-       AND timestamp > ?
-       GROUP BY kind, tags`
-    ).bind(cutoffTime).all();
+    const hoursBack = timeframe === '24h' ? 24 : timeframe === '7d' ? 168 : timeframe === '30d' ? 720 : 24;
+    const cutoffTime = new Date(Date.now() - (hoursBack * 60 * 60 * 1000)).toISOString();
     
     const stats = {
       total_autonomous_actions: 0,
       actions_by_type: {},
       triggers_by_keyword: {},
-      timeframe
+      success_rate: 0,
+      average_confidence: 0,
+      most_common_triggers: [],
+      timeframe,
+      analysis_timestamp: new Date().toISOString()
     };
-    
-    for (const row of results) {
-      stats.total_autonomous_actions += row.count;
+
+    // Get detailed autonomous logs from D1
+    try {
+      const { results } = await env.AQUIL_DB.prepare(
+        `SELECT kind, detail, tags, timestamp
+         FROM metamorphic_logs 
+         WHERE (kind = 'autonomous_action' OR tags LIKE '%autonomous%') 
+         AND timestamp > ?
+         ORDER BY timestamp DESC`
+      ).bind(cutoffTime).all();
       
-      // Parse the detail to get action type
+      let totalConfidence = 0;
+      let confidenceCount = 0;
+      let successCount = 0;
+      const triggerCounts = {};
+      
+      for (const row of results) {
+        stats.total_autonomous_actions++;
+        
+        try {
+          const detail = JSON.parse(row.detail || '{}');
+          const tags = JSON.parse(row.tags || '[]');
+          
+          // Count actions by type
+          if (detail.action) {
+            stats.actions_by_type[detail.action] = (stats.actions_by_type[detail.action] || 0) + 1;
+          }
+          
+          // Track success rate
+          if (detail.success !== false) {
+            successCount++;
+          }
+          
+          // Track confidence scores
+          if (detail.confidence_score && typeof detail.confidence_score === 'number') {
+            totalConfidence += detail.confidence_score;
+            confidenceCount++;
+          }
+          
+          // Count trigger keywords
+          if (detail.trigger_keywords && Array.isArray(detail.trigger_keywords)) {
+            detail.trigger_keywords.forEach(keyword => {
+              triggerCounts[keyword] = (triggerCounts[keyword] || 0) + 1;
+            });
+          }
+          
+        } catch (parseError) {
+          console.warn('Error parsing autonomous log detail:', parseError);
+        }
+      }
+      
+      // Calculate derived statistics
+      stats.success_rate = stats.total_autonomous_actions > 0 ? 
+        (successCount / stats.total_autonomous_actions) * 100 : 0;
+      
+      stats.average_confidence = confidenceCount > 0 ? 
+        totalConfidence / confidenceCount : 0;
+      
+      // Get most common triggers (top 10)
+      stats.most_common_triggers = Object.entries(triggerCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([keyword, count]) => ({ keyword, count }));
+      
+      stats.triggers_by_keyword = triggerCounts;
+      
+    } catch (d1Error) {
+      console.warn('D1 query failed, trying KV fallback:', d1Error);
+      
+      // Fallback to KV storage
       try {
-        const tags = JSON.parse(row.tags || '[]');
-        for (const tag of tags) {
-          if (tag !== 'autonomous') {
-            stats.actions_by_type[tag] = (stats.actions_by_type[tag] || 0) + row.count;
+        const kvList = await env.AQUIL_MEMORIES.list({ prefix: 'autonomous_' });
+        stats.total_autonomous_actions = kvList.keys.length;
+        
+        // Sample some KV entries for basic stats
+        const sampleSize = Math.min(50, kvList.keys.length);
+        let successCount = 0;
+        
+        for (let i = 0; i < sampleSize; i++) {
+          try {
+            const logData = await env.AQUIL_MEMORIES.get(kvList.keys[i].name);
+            if (logData) {
+              const parsed = JSON.parse(logData);
+              if (parsed.success !== false) successCount++;
+              if (parsed.action) {
+                stats.actions_by_type[parsed.action] = (stats.actions_by_type[parsed.action] || 0) + 1;
+              }
+            }
+          } catch (kvParseError) {
+            console.warn('Error parsing KV autonomous log:', kvParseError);
           }
         }
-      } catch (e) {
-        console.error('Error parsing autonomous log tags:', e);
+        
+        stats.success_rate = sampleSize > 0 ? (successCount / sampleSize) * 100 : 0;
+        
+      } catch (kvError) {
+        console.error('Both D1 and KV autonomous stats failed:', kvError);
+        stats.error = 'Unable to retrieve autonomous statistics';
       }
     }
     
@@ -365,13 +467,17 @@ export async function getAutonomousStats(env, timeframe = '24h') {
       total_autonomous_actions: 0,
       actions_by_type: {},
       triggers_by_keyword: {},
+      success_rate: 0,
+      average_confidence: 0,
+      most_common_triggers: [],
       timeframe,
-      error: error.message
+      error: error.message,
+      analysis_timestamp: new Date().toISOString()
     };
   }
 }
 
-// Enhanced log reading with filters for autonomous analysis
+// Enhanced log reading with filters and improved autonomous analysis
 export async function readLogsWithFilters(env, filters = {}) {
   const {
     limit = 20,
@@ -380,7 +486,10 @@ export async function readLogsWithFilters(env, filters = {}) {
     session_id,
     tags,
     date_from,
-    date_to
+    date_to,
+    include_trace_data = false,
+    success_only = false,
+    min_confidence = null
   } = filters;
   
   const maxLimit = Math.min(parseInt(limit, 10), 200);
@@ -411,12 +520,17 @@ export async function readLogsWithFilters(env, filters = {}) {
   
   if (date_from) {
     conditions.push('timestamp >= ?');
-    params.push(new Date(date_from).getTime());
+    params.push(new Date(date_from).toISOString());
   }
   
   if (date_to) {
     conditions.push('timestamp <= ?');
-    params.push(new Date(date_to).getTime());
+    params.push(new Date(date_to).toISOString());
+  }
+  
+  // Filter by success status if requested
+  if (success_only) {
+    conditions.push("(detail NOT LIKE '%\"success\":false%' OR detail IS NULL)");
   }
   
   if (conditions.length > 0) {
@@ -428,7 +542,46 @@ export async function readLogsWithFilters(env, filters = {}) {
   
   try {
     const { results } = await env.AQUIL_DB.prepare(query).bind(...params).all();
-    return results;
+    
+    // Post-process results for enhanced autonomous analysis
+    const processedResults = results.map(row => {
+      const processed = { ...row };
+      
+      try {
+        const detail = JSON.parse(row.detail || '{}');
+        
+        // Add computed fields for autonomous logs
+        if (row.kind === 'autonomous_action' || (row.tags && row.tags.includes('autonomous'))) {
+          processed.autonomous_metadata = {
+            trace_id: detail.trace_id || null,
+            confidence_score: detail.confidence_score || null,
+            success: detail.success !== false,
+            processing_time_ms: detail.processing_time_ms || null,
+            target_endpoint: detail.target_endpoint || null,
+            trigger_count: detail.trigger_keywords ? detail.trigger_keywords.length : 0
+          };
+          
+          // Filter by confidence if specified
+          if (min_confidence !== null && detail.confidence_score !== null) {
+            if (detail.confidence_score < min_confidence) {
+              return null; // Will be filtered out
+            }
+          }
+        }
+        
+        // Add trace data if requested
+        if (include_trace_data && detail.trace_id) {
+          processed.trace_id = detail.trace_id;
+        }
+        
+      } catch (parseError) {
+        console.warn('Error parsing log detail for filtering:', parseError);
+      }
+      
+      return processed;
+    }).filter(Boolean); // Remove null entries from confidence filtering
+    
+    return processedResults;
   } catch (error) {
     console.error('Error reading logs with filters:', error);
     return [];
