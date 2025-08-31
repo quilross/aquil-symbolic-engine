@@ -1,23 +1,24 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Aquil Symbolic Engine API",
-    "description": "Complete Personal AI Wisdom Builder & ARK Action Framework - Standing tall in the world, rooted in internal trust",
-    "version": "2.0.0"
+    "title": "Aquil Symbolic Engine API (Autonomous)",
+    "description": "Personal AI Wisdom Builder with built-in autonomy for proactive insights, rituals, and growth tracking. Fully compatible with Cloudflare Workers, D1, KV, R2, and Vectorize.",
+    "version": "2.2.0"
   },
   "servers": [
     {
       "url": "https://signal-q.me",
-      "description": "Aquil's personal AI domain"
+      "description": "Aquil's personal AI domain (Production)"
     }
   ],
   "paths": {
     "/api/log": {
       "post": {
         "summary": "Log any data or conversation event",
-        "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, or any meaningful moment. TRIGGER: Anytime user shares something worth remembering or system needs to track context.",
+        "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, or any meaningful moment. Called by the system without user prompts.",
         "operationId": "logDataOrEvent",
         "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -27,38 +28,41 @@
                 "properties": {
                   "type": {
                     "type": "string",
-                    "description": "chat_message, insight, breakthrough, context, reflection, etc."
+                    "description": "Type of log (chat_message, insight, breakthrough, context, reflection, etc.)",
+                    "default": "chat_message"
                   },
                   "who": {
                     "type": "string",
-                    "description": "user, assistant, system"
+                    "description": "Who generated the log (user or assistant)",
+                    "default": "user"
                   },
                   "level": {
                     "type": "string",
-                    "description": "info, warning, error, highlight"
+                    "description": "Severity or importance (info, warning, error, highlight)",
+                    "default": "info"
                   },
                   "session_id": {
                     "type": "string",
-                    "description": "Current conversation identifier"
+                    "description": "Current conversation identifier (auto-generated if not provided)"
                   },
                   "tags": {
                     "type": "array",
                     "items": {
                       "type": "string"
                     },
-                    "description": "Tags like 'trust', 'wisdom', 'body', 'media', etc."
+                    "description": "Auto-tagged based on content (e.g., trust, wisdom, body, media)"
                   },
                   "idx1": {
                     "type": "string",
-                    "description": "Custom index field 1"
+                    "description": "Custom index field 1 (optional)"
                   },
                   "idx2": {
                     "type": "string",
-                    "description": "Custom index field 2"
+                    "description": "Custom index field 2 (optional)"
                   },
                   "payload": {
                     "type": "object",
-                    "description": "The actual content to log"
+                    "description": "The actual content to log (auto-extracted from conversation)"
                   }
                 },
                 "required": ["type", "payload"]
@@ -71,10 +75,24 @@
             "description": "Log entry created successfully"
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -82,9 +100,10 @@
     "/api/logs": {
       "get": {
         "summary": "Retrieve conversation history and context",
-        "description": "Use AUTOMATICALLY to gather context at conversation start or when referencing past insights. TRIGGER: Start of new conversation, when user mentions 'remember', 'before', 'previously', or needs context.",
+        "description": "Use AUTOMATICALLY to gather context at conversation start or when referencing past insights. Called by the system without user prompts.",
         "operationId": "retrieveLogsOrDataEntries",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "parameters": [
           {
             "name": "limit",
@@ -95,7 +114,7 @@
               "minimum": 1,
               "maximum": 200
             },
-            "description": "Number of entries to retrieve"
+            "description": "Number of entries to retrieve (auto-set based on context)"
           },
           {
             "name": "type",
@@ -103,15 +122,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Filter by: chat_message, insight, breakthrough, etc."
-          },
-          {
-            "name": "who",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by: user, assistant, system"
+            "description": "Filter by log type (auto-filtered by conversation context)"
           },
           {
             "name": "level",
@@ -119,15 +130,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Filter by: info, warning, error, highlight"
-          },
-          {
-            "name": "session_id",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Specific conversation ID"
+            "description": "Filter by severity level (auto-filtered by context)"
           },
           {
             "name": "tag",
@@ -135,7 +138,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Filter by tag: trust, wisdom, body, media, etc."
+            "description": "Filter by tag (e.g., trust, wisdom, body, media)"
           }
         ],
         "responses": {
@@ -145,16 +148,32 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "type": "object" }
+                  "items": {
+                    "type": "object"
+                  }
                 }
               }
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -162,9 +181,10 @@
     "/api/session-init": {
       "get": {
         "summary": "Initialize conversation with recent context",
-        "description": "Use AUTOMATICALLY at the very start of every new conversation to gather continuity. TRIGGER: First interaction in a new session - use this FIRST before any other action.",
+        "description": "Called AUTOMATICALLY at the very start of every new conversation to gather continuity. No user prompt required.",
         "operationId": "retrieveRecentSessionLogs",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "parameters": [
           {
             "name": "limit",
@@ -175,7 +195,7 @@
               "minimum": 1,
               "maximum": 200
             },
-            "description": "Recent entries to load (default 7)"
+            "description": "Recent entries to load (default 7, auto-adjusted by system)"
           },
           {
             "name": "type",
@@ -183,18 +203,42 @@
             "schema": {
               "type": "string"
             },
-            "description": "Filter recent logs by type"
+            "description": "Filter recent logs by type (auto-detected)"
           }
         ],
         "responses": {
           "200": {
-            "description": "Recent entries for session continuity"
+            "description": "Recent entries for session continuity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -202,9 +246,10 @@
     "/api/trust/check-in": {
       "post": {
         "summary": "Trust and self-confidence building session",
-        "description": "Use when user expresses: doubt, uncertainty, lack of confidence, questioning themselves, feeling insecure, needing validation, or explicitly asks about trust. TRIGGER PHRASES: 'I don't trust myself', 'am I making the right choice', 'I'm not sure', 'I doubt', 'feeling insecure', 'need confidence'.",
+        "description": "Called AUTOMATICALLY when keywords like 'doubt', 'uncertainty', or 'insecure' are detected. No user prompt required.",
         "operationId": "trustCheckIn",
         "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -214,37 +259,67 @@
                 "properties": {
                   "current_state": {
                     "type": "string",
-                    "description": "User's current trust/confidence level description"
+                    "description": "Auto-detected user state (e.g., 'feeling uncertain')"
                   },
                   "trust_level": {
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 10,
-                    "description": "Self-trust rating 1-10"
+                    "description": "Auto-estimated self-trust rating (1-10)"
                   },
                   "specific_situation": {
                     "type": "string",
-                    "description": "Specific scenario causing trust doubt"
+                    "description": "Auto-extracted situation causing trust doubt"
                   },
                   "body_sensations": {
                     "type": "string",
-                    "description": "Physical sensations related to the doubt"
+                    "description": "Auto-detected physical sensations (e.g., 'tight chest')"
+                  },
+                  "trigger_keywords": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Keywords that triggered this check-in (e.g., 'doubt', 'insecure')"
                   }
                 },
-                "required": ["current_state"]
+                "required": ["current_state", "trigger_keywords"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Personalized trust-building guidance and exercises"
+            "description": "Personalized trust-building guidance and exercises",
+            "content": {
+              "application/json": {
+                "example": {
+                  "response": "I notice you’re feeling uncertain about your decision. Let’s explore this...",
+                  "exercise": "Try this grounding ritual: [link]",
+                  "questions": ["What’s the worst that could happen?", "When have you trusted yourself before?"]
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -252,9 +327,10 @@
     "/api/media/extract-wisdom": {
       "post": {
         "summary": "Extract personal growth wisdom from consumed media",
-        "description": "Use when user mentions consuming ANY media content and wants to process it for growth. TRIGGER PHRASES: 'I watched', 'I read', 'I listened to', 'just finished', 'that show/book/podcast', 'reminded me of', 'made me think'. Works with TV, movies, books, podcasts, music, articles.",
+        "description": "Called AUTOMATICALLY when user mentions media (e.g., 'I read', 'I watched'). No user prompt required.",
         "operationId": "extractMediaWisdom",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -264,43 +340,66 @@
                 "properties": {
                   "media_type": {
                     "type": "string",
-                    "enum": [
-                      "tv_show",
-                      "movie",
-                      "book",
-                      "podcast",
-                      "music",
-                      "article"
-                    ],
-                    "description": "Type of media consumed"
+                    "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
+                    "description": "Auto-detected media type"
                   },
                   "title": {
                     "type": "string",
-                    "description": "Name/title of the content"
+                    "description": "Auto-extracted media title"
                   },
                   "your_reaction": {
                     "type": "string",
-                    "description": "User's personal response, feelings, thoughts about the content"
+                    "description": "Auto-extracted user reaction"
                   },
                   "content_summary": {
                     "type": "string",
-                    "description": "Brief summary if needed for context"
+                    "description": "Auto-generated summary if needed"
+                  },
+                  "trigger_phrase": {
+                    "type": "string",
+                    "description": "Phrase that triggered this (e.g., 'I read')"
                   }
                 },
-                "required": ["media_type", "title", "your_reaction"]
+                "required": ["media_type", "title", "trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Personalized wisdom extraction with growth insights"
+            "description": "Personalized wisdom extraction with growth insights",
+            "content": {
+              "application/json": {
+                "example": {
+                  "wisdom": "This book highlights the power of trust—here’s how it applies to you...",
+                  "growth_insights": ["Trust yourself more in decisions", "Explore creative blocks"],
+                  "ritual": {
+                    "name": "Reflective Journaling",
+                    "link": "https://signal-q.me/rituals/journaling"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -308,9 +407,10 @@
     "/api/somatic/session": {
       "post": {
         "summary": "Body-based healing and nervous system regulation",
-        "description": "Use when user mentions PHYSICAL sensations, body tension, stress symptoms, or wants body-based healing. TRIGGER: 'tight shoulders', 'chest feels', 'can't breathe', 'tense', 'help me relax', 'release tension'.",
+        "description": "Called AUTOMATICALLY when user mentions physical sensations (e.g., 'tight shoulders'). No user prompt required.",
         "operationId": "somaticHealingSession",
         "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -320,31 +420,58 @@
                 "properties": {
                   "body_state": {
                     "type": "string",
-                    "description": "Current physical sensations, tension, or body state"
+                    "description": "Auto-detected physical sensations (e.g., 'tight shoulders')"
                   },
                   "emotions": {
                     "type": "string",
-                    "description": "Emotions connected to the body sensations"
+                    "description": "Auto-detected emotions (e.g., 'anxious')"
                   },
                   "intention": {
                     "type": "string",
-                    "description": "What the user wants to achieve (release, grounding, etc.)"
+                    "description": "Auto-suggested intention (e.g., 'release tension')"
+                  },
+                  "trigger_phrase": {
+                    "type": "string",
+                    "description": "Phrase that triggered this (e.g., 'my body feels')"
                   }
                 },
-                "required": ["body_state", "emotions", "intention"]
+                "required": ["body_state", "trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Guided somatic healing practices and exercises"
+            "description": "Guided somatic healing practices and exercises",
+            "content": {
+              "application/json": {
+                "example": {
+                  "practice": "Try this shoulder release exercise: [link]",
+                  "insight": "Your body is holding stress—let’s release it together.",
+                  "follow_up": "How does your body feel now?"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -352,9 +479,10 @@
     "/api/wisdom/synthesize": {
       "post": {
         "summary": "Multi-framework wisdom for life decisions",
-        "description": "Use when user has a SPECIFIC life decision and wants integrated guidance from wisdom systems. TRIGGER: 'what should I do', 'help me decide', 'I need guidance', 'human design perspective'.",
+        "description": "Called AUTOMATICALLY when user asks for guidance or at scheduled times (morning/evening).",
         "operationId": "synthesizeWisdom",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -364,41 +492,62 @@
                 "properties": {
                   "life_situation": {
                     "type": "string",
-                    "description": "Current life context and circumstances"
+                    "description": "Auto-extracted life context"
                   },
                   "specific_question": {
                     "type": "string",
-                    "description": "The exact decision or question needing guidance"
+                    "description": "Auto-extracted question or decision"
                   },
                   "frameworks_requested": {
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "enum": [
-                        "human_design",
-                        "gene_keys",
-                        "astrology",
-                        "somatic_wisdom",
-                        "all"
-                      ]
+                      "enum": ["human_design", "gene_keys", "astrology", "somatic_wisdom", "all"]
                     },
-                    "description": "Which wisdom frameworks to consult (default: all)"
+                    "default": ["all"]
+                  },
+                  "trigger": {
+                    "type": "string",
+                    "description": "What triggered this (e.g., 'user asked for guidance', 'scheduled')"
                   }
                 },
-                "required": ["life_situation", "specific_question"]
+                "required": ["trigger"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Integrated wisdom from multiple frameworks"
+            "description": "Integrated wisdom from multiple frameworks",
+            "content": {
+              "application/json": {
+                "example": {
+                  "wisdom": "Your Human Design suggests waiting for clarity before deciding...",
+                  "frameworks_used": ["human_design", "astrology"],
+                  "suggested_action": "Meditate on this question: 'What does my gut say?'"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -406,9 +555,10 @@
     "/api/patterns/recognize": {
       "post": {
         "summary": "Identify recurring patterns and growth trends",
-        "description": "Use when user wants to ANALYZE recurring themes, behaviors, or growth patterns over time. TRIGGER PHRASES: 'I keep doing', 'this always happens', 'I notice a pattern', 'why do I', 'same thing keeps happening', 'how have I grown', 'looking back', 'I see a trend'.",
+        "description": "Called AUTOMATICALLY when recurring themes are detected in logs.",
         "operationId": "recognizePatterns",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -418,37 +568,61 @@
                 "properties": {
                   "area_of_focus": {
                     "type": "string",
-                    "enum": [
-                      "trust_building",
-                      "media_consumption",
-                      "body_awareness",
-                      "overall_growth"
-                    ],
-                    "description": "Main area for pattern analysis"
+                    "enum": ["trust_building", "media_consumption", "body_awareness", "overall_growth"],
+                    "default": "overall_growth"
                   },
                   "recent_experiences": {
                     "type": "string",
-                    "description": "Recent examples of the pattern or experiences"
+                    "description": "Auto-extracted recent experiences"
                   },
                   "recurring_themes": {
                     "type": "string",
-                    "description": "What keeps repeating or showing up"
+                    "description": "Auto-detected recurring themes (e.g., 'procrastination')"
+                  },
+                  "triggered_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Logs or keywords that triggered this analysis"
                   }
-                },
-                "required": ["area_of_focus", "recent_experiences"]
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Pattern analysis with growth insights and recommendations"
+            "description": "Pattern analysis with growth insights and recommendations",
+            "content": {
+              "application/json": {
+                "example": {
+                  "pattern": "You’ve mentioned procrastination 5 times this month.",
+                  "insight": "This often happens when you’re avoiding a fear of failure.",
+                  "suggestion": "Try the '2-minute rule' ritual: [link]"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -456,9 +630,10 @@
     "/api/standing-tall/practice": {
       "post": {
         "summary": "Confidence and personal power practices",
-        "description": "Use when user mentions feeling SMALL, powerless, or wanting to be more confident/assertive. TRIGGER PHRASES: 'I feel small', 'shrinking', 'can't speak up', 'intimidated', 'need confidence', 'stand in my power', 'be more assertive', 'afraid to', 'people please', 'not showing up fully'.",
+        "description": "Called AUTOMATICALLY when user mentions feeling small or powerless (e.g., 'I feel intimidated').",
         "operationId": "standingTallPractice",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -468,35 +643,58 @@
                 "properties": {
                   "situation": {
                     "type": "string",
-                    "description": "Specific situation where user feels small or powerless"
+                    "description": "Auto-extracted situation (e.g., 'in meetings')"
                   },
                   "fears_concerns": {
                     "type": "string",
-                    "description": "What holds them back from standing tall"
+                    "description": "Auto-extracted fears (e.g., 'judgment')"
                   },
                   "desired_outcome": {
                     "type": "string",
-                    "description": "How they want to show up instead"
+                    "description": "Auto-suggested outcome (e.g., 'speak confidently')"
                   },
-                  "past_successes": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "Times they successfully stood in their power"
+                    "description": "Phrase that triggered this (e.g., 'I feel small')"
                   }
                 },
-                "required": ["situation", "desired_outcome"]
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Personalized confidence-building practices and power reclamation"
+            "description": "Personalized confidence-building practices and power reclamation",
+            "content": {
+              "application/json": {
+                "example": {
+                  "practice": "Before your next meeting, try this power pose: [link]",
+                  "affirmation": "You belong here. Your voice matters.",
+                  "question": "What’s one thing you’ll say with confidence today?"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -504,30 +702,58 @@
     "/api/wisdom/daily-synthesis": {
       "get": {
         "summary": "Daily wisdom compilation and insights",
-        "description": "Use when user asks for daily wisdom, morning insights, or wants a summary of recent growth. TRIGGER PHRASES: 'daily wisdom', 'morning insights', 'what's my focus today', 'wisdom summary', 'recent insights', 'what should I know today'.",
+        "description": "Called AUTOMATICALLY every morning/evening (via cron) or when user asks for insights.",
         "operationId": "getDailySynthesis",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "parameters": [
           {
             "name": "period",
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["today", "week", "month"],
+              "enum": ["today", "week"],
               "default": "today"
             },
-            "description": "Time period for wisdom compilation"
+            "description": "Time period for synthesis (auto-set to 'today' if not provided)"
           }
         ],
         "responses": {
           "200": {
-            "description": "Personalized daily wisdom and growth focus"
+            "description": "Personalized daily wisdom and growth focus",
+            "content": {
+              "application/json": {
+                "example": {
+                  "daily_focus": "Trust in your creative process",
+                  "wisdom_insight": "Your logs show progress on your book—keep trusting the process!",
+                  "growth_prompt": "What’s one creative act you’ll do today?",
+                  "recommended_ritual": {
+                    "name": "Morning Creative Visualization",
+                    "link": "https://signal-q.me/rituals/creative-visualization"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -535,31 +761,52 @@
     "/api/insights": {
       "get": {
         "summary": "Personal growth summary and progress review",
-        "description": "Use when user wants to review their OVERALL progress, growth trends, or life insights summary. TRIGGER PHRASES: 'how am I doing', 'my progress', 'growth summary', 'insights about me', 'what have I learned', 'how have I changed', 'personal review'.",
+        "description": "Called AUTOMATICALLY when user asks for progress review or at scheduled intervals.",
         "operationId": "getPersonalInsights",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "responses": {
           "200": {
             "description": "Comprehensive personal growth insights and patterns",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "insights": {
-                      "type": "object",
-                      "description": "Personal growth insights and trends"
+                "example": {
+                  "progress_trends": [
+                    {
+                      "area": "Trust",
+                      "trend": "Improving (mentioned self-trust 5x this week)",
+                      "recommendation": "Celebrate this growth!"
+                    },
+                    {
+                      "area": "Creativity",
+                      "trend": "Stable (consistent writing logs)",
+                      "recommendation": "Try a new creative ritual: [link]"
                     }
-                  }
+                  ],
+                  "key_insight": "You’re making progress on trust—keep going!"
                 }
               }
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -567,9 +814,10 @@
     "/api/feedback": {
       "post": {
         "summary": "Submit personal notes, ideas, or system feedback",
-        "description": "Use when user wants to leave notes for later, record ideas, or give feedback about the system. TRIGGER PHRASES: 'remember this', 'note to self', 'save this idea', 'feedback about', 'suggestion for', 'this could be better', 'I want to remember'.",
+        "description": "Called AUTOMATICALLY when user mentions feedback or ideas (e.g., 'remember this').",
         "operationId": "submitFeedback",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -579,50 +827,61 @@
                 "properties": {
                   "message": {
                     "type": "string",
-                    "description": "The feedback, note, or idea to save"
+                    "description": "Auto-extracted feedback or idea"
                   },
                   "type": {
                     "type": "string",
-                    "description": "Type: note, idea, feedback, suggestion",
-                    "default": "general"
+                    "description": "Type of feedback (note, idea, suggestion)",
+                    "default": "note"
+                  },
+                  "trigger_phrase": {
+                    "type": "string",
+                    "description": "Phrase that triggered this (e.g., 'remember this')"
+                  },
+                  "related_logs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Logs related to this feedback"
                   }
                 },
-                "required": ["message"]
+                "required": ["message", "trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Feedback/note saved successfully",
+            "description": "Feedback logged automatically",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    },
-                    "received_at": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                "example": {
+                  "status": "saved",
+                  "related_resources": ["log_123", "log_456"]
                 }
               }
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -630,9 +889,10 @@
     "/api/dreams/interpret": {
       "post": {
         "summary": "Interpret dreams and symbolic imagery",
-        "description": "Use when user shares a dream and wants archetypal or symbolic insights. TRIGGER PHRASES: 'I dreamed', 'my dream', 'interpret my dream', 'dream meaning', 'strange dream', 'recurring dream'.",
+        "description": "Called AUTOMATICALLY when user mentions a dream (e.g., 'I dreamed').",
         "operationId": "interpretDream",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -642,31 +902,62 @@
                 "properties": {
                   "dream_text": {
                     "type": "string",
-                    "description": "Description of the dream or dream symbols"
+                    "description": "Auto-extracted dream description"
                   },
                   "emotions_felt": {
                     "type": "string",
-                    "description": "Emotions experienced during or after the dream"
+                    "description": "Auto-detected emotions (e.g., 'scared', 'curious')"
                   },
                   "recurring": {
                     "type": "boolean",
-                    "description": "Whether this is a recurring dream theme"
+                    "description": "Auto-detected if this is a recurring dream"
+                  },
+                  "trigger_phrase": {
+                    "type": "string",
+                    "description": "Phrase that triggered this (e.g., 'I dreamed')"
                   }
                 },
-                "required": ["dream_text"]
+                "required": ["dream_text", "trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Symbolic dream interpretation with personal insights"
+            "description": "Symbolic dream interpretation with personal insights",
+            "content": {
+              "application/json": {
+                "example": {
+                  "interpretation": "This dream suggests a fear of losing control...",
+                  "archetypal_themes": ["the shadow", "the hero"],
+                  "personal_insight": "Your subconscious is processing recent stress.",
+                  "suggested_ritual": {
+                    "name": "Dream Journaling",
+                    "link": "https://signal-q.me/rituals/dream-journal"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -674,9 +965,10 @@
     "/api/energy/optimize": {
       "post": {
         "summary": "Optimize personal energy and vitality",
-        "description": "Use when user mentions energy levels, fatigue, or wanting vitality optimization. TRIGGER PHRASES: 'tired', 'exhausted', 'low energy', 'drained', 'need energy', 'feeling sluggish', 'vitality'.",
+        "description": "Called AUTOMATICALLY when user mentions fatigue or energy (e.g., 'I’m tired').",
         "operationId": "optimizeEnergy",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -686,31 +978,60 @@
                 "properties": {
                   "current_energy": {
                     "type": "string",
-                    "description": "Current energy state and levels"
+                    "description": "Auto-detected energy state (e.g., 'low', 'scattered')"
                   },
                   "energy_drains": {
                     "type": "string",
-                    "description": "What depletes your energy"
+                    "description": "Auto-extracted energy drains (e.g., 'meetings')"
                   },
-                  "energy_goals": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "What energy state you want to achieve"
+                    "description": "Phrase that triggered this (e.g., 'I’m exhausted')"
                   }
                 },
-                "required": ["current_energy"]
+                "required": ["current_energy", "trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Personalized energy optimization strategies"
+            "description": "Personalized energy optimization strategies",
+            "content": {
+              "application/json": {
+                "example": {
+                  "energy_insight": "Your energy drops after long meetings.",
+                  "recommended_rituals": [
+                    {
+                      "name": "Post-Meeting Reset",
+                      "duration": "5 minutes",
+                      "link": "https://signal-q.me/rituals/post-meeting-reset"
+                    }
+                  ],
+                  "diet_tip": "Try adding protein to your lunch for sustained energy."
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -718,9 +1039,10 @@
     "/api/values/clarify": {
       "post": {
         "summary": "Clarify and prioritize core values",
-        "description": "Use when user wants to identify, clarify, or rank personal values for decision-making. TRIGGER PHRASES: 'my values', 'what matters to me', 'clarify values', 'core values', 'priorities', 'what's important'.",
+        "description": "Called AUTOMATICALLY when user mentions values or priorities (e.g., 'what matters to me').",
         "operationId": "clarifyValues",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -733,31 +1055,64 @@
                     "items": {
                       "type": "string"
                     },
-                    "description": "List of potential or current values"
+                    "description": "Auto-extracted or suggested values"
                   },
                   "life_context": {
                     "type": "string",
-                    "description": "Current life situation for values clarification"
+                    "description": "Auto-detected life context (e.g., 'career transition')"
                   },
-                  "decision_context": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "Specific decision or choice requiring values clarity"
+                    "description": "Phrase that triggered this (e.g., 'what matters to me')"
                   }
                 },
-                "required": ["values_list"]
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Clarified and prioritized values with decision framework"
+            "description": "Clarified and prioritized values with decision framework",
+            "content": {
+              "application/json": {
+                "example": {
+                  "prioritized_values": [
+                    {
+                      "value": "Creativity",
+                      "priority": 1,
+                      "examples": ["Writing your book", "Painting"]
+                    },
+                    {
+                      "value": "Trust",
+                      "priority": 2,
+                      "examples": ["Deciding to leave your job", "Setting boundaries"]
+                    }
+                  ],
+                  "decision_framework": "When faced with a choice, ask: 'Does this align with my creativity and trust?'"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -765,9 +1120,10 @@
     "/api/creativity/unleash": {
       "post": {
         "summary": "Unleash creativity and overcome blocks",
-        "description": "Use when user feels creatively blocked or wants creative inspiration and breakthrough. TRIGGER PHRASES: 'creative block', 'stuck creatively', 'need inspiration', 'creative breakthrough', 'artistic block', 'can't create'.",
+        "description": "Called AUTOMATICALLY when user mentions creative blocks (e.g., 'I’m stuck').",
         "operationId": "unleashCreativity",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -777,31 +1133,60 @@
                 "properties": {
                   "block_description": {
                     "type": "string",
-                    "description": "Description of the creative block or challenge"
+                    "description": "Auto-extracted block description (e.g., 'can’t write')"
                   },
                   "creative_medium": {
                     "type": "string",
-                    "description": "Art form or creative medium (writing, visual art, music, etc.)"
+                    "description": "Auto-detected medium (e.g., 'writing')"
                   },
-                  "desired_outcome": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "What creative breakthrough you're seeking"
+                    "description": "Phrase that triggered this (e.g., 'creative block')"
                   }
                 },
-                "required": ["block_description"]
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Creative breakthrough exercises and inspiration"
+            "description": "Creative breakthrough exercises and inspiration",
+            "content": {
+              "application/json": {
+                "example": {
+                  "insight": "Your block stems from perfectionism—progress over perfection!",
+                  "creative_prompts": [
+                    "Write the worst version of your chapter—just get it out.",
+                    "Describe your creative space in 3 words."
+                  ],
+                  "recommended_ritual": {
+                    "name": "Freewriting Sprint",
+                    "link": "https://signal-q.me/rituals/freewriting"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -809,9 +1194,10 @@
     "/api/abundance/cultivate": {
       "post": {
         "summary": "Cultivate abundance and prosperity mindset",
-        "description": "Use when user discusses money, wealth, scarcity, or abundance mindset issues. TRIGGER PHRASES: 'money problems', 'financial stress', 'abundance', 'prosperity', 'wealth mindset', 'scarcity', 'money blocks'.",
+        "description": "Called AUTOMATICALLY when user mentions money or abundance (e.g., 'I’m broke').",
         "operationId": "cultivateAbundance",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -821,31 +1207,57 @@
                 "properties": {
                   "money_mindset": {
                     "type": "string",
-                    "description": "Current relationship and beliefs about money"
+                    "description": "Auto-detected mindset (e.g., 'scarcity')"
                   },
                   "abundance_blocks": {
                     "type": "string",
-                    "description": "What blocks abundance in your life"
+                    "description": "Auto-extracted blocks (e.g., 'fear of charging more')"
                   },
-                  "financial_goals": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "Abundance and financial aspirations"
+                    "description": "Phrase that triggered this (e.g., 'I need more money')"
                   }
                 },
-                "required": ["money_mindset"]
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Abundance cultivation practices and mindset shifts"
+            "description": "Abundance cultivation practices and mindset shifts",
+            "content": {
+              "application/json": {
+                "example": {
+                  "abundance_insight": "Your fear of charging more is blocking flow.",
+                  "affirmations": [
+                    "I am worthy of abundance.",
+                    "Money comes to me easily and frequently."
+                  ],
+                  "action_step": "Raise your rates by 10% this week."
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -853,9 +1265,10 @@
     "/api/transitions/navigate": {
       "post": {
         "summary": "Navigate major life transitions",
-        "description": "Use when user faces or discusses major life changes, transitions, or new phases. TRIGGER PHRASES: 'life transition', 'major change', 'new chapter', 'life phase', 'big change', 'transition period', 'moving to'.",
+        "description": "Called AUTOMATICALLY when user mentions transitions (e.g., 'new job').",
         "operationId": "navigateTransitions",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -865,31 +1278,57 @@
                 "properties": {
                   "transition_type": {
                     "type": "string",
-                    "description": "Type of transition (career, relationship, location, life stage, etc.)"
+                    "description": "Auto-detected transition type (e.g., 'career')"
                   },
                   "current_challenges": {
                     "type": "string",
-                    "description": "Current difficulties or concerns with the transition"
+                    "description": "Auto-extracted challenges (e.g., 'imposter syndrome')"
                   },
-                  "desired_support": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "What kind of support or guidance you need"
+                    "description": "Phrase that triggered this (e.g., 'starting a new job')"
                   }
                 },
-                "required": ["transition_type"]
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Transition navigation strategies and support practices"
+            "description": "Transition navigation strategies and support practices",
+            "content": {
+              "application/json": {
+                "example": {
+                  "transition_insight": "This career shift aligns with your value of creativity.",
+                  "support_strategies": [
+                    "Daily confidence rituals: [link]",
+                    "Connect with your mentor this week."
+                  ],
+                  "question": "What’s one small step you’ll take today?"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -897,9 +1336,10 @@
     "/api/ancestry/heal": {
       "post": {
         "summary": "Heal ancestral and family patterns",
-        "description": "Use when user explores family dynamics, ancestral patterns, or generational healing. TRIGGER PHRASES: 'family patterns', 'ancestral healing', 'generational trauma', 'family dynamics', 'inherited patterns', 'lineage healing'.",
+        "description": "Called AUTOMATICALLY when user mentions family or ancestry (e.g., 'my mom always').",
         "operationId": "healAncestry",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -909,119 +1349,89 @@
                 "properties": {
                   "family_pattern": {
                     "type": "string",
-                    "description": "Specific family or ancestral pattern to address"
+                    "description": "Auto-detected pattern (e.g., 'people-pleasing')"
                   },
                   "generational_theme": {
                     "type": "string",
-                    "description": "Recurring theme across generations"
+                    "description": "Auto-detected theme (e.g., 'silencing women')"
                   },
-                  "healing_intention": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "What you want to heal or transform"
+                    "description": "Phrase that triggered this (e.g., 'my family always')"
                   }
                 },
-                "required": ["family_pattern"]
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Ancestral healing practices and family pattern transformation"
+            "description": "Ancestral healing practices and family pattern transformation",
+            "content": {
+              "application/json": {
+                "example": {
+                  "healing_insight": "This pattern of people-pleasing traces back 3 generations.",
+                  "ritual": {
+                    "name": "Ancestral Letter Writing",
+                    "link": "https://signal-q.me/rituals/ancestral-letter"
+                  },
+                  "question": "What do you want to say to your ancestors about this pattern?"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/system/health-check": {
+    "/api/healthz": {
       "get": {
         "summary": "System health check",
-        "description": "Perform system health checks",
+        "description": "Called AUTOMATICALLY for monitoring. No user prompt required.",
         "operationId": "systemHealthCheck",
+        "x-openai-autonomous": true,
         "responses": {
           "200": {
-            "description": "Health status"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "System is healthy",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "healthy",
+                  "last_check": "2025-09-01T12:00:00Z"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/health": {
-      "get": {
-        "summary": "Health endpoint",
-        "description": "Simple health status",
-        "operationId": "health",
-        "responses": {
-          "200": {
-            "description": "Health status"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/api/discovery/generate-inquiry": {
+    "/api/question": {
       "post": {
-        "summary": "Generate discovery inquiry",
-        "description": "Generate Socratic questions based on provided context",
+        "summary": "Generate Socratic or discovery questions",
+        "description": "Called AUTOMATICALLY when user needs guidance or reflection.",
         "operationId": "generateDiscoveryInquiry",
-        "requestBody": {
-          "required": false
-        },
-        "responses": {
-          "200": {
-            "description": "Generated inquiry"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/api/ritual/auto-suggest": {
-      "post": {
-        "summary": "Auto-suggest rituals",
-        "description": "Suggest rituals based on context",
-        "operationId": "autoSuggestRitual",
-        "requestBody": {
-          "required": false
-        },
-        "responses": {
-          "200": {
-            "description": "Ritual suggestion"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/api/patterns/autonomous-detect": {
-      "post": {
-        "summary": "Autonomous pattern detection and ritual suggestion",
-        "description": "Automatically detect behavioral patterns and suggest healing rituals. Use when user shows signs of recurring patterns or needs intervention.",
-        "operationId": "autonomousPatternDetect",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -1029,42 +1439,69 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "recent_interactions": {
-                    "type": "array",
-                    "description": "Recent user interactions for pattern analysis"
-                  },
-                  "user_state": {
-                    "type": "string",
-                    "description": "Current user emotional/mental state"
-                  },
                   "context": {
                     "type": "object",
-                    "description": "Additional context for pattern detection"
+                    "description": "Auto-extracted context from recent logs"
+                  },
+                  "topic": {
+                    "type": "string",
+                    "description": "Auto-detected topic (e.g., 'trust', 'creativity')"
+                  },
+                  "trigger_phrase": {
+                    "type": "string",
+                    "description": "Phrase that triggered this (e.g., 'I don’t know what to do')"
                   }
-                }
+                },
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Pattern detection results with ritual suggestions"
+            "description": "Socratic questions and integration practices",
+            "content": {
+              "application/json": {
+                "example": {
+                  "questions": [
+                    "What would your future self advise you to do?",
+                    "What’s the fear beneath this doubt?"
+                  ],
+                  "integration_practice": "Meditate on these questions for 5 minutes."
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/commitments/create": {
+    "/api/commitments": {
       "post": {
-        "summary": "Create behavioral change commitment",
-        "description": "Create and track commitments for personal growth and behavioral change.",
-        "operationId": "createCommitment",
+        "summary": "Create or update a commitment",
+        "description": "Called AUTOMATICALLY when user mentions goals or commitments.",
+        "operationId": "manageCommitment",
         "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -1074,50 +1511,86 @@
                 "properties": {
                   "title": {
                     "type": "string",
-                    "description": "Title of the commitment"
+                    "description": "Auto-generated title (e.g., 'Write book chapter')"
                   },
                   "description": {
                     "type": "string",
-                    "description": "Detailed description of the commitment"
+                    "description": "Auto-extracted description"
                   },
                   "commitment_type": {
                     "type": "string",
-                    "description": "Type of commitment (behavioral_change, habit_formation, etc.)"
+                    "description": "Auto-detected type (e.g., 'creative_project')"
                   },
-                  "target_date": {
+                  "trigger_phrase": {
                     "type": "string",
-                    "description": "Target completion date"
+                    "description": "Phrase that triggered this (e.g., 'I want to write a book')"
                   }
-                }
+                },
+                "required": ["trigger_phrase"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Commitment created successfully"
+            "description": "Commitment created or updated automatically",
+            "content": {
+              "application/json": {
+                "example": {
+                  "commitment": {
+                    "id": "commit_123",
+                    "title": "Write Book Chapter",
+                    "next_step": "Write 500 words this week."
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
-      }
-    },
-    "/api/commitments/active": {
+      },
       "get": {
-        "summary": "Get active commitments",
-        "description": "Retrieve all active behavioral change commitments.",
-        "operationId": "getActiveCommitments",
+        "summary": "List active commitments",
+        "description": "Called AUTOMATICALLY when user asks for progress or at scheduled intervals.",
+        "operationId": "listActiveCommitments",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "responses": {
           "200": {
-            "description": "List of active commitments"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "List of active commitments",
+            "content": {
+              "application/json": {
+                "example": {
+                  "commitments": [
+                    {
+                      "id": "commit_123",
+                      "title": "Write Book Chapter",
+                      "progress": "500/2000 words",
+                      "next_step": "Write 500 more words this week."
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -1125,9 +1598,10 @@
     "/api/commitments/{id}/progress": {
       "post": {
         "summary": "Update commitment progress",
-        "description": "Update progress on a specific commitment with reflection and insights.",
+        "description": "Called AUTOMATICALLY when progress is detected in logs.",
         "operationId": "updateCommitmentProgress",
         "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
         "parameters": [
           {
             "name": "id",
@@ -1135,8 +1609,7 @@
             "required": true,
             "schema": {
               "type": "string"
-            },
-            "description": "Commitment ID"
+            }
           }
         ],
         "requestBody": {
@@ -1148,19 +1621,14 @@
                 "properties": {
                   "progress_update": {
                     "type": "string",
-                    "description": "Description of progress made"
+                    "description": "Auto-detected progress (e.g., 'wrote 500 words')"
                   },
-                  "challenges_faced": {
-                    "type": "string",
-                    "description": "Any challenges encountered"
-                  },
-                  "insights_gained": {
-                    "type": "string",
-                    "description": "Insights or learnings from the experience"
-                  },
-                  "next_steps": {
-                    "type": "string",
-                    "description": "Planned next actions"
+                  "trigger_logs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Logs indicating progress"
                   }
                 },
                 "required": ["progress_update"]
@@ -1170,23 +1638,47 @@
         },
         "responses": {
           "200": {
-            "description": "Progress updated successfully"
+            "description": "Progress updated automatically",
+            "content": {
+              "application/json": {
+                "example": {
+                  "update": "Progress detected: +500 words toward your book goal!",
+                  "next_step": "Aim for another 500 words by Friday.",
+                  "encouragement": "You’re 25% closer—keep going!"
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/socratic/question": {
+    "/api/ritual/auto-suggest": {
       "post": {
-        "summary": "Generate Socratic questions for self-discovery",
-        "description": "Generate deep, thoughtful questions to guide self-discovery and insight. Use when user needs guidance for reflection.",
-        "operationId": "socraticQuestion",
+        "summary": "Autonomous ritual suggestion",
+        "description": "Called AUTOMATICALLY based on user state, time of day, or detected needs.",
+        "operationId": "autoSuggestRitual",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -1194,46 +1686,75 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "user_state": {
+                    "type": "string",
+                    "description": "Auto-detected state (e.g., 'stressed', 'focused')"
+                  },
+                  "time_of_day": {
+                    "type": "string",
+                    "enum": ["morning", "afternoon", "evening", "night"],
+                    "description": "Auto-detected time of day"
+                  },
                   "context": {
-                    "type": "object",
-                    "description": "Context for question generation"
-                  },
-                  "topic": {
                     "type": "string",
-                    "description": "Topic area (self_discovery, relationships, purpose, growth)"
+                    "description": "Auto-detected context (e.g., 'after a meeting')"
                   },
-                  "depth_level": {
+                  "trigger": {
                     "type": "string",
-                    "description": "Question depth (surface, deep, archetypal)"
-                  },
-                  "voice_preference": {
-                    "type": "string",
-                    "description": "Preferred voice (mirror, oracle, scientist, strategist)"
+                    "description": "What triggered this (e.g., 'user mentioned stress')"
                   }
-                }
+                },
+                "required": ["user_state", "time_of_day", "trigger"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Socratic questions and integration practices"
+            "description": "Autonomous ritual suggestion provided",
+            "content": {
+              "application/json": {
+                "example": {
+                  "ritual": {
+                    "name": "Evening Gratitude Practice",
+                    "description": "Write 3 things you’re grateful for today.",
+                    "duration": "5 minutes",
+                    "link": "https://signal-q.me/rituals/gratitude"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/coaching/comb-analysis": {
+    "/api/patterns/autonomous-detect": {
       "post": {
-        "summary": "COM-B model behavioral analysis",
-        "description": "Analyze behavior change using Capability, Opportunity, Motivation framework. Use for systematic behavior change planning.",
-        "operationId": "combAnalysis",
+        "summary": "Autonomous pattern detection and ritual suggestion",
+        "description": "Called AUTOMATICALLY when recurring patterns are detected in logs.",
+        "operationId": "autonomousPatternDetect",
         "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -1241,48 +1762,62 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "behavior_goal": {
-                    "type": "string",
-                    "description": "Target behavior to achieve"
+                  "recent_interactions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Logs triggering pattern detection"
                   },
-                  "current_situation": {
+                  "detected_pattern": {
                     "type": "string",
-                    "description": "Current behavioral patterns and situation"
+                    "description": "Auto-detected pattern (e.g., 'procrastination')"
                   },
-                  "context": {
-                    "type": "object",
-                    "description": "Additional context for analysis"
+                  "user_state": {
+                    "type": "string",
+                    "description": "Auto-detected user state (e.g., 'avoidant')"
                   }
-                }
+                },
+                "required": ["recent_interactions", "detected_pattern"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "COM-B analysis with intervention recommendations"
+            "description": "Pattern detection results with ritual suggestions",
+            "content": {
+              "application/json": {
+                "example": {
+                  "pattern": "You’ve delayed your book writing 3 times this week.",
+                  "insight": "This is a fear of imperfection—progress over perfection!",
+                  "ritual": {
+                    "name": "2-Minute Rule",
+                    "link": "https://signal-q.me/rituals/2-minute-rule"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/api/monitoring/metrics": {
-      "get": {
-        "summary": "Get system monitoring metrics",
-        "description": "Retrieve comprehensive system health and performance metrics for production monitoring.",
-        "operationId": "getMonitoringMetrics",
-        "x-openai-isConsequential": false,
-        "responses": {
-          "200": {
-            "description": "System metrics and health status"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1290,7 +1825,7 @@
     "/api/contracts/create": {
       "post": {
         "summary": "Create transformation contract",
-        "description": "Create a structured transformation contract with milestones, support systems, and tracking methods.",
+        "description": "Called when user explicitly requests a structured contract (not autonomous).",
         "operationId": "createTransformationContract",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -1315,25 +1850,71 @@
                   "timeline": {
                     "type": "string",
                     "description": "Expected timeline for transformation"
-                  },
-                  "accountability_measures": {
-                    "type": "array",
-                    "description": "Specific accountability measures"
                   }
-                }
+                },
+                "required": ["transformation_goal", "current_state", "desired_state"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Transformation contract created with milestones and support system"
+            "description": "Transformation contract created with milestones and support system",
+            "content": {
+              "application/json": {
+                "example": {
+                  "contract": {
+                    "goal": "Publish Book",
+                    "milestones": ["Outline by Oct 1", "First draft by Dec 1"],
+                    "support": "Weekly accountability calls with Aquil"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/InternalError"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/monitoring/metrics": {
+      "get": {
+        "summary": "Get system monitoring metrics",
+        "description": "Called AUTOMATICALLY for production monitoring.",
+        "operationId": "getMonitoringMetrics",
+        "x-openai-autonomous": true,
+        "responses": {
+          "200": {
+            "description": "System metrics and health status",
+            "content": {
+              "application/json": {
+                "example": {
+                  "metrics": {
+                    "logs_created": 120,
+                    "rituals_suggested": 30,
+                    "system_health": "optimal"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1341,62 +1922,62 @@
   },
   "components": {
     "schemas": {
-      "ErrorResponse": {
+      "Error": {
         "type": "object",
         "properties": {
           "error": {
-            "type": "string"
+            "type": "string",
+            "example": "invalid_request"
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "example": "The request was missing required fields."
           }
         },
         "required": ["error", "message"]
       }
+    }
+  },
+  "x-openai-autonomous-triggers": {
+    "keyword_map": {
+      "wellbeing": ["doubt", "uncertain", "insecure", "anxious", "stress", "overwhelm"],
+      "somatic": ["body", "tight", "shoulders", "chest", "tense", "pain", "breath"],
+      "standing_tall": ["small", "powerless", "intimidated", "voice", "confidence", "assertive"],
+      "media_wisdom": ["read", "watched", "listened", "book", "movie", "podcast", "show"],
+      "creativity": ["block", "stuck", "write", "create", "paint", "draw", "music"],
+      "abundance": ["money", "broke", "wealth", "scarcity", "prosperity", "charging", "rates"],
+      "transitions": ["new job", "move", "change", "transition", "phase", "chapter"],
+      "ancestry": ["family", "mom", "dad", "parents", "generational", "pattern", "lineage"],
+      "values": ["matters", "priority", "values", "important", "decision", "choice"],
+      "goals": ["goal", "commit", "promise", "achieve", "progress", "next step"],
+      "dreams": ["dreamed", "dream", "nightmare", "recurring", "symbolic"]
     },
-    "responses": {
-      "BadRequest": {
-        "description": "Malformed request",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponse"
-            }
-          }
-        }
-      },
-      "InternalError": {
-        "description": "Internal server error",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ErrorResponse"
-            }
-          }
-        }
-      }
+    "scheduled_triggers": {
+      "daily_wisdom": ["0 7 * * *", "0 19 * * *"],
+      "evening_ritual": ["0 20 * * *"],
+      "weekly_insights": ["0 8 * * 1"]
     }
   },
   "x-openai-conversation-starters": [
     "I had a recurring dream about my childhood home.",
     "I feel so drained today, no energy at all.",
-    "I don't know what really matters to me right now.",
+    "I don’t know what really matters to me right now.",
     "I keep hitting a creative block when writing.",
     "Money feels tight and stressful right now.",
-    "I'm moving into a new phase of life and feel uncertain.",
+    "I’m moving into a new phase of life and feel uncertain.",
     "I keep repeating patterns from my family.",
-    "My body feels tense and I can't relax.",
+    "My body feels tense and I can’t relax.",
     "I feel small and powerless in meetings.",
-    "I don't trust my own decisions anymore.",
+    "I don’t trust my own decisions anymore.",
     "I want to practice meditation for the next month.",
     "I keep repeating the same mistakes.",
     "I just read a book that really moved me.",
     "Help me make sense of everything happening.",
-    "I'm feeling overwhelmed and need grounding.",
+    "I’m feeling overwhelmed and need grounding.",
     "What does this dream mean symbolically?",
     "I want to analyze my behavioral patterns.",
     "What should I do next in this situation?",
     "What does my body need today?",
-    "Help me synthesize today's experiences."
+    "Help me synthesize today’s experiences."
   ]
 }
