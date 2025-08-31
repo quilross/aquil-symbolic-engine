@@ -10,7 +10,7 @@ import * as d1 from "./actions/d1.js";
 import * as r2 from "./actions/r2.js";
 import * as vectorize from "./actions/vectorize.js";
 import * as ai from "./actions/ai.js";
-import { writeLog, readLogs } from "./actions/logging.js";
+import { writeLog, readLogs, writeAutonomousLog, readAutonomousLogs, getAutonomousStats, readLogsWithFilters } from "./actions/logging.js";
 import { attachLocalVectorContext } from "./utils/local-vector-context.js";
 import { SomaticHealer } from "./src-core-somatic-healer.js";
 import { TrustBuilder } from "./src-core-trust-builder.js";
@@ -26,6 +26,13 @@ import { AquilCore } from "./src-core-aquil-core.js";
 import { logMetamorphicEvent } from "./ark/core.js";
 import { AquilDatabase } from "./utils/database.js";
 import { AquilAI } from "./utils/ai-helpers.js";
+import { 
+  detectTriggers, 
+  callAutonomousEndpoint, 
+  handleScheduledTriggers,
+  autoDetectTags,
+  AUTONOMOUS_TRIGGERS 
+} from "./utils/autonomy.js";
 
 // Dream interpretation helpers
 function interpretSymbol(symbol) {
@@ -281,6 +288,236 @@ function generateIntegrationPractices(topic, depth_level) {
   };
   
   return practices[depth_level] || practices.surface;
+}
+
+// Autonomous endpoint handlers
+async function handleWisdomSynthesize(body, env) {
+  try {
+    const aquilCore = new AquilCore();
+    const recentLogs = await readLogs(env, { limit: 20 });
+    
+    const synthesis = await aquilCore.synthesizeWisdom({
+      logs: recentLogs,
+      context: body.context || "general",
+      autonomous: body.autonomous || false,
+      trigger_phrase: body.trigger_phrase || ""
+    });
+    
+    return new Response(JSON.stringify({
+      success: true,
+      wisdom: synthesis,
+      timestamp: new Date().toISOString(),
+      autonomous: body.autonomous || false
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in wisdom synthesis:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to synthesize wisdom",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handleWisdomPatterns(body, env) {
+  try {
+    const patternRecognizer = new PatternRecognizer();
+    const recentLogs = await readLogs(env, { limit: 50 });
+    
+    const patterns = await patternRecognizer.recognizePatterns({
+      logs: recentLogs,
+      context: body.context || "behavioral",
+      autonomous: body.autonomous || false
+    });
+    
+    return new Response(JSON.stringify({
+      success: true,
+      patterns,
+      timestamp: new Date().toISOString(),
+      autonomous: body.autonomous || false
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in pattern recognition:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to recognize patterns",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handleDailyWisdomSynthesis(body, env) {
+  try {
+    const aquilCore = new AquilCore();
+    const today = new Date().toISOString().split('T')[0];
+    const todayLogs = await readLogs(env, { 
+      limit: 100,
+      filters: { date: today }
+    });
+    
+    const dailyWisdom = await aquilCore.synthesizeDailyWisdom({
+      logs: todayLogs,
+      date: today,
+      autonomous: true
+    });
+    
+    return new Response(JSON.stringify({
+      success: true,
+      daily_wisdom: dailyWisdom,
+      date: today,
+      timestamp: new Date().toISOString(),
+      autonomous: true
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in daily wisdom synthesis:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to synthesize daily wisdom",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handleAutonomousWellbeingCheckIn(body, env) {
+  try {
+    const trustBuilder = new TrustBuilder();
+    const checkIn = await trustBuilder.autonomousCheckIn({
+      trigger_keywords: body.trigger_keywords || [],
+      trigger_phrase: body.trigger_phrase || "",
+      user_state: body.user_state || "auto-detected",
+      context: body.context || {}
+    });
+    
+    return new Response(JSON.stringify({
+      success: true,
+      check_in: checkIn,
+      timestamp: new Date().toISOString(),
+      autonomous: true,
+      trigger_type: "keyword"
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in autonomous wellbeing check-in:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to perform wellbeing check-in",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handleTrustCheckIn(body, env) {
+  try {
+    const trustBuilder = new TrustBuilder();
+    const checkIn = await trustBuilder.checkIn(body);
+    
+    return new Response(JSON.stringify({
+      success: true,
+      check_in: checkIn,
+      timestamp: new Date().toISOString()
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in trust check-in:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to perform trust check-in",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handleSomaticSession(body, env) {
+  try {
+    const somaticHealer = new SomaticHealer();
+    const session = await somaticHealer.createSession(body);
+    
+    return new Response(JSON.stringify({
+      success: true,
+      session,
+      timestamp: new Date().toISOString()
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in somatic session:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to create somatic session",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handlePersonalPatterns(body, env) {
+  try {
+    const patternRecognizer = new PatternRecognizer();
+    const userLogs = await readLogs(env, { 
+      limit: 100,
+      filters: { user_id: body.user_id || "default" }
+    });
+    
+    const personalPatterns = await patternRecognizer.analyzePersonalPatterns({
+      logs: userLogs,
+      context: body.context || "personal_growth"
+    });
+    
+    return new Response(JSON.stringify({
+      success: true,
+      patterns: personalPatterns,
+      timestamp: new Date().toISOString()
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in personal patterns analysis:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to analyze personal patterns",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handlePersonalInsights(body, env) {
+  try {
+    const aquilCore = new AquilCore();
+    const userLogs = await readLogs(env, { 
+      limit: 50,
+      filters: { user_id: body.user_id || "default" }
+    });
+    
+    const insights = await aquilCore.generatePersonalInsights({
+      logs: userLogs,
+      focus_area: body.focus_area || "general"
+    });
+    
+    return new Response(JSON.stringify({
+      success: true,
+      insights,
+      timestamp: new Date().toISOString()
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in personal insights generation:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to generate personal insights",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+async function handlePersonalGrowth(body, env) {
+  try {
+    const aquilCore = new AquilCore();
+    const userLogs = await readLogs(env, { 
+      limit: 100,
+      filters: { user_id: body.user_id || "default" }
+    });
+    
+    const growthAnalysis = await aquilCore.analyzePersonalGrowth({
+      logs: userLogs,
+      timeframe: body.timeframe || "30_days"
+    });
+    
+    return new Response(JSON.stringify({
+      success: true,
+      growth_analysis: growthAnalysis,
+      timestamp: new Date().toISOString()
+    }), { headers: { "Content-Type": "application/json" } });
+  } catch (error) {
+    console.error('Error in personal growth analysis:', error);
+    return new Response(JSON.stringify({
+      error: "Failed to analyze personal growth",
+      message: error.message
+    }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
 }
 
 // COM-B model analysis helpers
@@ -585,7 +822,39 @@ router.post("/api/log", async (req, env) => {
   }
   const { type, payload, who, level, tags, text, vector, binary, session_id } = body;
   let textOrVector = vector || text || null;
-  const logResult = await writeLog(env, { type, payload, session_id, who, level, tags, binary, textOrVector });
+  
+  // Check for autonomous triggers in the logged content
+  let autonomousResponse = null;
+  const contentToAnalyze = payload?.content || text || payload?.message || "";
+  
+  if (contentToAnalyze && typeof contentToAnalyze === 'string') {
+    const trigger = await detectTriggers(contentToAnalyze, env);
+    if (trigger) {
+      try {
+        autonomousResponse = await callAutonomousEndpoint(trigger.action, body, env);
+        console.log(`Autonomous trigger detected: ${trigger.action}`, trigger);
+      } catch (error) {
+        console.error('Failed to call autonomous endpoint:', error);
+      }
+    }
+    
+    // Auto-detect and add tags if not provided
+    if (!tags || tags.length === 0) {
+      const detectedTags = autoDetectTags(contentToAnalyze);
+      if (detectedTags.length > 0) {
+        body.tags = detectedTags;
+      }
+    }
+  }
+  
+  const logResult = await writeLog(env, { type, payload, session_id, who, level, tags: body.tags || tags, binary, textOrVector });
+  
+  // Include autonomous response info in the log result if triggered
+  if (autonomousResponse) {
+    const autonomousData = await autonomousResponse.json();
+    logResult.autonomous_trigger = autonomousData;
+  }
+  
   return addCORS(new Response(JSON.stringify(logResult), { status: 200, headers: corsHeaders }));
 });
 router.get("/api/logs", async (req, env) => {
@@ -1615,11 +1884,335 @@ router.post("/vectorize/upsert", async (req, env) => addCORS(await vectorize.ups
 router.post("/vectorize/query", async (req, env) => addCORS(await vectorize.query(req, env)));
 router.post("/ai/embed", async (req, env) => addCORS(await ai.embed(req, env)));
 router.post("/ai/generate", async (req, env) => addCORS(await ai.generate(req, env)));
+
+// Dynamic routing handlers for autonomous endpoints
+router.post("/api/wisdom/:action", async (req, env) => {
+  const url = new URL(req.url);
+  const action = url.pathname.split('/').pop();
+  
+  let body;
+  try { body = await req.json(); } catch {
+    return addCORS(new Response(JSON.stringify({ error: "Malformed JSON" }), { status: 400, headers: corsHeaders }));
+  }
+  
+  try {
+    switch (action) {
+      case "synthesize":
+        return addCORS(await handleWisdomSynthesize(body, env));
+      case "patterns":
+        return addCORS(await handleWisdomPatterns(body, env));
+      case "daily-synthesis":
+        return addCORS(await handleDailyWisdomSynthesis(body, env));
+      default:
+        return addCORS(await handleWisdomSynthesize(body, env));
+    }
+  } catch (error) {
+    console.error(`Error in wisdom/${action}:`, error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Internal server error", 
+      action,
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+router.post("/api/wellbeing/:focus", async (req, env) => {
+  const url = new URL(req.url);
+  const focus = url.pathname.split('/').pop();
+  
+  let body;
+  try { body = await req.json(); } catch {
+    return addCORS(new Response(JSON.stringify({ error: "Malformed JSON" }), { status: 400, headers: corsHeaders }));
+  }
+  
+  try {
+    switch (focus) {
+      case "auto":
+        return addCORS(await handleAutonomousWellbeingCheckIn(body, env));
+      case "trust":
+        return addCORS(await handleTrustCheckIn(body, env));
+      case "somatic":
+        return addCORS(await handleSomaticSession(body, env));
+      default:
+        return addCORS(await handleTrustCheckIn(body, env));
+    }
+  } catch (error) {
+    console.error(`Error in wellbeing/${focus}:`, error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Internal server error", 
+      focus,
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+router.post("/api/me/:aspect", async (req, env) => {
+  const url = new URL(req.url);
+  const aspect = url.pathname.split('/').pop();
+  
+  let body;
+  try { body = await req.json(); } catch {
+    return addCORS(new Response(JSON.stringify({ error: "Malformed JSON" }), { status: 400, headers: corsHeaders }));
+  }
+  
+  try {
+    switch (aspect) {
+      case "patterns":
+        return addCORS(await handlePersonalPatterns(body, env));
+      case "insights":
+        return addCORS(await handlePersonalInsights(body, env));
+      case "growth":
+        return addCORS(await handlePersonalGrowth(body, env));
+      default:
+        return addCORS(await handlePersonalInsights(body, env));
+    }
+  } catch (error) {
+    console.error(`Error in me/${aspect}:`, error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Internal server error", 
+      aspect,
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+// Scheduled trigger endpoint for cron jobs
+router.post("/api/scheduled/trigger", async (req, env) => {
+  try {
+    const response = await handleScheduledTriggers(env);
+    return addCORS(response);
+  } catch (error) {
+    console.error('Error in scheduled trigger:', error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Internal server error", 
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+// Autonomous system endpoints
+router.get("/api/autonomous/stats", async (req, env) => {
+  try {
+    const url = new URL(req.url);
+    const timeframe = url.searchParams.get("timeframe") || "24h";
+    const stats = await getAutonomousStats(env, timeframe);
+    return addCORS(new Response(JSON.stringify(stats), { headers: corsHeaders }));
+  } catch (error) {
+    console.error('Error getting autonomous stats:', error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Failed to get autonomous stats", 
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+router.get("/api/autonomous/logs", async (req, env) => {
+  try {
+    const url = new URL(req.url);
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 200);
+    const logs = await readAutonomousLogs(env, { limit });
+    return addCORS(new Response(JSON.stringify(logs), { headers: corsHeaders }));
+  } catch (error) {
+    console.error('Error reading autonomous logs:', error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Failed to read autonomous logs", 
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+router.post("/api/autonomous/test-trigger", async (req, env) => {
+  try {
+    let body;
+    try { body = await req.json(); } catch {
+      return addCORS(new Response(JSON.stringify({ error: "Malformed JSON" }), { status: 400, headers: corsHeaders }));
+    }
+    
+    const { test_phrase, keywords } = body;
+    const trigger = await detectTriggers(test_phrase || "I feel anxious and overwhelmed", env);
+    
+    if (trigger) {
+      const response = await callAutonomousEndpoint(trigger.action, {
+        payload: { content: test_phrase },
+        trigger_keywords: keywords || trigger.keywords,
+        test_mode: true
+      }, env);
+      
+      return addCORS(response);
+    } else {
+      return addCORS(new Response(JSON.stringify({
+        message: "No autonomous triggers detected",
+        test_phrase,
+        available_triggers: Object.keys(AUTONOMOUS_TRIGGERS.keywords)
+      }), { headers: corsHeaders }));
+    }
+  } catch (error) {
+    console.error('Error testing autonomous trigger:', error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Failed to test autonomous trigger", 
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+router.get("/api/autonomous/triggers", async (req, env) => {
+  try {
+    return addCORS(new Response(JSON.stringify({
+      available_triggers: AUTONOMOUS_TRIGGERS,
+      description: "Available autonomous triggers and their keywords"
+    }), { headers: corsHeaders }));
+  } catch (error) {
+    console.error('Error getting autonomous triggers:', error);
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Failed to get autonomous triggers", 
+      message: error.message 
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+// Debug endpoint for comprehensive logging
+router.get("/api/debug/logs", async (req, env) => {
+  const url = new URL(req.url);
+  const limit = parseInt(url.searchParams.get('limit')) || 50;
+  const type = url.searchParams.get('type');
+  const level = url.searchParams.get('level');
+  const session_id = url.searchParams.get('session_id');
+  
+  try {
+    // Build query with filters
+    let query = "SELECT * FROM metamorphic_logs";
+    const conditions = [];
+    const params = [];
+    
+    if (type) {
+      conditions.push("kind = ?");
+      params.push(type);
+    }
+    if (level) {
+      conditions.push("signal_strength = ?");
+      params.push(level);
+    }
+    if (session_id) {
+      conditions.push("session_id = ?");
+      params.push(session_id);
+    }
+    
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+    query += " ORDER BY timestamp DESC LIMIT ?";
+    params.push(limit);
+    
+    const { results } = await env.AQUIL_DB.prepare(query).bind(...params).all();
+    
+    // Also get autonomous action logs
+    const autonomousLogs = await readAutonomousLogs(env, { limit: Math.min(limit, 20) });
+    
+    return addCORS(new Response(JSON.stringify({
+      success: true,
+      logs: results,
+      autonomous_logs: autonomousLogs,
+      total_logs: results.length,
+      filters: { type, level, session_id, limit },
+      timestamp: new Date().toISOString()
+    }), { headers: corsHeaders }));
+  } catch (error) {
+    console.error('Error fetching debug logs:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: "Failed to fetch debug logs",
+      message: error.message
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+// Debug endpoint for system health
+router.get("/api/debug/health", async (req, env) => {
+  const health = {
+    timestamp: new Date().toISOString(),
+    services: {},
+    autonomous_system: {
+      triggers_loaded: Object.keys(AUTONOMOUS_TRIGGERS.keywords).length,
+      scheduled_jobs: Object.keys(AUTONOMOUS_TRIGGERS.scheduled).length,
+      status: 'operational'
+    }
+  };
+  
+  // Test D1 connection
+  try {
+    await env.AQUIL_DB.prepare("SELECT 1").run();
+    health.services.d1 = 'operational';
+  } catch (error) {
+    health.services.d1 = `error: ${error.message}`;
+  }
+  
+  // Test KV connection
+  try {
+    await env.AQUIL_MEMORIES.get('health_check');
+    health.services.kv = 'operational';
+  } catch (error) {
+    health.services.kv = `error: ${error.message}`;
+  }
+  
+  // Test AI service
+  try {
+    await env.AI.run("@cf/baai/bge-small-en-v1.5", { text: "health check" });
+    health.services.ai = 'operational';
+  } catch (error) {
+    health.services.ai = `error: ${error.message}`;
+  }
+  
+  const allHealthy = Object.values(health.services).every(status => status === 'operational');
+  
+  return addCORS(new Response(JSON.stringify({
+    success: true,
+    health,
+    overall_status: allHealthy ? 'healthy' : 'degraded'
+  }), { 
+    status: allHealthy ? 200 : 503,
+    headers: corsHeaders 
+  }));
+});
+
 router.all("*", () => addCORS(new Response(JSON.stringify({ error: "Not found", message: "Route not found" }), { status: 404, headers: corsHeaders })));
 export default {
   async fetch(request, env, ctx) {
     attachLocalVectorContext(env);
     return router.fetch(request, env, ctx);
+  },
+  
+  async scheduled(event, env, ctx) {
+    // Handle scheduled triggers for autonomous actions
+    console.log('Scheduled trigger fired:', event.cron);
+    
+    try {
+      const response = await handleScheduledTriggers(env);
+      const result = await response.json();
+      console.log('Scheduled triggers processed:', result);
+      
+      // If any triggers were activated, log them
+      if (result.triggered_actions && result.triggered_actions.length > 0) {
+        for (const action of result.triggered_actions) {
+          await writeLog(env, {
+            type: 'scheduled_trigger',
+            payload: action,
+            who: 'system',
+            level: 'info',
+            tags: ['autonomous', 'scheduled', action.type]
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error processing scheduled triggers:', error);
+      
+      // Log the error
+      await writeLog(env, {
+        type: 'scheduled_trigger_error',
+        payload: { error: error.message, cron: event.cron },
+        who: 'system',
+        level: 'error',
+        tags: ['autonomous', 'scheduled', 'error']
+      });
+    }
   }
 };
 export { ARK_MANIFEST } from "./ark/endpoints.js";

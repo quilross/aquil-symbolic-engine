@@ -180,3 +180,184 @@ export async function writeLog(
   }
   return status;
 }
+
+// Enhanced logging for autonomous actions
+export async function writeAutonomousLog(env, data) {
+  const { action, trigger_keywords, trigger_phrase, user_state, response } = data;
+  
+  const autonomousLogData = {
+    type: 'autonomous_action',
+    payload: {
+      action,
+      trigger_keywords: trigger_keywords || [],
+      trigger_phrase: trigger_phrase || '',
+      user_state: user_state || 'unknown',
+      response_summary: response?.message || 'No response',
+      timestamp: new Date().toISOString(),
+      autonomous: true
+    },
+    session_id: data.session_id || crypto.randomUUID(),
+    who: 'system',
+    level: 'info',
+    tags: ['autonomous', action, ...(trigger_keywords || [])],
+    textOrVector: `Autonomous action: ${action}. Triggered by: ${trigger_phrase || 'system'}. Keywords: ${(trigger_keywords || []).join(', ')}`
+  };
+
+  return await writeLog(env, autonomousLogData);
+}
+
+// Read logs with autonomous filtering
+export async function readAutonomousLogs(env, opts = {}) {
+  const limit = Math.min(parseInt(opts.limit || '20', 10), 200);
+  const results = {};
+
+  // D1 - Filter for autonomous actions
+  try {
+    const { results: d1logs } = await env.AQUIL_DB.prepare(
+      `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags 
+       FROM metamorphic_logs 
+       WHERE kind = 'autonomous_action' OR tags LIKE '%autonomous%'
+       ORDER BY timestamp DESC LIMIT ?`
+    ).bind(limit).all();
+    results.d1 = d1logs;
+  } catch (e) {
+    results.d1 = String(e);
+  }
+
+  // KV - Look for autonomous logs
+  try {
+    const kvList = await env.AQUIL_MEMORIES.list({ prefix: 'autonomous_action:' });
+    const autonomousLogs = [];
+    
+    for (const key of kvList.keys.slice(0, limit)) {
+      try {
+        const logData = await env.AQUIL_MEMORIES.get(key.name);
+        if (logData) {
+          autonomousLogs.push(JSON.parse(logData));
+        }
+      } catch (e) {
+        console.error('Error reading autonomous log from KV:', e);
+      }
+    }
+    
+    results.kv = autonomousLogs;
+  } catch (e) {
+    results.kv = String(e);
+  }
+
+  return results;
+}
+
+// Get autonomous action statistics
+export async function getAutonomousStats(env, timeframe = '24h') {
+  try {
+    const hoursBack = timeframe === '24h' ? 24 : timeframe === '7d' ? 168 : 24;
+    const cutoffTime = Date.now() - (hoursBack * 60 * 60 * 1000);
+    
+    const { results } = await env.AQUIL_DB.prepare(
+      `SELECT kind, COUNT(*) as count, tags
+       FROM metamorphic_logs 
+       WHERE (kind = 'autonomous_action' OR tags LIKE '%autonomous%') 
+       AND timestamp > ?
+       GROUP BY kind, tags`
+    ).bind(cutoffTime).all();
+    
+    const stats = {
+      total_autonomous_actions: 0,
+      actions_by_type: {},
+      triggers_by_keyword: {},
+      timeframe
+    };
+    
+    for (const row of results) {
+      stats.total_autonomous_actions += row.count;
+      
+      // Parse the detail to get action type
+      try {
+        const tags = JSON.parse(row.tags || '[]');
+        for (const tag of tags) {
+          if (tag !== 'autonomous') {
+            stats.actions_by_type[tag] = (stats.actions_by_type[tag] || 0) + row.count;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing autonomous log tags:', e);
+      }
+    }
+    
+    return stats;
+  } catch (error) {
+    console.error('Error getting autonomous stats:', error);
+    return {
+      total_autonomous_actions: 0,
+      actions_by_type: {},
+      triggers_by_keyword: {},
+      timeframe,
+      error: error.message
+    };
+  }
+}
+
+// Enhanced log reading with filters for autonomous analysis
+export async function readLogsWithFilters(env, filters = {}) {
+  const {
+    limit = 20,
+    type,
+    autonomous_only = false,
+    session_id,
+    tags,
+    date_from,
+    date_to
+  } = filters;
+  
+  const maxLimit = Math.min(parseInt(limit, 10), 200);
+  let query = `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags FROM metamorphic_logs`;
+  const conditions = [];
+  const params = [];
+  
+  if (type) {
+    conditions.push('kind = ?');
+    params.push(type);
+  }
+  
+  if (autonomous_only) {
+    conditions.push("(kind = 'autonomous_action' OR tags LIKE '%autonomous%')");
+  }
+  
+  if (session_id) {
+    conditions.push('session_id = ?');
+    params.push(session_id);
+  }
+  
+  if (tags && Array.isArray(tags)) {
+    for (const tag of tags) {
+      conditions.push('tags LIKE ?');
+      params.push(`%${tag}%`);
+    }
+  }
+  
+  if (date_from) {
+    conditions.push('timestamp >= ?');
+    params.push(new Date(date_from).getTime());
+  }
+  
+  if (date_to) {
+    conditions.push('timestamp <= ?');
+    params.push(new Date(date_to).getTime());
+  }
+  
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+  
+  query += ' ORDER BY timestamp DESC LIMIT ?';
+  params.push(maxLimit);
+  
+  try {
+    const { results } = await env.AQUIL_DB.prepare(query).bind(...params).all();
+    return results;
+  } catch (error) {
+    console.error('Error reading logs with filters:', error);
+    return [];
+  }
+}

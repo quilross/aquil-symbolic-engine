@@ -245,53 +245,7 @@ export class AquilCore {
     );
   }
 
-  async synthesizeWisdom(data) {
-    await this.initialize();
-    
-    const { insights = [], experiences = [], patterns = [] } = data;
-    
-    // Synthesize wisdom from provided insights and experiences
-    const synthesis = {
-      timestamp: new Date().toISOString(),
-      wisdom_threads: [],
-      integration_opportunities: [],
-      growth_edges: [],
-      celebration_moments: []
-    };
-
-    // Process insights into wisdom threads
-    for (const insight of insights) {
-      synthesis.wisdom_threads.push({
-        source: insight.source || "user_reflection",
-        wisdom: insight.content || insight,
-        archetypal_pattern: this.identifyArchetypalPattern(insight.content || insight),
-        integration_practice: this.suggestIntegrationPractice(insight.content || insight)
-      });
-    }
-
-    // Identify growth edges from experiences
-    for (const experience of experiences) {
-      const growthEdge = this.extractGrowthEdge(experience);
-      if (growthEdge) {
-        synthesis.growth_edges.push(growthEdge);
-      }
-    }
-
-    // Generate integration opportunities
-    synthesis.integration_opportunities = this.generateIntegrationOpportunities(
-      synthesis.wisdom_threads,
-      synthesis.growth_edges
-    );
-
-    // Store synthesis for future reference
-    await this.db.storeWisdomSynthesis(synthesis);
-
-    return {
-      synthesis,
-      next_steps: this.generateNextSteps(synthesis),
-      reflection_prompt: "How do these wisdom threads want to weave together in your life?"
-    };
-  }
+  // Original synthesizeWisdom method moved to autonomous section below
 
   async generateDailySynthesis() {
     await this.initialize();
@@ -551,5 +505,304 @@ export class AquilCore {
   suggestNextExploration(insights) {
     const areas = ["trust building", "creative expression", "somatic awareness", "pattern recognition", "values clarification"];
     return areas[Math.floor(Math.random() * areas.length)];
+  }
+
+  // Autonomous methods for wisdom synthesis
+  async synthesizeWisdom(data) {
+    try {
+      const { logs, context, autonomous, trigger_phrase } = data;
+      
+      if (!logs || logs.length === 0) {
+        return this.getDefaultWisdomSynthesis(context, autonomous);
+      }
+
+      // Analyze patterns in recent logs
+      const patterns = await this.analyzeLogPatterns(logs);
+      const themes = await this.extractWisdomThemes(logs);
+      const insights = await this.generateContextualInsights(patterns, themes, context);
+      
+      const synthesis = {
+        wisdom_summary: await this.createWisdomSummary(insights, context),
+        key_patterns: patterns,
+        emerging_themes: themes,
+        personalized_insights: insights,
+        integration_practices: await this.suggestIntegrationPractices(insights),
+        next_exploration: this.suggestNextExploration(insights),
+        autonomous_context: autonomous ? {
+          trigger_phrase,
+          detection_note: "This wisdom synthesis was automatically generated based on patterns in your recent interactions."
+        } : null
+      };
+
+      // Save synthesis to database
+      await this.db.saveWisdomSynthesis(synthesis);
+      
+      return synthesis;
+    } catch (error) {
+      logger.error("Error in wisdom synthesis:", error);
+      return this.getEmergencyWisdomResponse(data);
+    }
+  }
+
+  async synthesizeDailyWisdom(data) {
+    try {
+      const { logs, date, autonomous } = data;
+      
+      const dailyPatterns = await this.analyzeDailyPatterns(logs, date);
+      const dailyThemes = await this.extractDailyThemes(logs);
+      const dailyInsights = await this.generateDailyInsights(dailyPatterns, dailyThemes);
+      
+      const dailyWisdom = {
+        date,
+        daily_summary: await this.createDailySummary(dailyInsights, date),
+        key_moments: await this.identifyKeyMoments(logs),
+        growth_observations: await this.observeGrowth(dailyPatterns),
+        integration_opportunities: await this.identifyIntegrationOpportunities(dailyInsights),
+        tomorrow_intention: await this.suggestTomorrowIntention(dailyInsights),
+        gratitude_moments: await this.extractGratitudeMoments(logs),
+        autonomous: autonomous || false
+      };
+
+      // Save daily wisdom
+      await this.db.saveDailyWisdom(dailyWisdom);
+      
+      return dailyWisdom;
+    } catch (error) {
+      logger.error("Error in daily wisdom synthesis:", error);
+      return this.getEmergencyDailyWisdom(data);
+    }
+  }
+
+  async generatePersonalInsights(data) {
+    try {
+      const { logs, focus_area } = data;
+      
+      const personalPatterns = await this.analyzePersonalPatterns(logs);
+      const growthAreas = await this.identifyGrowthAreas(logs, focus_area);
+      const strengths = await this.identifyStrengths(logs);
+      
+      const insights = {
+        focus_area,
+        personal_patterns: personalPatterns,
+        growth_opportunities: growthAreas,
+        recognized_strengths: strengths,
+        integration_suggestions: await this.suggestPersonalIntegration(personalPatterns, growthAreas),
+        celebration_points: await this.identifyCelebrationPoints(logs),
+        next_steps: await this.suggestPersonalNextSteps(growthAreas)
+      };
+
+      return insights;
+    } catch (error) {
+      logger.error("Error generating personal insights:", error);
+      return this.getEmergencyPersonalInsights(data);
+    }
+  }
+
+  async analyzePersonalGrowth(data) {
+    try {
+      const { logs, timeframe } = data;
+      
+      const growthMetrics = await this.calculateGrowthMetrics(logs, timeframe);
+      const progressAreas = await this.identifyProgressAreas(logs);
+      const challenges = await this.identifyChallenges(logs);
+      
+      const growthAnalysis = {
+        timeframe,
+        growth_metrics: growthMetrics,
+        progress_areas: progressAreas,
+        challenges_faced: challenges,
+        resilience_indicators: await this.identifyResilienceIndicators(logs),
+        breakthrough_moments: await this.identifyBreakthroughMoments(logs),
+        integration_level: await this.assessIntegrationLevel(logs),
+        future_focus: await this.suggestFutureFocus(growthMetrics, progressAreas)
+      };
+
+      return growthAnalysis;
+    } catch (error) {
+      logger.error("Error analyzing personal growth:", error);
+      return this.getEmergencyGrowthAnalysis(data);
+    }
+  }
+
+  // Helper methods for autonomous functionality
+  async analyzeLogPatterns(logs) {
+    // Analyze patterns in user logs
+    const patterns = {
+      emotional_patterns: [],
+      behavioral_patterns: [],
+      growth_patterns: [],
+      recurring_themes: []
+    };
+
+    for (const log of logs) {
+      const content = log.payload?.content || log.content || "";
+      if (content) {
+        // Extract emotional patterns
+        patterns.emotional_patterns.push(...this.extractEmotionalPatterns(content));
+        // Extract behavioral patterns
+        patterns.behavioral_patterns.push(...this.extractBehavioralPatterns(content));
+        // Extract growth patterns
+        patterns.growth_patterns.push(...this.extractGrowthPatterns(content));
+      }
+    }
+
+    return patterns;
+  }
+
+  async extractWisdomThemes(logs) {
+    const themes = [];
+    const themeKeywords = {
+      trust: ["trust", "faith", "belief", "confidence"],
+      creativity: ["create", "art", "express", "inspiration"],
+      growth: ["grow", "learn", "evolve", "develop"],
+      relationships: ["connect", "relationship", "love", "family"],
+      purpose: ["purpose", "meaning", "calling", "mission"]
+    };
+
+    for (const log of logs) {
+      const content = (log.payload?.content || log.content || "").toLowerCase();
+      for (const [theme, keywords] of Object.entries(themeKeywords)) {
+        if (keywords.some(keyword => content.includes(keyword))) {
+          themes.push(theme);
+        }
+      }
+    }
+
+    return [...new Set(themes)]; // Remove duplicates
+  }
+
+  async generateContextualInsights(patterns, themes, context) {
+    const insights = [];
+    
+    // Generate insights based on patterns and themes
+    if (themes.includes("trust")) {
+      insights.push({
+        area: "trust",
+        insight: "Your journey with trust is deepening",
+        suggestion: "Continue building your inner authority through daily check-ins"
+      });
+    }
+    
+    if (themes.includes("creativity")) {
+      insights.push({
+        area: "creativity",
+        insight: "Your creative expression is seeking new outlets",
+        suggestion: "Explore a new creative medium or return to an old favorite"
+      });
+    }
+
+    return insights;
+  }
+
+  extractEmotionalPatterns(content) {
+    const emotions = [];
+    const emotionKeywords = {
+      joy: ["happy", "joy", "excited", "grateful"],
+      anxiety: ["anxious", "worried", "stress", "overwhelm"],
+      sadness: ["sad", "grief", "loss", "melancholy"],
+      anger: ["angry", "frustrated", "irritated", "mad"]
+    };
+
+    const lowerContent = content.toLowerCase();
+    for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
+      if (keywords.some(keyword => lowerContent.includes(keyword))) {
+        emotions.push(emotion);
+      }
+    }
+
+    return emotions;
+  }
+
+  extractBehavioralPatterns(content) {
+    const behaviors = [];
+    const behaviorKeywords = {
+      avoidance: ["avoid", "procrastinate", "delay", "postpone"],
+      engagement: ["engage", "participate", "involve", "commit"],
+      reflection: ["reflect", "think", "consider", "ponder"],
+      action: ["do", "act", "implement", "execute"]
+    };
+
+    const lowerContent = content.toLowerCase();
+    for (const [behavior, keywords] of Object.entries(behaviorKeywords)) {
+      if (keywords.some(keyword => lowerContent.includes(keyword))) {
+        behaviors.push(behavior);
+      }
+    }
+
+    return behaviors;
+  }
+
+  extractGrowthPatterns(content) {
+    const growth = [];
+    const growthKeywords = {
+      learning: ["learn", "discover", "understand", "realize"],
+      challenging: ["challenge", "difficult", "hard", "struggle"],
+      breakthrough: ["breakthrough", "insight", "clarity", "understanding"],
+      integration: ["integrate", "apply", "practice", "implement"]
+    };
+
+    const lowerContent = content.toLowerCase();
+    for (const [pattern, keywords] of Object.entries(growthKeywords)) {
+      if (keywords.some(keyword => lowerContent.includes(keyword))) {
+        growth.push(pattern);
+      }
+    }
+
+    return growth;
+  }
+
+  getDefaultWisdomSynthesis(context, autonomous) {
+    return {
+      wisdom_summary: "Your wisdom is always available to you, even in quiet moments.",
+      key_patterns: [],
+      emerging_themes: ["presence", "awareness"],
+      personalized_insights: [{
+        area: "general",
+        insight: "Every moment offers an opportunity for growth and awareness",
+        suggestion: "Take a moment to check in with yourself and notice what's present"
+      }],
+      integration_practices: ["Daily mindful check-ins", "Gratitude practice"],
+      next_exploration: "trust building",
+      autonomous_context: autonomous ? {
+        detection_note: "This wisdom synthesis was generated to support your journey."
+      } : null
+    };
+  }
+
+  getEmergencyWisdomResponse(data) {
+    return {
+      wisdom_summary: "You have everything you need within you right now.",
+      emergency_support: true,
+      key_insight: "Sometimes the most profound wisdom comes from simply being present with what is.",
+      immediate_practice: "Take three deep breaths and notice what you're grateful for in this moment."
+    };
+  }
+
+  getEmergencyDailyWisdom(data) {
+    return {
+      date: data.date || new Date().toISOString().split('T')[0],
+      daily_summary: "Today was a day of being human, with all its complexity and beauty.",
+      emergency_support: true,
+      key_insight: "Every day offers gifts, even the challenging ones.",
+      tomorrow_intention: "Approach tomorrow with curiosity and compassion."
+    };
+  }
+
+  getEmergencyPersonalInsights(data) {
+    return {
+      focus_area: data.focus_area || "general",
+      emergency_support: true,
+      key_insight: "You are exactly where you need to be in your journey.",
+      immediate_support: "Trust your inner wisdom and take things one step at a time."
+    };
+  }
+
+  getEmergencyGrowthAnalysis(data) {
+    return {
+      timeframe: data.timeframe || "current",
+      emergency_support: true,
+      key_insight: "Growth happens in spirals, not straight lines.",
+      encouragement: "You are growing even when it doesn't feel like it."
+    };
   }
 }
