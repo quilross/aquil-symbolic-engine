@@ -59,6 +59,178 @@ export class TrustBuilder {
     }
   }
 
+  async autonomousCheckIn(data) {
+    // Autonomous check-in triggered by keywords or patterns
+    try {
+      const { trigger_keywords, trigger_phrase, user_state, context } = data;
+      
+      // Create synthetic check-in data based on triggers
+      const syntheticData = {
+        current_state: trigger_phrase || "Autonomous check-in triggered",
+        trust_level: this.inferTrustLevelFromKeywords(trigger_keywords),
+        specific_situation: `Triggered by: ${trigger_keywords?.join(', ') || 'autonomous system'}`,
+        autonomous: true,
+        trigger_context: context
+      };
+      
+      const analysis = await this.analyzeTrustState(syntheticData);
+      const guidance = await this.generateAutonomousTrustGuidance(analysis, trigger_keywords);
+      const exercises = await this.createAutonomousExercises(analysis, trigger_keywords);
+      
+      // Save autonomous session
+      const sessionData = {
+        trust_level: analysis.trust_level,
+        reflection: trigger_phrase,
+        session_type: "autonomous-check-in",
+        trigger_keywords,
+        insights: {
+          analysis: analysis,
+          guidance: guidance,
+          autonomous_trigger: true
+        },
+        exercises_completed: exercises,
+        next_steps: guidance.next_steps,
+      };
+
+      await this.db.saveTrustSession(sessionData);
+
+      return {
+        message: guidance.main_message,
+        trust_analysis: analysis,
+        autonomous_guidance: guidance,
+        suggested_exercises: exercises,
+        trigger_response: this.generateTriggerResponse(trigger_keywords),
+        immediate_support: this.getImmediateSupport(trigger_keywords),
+        next_steps: guidance.next_steps,
+        autonomous: true,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error("Autonomous trust check-in error:", error);
+      return this.getEmergencyAutonomousResponse(data);
+    }
+  }
+
+  inferTrustLevelFromKeywords(keywords) {
+    if (!keywords || !Array.isArray(keywords)) return "medium";
+    
+    const highAnxietyKeywords = ["panic", "overwhelm", "scared", "terrified"];
+    const mediumAnxietyKeywords = ["anxious", "worried", "stress", "uncertain"];
+    const lowAnxietyKeywords = ["doubt", "insecure"];
+    
+    if (keywords.some(k => highAnxietyKeywords.includes(k))) return "low";
+    if (keywords.some(k => mediumAnxietyKeywords.includes(k))) return "medium-low";
+    if (keywords.some(k => lowAnxietyKeywords.includes(k))) return "medium";
+    
+    return "medium";
+  }
+
+  async generateAutonomousTrustGuidance(analysis, triggerKeywords) {
+    const guidance = await this.generateTrustGuidance(analysis);
+    
+    // Add autonomous-specific guidance
+    guidance.autonomous_context = {
+      trigger_detected: triggerKeywords,
+      immediate_response: this.getImmediateTrustResponse(triggerKeywords),
+      gentle_reminder: "I noticed some words that might indicate you could use some trust-building support right now."
+    };
+    
+    return guidance;
+  }
+
+  async createAutonomousExercises(analysis, triggerKeywords) {
+    const baseExercises = await this.createPersonalizedExercises(analysis);
+    
+    // Add trigger-specific exercises
+    const triggerExercises = this.getTriggerSpecificExercises(triggerKeywords);
+    
+    return {
+      ...baseExercises,
+      immediate_exercises: triggerExercises,
+      autonomous_note: "These exercises were selected based on the patterns I detected in your message."
+    };
+  }
+
+  getTriggerSpecificExercises(keywords) {
+    const exercises = [];
+    
+    if (keywords?.includes("anxious") || keywords?.includes("stress")) {
+      exercises.push({
+        name: "3-3-3 Grounding",
+        instruction: "Name 3 things you can see, 3 sounds you can hear, 3 things you can touch",
+        duration: "2 minutes"
+      });
+    }
+    
+    if (keywords?.includes("doubt") || keywords?.includes("uncertain")) {
+      exercises.push({
+        name: "Inner Knowing Check",
+        instruction: "Place hand on heart, take 3 deep breaths, ask 'What do I know to be true right now?'",
+        duration: "3 minutes"
+      });
+    }
+    
+    if (keywords?.includes("overwhelm")) {
+      exercises.push({
+        name: "One Thing Focus",
+        instruction: "Choose just one small thing you can do right now. Focus only on that.",
+        duration: "5 minutes"
+      });
+    }
+    
+    return exercises;
+  }
+
+  getImmediateTrustResponse(keywords) {
+    if (keywords?.includes("panic") || keywords?.includes("overwhelm")) {
+      return "You're safe right now. Let's take this one breath at a time.";
+    }
+    
+    if (keywords?.includes("anxious") || keywords?.includes("stress")) {
+      return "I hear that you're feeling anxious. Your feelings are valid, and you have the strength to work through this.";
+    }
+    
+    if (keywords?.includes("doubt") || keywords?.includes("uncertain")) {
+      return "Uncertainty is part of growth. You have inner wisdom that can guide you through this.";
+    }
+    
+    return "I'm here to support you in building trust in yourself.";
+  }
+
+  getImmediateSupport(keywords) {
+    return {
+      breathing_reminder: "Take 3 slow, deep breaths",
+      grounding_phrase: "I am safe, I am capable, I can trust myself",
+      body_check: "Notice where you feel tension and breathe into that space",
+      next_action: "Choose one small, kind thing you can do for yourself right now"
+    };
+  }
+
+  getEmergencyAutonomousResponse(data) {
+    return {
+      message: "I noticed you might need some support right now. You're not alone.",
+      immediate_support: this.getImmediateSupport([]),
+      emergency_exercises: [
+        {
+          name: "Emergency Grounding",
+          instruction: "Feel your feet on the ground, take 5 deep breaths",
+          duration: "2 minutes"
+        }
+      ],
+      autonomous: true,
+      fallback: true,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  generateTriggerResponse(keywords) {
+    if (!keywords || keywords.length === 0) {
+      return "I'm here to support your trust-building journey.";
+    }
+    
+    return `I noticed words like "${keywords.join('", "')}" in your message. These feelings are completely valid, and I'm here to help you work through them with compassion.`;
+  }
+
   async analyzeTrustState(data) {
     const { current_state, trust_level, specific_situation, body_sensations } =
       data;
