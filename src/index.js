@@ -2070,6 +2070,109 @@ router.get("/api/autonomous/triggers", async (req, env) => {
   }
 });
 
+// Debug endpoint for comprehensive logging
+router.get("/api/debug/logs", async (req, env) => {
+  const url = new URL(req.url);
+  const limit = parseInt(url.searchParams.get('limit')) || 50;
+  const type = url.searchParams.get('type');
+  const level = url.searchParams.get('level');
+  const session_id = url.searchParams.get('session_id');
+  
+  try {
+    // Build query with filters
+    let query = "SELECT * FROM metamorphic_logs";
+    const conditions = [];
+    const params = [];
+    
+    if (type) {
+      conditions.push("kind = ?");
+      params.push(type);
+    }
+    if (level) {
+      conditions.push("signal_strength = ?");
+      params.push(level);
+    }
+    if (session_id) {
+      conditions.push("session_id = ?");
+      params.push(session_id);
+    }
+    
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+    query += " ORDER BY timestamp DESC LIMIT ?";
+    params.push(limit);
+    
+    const { results } = await env.AQUIL_DB.prepare(query).bind(...params).all();
+    
+    // Also get autonomous action logs
+    const autonomousLogs = await readAutonomousLogs(env, { limit: Math.min(limit, 20) });
+    
+    return addCORS(new Response(JSON.stringify({
+      success: true,
+      logs: results,
+      autonomous_logs: autonomousLogs,
+      total_logs: results.length,
+      filters: { type, level, session_id, limit },
+      timestamp: new Date().toISOString()
+    }), { headers: corsHeaders }));
+  } catch (error) {
+    console.error('Error fetching debug logs:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: "Failed to fetch debug logs",
+      message: error.message
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+// Debug endpoint for system health
+router.get("/api/debug/health", async (req, env) => {
+  const health = {
+    timestamp: new Date().toISOString(),
+    services: {},
+    autonomous_system: {
+      triggers_loaded: Object.keys(AUTONOMOUS_TRIGGERS.keywords).length,
+      scheduled_jobs: Object.keys(AUTONOMOUS_TRIGGERS.scheduled).length,
+      status: 'operational'
+    }
+  };
+  
+  // Test D1 connection
+  try {
+    await env.AQUIL_DB.prepare("SELECT 1").run();
+    health.services.d1 = 'operational';
+  } catch (error) {
+    health.services.d1 = `error: ${error.message}`;
+  }
+  
+  // Test KV connection
+  try {
+    await env.AQUIL_MEMORIES.get('health_check');
+    health.services.kv = 'operational';
+  } catch (error) {
+    health.services.kv = `error: ${error.message}`;
+  }
+  
+  // Test AI service
+  try {
+    await env.AI.run("@cf/baai/bge-small-en-v1.5", { text: "health check" });
+    health.services.ai = 'operational';
+  } catch (error) {
+    health.services.ai = `error: ${error.message}`;
+  }
+  
+  const allHealthy = Object.values(health.services).every(status => status === 'operational');
+  
+  return addCORS(new Response(JSON.stringify({
+    success: true,
+    health,
+    overall_status: allHealthy ? 'healthy' : 'degraded'
+  }), { 
+    status: allHealthy ? 200 : 503,
+    headers: corsHeaders 
+  }));
+});
+
 router.all("*", () => addCORS(new Response(JSON.stringify({ error: "Not found", message: "Route not found" }), { status: 404, headers: corsHeaders })));
 export default {
   async fetch(request, env, ctx) {

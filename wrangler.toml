@@ -47,9 +47,14 @@ TIMEZONE         = "America/New_York"
 AUTO_SESSION_INIT = "true"
 VOICE_ADAPTATION = "true"
 
-# Scheduled triggers (morning + evening ritual syncs)
+# Scheduled triggers for autonomous actions
 [env.production.triggers]
-crons = ["0 7 * * *", "0 19 * * *"]
+crons = [
+  "0 7 * * *",   # Daily wisdom synthesis (morning)
+  "0 19 * * *",  # Daily wisdom synthesis (evening)
+  "0 20 * * *",  # Evening ritual suggestions
+  "0 8 * * 1"    # Weekly insights (Monday morning)
+]
 
 # ----------------------------------------------------
 # 🧪 Development Environment
@@ -94,3 +99,12 @@ ARK_VERSION     = "2.0"
 TIMEZONE        = "America/New_York"
 AUTO_SESSION_INIT = "true"
 VOICE_ADAPTATION = "true"
+
+# Scheduled triggers for autonomous actions (development)
+[env.development.triggers]
+crons = [
+  "0 7 * * *",   # Daily wisdom synthesis (morning)
+  "0 19 * * *",  # Daily wisdom synthesis (evening)
+  "0 20 * * *",  # Evening ritual suggestions
+  "0 8 * * 1"    # Weekly insights (Monday morning)
+]

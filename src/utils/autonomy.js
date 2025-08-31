@@ -5,16 +5,17 @@
 
 export const AUTONOMOUS_TRIGGERS = {
   keywords: {
-    wellbeing: ["doubt", "uncertain", "insecure", "anxious", "stress", "overwhelm", "worried", "fear", "scared", "panic"],
+    // Financial/abundance triggers should be checked first to avoid wellbeing overlap
+    abundance: ["money", "broke", "wealth", "scarcity", "prosperity", "charging", "rates", "financial", "income", "expensive", "afford", "budget", "salary", "payment", "worried about money"],
+    transitions: ["new job", "move", "change", "transition", "phase", "chapter", "ending", "beginning", "shift", "transform", "relocating", "starting", "leaving", "moving"],
+    wellbeing: ["doubt", "uncertain", "insecure", "anxious", "overwhelm", "worried", "fear", "scared", "panic", "nervous", "uneasy", "stressed"],
     somatic: ["body", "tight", "shoulders", "chest", "tense", "pain", "breath", "breathing", "headache", "stomach", "muscle"],
     standing_tall: ["small", "powerless", "intimidated", "voice", "confidence", "assertive", "speak up", "invisible", "shrinking"],
     media_wisdom: ["read", "watched", "listened", "book", "movie", "podcast", "show", "documentary", "article", "video"],
     creativity: ["block", "stuck", "write", "create", "paint", "draw", "music", "art", "creative", "inspiration", "express"],
-    abundance: ["money", "broke", "wealth", "scarcity", "prosperity", "charging", "rates", "financial", "income", "expensive"],
-    transitions: ["new job", "move", "change", "transition", "phase", "chapter", "ending", "beginning", "shift", "transform"],
     ancestry: ["family", "mom", "dad", "parents", "generational", "pattern", "lineage", "ancestors", "inherited", "bloodline"],
-    values: ["matters", "priority", "values", "important", "decision", "choice", "principle", "belief", "meaning", "purpose"],
-    goals: ["goal", "commit", "promise", "achieve", "progress", "next step", "milestone", "target", "objective", "plan"],
+    values: ["matters", "priority", "values", "decision", "choice", "principle", "belief", "prioritize", "important"],
+    goals: ["goal", "commit", "promise", "achieve", "progress", "next step", "milestone", "target", "objective", "plan", "meaningful"],
     dreams: ["dreamed", "dream", "nightmare", "recurring", "symbolic", "sleep", "subconscious", "vision", "imagery", "metaphor"]
   },
   scheduled: {
@@ -34,20 +35,33 @@ export async function detectTriggers(text, env) {
   if (!text || typeof text !== 'string') return null;
   
   const lowerText = text.toLowerCase();
+  const matches = [];
   
+  // Find all matches with their confidence scores
   for (const [action, keywords] of Object.entries(AUTONOMOUS_TRIGGERS.keywords)) {
     const matchedKeywords = keywords.filter(keyword => lowerText.includes(keyword));
     if (matchedKeywords.length > 0) {
-      return { 
+      matches.push({
         action, 
         keywords: matchedKeywords,
         trigger_type: 'keyword',
-        confidence: matchedKeywords.length / keywords.length
-      };
+        confidence: matchedKeywords.length / keywords.length,
+        matchCount: matchedKeywords.length
+      });
     }
   }
   
-  return null;
+  if (matches.length === 0) return null;
+  
+  // Sort by confidence (highest first), then by match count
+  matches.sort((a, b) => {
+    if (b.confidence !== a.confidence) {
+      return b.confidence - a.confidence;
+    }
+    return b.matchCount - a.matchCount;
+  });
+  
+  return matches[0];
 }
 
 /**
@@ -75,6 +89,10 @@ export const AUTONOMOUS_ENDPOINT_MAP = {
  * @returns {Promise<Response>} Response from the autonomous endpoint
  */
 export async function callAutonomousEndpoint(action, originalBody, env) {
+  if (!env) {
+    throw new Error('Environment bindings are required');
+  }
+  
   const endpointConfig = AUTONOMOUS_ENDPOINT_MAP[action];
   if (!endpointConfig) {
     throw new Error(`Unknown autonomous action: ${action}`);
