@@ -13,25 +13,38 @@ export async function readLogs(env, opts = {}) {
     results.d1 = String(e);
   }
 
-  // KV
+  // KV - Enhanced to return full content + IDs
   try {
-    const { listRecent } = await import('./kv.js');
-    results.kv = await listRecent(env, { limit });
+    const { getRecentLogs } = await import('./kv.js');
+    results.kv = await getRecentLogs(env, { limit, includeContent: true });
   } catch (e) {
     results.kv = String(e);
   }
 
-  // R2
+  // R2 - Enhanced with resonance weaving
   try {
-    const { listRecent } = await import('./r2.js');
+    const { listRecent, progressiveWeaving } = await import('./r2.js');
     results.r2 = await listRecent(env, { limit });
+    
+    // Add resonance weaving for recent logs
+    try {
+      const resonanceResult = await progressiveWeaving(env, { timeframe: '24h' });
+      results.r2_resonance = resonanceResult.success ? resonanceResult : null;
+    } catch (resonanceError) {
+      results.r2_resonance = `resonance_error: ${resonanceError.message}`;
+    }
   } catch (e) {
     results.r2 = String(e);
   }
 
-  // Vector
+  // Vector - Enhanced with dual-mode support
   try {
-    results.vector = 'Listing not supported; use query API.';
+    const { queryVector } = await import('./vectorize.js');
+    results.vector = {
+      status: 'Available modes: semantic_recall, transformative_inquiry, legacy',
+      modes: ['semantic_recall', 'transformative_inquiry', 'legacy'],
+      note: 'Use /api/vector/query with mode parameter'
+    };
   } catch (e) {
     results.vector = String(e);
   }
@@ -93,23 +106,55 @@ export async function writeLog(
   const id = generateId();
   const timestamp = getNYTimestamp();
   const status = {};
-  // D1
+  
+  // D1 - Enhanced with variable payload support and schema enforcement
   try {
-    await env.AQUIL_DB.prepare(
-      "INSERT INTO metamorphic_logs (id, timestamp, kind, signal_strength, detail, session_id, voice_used, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    )
-      .bind(
-        id,
-        Date.now(),
-        type,
-  level || null,
-        JSON.stringify(payload),
-        session_id || null,
-        who || null,
-        JSON.stringify(tags || []),
+    // Normalize payload to ensure it has required fields
+    const normalizedPayload = {
+      content: payload?.content || payload?.message || JSON.stringify(payload),
+      source: payload?.source || who || 'system',
+      ...payload
+    };
+
+    // Try primary table (metamorphic_logs) first
+    try {
+      await env.AQUIL_DB.prepare(
+        "INSERT INTO metamorphic_logs (id, timestamp, kind, signal_strength, detail, session_id, voice_used, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       )
-      .run();
-    status.d1 = "ok";
+        .bind(
+          id,
+          new Date().toISOString(), // Use ISO format instead of Date.now()
+          type || 'log',
+          level || 'medium',
+          JSON.stringify(normalizedPayload),
+          session_id || null,
+          who || null,
+          JSON.stringify(tags || []),
+        )
+        .run();
+      status.d1 = "ok";
+    } catch (primaryError) {
+      // Fallback to event_log table if metamorphic_logs fails
+      try {
+        await env.AQUIL_DB.prepare(
+          "INSERT INTO event_log (id, ts, type, who, level, session_id, tags, payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+          .bind(
+            id,
+            new Date().toISOString(),
+            type || 'log',
+            who || 'system',
+            level || 'info',
+            session_id || null,
+            JSON.stringify(tags || []),
+            JSON.stringify(normalizedPayload),
+          )
+          .run();
+        status.d1 = "ok_fallback";
+      } catch (fallbackError) {
+        status.d1 = `primary_error: ${primaryError.message}, fallback_error: ${fallbackError.message}`;
+      }
+    }
   } catch (e) {
     status.d1 = String(e);
   }

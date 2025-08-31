@@ -1,4 +1,4 @@
-// List recent log keys from KV
+// List recent log keys from KV (LEGACY - returns only IDs)
 export async function listRecent(env, { prefix = "log_", limit = 20 } = {}) {
   const result = await env.AQUIL_MEMORIES.list({ prefix });
   // Sort keys newest to oldest by extracting timestamp from key
@@ -8,6 +8,57 @@ export async function listRecent(env, { prefix = "log_", limit = 20 } = {}) {
     .slice(0, limit)
     .map((k) => k.key);
   return sorted;
+}
+
+// Enhanced: List recent logs with FULL CONTENT + IDs (NO REGRESSION)
+export async function listRecentWithContent(env, { prefix = "log_", limit = 20 } = {}) {
+  const result = await env.AQUIL_MEMORIES.list({ prefix });
+  
+  // Sort keys newest to oldest by extracting timestamp from key
+  const sortedKeys = result.keys
+    .map((k) => ({ key: k.name, ts: parseInt(k.name.split("_")[1], 10) || 0 }))
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, limit);
+
+  // Fetch full content for each key
+  const logsWithContent = [];
+  for (const { key } of sortedKeys) {
+    try {
+      const content = await env.AQUIL_MEMORIES.get(key);
+      if (content) {
+        const parsedContent = JSON.parse(content);
+        logsWithContent.push({
+          id: key,
+          key: key, // Preserve legacy key field
+          content: parsedContent,
+          timestamp: parsedContent.timestamp,
+          type: parsedContent.type,
+          payload: parsedContent.payload
+        });
+      }
+    } catch (e) {
+      // Include failed entries for debugging
+      logsWithContent.push({
+        id: key,
+        key: key,
+        content: null,
+        error: e.message
+      });
+    }
+  }
+  
+  return logsWithContent;
+}
+
+// Dual-mode retrieval: IDs only OR full content
+export async function getRecentLogs(env, options = {}) {
+  const { includeContent = true, ...opts } = options;
+  
+  if (includeContent) {
+    return await listRecentWithContent(env, opts);
+  } else {
+    return await listRecent(env, opts); // Legacy mode preserved
+  }
 }
 
 // Batch get values for keys
