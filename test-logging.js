@@ -259,33 +259,71 @@ async function testLogFiltering() {
 
   // Test filtering by type
   try {
+    await writeAutonomousLog(mockEnv, {
+      action: 'test',
+      type: 'autonomous_action',
+      trigger_keywords: ['test'],
+      trigger_phrase: 'test filtering',
+      user_state: 'testing',
+      payload: { content: 'test log for filtering' }
+    });
+
     const logs = await readAutonomousLogs(mockEnv, { 
       limit: 10,
       filters: { type: 'autonomous_action' }
     });
-    logTest('Log filtering by type', Array.isArray(logs));
+    
+    const hasCorrectType = logs.d1 && logs.d1.length > 0 && 
+                          logs.d1.every(log => log.kind === 'autonomous_action');
+    logTest('Log filtering by type', hasCorrectType);
   } catch (error) {
     logTest('Log filtering by type', false, error.message);
   }
 
   // Test filtering by session
   try {
+    await writeAutonomousLog(mockEnv, {
+      action: 'test',
+      type: 'autonomous_action', 
+      trigger_keywords: ['test'],
+      trigger_phrase: 'test session filtering',
+      user_state: 'testing',
+      session_id: 'test-session-1',
+      payload: { content: 'test log for session filtering' }
+    });
+
     const logs = await readAutonomousLogs(mockEnv, { 
       limit: 10,
       filters: { session_id: 'test-session-1' }
     });
-    logTest('Log filtering by session', Array.isArray(logs));
+    
+    const hasCorrectSession = logs.d1 && logs.d1.length > 0 && 
+                              logs.d1.every(log => log.session_id === 'test-session-1');
+    logTest('Log filtering by session', hasCorrectSession);
   } catch (error) {
     logTest('Log filtering by session', false, error.message);
   }
 
   // Test filtering by level
   try {
+    await writeAutonomousLog(mockEnv, {
+      action: 'test',
+      type: 'autonomous_action',
+      trigger_keywords: ['test'],
+      trigger_phrase: 'test level filtering', 
+      user_state: 'testing',
+      level: 'error',
+      payload: { content: 'test log for level filtering' }
+    });
+
     const logs = await readAutonomousLogs(mockEnv, { 
       limit: 10,
       filters: { level: 'error' }
     });
-    logTest('Log filtering by level', Array.isArray(logs));
+    
+    const hasCorrectLevel = logs.d1 && logs.d1.length > 0 && 
+                           logs.d1.every(log => log.signal_strength === 'error');
+    logTest('Log filtering by level', hasCorrectLevel);
   } catch (error) {
     logTest('Log filtering by level', false, error.message);
   }
