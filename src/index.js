@@ -22,6 +22,10 @@ import { CreativityUnleasher } from "./src-core-creativity-unleasher.js";
 import { AbundanceCultivator } from "./src-core-abundance-cultivator.js";
 import { TransitionNavigator } from "./src-core-transition-navigator.js";
 import { AncestryHealer } from "./src-core-ancestry-healer.js";
+import { AquilCore } from "./src-core-aquil-core.js";
+import { logMetamorphicEvent } from "./ark/core.js";
+import { AquilDatabase } from "./utils/database.js";
+import { AquilAI } from "./utils/ai-helpers.js";
 
 // Dream interpretation helpers
 function interpretSymbol(symbol) {
@@ -535,8 +539,9 @@ function generateTrackingMethods(goal) {
 const router = Router();
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin",
+  "Access-Control-Max-Age": "86400",
   "Content-Type": "application/json",
 };
 const addCORS = (res) => {
@@ -746,7 +751,6 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
   }
   
   try {
-    const { AquilCore } = await import("./src-core-aquil-core.js");
     const core = new AquilCore(env);
     const result = await core.synthesizeWisdom(data);
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
@@ -765,7 +769,6 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
 });
 router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
-    const { AquilCore } = await import("./src-core-aquil-core.js");
     const core = new AquilCore(env);
     const result = await core.generateDailySynthesis();
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
@@ -841,7 +844,6 @@ router.post("/api/somatic/session", async (req, env) => {
 });
 router.get("/api/insights", async (req, env) => {
   try {
-    const { AquilCore } = await import("./src-core-aquil-core.js");
     const core = new AquilCore(env);
     const result = await core.generateInsights();
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
@@ -868,7 +870,7 @@ router.post("/api/feedback", async (req, env) => {
     const { feedback, rating, session_id, context } = data;
     
     // Log feedback for system improvement
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "user_feedback",
       detail: {
@@ -943,7 +945,6 @@ router.post("/api/dreams/interpret", async (req, env) => {
     ];
 
     // Log the dream interpretation
-    const { logMetamorphicEvent } = await import("./ark/core.js");
     await logMetamorphicEvent(env, {
       kind: "dream_interpretation",
       detail: {
@@ -1029,7 +1030,7 @@ router.post("/api/energy/optimize", async (req, env) => {
     ];
 
     // Log the energy optimization session
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "energy_optimization",
       detail: {
@@ -1165,7 +1166,7 @@ router.post("/api/patterns/autonomous-detect", async (req, env) => {
     }
 
     // Log the pattern detection
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "autonomous_pattern_detection",
       detail: {
@@ -1201,12 +1202,12 @@ router.post("/api/commitments/create", async (req, env) => {
   }
   
   try {
-    const { AquilDatabase } = await import("./utils/database.js");
+    
     const db = new AquilDatabase(env);
     const commitmentId = await db.createCommitment(data);
     
     // Log commitment creation
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "commitment_created",
       detail: {
@@ -1240,7 +1241,7 @@ router.post("/api/commitments/create", async (req, env) => {
 
 router.get("/api/commitments/active", async (req, env) => {
   try {
-    const { AquilDatabase } = await import("./utils/database.js");
+    
     const db = new AquilDatabase(env);
     const commitments = await db.getActiveCommitments();
     
@@ -1269,7 +1270,7 @@ router.post("/api/commitments/:id/progress", async (req, env) => {
   
   try {
     const commitmentId = req.params.id;
-    const { AquilDatabase } = await import("./utils/database.js");
+    
     const db = new AquilDatabase(env);
     
     const progressId = await db.logCommitmentProgress(commitmentId, data);
@@ -1280,7 +1281,7 @@ router.post("/api/commitments/:id/progress", async (req, env) => {
     }
     
     // Log progress update
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "commitment_progress",
       detail: {
@@ -1346,7 +1347,7 @@ router.post("/api/socratic/question", async (req, env) => {
 
     // Try to enhance with AI if available
     try {
-      const { AquilAI } = await import("./utils/ai-helpers.js");
+      
       const ai = new AquilAI(env);
       const aiQuestion = await ai.generateSocraticQuestion(context, voice_preference);
       questionSession.questions.unshift(aiQuestion);
@@ -1355,7 +1356,7 @@ router.post("/api/socratic/question", async (req, env) => {
     }
 
     // Log the questioning session
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "socratic_questioning",
       detail: {
@@ -1437,7 +1438,7 @@ router.post("/api/coaching/comb-analysis", async (req, env) => {
     combAnalysis.success_probability = calculateSuccessProbability(combAnalysis);
 
     // Log the COM-B analysis
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "comb_analysis",
       detail: {
@@ -1479,7 +1480,7 @@ router.get("/api/monitoring/metrics", async (req, env) => {
 
     // Feature status checks
     try {
-      const { AquilCore } = await import("./ark/core.js");
+      
       const core = new AquilCore(env);
       await core.initialize();
       metrics.feature_status.core_system = "operational";
@@ -1489,7 +1490,7 @@ router.get("/api/monitoring/metrics", async (req, env) => {
     }
 
     try {
-      const { AquilDatabase } = await import("./utils/database.js");
+      
       const db = new AquilDatabase(env);
       const recentLogs = await db.getRecentLogs(1); // Last hour
       metrics.feature_status.logging_system = "operational";
@@ -1499,7 +1500,7 @@ router.get("/api/monitoring/metrics", async (req, env) => {
     }
 
     try {
-      const { AquilAI } = await import("./utils/ai-helpers.js");
+      
       const ai = new AquilAI(env);
       await ai.testConnection();
       metrics.feature_status.ai_integration = "operational";
@@ -1512,7 +1513,7 @@ router.get("/api/monitoring/metrics", async (req, env) => {
     try {
       // Test response time for core operations
       const testData = { type: "monitoring_test", payload: { test: true } };
-      const { logMetamorphicEvent } = await import("./ark/core.js");
+      
       await logMetamorphicEvent(env, {
         kind: "monitoring_test",
         detail: testData,
@@ -1568,7 +1569,7 @@ router.post("/api/contracts/create", async (req, env) => {
 
     // Store the contract
     try {
-      const { AquilDatabase } = await import("./utils/database.js");
+      
       const db = new AquilDatabase(env);
       await db.storeTransformationContract(contract);
     } catch (error) {
@@ -1576,7 +1577,7 @@ router.post("/api/contracts/create", async (req, env) => {
     }
 
     // Log the contract creation
-    const { logMetamorphicEvent } = await import("./ark/core.js");
+    
     await logMetamorphicEvent(env, {
       kind: "transformation_contract",
       detail: {
