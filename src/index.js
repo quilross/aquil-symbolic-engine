@@ -1141,9 +1141,54 @@ router.post("/api/ark/autonomous", async (req, env) => addCORS(await arkAutonomo
 
 // Main API endpoints
 router.get("/api/session-init", async (req, env) => addCORS(await handleSessionInit(req, env)));
-router.post("/api/discovery/generate-inquiry", async (req, env) => addCORS(await handleDiscoveryInquiry(req, env)));
-router.post("/api/ritual/auto-suggest", async (req, env) => addCORS(await handleRitualSuggestion(req, env)));
-router.get("/api/system/health-check", async (req, env) => addCORS(await handleHealthCheck(req, env)));
+router.post("/api/discovery/generate-inquiry", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = await handleDiscoveryInquiry(req, env);
+    const resultData = JSON.parse(result.body || '{}');
+    
+    await logChatGPTAction(env, 'generateDiscoveryInquiry', body, resultData);
+    
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'generateDiscoveryInquiry', {}, null, error);
+    
+    return addCORS(createErrorResponse(error, 'generateDiscoveryInquiry'));
+  }
+});
+router.post("/api/ritual/auto-suggest", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = await handleRitualSuggestion(req, env);
+    const resultData = JSON.parse(result.body || '{}');
+    
+    await logChatGPTAction(env, 'autoSuggestRitual', body, resultData);
+    
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'autoSuggestRitual', {}, null, error);
+    
+    return addCORS(createErrorResponse(error, 'autoSuggestRitual'));
+  }
+});
+router.get("/api/system/health-check", async (req, env) => {
+  try {
+    const result = await handleHealthCheck(req, env);
+    const resultData = JSON.parse(result.body || '{}');
+    
+    await logChatGPTAction(env, 'systemHealthCheck', { 
+      endpoint: '/api/system/health-check' 
+    }, resultData);
+    
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'systemHealthCheck', { 
+      endpoint: '/api/system/health-check' 
+    }, null, error);
+    
+    return addCORS(createErrorResponse(error, 'systemHealthCheck'));
+  }
+});
 router.post("/api/log", async (req, env) => {
   let body;
   try { body = await req.json(); } catch {
@@ -1177,6 +1222,14 @@ router.post("/api/log", async (req, env) => {
   }
   
   const logResult = await writeLog(env, { type, payload, session_id, who, level, tags: body.tags || tags, binary, textOrVector });
+  
+  // Log the data/event operation
+  await logChatGPTAction(env, 'logDataOrEvent', { 
+    type, 
+    payload: payload ? 'present' : 'none',
+    session_id,
+    endpoint: '/api/log'
+  }, logResult);
   
   // Include autonomous response info in the log result if triggered
   if (autonomousResponse) {
@@ -1338,8 +1391,22 @@ router.get("/api/logs", async (req, env) => {
       cursor: nextCursor
     };
     
+    // Log the retrieve operation
+    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', { 
+      limit, 
+      cursor,
+      endpoint: '/api/logs' 
+    }, { count: paginatedLogs.length, hasMore: !!nextCursor });
+    
     return addCORS(new Response(JSON.stringify(response), { status: 200, headers: corsHeaders }));
   } catch (e) {
+    // Log the error
+    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', { 
+      limit, 
+      cursor,
+      endpoint: '/api/logs' 
+    }, null, e);
+    
     return addCORS(new Response(JSON.stringify({ 
       items: [], 
       cursor: null, 
@@ -1347,6 +1414,63 @@ router.get("/api/logs", async (req, env) => {
     }), { status: 500, headers: corsHeaders }));
   }
 });
+
+// Retrieve recent logs for a specific session
+router.get("/api/logs/session/:sessionId", async (req, env) => {
+  try {
+    const sessionId = req.params.sessionId;
+    const url = new URL(req.url);
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 100);
+    
+    if (!sessionId) {
+      return addCORS(new Response(JSON.stringify({ 
+        error: "Session ID required",
+        message: "Please provide a session ID to retrieve session-specific logs"
+      }), { status: 400, headers: corsHeaders }));
+    }
+
+    // Get logs from all stores filtered by session ID
+    const logs = await readLogsWithFilters(env, { 
+      session_id: sessionId, 
+      limit,
+      orderBy: 'timestamp',
+      orderDirection: 'DESC'
+    });
+    
+    // Standardize the response format
+    const sessionLogs = {
+      session_id: sessionId,
+      items: logs || [],
+      total_count: logs ? logs.length : 0,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Log the retrieval operation
+    await logChatGPTAction(env, 'retrieveRecentSessionLogs', { 
+      sessionId,
+      limit,
+      endpoint: '/api/logs/session/:sessionId'
+    }, {
+      count: sessionLogs.total_count,
+      session_id: sessionId
+    });
+
+    return addCORS(new Response(JSON.stringify(sessionLogs), { status: 200, headers: corsHeaders }));
+  } catch (error) {
+    // Log the error
+    await logChatGPTAction(env, 'retrieveRecentSessionLogs', { 
+      sessionId: req.params.sessionId,
+      endpoint: '/api/logs/session/:sessionId'
+    }, null, error);
+
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Session logs retrieval failed",
+      message: "Could not retrieve logs for this session",
+      session_id: req.params.sessionId || null
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
 router.post("/api/trust/check-in", async (req, env) => {
   let data;
   try { data = await req.json(); } catch {
@@ -2005,6 +2129,7 @@ router.post("/api/patterns/autonomous-detect", async (req, env) => {
     }
 
     // Log the pattern detection
+    await logChatGPTAction(env, 'autonomousPatternDetect', data, detection);
     
     await logMetamorphicEvent(env, {
       kind: "autonomous_pattern_detection",
@@ -2021,6 +2146,10 @@ router.post("/api/patterns/autonomous-detect", async (req, env) => {
     return addCORS(new Response(JSON.stringify(detection), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Autonomous pattern detection error:", error);
+    
+    // Log the error
+    await logChatGPTAction(env, 'autonomousPatternDetect', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       error: "Pattern detection error", 
       message: "Your patterns are information, not judgment. Trust your capacity for growth.",
@@ -2091,21 +2220,36 @@ router.post("/api/commitments/create", async (req, env) => {
 
 router.get("/api/commitments/active", async (req, env) => {
   try {
-    
     const db = new AquilDatabase(env);
     const commitments = await db.getActiveCommitments();
     
-    return addCORS(new Response(JSON.stringify({ 
+    const result = { 
       commitments,
       total_active: commitments.length,
       message: commitments.length > 0 
         ? "Your active commitments are pathways to growth" 
         : "Ready to make a commitment to your growth?"
-    }), { status: 200, headers: corsHeaders }));
+    };
+    
+    // Log the retrieval
+    await logChatGPTAction(env, 'listActiveCommitments', { 
+      endpoint: '/api/commitments/active' 
+    }, { count: commitments.length });
+    
+    return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Active commitments retrieval error:", error);
+    
+    // Log the error
+    await logChatGPTAction(env, 'listActiveCommitments', { 
+      endpoint: '/api/commitments/active' 
+    }, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       commitments: [],
+      error: "Could not retrieve commitments",
+      message: "Your growth journey continues regardless of tracking systems."
+    }), { status: 500, headers: corsHeaders }));
       error: "Could not retrieve commitments",
       message: "Your growth journey continues regardless of tracking systems."
     }), { status: 500, headers: corsHeaders }));
@@ -2216,6 +2360,7 @@ router.post("/api/socratic/question", async (req, env) => {
     }
 
     // Log the questioning session
+    await logChatGPTAction(env, 'socraticQuestions', data, questionSession);
     
     await logMetamorphicEvent(env, {
       kind: "socratic_questioning",
@@ -2233,6 +2378,10 @@ router.post("/api/socratic/question", async (req, env) => {
     return addCORS(new Response(JSON.stringify(questionSession), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Socratic questioning error:", error);
+    
+    // Log the error
+    await logChatGPTAction(env, 'socraticQuestions', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       error: "Questioning system error", 
       message: "The most important questions come from within. What is your heart asking you?",
@@ -2298,6 +2447,7 @@ router.post("/api/coaching/comb-analysis", async (req, env) => {
     combAnalysis.success_probability = calculateSuccessProbability(combAnalysis);
 
     // Log the COM-B analysis
+    await logChatGPTAction(env, 'combBehavioralAnalysis', data, combAnalysis);
     
     await logMetamorphicEvent(env, {
       kind: "comb_analysis",
@@ -2314,6 +2464,10 @@ router.post("/api/coaching/comb-analysis", async (req, env) => {
     return addCORS(new Response(JSON.stringify(combAnalysis), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("COM-B analysis error:", error);
+    
+    // Log the error
+    await logChatGPTAction(env, 'combBehavioralAnalysis', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       error: "COM-B analysis error", 
       message: "Behavior change is complex. Start with self-compassion and small steps.",
@@ -2391,9 +2545,23 @@ router.get("/api/monitoring/metrics", async (req, env) => {
     const totalFeatures = Object.keys(metrics.feature_status).length;
     metrics.system_health_percentage = Math.round((healthyFeatures / totalFeatures) * 100);
 
+    // Log the monitoring operation
+    await logChatGPTAction(env, 'getMonitoringMetrics', { 
+      endpoint: '/api/monitoring/metrics' 
+    }, { 
+      system_status: metrics.system_status,
+      health_percentage: metrics.system_health_percentage
+    });
+
     return addCORS(new Response(JSON.stringify(metrics), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Monitoring metrics error:", error);
+    
+    // Log the error
+    await logChatGPTAction(env, 'getMonitoringMetrics', { 
+      endpoint: '/api/monitoring/metrics' 
+    }, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       error: "Monitoring system error",
       timestamp: new Date().toISOString(),
