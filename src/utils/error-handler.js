@@ -5,6 +5,7 @@
 
 import { logMetamorphicEvent } from '../ark/core.js';
 import { corsHeaders } from './cors.js';
+import { isGPTCompatMode, safeLog } from './gpt-compat.js';
 
 /**
  * Categorize errors for better debugging and monitoring
@@ -75,7 +76,8 @@ export async function handleError(error, context = {}, env = null) {
 
   // Log to ARK system if environment available
   if (env) {
-    try {
+    // Use safe logging to prevent failures from halting execution in GPT_COMPAT_MODE
+    await safeLog(env, async () => {
       await logMetamorphicEvent(env, {
         kind: 'system_error',
         detail: {
@@ -91,9 +93,7 @@ export async function handleError(error, context = {}, env = null) {
         voice: 'system',
         tags: ['error', category, endpoint.replace('/api/', '')]
       });
-    } catch (loggingError) {
-      console.error('Failed to log error to ARK system:', loggingError);
-    }
+    });
   }
 
   // Console log for immediate debugging
