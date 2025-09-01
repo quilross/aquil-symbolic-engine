@@ -25,19 +25,69 @@ function logTest(testName, passed, details = '') {
 }
 
 // Mock environment for logging tests
-const createMockEnv = () => ({
-  AQUIL_DB: {
-    prepare: (query) => ({
-      bind: (...params) => ({
-        run: async () => {
-          console.log(`DB Query: ${query.substring(0, 50)}...`);
-          return { success: true };
-        },
-        all: async () => {
-          console.log(`DB Query: ${query.substring(0, 50)}...`);
-          return { 
-            results: [
-              {
+const createMockEnv = () => {
+  // Store logs in memory for proper filtering
+  const mockLogs = [];
+  
+  return {
+    AQUIL_DB: {
+      prepare: (query) => ({
+        bind: (...params) => ({
+          run: async () => {
+            console.log(`DB Query: ${query.substring(0, 50)}...`);
+            
+            // Simulate INSERT operations by adding to mockLogs
+            if (query.includes('INSERT INTO metamorphic_logs')) {
+              const [id, timestamp, kind, signal_strength, detail, session_id, voice_used, tags] = params;
+              mockLogs.push({
+                id, timestamp, kind, 
+                signal_strength, 
+                detail, 
+                session_id, 
+                voice_used, 
+                tags
+              });
+            }
+            
+            return { success: true };
+          },
+          all: async () => {
+            console.log(`DB Query: ${query.substring(0, 50)}...`);
+            
+            // Parse the query to understand filters
+            let filteredLogs = [...mockLogs];
+            
+            // Apply filtering based on query and params
+            if (query.includes('WHERE') && params.length > 0) {
+              const lastParam = params[params.length - 1]; // LIMIT is always last
+              const filterParams = params.slice(0, -1);
+              
+              // Apply filters based on query structure
+              if (query.includes('session_id = ?') && filterParams.length > 0) {
+                const sessionFilter = filterParams.find(p => typeof p === 'string' && p.startsWith('test-session'));
+                if (sessionFilter) {
+                  filteredLogs = filteredLogs.filter(log => log.session_id === sessionFilter);
+                }
+              }
+              
+              if (query.includes('signal_strength = ?') && filterParams.length > 0) {
+                const levelFilter = filterParams.find(p => p === 'error' || p === 'info' || p === 'warning');
+                if (levelFilter) {
+                  filteredLogs = filteredLogs.filter(log => log.signal_strength === levelFilter);
+                }
+              }
+              
+              if (query.includes('kind = ?') && filterParams.length > 0) {
+                const typeFilter = filterParams.find(p => p === 'autonomous_action');
+                if (typeFilter) {
+                  filteredLogs = filteredLogs.filter(log => log.kind === typeFilter);
+                }
+              }
+            }
+            
+            // If no logs match and this is a fresh test, add a default
+            if (filteredLogs.length === 0 && mockLogs.length === 0) {
+              filteredLogs = [{
                 id: 'test-log-1',
                 timestamp: new Date().toISOString(),
                 kind: 'autonomous_action',
@@ -46,35 +96,50 @@ const createMockEnv = () => ({
                 session_id: 'test-session',
                 voice_used: 'system',
                 tags: JSON.stringify(['autonomous', 'wellbeing'])
-              }
-            ]
-          };
-        }
+              }];
+            }
+            
+            return { results: filteredLogs };
+          }
+        })
       })
-    })
-  },
+    },
   AQUIL_MEMORIES: {
-    put: async (key, value) => {
+    kvStore: new Map(),
+    
+    put: async function(key, value, options) {
       console.log(`KV Put: ${key} = ${value.substring(0, 50)}...`);
+      this.kvStore.set(key, value);
       return true;
     },
-    get: async (key) => {
+    
+    get: async function(key) {
       console.log(`KV Get: ${key}`);
-      return JSON.stringify({
+      return this.kvStore.get(key) || JSON.stringify({
         id: 'test-autonomous-1',
         type: 'autonomous_action',
         action: 'wellbeing',
         timestamp: new Date().toISOString()
       });
     },
-    list: async (options) => {
+    
+    list: async function(options) {
       console.log(`KV List: ${JSON.stringify(options)}`);
-      return {
-        keys: [
-          { name: 'autonomous_action:test-1' },
-          { name: 'autonomous_action:test-2' }
-        ]
-      };
+      const keys = Array.from(this.kvStore.keys())
+        .filter(key => !options.prefix || key.startsWith(options.prefix))
+        .map(name => ({ name }));
+      
+      // If no keys found, return default keys for testing
+      if (keys.length === 0) {
+        return {
+          keys: [
+            { name: 'autonomous_action:test-1' },
+            { name: 'autonomous_action:test-2' }
+          ]
+        };
+      }
+      
+      return { keys };
     }
   },
   AI: {
@@ -83,7 +148,8 @@ const createMockEnv = () => ({
       return { values: new Array(384).fill(0.1) };
     }
   }
-});
+  };
+};
 
 async function testAutonomousActionLogging() {
   console.log('\n📝 Testing Autonomous Action Logging:');
