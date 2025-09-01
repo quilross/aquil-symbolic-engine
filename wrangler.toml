@@ -28,7 +28,7 @@ bucket_name = "aquil-wisdom-storage"
 
 
 [[env.production.vectorize]]
-binding   = "AQUIL_VECTORIZE"
+binding   = "AQUIL_CONTEXT"
 index_name = "aquil-context-index"
 
 [[env.production.services]]
