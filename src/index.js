@@ -1,4 +1,5 @@
 import { Router } from 'itty-router';
+import crypto from 'crypto';
 import {
   handleSessionInit,
   handleDiscoveryInquiry,
@@ -65,6 +66,31 @@ import {
   createCommitmentResponse,
   createFallbackResponse
 } from "./utils/response-helpers.js";
+
+// Helper function to add external logging to ChatGPT actions
+async function logChatGPTAction(env, actionType, data, result, error = null) {
+  try {
+    const payload = {
+      action: actionType,
+      input: data,
+      result: error ? { error: error.message } : { success: true, processed: !!result }
+    };
+    
+    await writeLog(env, {
+      type: error ? `${actionType}_error` : actionType,
+      payload,
+      session_id: data?.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: error ? 'error' : 'info',
+      tags: [actionType.replace(/_/g, '-'), error ? 'error' : 'success', 'chatgpt_action'],
+      textOrVector: error 
+        ? `${actionType.replace(/_/g, ' ')} error: ${error.message}`
+        : `${actionType.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`
+    });
+  } catch (logError) {
+    console.warn('Failed to log ChatGPT action:', logError);
+  }
+}
 
 // Dream interpretation helpers
 function interpretSymbol(symbol) {
@@ -939,9 +965,41 @@ router.post("/api/trust/check-in", async (req, env) => {
   try {
     const trustBuilder = new TrustBuilder(env);
     const result = await trustBuilder.checkIn(data);
+    
+    // External logging for ChatGPT integration (D1, KV, R2, Vector)
+    await writeLog(env, {
+      type: 'trust_check_in',
+      payload: {
+        action: 'trust_check_in',
+        input: data,
+        result: {
+          trust_level: result.trust_analysis?.trust_level,
+          guidance_provided: !!result.personalized_guidance,
+          exercises_count: result.trust_exercises?.length || 0
+        }
+      },
+      session_id: data.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: 'info',
+      tags: ['trust', 'check_in', 'chatgpt_action'],
+      textOrVector: `Trust check-in: ${data.current_state}. Trust level: ${result.trust_analysis?.trust_level || 'unknown'}`
+    });
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Trust check-in error:", error);
+    
+    // Log error to external systems
+    await writeLog(env, {
+      type: 'trust_check_in_error',
+      payload: { action: 'trust_check_in', error: error.message, input: data },
+      session_id: data?.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: 'error',
+      tags: ['trust', 'error', 'chatgpt_action'],
+      textOrVector: `Trust check-in error: ${error.message}`
+    });
+    
     return addCORS(new Response(JSON.stringify({ error: "Trust check-in error", message: "Trust building is always available. Take a breath and honor your inner knowing." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -953,9 +1011,41 @@ router.post("/api/media/extract-wisdom", async (req, env) => {
   try {
     const mediaExtractor = new MediaWisdomExtractor(env);
     const result = await mediaExtractor.extractWisdom(data);
+    
+    // External logging for ChatGPT integration (D1, KV, R2, Vector)
+    await writeLog(env, {
+      type: 'media_wisdom_extraction',
+      payload: {
+        action: 'extract_media_wisdom',
+        input: data,
+        result: {
+          wisdom_extracted: !!result.wisdom,
+          media_type: data.media_type,
+          themes_count: result.themes?.length || 0
+        }
+      },
+      session_id: data.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: 'info',
+      tags: ['media', 'wisdom', 'chatgpt_action'],
+      textOrVector: `Media wisdom extraction: ${data.media_type || 'unknown'} - ${data.title || 'untitled'}`
+    });
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Media wisdom error:", error);
+    
+    // Log error to external systems
+    await writeLog(env, {
+      type: 'media_wisdom_error',
+      payload: { action: 'extract_media_wisdom', error: error.message, input: data },
+      session_id: data?.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: 'error',
+      tags: ['media', 'error', 'chatgpt_action'],
+      textOrVector: `Media wisdom extraction error: ${error.message}`
+    });
+    
     return addCORS(new Response(JSON.stringify({ error: "Media wisdom processing error", message: "Your reaction to content always contains valuable information about your inner world and growth needs." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -967,9 +1057,17 @@ router.post("/api/patterns/recognize", async (req, env) => {
   try {
     const recognizer = new PatternRecognizer(env);
     const result = await recognizer.analyzePatterns(data);
+    
+    // External logging for ChatGPT integration
+    await logChatGPTAction(env, 'pattern_recognition', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Pattern recognition error:", error);
+    
+    // Log error to external systems
+    await logChatGPTAction(env, 'pattern_recognition', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Pattern processing error", message: "Pattern recognition is happening even when systems are offline - your awareness itself is the most powerful tool for growth." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1149,9 +1247,40 @@ router.post("/api/somatic/session", async (req, env) => {
   try {
     const healer = new SomaticHealer(env);
     const result = await healer.generateSession(data);
+    
+    // External logging for ChatGPT integration (D1, KV, R2, Vector) 
+    await writeLog(env, {
+      type: 'somatic_session',
+      payload: {
+        action: 'somatic_session',
+        input: data,
+        result: {
+          session_generated: !!result.session,
+          practices_count: result.session?.practices?.length || 0
+        }
+      },
+      session_id: data.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: 'info',
+      tags: ['somatic', 'healing', 'chatgpt_action'],
+      textOrVector: `Somatic healing session: ${data.focus_area || 'general'} - ${data.current_sensation || 'no sensation specified'}`
+    });
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Somatic session error:", error);
+    
+    // Log error to external systems
+    await writeLog(env, {
+      type: 'somatic_session_error', 
+      payload: { action: 'somatic_session', error: error.message, input: data },
+      session_id: data?.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: 'error',
+      tags: ['somatic', 'error', 'chatgpt_action'],
+      textOrVector: `Somatic session error: ${error.message}`
+    });
+    
     return addCORS(new Response(JSON.stringify({ error: "Somatic processing error", message: "Your body's wisdom is always available. Simply placing a hand on your heart and breathing connects you to your inner knowing." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1531,6 +1660,25 @@ router.post("/api/commitments/create", async (req, env) => {
       voice: "strategist",
       signal_strength: "high"
     });
+    
+    // External logging for ChatGPT integration (D1, KV, R2, Vector)
+    await writeLog(env, {
+      type: 'commitment_creation',
+      payload: {
+        action: 'manage_commitment',
+        input: data,
+        result: {
+          commitment_created: true,
+          commitment_id: commitmentId,
+          title: data.title
+        }
+      },
+      session_id: data.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: 'info',
+      tags: ['commitment', 'creation', 'chatgpt_action'],
+      textOrVector: `Commitment created: ${data.title} - ${data.commitment_type || 'personal'}`
+    });
 
     return addCORS(new Response(JSON.stringify({ 
       commitment_id: commitmentId,
@@ -1545,6 +1693,18 @@ router.post("/api/commitments/create", async (req, env) => {
     }), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Commitment creation error:", error);
+    
+    // Log error to external systems
+    await writeLog(env, {
+      type: 'commitment_creation_error',
+      payload: { action: 'manage_commitment', error: error.message, input: data },
+      session_id: data?.session_id || crypto.randomUUID(),
+      who: 'system', 
+      level: 'error',
+      tags: ['commitment', 'error', 'chatgpt_action'],
+      textOrVector: `Commitment creation error: ${error.message}`
+    });
+    
     return addCORS(new Response(JSON.stringify({ 
       error: "Commitment creation error", 
       message: "Your intention to grow is honored even if we couldn't track it formally."
