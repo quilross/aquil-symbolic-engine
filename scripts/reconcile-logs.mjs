@@ -7,6 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { toCanonical } from '../src/ops/operation-aliases.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
@@ -181,12 +182,28 @@ async function findMissingR2Logs(env, d1Logs) {
 }
 
 function getR2PolicyForOperation(operationId) {
+  const canonical = toCanonical(operationId);
   const r2Policies = {
+    // Required: Actions that generate significant artifacts/content
+    'somaticHealingSession': 'required',
+    'extractMediaWisdom': 'required', 
+    'interpretDream': 'required',
+    'transformation_contract': 'required',
+    
+    // Optional: Actions that may generate shareable content
+    'trustCheckIn': 'optional',
+    'recognizePatterns': 'optional',
+    'synthesizeWisdom': 'optional',
+    'getPersonalInsights': 'optional',
+    'getDailySynthesis': 'optional',
+    'optimizeEnergy': 'optional',
+    
+    // Legacy mappings for backwards compatibility during reconciliation
     'somatic_healing_session': 'required',
     'trust_check_in': 'optional',
     'pattern_recognition': 'optional'
   };
-  return r2Policies[operationId] || 'n/a';
+  return r2Policies[canonical] || r2Policies[operationId] || 'n/a';
 }
 
 function generateR2Key(log) {
@@ -206,7 +223,14 @@ async function backfillKVLog(env, log) {
     backfilled_at: new Date().toISOString()
   });
   
-  await env.AQUIL_MEMORIES.put(kvKey, kvValue);
+  // Respect KV_TTL_SECONDS environment variable - default 0 (no expiry)
+  const ttlSeconds = parseInt(env.KV_TTL_SECONDS || '0', 10);
+  
+  if (ttlSeconds > 0) {
+    await env.AQUIL_MEMORIES.put(kvKey, kvValue, { expirationTtl: ttlSeconds });
+  } else {
+    await env.AQUIL_MEMORIES.put(kvKey, kvValue);
+  }
 }
 
 async function backfillVectorLog(env, log) {
