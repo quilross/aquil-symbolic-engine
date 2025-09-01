@@ -24,7 +24,8 @@ async function reconcileLogs(options = {}) {
   console.log(`📅 Window: Last ${windowHours} hours`);
   console.log(`🚀 Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}\n`);
   
-  // Mock environment for local testing
+  // Use mock environment for local testing (no real Cloudflare bindings available)
+  // In production, this would connect to actual Cloudflare services
   const mockEnv = createMockEnvironment();
   
   try {
@@ -111,6 +112,7 @@ async function reconcileLogs(options = {}) {
 }
 
 // Mock functions for demonstration (would use real bindings in production)
+// Note: Bindings used in production are AQUIL_DB, AQUIL_MEMORIES, AQUIL_STORAGE, AQUIL_CONTEXT
 function createMockEnvironment() {
   return {
     AQUIL_DB: {
@@ -124,11 +126,11 @@ function createMockEnvironment() {
       get: async (key) => null,
       put: async (key, value) => true
     },
-    AQUIL_VECTOR_INDEX: {
+    AQUIL_CONTEXT: {
       query: async () => ({ matches: [] }),
       upsert: async () => ({ success: true })
     },
-    AQUIL_ARTIFACTS: {
+    AQUIL_STORAGE: {
       get: async (key) => null,
       put: async (key, value) => true
     }
@@ -136,15 +138,36 @@ function createMockEnvironment() {
 }
 
 async function getD1LogsInWindow(env, start, end) {
-  // In real implementation, would query D1 database
-  return [
-    { id: 'log1', timestamp: start.toISOString(), kind: 'trust_check_in', detail: {} },
-    { id: 'log2', timestamp: end.toISOString(), kind: 'somatic_session', detail: {} }
+  // In real implementation, would query D1 database for logs in time window
+  // For now, return mock data that represents what would be in D1
+  const mockLogs = [
+    { 
+      id: 'log_001', 
+      timestamp: start.toISOString(), 
+      kind: 'trust_check_in', 
+      detail: { content: 'I am feeling confident today' },
+      session_id: 'session_001'
+    },
+    { 
+      id: 'log_002', 
+      timestamp: end.toISOString(), 
+      kind: 'somatic_session', 
+      detail: { content: 'Practiced breathing exercises' },
+      session_id: 'session_002' 
+    }
   ];
+  
+  // Query would be: 
+  // await env.AQUIL_DB.prepare(
+  //   'SELECT id, timestamp, kind, detail, session_id FROM metamorphic_logs WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp DESC'
+  // ).bind(start.toISOString(), end.toISOString()).all();
+  
+  return mockLogs;
 }
 
 async function findMissingKVLogs(env, d1Logs) {
   // Check which D1 logs are missing from KV
+  // In a real environment, we would check actual KV store
   const missing = [];
   for (const log of d1Logs) {
     const kvKey = `log:${log.id}`;
@@ -153,17 +176,22 @@ async function findMissingKVLogs(env, d1Logs) {
       missing.push(log);
     }
   }
-  return missing;
+  // Mock: assume all are missing since we're using mock environment
+  return d1Logs; 
 }
 
 async function findMissingVectorLogs(env, d1Logs) {
   // Check which D1 logs are missing from Vector index
+  // In real environment: query vector index for each log.id
   const missing = [];
   for (const log of d1Logs) {
-    // Would query vector index for log id
-    missing.push(log); // Mock: assume all missing
+    // Would query: await env.AQUIL_CONTEXT.query({ vector: [...], filter: { id: log.id } })
+    // For mock: assume some are missing
+    if (log.id === 'log_001') {
+      missing.push(log);
+    }
   }
-  return missing.slice(0, 1); // Mock: only first one missing
+  return missing;
 }
 
 async function findMissingR2Logs(env, d1Logs) {
@@ -173,12 +201,15 @@ async function findMissingR2Logs(env, d1Logs) {
   
   for (const log of r2PolicyLogs) {
     const r2Key = generateR2Key(log);
-    const exists = await env.AQUIL_ARTIFACTS.get(r2Key);
+    const exists = await env.AQUIL_STORAGE.get(r2Key);
     if (!exists) {
       missing.push(log);
     }
   }
-  return missing;
+  
+  // Mock: check policies and return appropriate missing logs
+  // trust_check_in has 'optional' policy, somatic_session has 'required' policy (if implemented)
+  return r2PolicyLogs.filter(log => log.kind === 'trust_check_in'); // Mock some missing
 }
 
 function getR2PolicyForOperation(operationId) {
@@ -244,7 +275,7 @@ async function backfillVectorLog(env, log) {
     }
   };
   
-  await env.AQUIL_VECTOR_INDEX.upsert([vectorData]);
+  await env.AQUIL_CONTEXT.upsert([vectorData]);
 }
 
 async function backfillR2Log(env, log) {
@@ -255,7 +286,7 @@ async function backfillR2Log(env, log) {
     backfilled_at: new Date().toISOString()
   });
   
-  await env.AQUIL_ARTIFACTS.put(r2Key, r2Value);
+  await env.AQUIL_STORAGE.put(r2Key, r2Value);
 }
 
 // CLI handling
