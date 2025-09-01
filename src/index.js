@@ -1123,9 +1123,17 @@ router.post("/api/creativity/unleash", async (req, env) => {
   try {
     const unleasher = new CreativityUnleasher(env);
     const result = await unleasher.unleash(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'creativity_unleash', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Creativity unleash error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'creativity_unleash', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Creativity unleashing error", message: "Creative flow is always within you, ready to emerge." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1137,9 +1145,17 @@ router.post("/api/abundance/cultivate", async (req, env) => {
   try {
     const cultivator = new AbundanceCultivator(env);
     const result = await cultivator.cultivate(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'abundance_cultivate', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Abundance cultivation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'abundance_cultivate', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Abundance cultivation error", message: "Abundance begins with a mindset of possibility." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1151,9 +1167,17 @@ router.post("/api/transitions/navigate", async (req, env) => {
   try {
     const navigator = new TransitionNavigator(env);
     const result = await navigator.navigate(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'transitions_navigate', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Transition navigation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'transitions_navigate', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Transition navigation error", message: "Every transition carries seeds of renewal and growth." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1165,9 +1189,17 @@ router.post("/api/ancestry/heal", async (req, env) => {
   try {
     const healer = new AncestryHealer(env);
     const result = await healer.heal(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'ancestry_heal', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Ancestry healing error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'ancestry_heal', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Ancestry healing error", message: "You carry your ancestors' strength as you heal old patterns." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1202,9 +1234,17 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
     const core = new AquilCore(env);
     const result = await core.generateDailySynthesis();
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'daily_synthesis', { period: 'today' }, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Daily synthesis error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'daily_synthesis', { period: 'today' }, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       message: "Daily synthesis generation error", 
       fallback_insights: [
@@ -1308,9 +1348,17 @@ router.get("/api/insights", async (req, env) => {
   try {
     const core = new AquilCore(env);
     const result = await core.generateInsights();
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'personal_insights', {}, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Insights generation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'personal_insights', {}, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       message: "Insights generation error", 
       fallback_insights: [
@@ -2070,7 +2118,6 @@ router.post("/api/contracts/create", async (req, env) => {
     }
 
     // Log the contract creation
-    
     await logMetamorphicEvent(env, {
       kind: "transformation_contract",
       detail: {
@@ -2083,9 +2130,15 @@ router.post("/api/contracts/create", async (req, env) => {
       signal_strength: "high"
     });
 
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'transformation_contract', data, contract);
+
     return addCORS(new Response(JSON.stringify(contract), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Contract creation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'transformation_contract', data, null, error);
     return addCORS(new Response(JSON.stringify({ 
       error: "Contract creation error", 
       message: "Transformation happens with or without contracts. Your commitment to growth is what matters.",
