@@ -75,7 +75,41 @@
         },
         "responses": {
           "200": {
-            "description": "Log entry created successfully"
+            "description": "Log entry created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d1": {
+                      "type": "string",
+                      "description": "Database write status"
+                    },
+                    "kv": {
+                      "type": "string", 
+                      "description": "KV store status"
+                    },
+                    "r2": {
+                      "type": "string",
+                      "description": "R2 storage status"
+                    },
+                    "vector": {
+                      "type": "string",
+                      "description": "Vector store status"
+                    },
+                    "autonomous_trigger": {
+                      "type": "object",
+                      "description": "Autonomous response if triggered"
+                    }
+                  }
+                },
+                "example": {
+                  "d1": "ok",
+                  "kv": "ok",
+                  "vector": "ok"
+                }
+              }
+            }
           },
           "400": {
             "description": "Malformed request",
