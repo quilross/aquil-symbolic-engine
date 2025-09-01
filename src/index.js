@@ -1183,7 +1183,8 @@ router.post("/api/ritual/auto-suggest", async (req, env) => {
 router.get("/api/system/health-check", async (req, env) => {
   try {
     const result = await handleHealthCheck(req, env);
-    const resultData = JSON.parse(result.body || '{}');
+    // Fixed: clone response to read text without consuming it
+    const resultData = JSON.parse(await result.clone().text());
     
     await logChatGPTAction(env, 'systemHealthCheck', { 
       endpoint: '/api/system/health-check' 
@@ -1274,7 +1275,7 @@ router.get("/api/logs", async (req, env) => {
       limit, 
       cursor,
       endpoint: '/api/logs' 
-    }, { count: paginatedLogs.length, hasMore: !!nextCursor });
+    }, { count: paginationResult.items.length, hasMore: !!paginationResult.cursor });
     
     return addCORS(new Response(JSON.stringify(response), { status: 200, headers: corsHeaders }));
   } catch (e) {
