@@ -96,6 +96,14 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
       'chatgpt_action'
     ];
     
+    // Scrub and truncate textOrVector for embedding hygiene
+    let textOrVector = error 
+      ? `${operationId.replace(/_/g, ' ')} error: ${error.message}`
+      : `${operationId.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`;
+    
+    // Apply embedding hygiene (scrub PII and truncate)
+    textOrVector = scrubAndTruncateForEmbedding(textOrVector);
+    
     await writeLog(env, {
       type: error ? `${operationId}_error` : operationId,
       payload,
@@ -104,13 +112,68 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
       level: error ? 'error' : 'info',
       tags: standardTags,
       binary,
-      textOrVector: error 
-        ? `${operationId.replace(/_/g, ' ')} error: ${error.message}`
-        : `${operationId.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`
+      textOrVector
     });
   } catch (logError) {
     console.warn('Failed to log ChatGPT action:', logError);
   }
+}
+
+// Helper function for idempotency
+async function checkIdempotency(env, idempotencyKey, operationId) {
+  if (!idempotencyKey) return null;
+  
+  try {
+    const key = `idempotency:${operationId}:${idempotencyKey}`;
+    const cached = await env.AQUIL_MEMORIES.get(key);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.error('Failed to check idempotency:', error);
+  }
+  return null;
+}
+
+// Helper function to store idempotency result
+async function storeIdempotencyResult(env, idempotencyKey, operationId, logId, response) {
+  if (!idempotencyKey) return;
+  
+  try {
+    const key = `idempotency:${operationId}:${idempotencyKey}`;
+    const data = { logId, response, timestamp: new Date().toISOString() };
+    
+    // Store for 24 hours (86400 seconds)
+    await env.AQUIL_MEMORIES.put(key, JSON.stringify(data), { expirationTtl: 86400 });
+  } catch (error) {
+    console.error('Failed to store idempotency result:', error);
+  }
+}
+
+// Embedding hygiene: scrub PII and truncate for vector embedding
+function scrubAndTruncateForEmbedding(text, maxLength = 1000) {
+  if (!text || typeof text !== 'string') return '';
+  
+  // Basic PII scrubbing patterns
+  let scrubbed = text
+    // Email addresses
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
+    // Phone numbers (various formats)
+    .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[PHONE]')
+    // Credit card numbers (basic patterns)
+    .replace(/\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, '[CARD]')
+    // SSN patterns
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]')
+    // Remove excessive whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+    
+  // Truncate to max length
+  if (scrubbed.length > maxLength) {
+    scrubbed = scrubbed.substring(0, maxLength - 3) + '...';
+  }
+  
+  return scrubbed;
 }
 
 // Determine R2 policy for each action
@@ -1112,31 +1175,137 @@ router.post("/api/log", async (req, env) => {
 router.get("/api/logs", async (req, env) => {
   const url = new URL(req.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 200);
+  const cursor = url.searchParams.get("cursor");
+  
   try {
-    const logs = await readLogs(env, { limit });
-    // Flatten the logs from different sources into a single array
-    const flattenedLogs = [];
+    const logs = await readLogs(env, { limit, cursor });
     
+    // Standardize log format and de-duplicate
+    const standardizedLogs = new Map(); // Use Map to deduplicate by id
+    
+    // Process D1 logs
     if (Array.isArray(logs.d1)) {
-      flattenedLogs.push(...logs.d1.map(log => ({ ...log, source: 'd1' })));
-    }
-    if (Array.isArray(logs.kv)) {
-      flattenedLogs.push(...logs.kv.map(log => ({ ...log, source: 'kv' })));
-    }
-    if (Array.isArray(logs.r2)) {
-      flattenedLogs.push(...logs.r2.map(log => ({ ...log, source: 'r2' })));
+      logs.d1.forEach(log => {
+        const standardLog = {
+          id: log.id || `d1_${log.timestamp}_${Math.random()}`,
+          timestamp: log.timestamp,
+          operationId: log.kind || 'unknown',
+          type: log.kind?.includes('error') ? 'action_error' : 'action_success',
+          tags: [
+            `action:${log.kind || 'unknown'}`,
+            'domain:system',
+            'source:gpt',
+            `env:${env.ENVIRONMENT || 'production'}`
+          ].concat(log.tags ? JSON.parse(log.tags) : []),
+          stores: ['d1']
+        };
+        
+        if (log.kind?.includes('error')) {
+          standardLog.error = {
+            message: log.detail?.error || 'Unknown error',
+            code: log.detail?.code || undefined
+          };
+        }
+        
+        standardizedLogs.set(standardLog.id, standardLog);
+      });
     }
     
-    // Sort by timestamp if available
-    flattenedLogs.sort((a, b) => {
-      const aTime = a.timestamp || a.created_at || 0;
-      const bTime = b.timestamp || b.created_at || 0;
-      return new Date(bTime) - new Date(aTime);
+    // Process KV logs  
+    if (Array.isArray(logs.kv)) {
+      logs.kv.forEach(log => {
+        const logId = log.id || `kv_${log.timestamp}_${Math.random()}`;
+        const existing = standardizedLogs.get(logId);
+        
+        const standardLog = {
+          id: logId,
+          timestamp: log.timestamp || log.created_at,
+          operationId: log.type || 'unknown',
+          type: log.level === 'error' ? 'action_error' : 'action_success',
+          tags: [
+            `action:${log.type || 'unknown'}`,
+            'domain:system',
+            'source:gpt',
+            `env:${env.ENVIRONMENT || 'production'}`
+          ].concat(log.tags || []),
+          stores: existing ? [...existing.stores, 'kv'] : ['kv']
+        };
+        
+        if (log.level === 'error') {
+          standardLog.error = {
+            message: log.payload?.message || 'Unknown error',
+            code: log.payload?.code || undefined
+          };
+        }
+        
+        standardizedLogs.set(logId, { ...existing, ...standardLog });
+      });
+    }
+    
+    // Process R2 logs
+    if (Array.isArray(logs.r2)) {
+      logs.r2.forEach(log => {
+        const logId = log.id || `r2_${log.timestamp}_${Math.random()}`;
+        const existing = standardizedLogs.get(logId);
+        
+        const standardLog = {
+          id: logId,
+          timestamp: log.timestamp || log.created_at,
+          operationId: log.type || 'unknown',
+          type: 'action_success', // R2 typically stores successful actions
+          tags: [
+            `action:${log.type || 'unknown'}`,
+            'domain:system',
+            'source:gpt',
+            `env:${env.ENVIRONMENT || 'production'}`
+          ].concat(log.tags || []),
+          stores: existing ? [...existing.stores, 'r2'] : ['r2'],
+          artifactKey: log.key || undefined
+        };
+        
+        standardizedLogs.set(logId, { ...existing, ...standardLog });
+      });
+    }
+    
+    // Convert to array and sort by timestamp (stable sort with logId tiebreaker)
+    const sortedLogs = Array.from(standardizedLogs.values()).sort((a, b) => {
+      const aTime = new Date(a.timestamp || 0).getTime();
+      const bTime = new Date(b.timestamp || 0).getTime();
+      
+      if (aTime !== bTime) {
+        return bTime - aTime; // Newest first
+      }
+      
+      // Stable tiebreaker using logId
+      return a.id.localeCompare(b.id);
     });
     
-    return addCORS(new Response(JSON.stringify(flattenedLogs.slice(0, limit)), { status: 200, headers: corsHeaders }));
+    // Apply cursor pagination
+    let startIndex = 0;
+    if (cursor) {
+      const cursorIndex = sortedLogs.findIndex(log => log.id === cursor);
+      if (cursorIndex >= 0) {
+        startIndex = cursorIndex + 1;
+      }
+    }
+    
+    const paginatedLogs = sortedLogs.slice(startIndex, startIndex + limit);
+    const nextCursor = paginatedLogs.length === limit && startIndex + limit < sortedLogs.length 
+      ? paginatedLogs[paginatedLogs.length - 1].id 
+      : null;
+    
+    const response = {
+      items: paginatedLogs,
+      cursor: nextCursor
+    };
+    
+    return addCORS(new Response(JSON.stringify(response), { status: 200, headers: corsHeaders }));
   } catch (e) {
-    return addCORS(new Response(JSON.stringify({ status: "error", error: String(e) }), { status: 500, headers: corsHeaders }));
+    return addCORS(new Response(JSON.stringify({ 
+      items: [], 
+      cursor: null, 
+      error: { message: String(e), code: "logs_fetch_error" }
+    }), { status: 500, headers: corsHeaders }));
   }
 });
 router.post("/api/trust/check-in", async (req, env) => {
@@ -1144,12 +1313,27 @@ router.post("/api/trust/check-in", async (req, env) => {
   try { data = await req.json(); } catch {
     return addCORS(new Response(JSON.stringify({ error: "Malformed JSON", message: "Request body must be valid JSON." }), { status: 400, headers: corsHeaders }));
   }
+  
+  // Check for idempotency
+  const idempotencyKey = req.headers.get('Idempotency-Key');
+  if (idempotencyKey) {
+    const cached = await checkIdempotency(env, idempotencyKey, 'trust_check_in');
+    if (cached) {
+      return addCORS(new Response(JSON.stringify(cached.response), { status: 200, headers: corsHeaders }));
+    }
+  }
+  
   try {
     const trustBuilder = new TrustBuilder(env);
     const result = await trustBuilder.checkIn(data);
     
     // External logging for ChatGPT integration (D1, KV, R2, Vector)
     await logChatGPTAction(env, 'trust_check_in', data, result);
+    
+    // Store idempotency result if key provided
+    if (idempotencyKey) {
+      await storeIdempotencyResult(env, idempotencyKey, 'trust_check_in', result.logId || 'unknown', result);
+    }
     
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
@@ -1399,12 +1583,27 @@ router.post("/api/somatic/session", async (req, env) => {
   try { data = await req.json(); } catch {
     return addCORS(new Response(JSON.stringify({ error: "Malformed JSON", message: "Request body must be valid JSON." }), { status: 400, headers: corsHeaders }));
   }
+  
+  // Check for idempotency
+  const idempotencyKey = req.headers.get('Idempotency-Key');
+  if (idempotencyKey) {
+    const cached = await checkIdempotency(env, idempotencyKey, 'somatic_healing_session');
+    if (cached) {
+      return addCORS(new Response(JSON.stringify(cached.response), { status: 200, headers: corsHeaders }));
+    }
+  }
+  
   try {
     const healer = new SomaticHealer(env);
     const result = await healer.generateSession(data);
     
     // External logging for ChatGPT integration (D1, KV, R2, Vector) 
     await logChatGPTAction(env, 'somatic_healing_session', data, result);
+    
+    // Store idempotency result if key provided
+    if (idempotencyKey) {
+      await storeIdempotencyResult(env, idempotencyKey, 'somatic_healing_session', result.logId || 'unknown', result);
+    }
     
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
@@ -2229,6 +2428,39 @@ router.post("/api/contracts/create", async (req, env) => {
         step3: "Create accountability measures",
         step4: "Set realistic milestones"
       }
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
+// Internal reconcile route (protected by env flag)
+router.get("/internal/reconcile", async (req, env) => {
+  // Check if internal routes are enabled
+  if (!env.ENABLE_INTERNAL_ROUTES) {
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Internal routes disabled",
+      message: "Set ENABLE_INTERNAL_ROUTES=true to access this endpoint" 
+    }), { status: 403, headers: corsHeaders }));
+  }
+  
+  const url = new URL(req.url);
+  const windowHours = parseInt(url.searchParams.get("window") || "24", 10);
+  const dryRun = url.searchParams.get("dry") === "true";
+  
+  try {
+    // Import reconcile function
+    const { reconcileLogs } = await import('../scripts/reconcile-logs.mjs');
+    
+    const result = await reconcileLogs({
+      windowHours,
+      dryRun,
+      env: env.ENVIRONMENT || 'production'
+    });
+    
+    return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
+  } catch (error) {
+    return addCORS(new Response(JSON.stringify({
+      success: false,
+      error: error.message
     }), { status: 500, headers: corsHeaders }));
   }
 });

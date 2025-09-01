@@ -1,3 +1,17 @@
+/**
+ * Unified Logging System with Multi-Store Support
+ * 
+ * R2 Lifecycle Policy:
+ * - Artifact storage: logs/<operationId>/<YYYY-MM-DD>/<logId>.json|bin
+ * - Retention: 30 days cache control, longer retention via Cloudflare R2 lifecycle rules
+ * - Required operations: somatic_healing_session, pattern_recognition (generate significant content)
+ * - Optional operations: trust_check_in, basic actions (minimal artifacts)
+ * - Binary artifacts: .bin for encoded data, .json for structured logs
+ * 
+ * Note: Configure R2 lifecycle rules in Cloudflare dashboard for automatic cleanup.
+ * No signed URLs implemented - use direct R2 access patterns if needed.
+ */
+
 // Unified log retrieval from D1, KV, R2
 export async function readLogs(env, opts = {}) {
   const limit = Math.min(parseInt(opts.limit || '20', 10), 200);
@@ -180,12 +194,54 @@ export async function writeLog(
     status.kv = String(e);
   }
 
-  // R2
+  // R2 - Store with proper artifact key format: logs/<opId>/<YYYY-MM-DD>/<logId>.json|bin
   if (binary) {
     try {
+      const operationId = type?.replace(/_error$/, '') || 'unknown';
+      const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+      const extension = binary.startsWith('data:') ? 'bin' : 'json';
+      const artifactKey = `logs/${operationId}/${date}/${id}.${extension}`;
+      
       const bytes = Uint8Array.from(atob(binary), (c) => c.charCodeAt(0));
-      await env.AQUIL_STORAGE.put(`logbin_${id}`, bytes);
+      await env.AQUIL_STORAGE.put(artifactKey, bytes, {
+        httpMetadata: {
+          contentType: extension === 'json' ? 'application/json' : 'application/octet-stream',
+          cacheControl: 'max-age=2592000' // 30 days
+        }
+      });
+      
       status.r2 = "ok";
+      status.artifactKey = artifactKey;
+    } catch (e) {
+      status.r2 = String(e);
+    }
+  } else if (r2Policy === 'required') {
+    // Store JSON log data for required operations
+    try {
+      const operationId = type?.replace(/_error$/, '') || 'unknown';
+      const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+      const artifactKey = `logs/${operationId}/${date}/${id}.json`;
+      
+      const logData = JSON.stringify({
+        id,
+        timestamp,
+        type,
+        payload,
+        session_id,
+        who,
+        level,
+        tags
+      });
+      
+      await env.AQUIL_STORAGE.put(artifactKey, logData, {
+        httpMetadata: {
+          contentType: 'application/json',
+          cacheControl: 'max-age=2592000' // 30 days
+        }
+      });
+      
+      status.r2 = "ok";
+      status.artifactKey = artifactKey;
     } catch (e) {
       status.r2 = String(e);
     }
