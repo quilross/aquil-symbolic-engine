@@ -2250,9 +2250,6 @@ router.get("/api/commitments/active", async (req, env) => {
       error: "Could not retrieve commitments",
       message: "Your growth journey continues regardless of tracking systems."
     }), { status: 500, headers: corsHeaders }));
-      error: "Could not retrieve commitments",
-      message: "Your growth journey continues regardless of tracking systems."
-    }), { status: 500, headers: corsHeaders }));
   }
 });
 
