@@ -18,7 +18,8 @@ const BANNED_PATTERNS = [
   {
     pattern: 'AQUIL_VECTORIZE',
     description: 'Legacy vectorize binding',
-    searchPaths: ['src/', 'test/', 'docs/', '*.md', '*.js', '*.mjs', '*.json']
+    searchPaths: ['src/', 'test/', 'docs/', '*.md', '*.js', '*.mjs', '*.json'],
+    excludePaths: ['scripts/check-banned-patterns.mjs'] // Exclude self-reference
   },
   {
     pattern: '/api/health[^-]',
@@ -74,6 +75,15 @@ async function checkBannedPatterns() {
           let hasViolations = false;
           
           for (const file of files) {
+            const relativePath = path.relative(rootDir, file);
+            
+            // Skip excluded paths
+            if (banned.excludePaths && banned.excludePaths.some(excludePath => 
+              relativePath.includes(excludePath)
+            )) {
+              continue;
+            }
+            
             const content = fs.readFileSync(file, 'utf8');
             const lines = content.split('\n');
             
