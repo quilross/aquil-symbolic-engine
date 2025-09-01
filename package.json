@@ -13,9 +13,10 @@
     "db:migrate": "wrangler d1 migrations apply AQUIL_DB --env production",
     "types": "wrangler types",
     "test": "node --test \"test/**/*.test.js\"",
-    "guard": "npm run guard:schema && npm run guard:patterns",
+    "guard": "npm run guard:schema && npm run guard:patterns && npm run guard:aliases",
     "guard:schema": "node scripts/check-schema-consistency.mjs",
     "guard:patterns": "node scripts/check-banned-patterns.mjs",
+    "guard:aliases": "node scripts/check-op-aliases.mjs",
     "reconcile": "node scripts/reconcile-logs.mjs"
   },
   "keywords": [

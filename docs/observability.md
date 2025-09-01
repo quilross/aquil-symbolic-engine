@@ -18,7 +18,7 @@ The Aquil Symbolic Engine uses a **multi-store logging architecture** to ensure 
 - **Purpose**: Fast retrieval and session continuity
 - **Format**: Key-value pairs with structured JSON
 - **Data**: Recent logs, user context, idempotency cache
-- **Retention**: 30 days automatic expiration
+- **Retention**: Configurable via `KV_TTL_SECONDS` (default: permanent)
 
 #### 3. Vector Index (AQUIL_VECTOR_INDEX)
 - **Purpose**: Semantic search and pattern recognition
@@ -40,16 +40,18 @@ All logs conform to a consistent schema across stores:
 {
   "id": "unique-log-identifier",
   "timestamp": "2024-01-01T12:00:00.000Z",
-  "operationId": "trust_check_in",
+  "operationId": "trustCheckIn",
+  "originalOperationId": "trust_check_in",
   "type": "action_success|action_error",
   "tags": [
-    "action:trust_check_in",
+    "action:trustCheckIn",
+    "alias:trust_check_in",
     "domain:trust",
     "source:gpt",
     "env:production"
   ],
   "stores": ["d1", "kv", "r2"],
-  "artifactKey": "logs/trust_check_in/2024-01-01/log123.json",
+  "artifactKey": "logs/trustCheckIn/2024-01-01/log123.json",
   "error": {
     "message": "Error description",
     "code": "optional_error_code"
@@ -65,19 +67,40 @@ All logs conform to a consistent schema across stores:
 - `tags`: Array of structured tags for filtering
 
 ### Optional Fields
+- `originalOperationId`: Present only when different from canonical `operationId`
 - `stores`: Array indicating which stores contain this log
 - `artifactKey`: R2 key for associated artifacts
 - `error`: Error details for failed operations
+
+## Canonical Operation Names
+
+### Purpose
+Normalizes operation naming between schema (camelCase) and implementation (snake_case) to ensure consistent R2 policy routing, domain classification, and analytics.
+
+### System
+- **Canonical Names**: Match GPT Actions schema exactly (e.g., `trustCheckIn`)
+- **Aliases**: Implementation variants (e.g., `trust_check_in`)
+- **Centralized Mapping**: Defined in `src/ops/operation-aliases.js`
+
+### Behavior
+- **R2 Policy**: Uses canonical name for storage decisions
+- **Domain Classification**: Uses canonical name for categorization
+- **Tags**: Include both `action:<canonical>` and `alias:<original>` when different
+- **Response**: `/api/logs` returns canonical `operationId`, with `originalOperationId` when different
+
+### Zero-Impact Migration
+Existing handlers continue using their current names. The `logChatGPTAction` function normalizes centrally, preserving all behavior while enabling consistent analytics.
 
 ## Tagging System
 
 ### Standard Tags
 Every log includes these standardized tags:
 
-1. **Action Tag**: `action:<operationId>`
-2. **Domain Tag**: `domain:<category>`
-3. **Source Tag**: `source:gpt` (for ChatGPT actions)
-4. **Environment Tag**: `env:<stage>`
+1. **Action Tag**: `action:<canonical-operationId>`
+2. **Alias Tag**: `alias:<original-operationId>` (when different from canonical)
+3. **Domain Tag**: `domain:<category>`
+4. **Source Tag**: `source:gpt` (for ChatGPT actions)
+5. **Environment Tag**: `env:<stage>`
 
 ### Domain Categories
 - `trust`: Trust-building operations
@@ -125,10 +148,30 @@ Simple operations:
 - `log_data_or_event`: Metadata only
 
 ### Retention Strategy
-1. **Cache Control**: 30 days (`max-age=2592000`)
-2. **Lifecycle Rules**: Configure in Cloudflare R2 dashboard
-3. **Cleanup**: Automatic via R2 lifecycle policies
-4. **Access**: Direct R2 patterns (no signed URLs by default)
+1. **R2 Cache Control**: 30 days (`max-age=2592000`)
+2. **R2 Lifecycle Rules**: Configure in Cloudflare R2 dashboard for longer-term retention
+3. **KV Retention**: Configurable via `KV_TTL_SECONDS` environment variable
+4. **Cleanup**: Automatic via R2 lifecycle policies and KV TTL
+
+### KV Retention Profiles
+
+#### Solo Developer (Default)
+```bash
+KV_TTL_SECONDS=0  # No expiry - persistent storage
+IDEMPOTENCY_TTL_SECONDS=86400  # 24 hours
+```
+- **Use case**: Single user, KV as hot index with D1 as source-of-truth
+- **Benefits**: Complete log history always available for analysis
+- **Trade-off**: Higher KV storage usage
+
+#### Team/Scale
+```bash
+KV_TTL_SECONDS=604800  # 7 days
+IDEMPOTENCY_TTL_SECONDS=86400  # 24 hours  
+```
+- **Use case**: Multiple users, confident D1/Vector/R2 capture everything needed
+- **Benefits**: Controlled KV storage usage
+- **Trade-off**: Older logs only available via D1/R2
 
 ## Reconciliation System
 
