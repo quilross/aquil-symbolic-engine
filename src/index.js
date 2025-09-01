@@ -1154,7 +1154,11 @@ router.post("/api/discovery/generate-inquiry", async (req, env) => {
   } catch (error) {
     await logChatGPTAction(env, 'generateDiscoveryInquiry', {}, null, error);
     
-    return addCORS(createErrorResponse(error, 'generateDiscoveryInquiry'));
+    const errorData = await handleError(error, { 
+      endpoint: '/api/discovery/generate-inquiry',
+      method: 'POST' 
+    }, env);
+    return addCORS(createErrorResponse(errorData, 500));
   }
 });
 router.post("/api/ritual/auto-suggest", async (req, env) => {
@@ -1169,7 +1173,11 @@ router.post("/api/ritual/auto-suggest", async (req, env) => {
   } catch (error) {
     await logChatGPTAction(env, 'autoSuggestRitual', {}, null, error);
     
-    return addCORS(createErrorResponse(error, 'autoSuggestRitual'));
+    const errorData = await handleError(error, { 
+      endpoint: '/api/ritual/auto-suggest',
+      method: 'POST' 
+    }, env);
+    return addCORS(createErrorResponse(errorData, 500));
   }
 });
 router.get("/api/system/health-check", async (req, env) => {
@@ -1187,7 +1195,11 @@ router.get("/api/system/health-check", async (req, env) => {
       endpoint: '/api/system/health-check' 
     }, null, error);
     
-    return addCORS(createErrorResponse(error, 'systemHealthCheck'));
+    const errorData = await handleError(error, { 
+      endpoint: '/api/system/health-check',
+      method: 'GET' 
+    }, env);
+    return addCORS(createErrorResponse(errorData, 500));
   }
 });
 router.post("/api/log", async (req, env) => {
