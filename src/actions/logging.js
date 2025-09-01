@@ -228,8 +228,10 @@ export async function writeLog(
 
 // Enhanced logging for autonomous actions with improved traceability
 export async function writeAutonomousLog(env, data) {
-  const { action, trigger_keywords, trigger_phrase, user_state, response, session_id, level } = data;
-
+  const { action, trigger_keywords, trigger_phrase, user_state, response, session_id, level, confidence, endpoint } = data;
+  
+  // Generate trace ID for this autonomous action
+  const traceId = generateId();
   
   const autonomousLogData = {
     type: 'autonomous_action',
