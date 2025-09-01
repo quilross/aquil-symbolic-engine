@@ -12,6 +12,32 @@
  * No signed URLs implemented - use direct R2 access patterns if needed.
  */
 
+import { toCanonical } from '../ops/operation-aliases.js';
+
+// Helper function to determine R2 policy for an operation
+function getR2PolicyForOperation(operationId) {
+  const canonical = toCanonical(operationId);
+  const r2Policies = {
+    // Required: Actions that generate significant artifacts/content
+    'somaticHealingSession': 'required',
+    'extractMediaWisdom': 'required', 
+    'interpretDream': 'required',
+    'transformation_contract': 'required',
+    
+    // Optional: Actions that may generate shareable content
+    'trustCheckIn': 'optional',
+    'recognizePatterns': 'optional',
+    'synthesizeWisdom': 'optional',
+    'getPersonalInsights': 'optional',
+    'getDailySynthesis': 'optional',
+    'optimizeEnergy': 'optional',
+    
+    // N/A: Actions that are purely informational (default)
+  };
+  
+  return r2Policies[canonical] || 'n/a';
+}
+
 // Unified log retrieval from D1, KV, R2
 export async function readLogs(env, opts = {}) {
   const limit = Math.min(parseInt(opts.limit || '20', 10), 200);
@@ -173,22 +199,27 @@ export async function writeLog(
     status.d1 = String(e);
   }
 
-  // KV
+  // KV - Respect KV_TTL_SECONDS environment variable
   try {
-    await env.AQUIL_MEMORIES.put(
-      `log_${id}`,
-      JSON.stringify({
-        id,
-        timestamp,
-        type,
-        payload,
-        session_id,
-        who,
-        level,
-        tags,
-      }),
-      { expirationTtl: 86400 },
-    );
+    const kvData = JSON.stringify({
+      id,
+      timestamp,
+      type,
+      payload,
+      session_id,
+      who,
+      level,
+      tags,
+    });
+    
+    // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
+    const ttlSeconds = parseInt(env.KV_TTL_SECONDS || '0', 10);
+    
+    if (ttlSeconds > 0) {
+      await env.AQUIL_MEMORIES.put(`log_${id}`, kvData, { expirationTtl: ttlSeconds });
+    } else {
+      await env.AQUIL_MEMORIES.put(`log_${id}`, kvData);
+    }
     status.kv = "ok";
   } catch (e) {
     status.kv = String(e);
@@ -215,9 +246,12 @@ export async function writeLog(
     } catch (e) {
       status.r2 = String(e);
     }
-  } else if (r2Policy === 'required') {
-    // Store JSON log data for required operations
-    try {
+  } else {
+    // Check if R2 storage is required for this operation type
+    const r2Policy = getR2PolicyForOperation(type?.replace(/_error$/, '') || 'unknown');
+    if (r2Policy === 'required') {
+      // Store JSON log data for required operations
+      try {
       const operationId = type?.replace(/_error$/, '') || 'unknown';
       const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
       const artifactKey = `logs/${operationId}/${date}/${id}.json`;
@@ -244,6 +278,7 @@ export async function writeLog(
       status.artifactKey = artifactKey;
     } catch (e) {
       status.r2 = String(e);
+    }
     }
   }
 

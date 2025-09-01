@@ -6,6 +6,7 @@ import {
   handleRitualSuggestion,
   handleHealthCheck,
 } from "./ark/endpoints.js";
+import { toCanonical } from "./ops/operation-aliases.js";
 import { 
   arkLog, 
   arkRetrieve, 
@@ -70,25 +71,30 @@ import {
 // Helper function to add external logging to ChatGPT actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
   try {
+    // Compute canonical operation name for R2 policy and domain classification
+    const canonical = toCanonical(operationId);
+    
     const payload = {
       action: operationId,
       input: data,
       result: error ? { error: error.message } : { success: true, processed: !!result }
     };
     
-    // Determine if this action should store artifacts in R2
-    const r2Policy = getR2PolicyForAction(operationId);
+    // Determine if this action should store artifacts in R2 - use canonical name
+    const r2Policy = getR2PolicyForAction(canonical);
     let binary = null;
     
-    // Generate binary artifact if applicable
+    // Generate binary artifact if applicable - use canonical name
     if (r2Policy !== 'n/a' && result && !error) {
-      binary = generateArtifactForAction(operationId, result);
+      binary = generateArtifactForAction(canonical, result);
     }
     
-    // Standardized tags with operationId, domain, source, env
-    const domain = getDomainForAction(operationId);
+    // Standardized tags with canonical operationId, domain, source, env
+    // Include alias tag if operationId differs from canonical
+    const domain = getDomainForAction(canonical);
     const standardTags = [
-      `action:${operationId}`,
+      `action:${canonical}`,
+      ...(canonical !== operationId ? [`alias:${operationId}`] : []),
       `domain:${domain}`,
       'source:gpt',
       `env:${env.ENVIRONMENT || 'production'}`,
@@ -98,14 +104,14 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
     
     // Scrub and truncate textOrVector for embedding hygiene
     let textOrVector = error 
-      ? `${operationId.replace(/_/g, ' ')} error: ${error.message}`
-      : `${operationId.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`;
+      ? `${canonical.replace(/_/g, ' ')} error: ${error.message}`
+      : `${canonical.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`;
     
     // Apply embedding hygiene (scrub PII and truncate)
     textOrVector = scrubAndTruncateForEmbedding(textOrVector);
     
     await writeLog(env, {
-      type: error ? `${operationId}_error` : operationId,
+      type: error ? `${canonical}_error` : canonical,
       payload,
       session_id: data?.session_id || crypto.randomUUID(),
       who: 'system',
@@ -124,7 +130,8 @@ async function checkIdempotency(env, idempotencyKey, operationId) {
   if (!idempotencyKey) return null;
   
   try {
-    const key = `idempotency:${operationId}:${idempotencyKey}`;
+    const canonical = toCanonical(operationId);
+    const key = `idempotency:${canonical}:${idempotencyKey}`;
     const cached = await env.AQUIL_MEMORIES.get(key);
     if (cached) {
       return JSON.parse(cached);
@@ -140,11 +147,18 @@ async function storeIdempotencyResult(env, idempotencyKey, operationId, logId, r
   if (!idempotencyKey) return;
   
   try {
-    const key = `idempotency:${operationId}:${idempotencyKey}`;
+    const canonical = toCanonical(operationId);
+    const key = `idempotency:${canonical}:${idempotencyKey}`;
     const data = { logId, response, timestamp: new Date().toISOString() };
     
-    // Store for 24 hours (86400 seconds)
-    await env.AQUIL_MEMORIES.put(key, JSON.stringify(data), { expirationTtl: 86400 });
+    // Use IDEMPOTENCY_TTL_SECONDS env var, default to 24 hours (86400 seconds)
+    const ttlSeconds = parseInt(env.IDEMPOTENCY_TTL_SECONDS || '86400', 10);
+    
+    if (ttlSeconds > 0) {
+      await env.AQUIL_MEMORIES.put(key, JSON.stringify(data), { expirationTtl: ttlSeconds });
+    } else {
+      await env.AQUIL_MEMORIES.put(key, JSON.stringify(data));
+    }
   } catch (error) {
     console.error('Failed to store idempotency result:', error);
   }
@@ -1186,19 +1200,28 @@ router.get("/api/logs", async (req, env) => {
     // Process D1 logs
     if (Array.isArray(logs.d1)) {
       logs.d1.forEach(log => {
+        const originalOperationId = log.kind || 'unknown';
+        const canonical = toCanonical(originalOperationId);
+        
         const standardLog = {
           id: log.id || `d1_${log.timestamp}_${Math.random()}`,
           timestamp: log.timestamp,
-          operationId: log.kind || 'unknown',
+          operationId: canonical,
           type: log.kind?.includes('error') ? 'action_error' : 'action_success',
           tags: [
-            `action:${log.kind || 'unknown'}`,
+            `action:${canonical}`,
+            ...(canonical !== originalOperationId ? [`alias:${originalOperationId}`] : []),
             'domain:system',
             'source:gpt',
             `env:${env.ENVIRONMENT || 'production'}`
           ].concat(log.tags ? JSON.parse(log.tags) : []),
           stores: ['d1']
         };
+        
+        // Add originalOperationId if different from canonical
+        if (canonical !== originalOperationId) {
+          standardLog.originalOperationId = originalOperationId;
+        }
         
         if (log.kind?.includes('error')) {
           standardLog.error = {
@@ -1216,20 +1239,28 @@ router.get("/api/logs", async (req, env) => {
       logs.kv.forEach(log => {
         const logId = log.id || `kv_${log.timestamp}_${Math.random()}`;
         const existing = standardizedLogs.get(logId);
+        const originalOperationId = log.type || 'unknown';
+        const canonical = toCanonical(originalOperationId);
         
         const standardLog = {
           id: logId,
           timestamp: log.timestamp || log.created_at,
-          operationId: log.type || 'unknown',
+          operationId: canonical,
           type: log.level === 'error' ? 'action_error' : 'action_success',
           tags: [
-            `action:${log.type || 'unknown'}`,
+            `action:${canonical}`,
+            ...(canonical !== originalOperationId ? [`alias:${originalOperationId}`] : []),
             'domain:system',
             'source:gpt',
             `env:${env.ENVIRONMENT || 'production'}`
           ].concat(log.tags || []),
           stores: existing ? [...existing.stores, 'kv'] : ['kv']
         };
+        
+        // Add originalOperationId if different from canonical
+        if (canonical !== originalOperationId) {
+          standardLog.originalOperationId = originalOperationId;
+        }
         
         if (log.level === 'error') {
           standardLog.error = {
@@ -1247,14 +1278,17 @@ router.get("/api/logs", async (req, env) => {
       logs.r2.forEach(log => {
         const logId = log.id || `r2_${log.timestamp}_${Math.random()}`;
         const existing = standardizedLogs.get(logId);
+        const originalOperationId = log.type || 'unknown';
+        const canonical = toCanonical(originalOperationId);
         
         const standardLog = {
           id: logId,
           timestamp: log.timestamp || log.created_at,
-          operationId: log.type || 'unknown',
+          operationId: canonical,
           type: 'action_success', // R2 typically stores successful actions
           tags: [
-            `action:${log.type || 'unknown'}`,
+            `action:${canonical}`,
+            ...(canonical !== originalOperationId ? [`alias:${originalOperationId}`] : []),
             'domain:system',
             'source:gpt',
             `env:${env.ENVIRONMENT || 'production'}`
@@ -1262,6 +1296,11 @@ router.get("/api/logs", async (req, env) => {
           stores: existing ? [...existing.stores, 'r2'] : ['r2'],
           artifactKey: log.key || undefined
         };
+        
+        // Add originalOperationId if different from canonical
+        if (canonical !== originalOperationId) {
+          standardLog.originalOperationId = originalOperationId;
+        }
         
         standardizedLogs.set(logId, { ...existing, ...standardLog });
       });
