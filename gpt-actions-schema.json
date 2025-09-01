@@ -1404,7 +1404,7 @@
         }
       }
     },
-    "/api/healthz": {
+    "/api/system/health-check": {
       "get": {
         "summary": "System health check",
         "description": "Called AUTOMATICALLY for monitoring. No user prompt required.",
@@ -1425,7 +1425,7 @@
         }
       }
     },
-    "/api/question": {
+    "/api/discovery/generate-inquiry": {
       "post": {
         "summary": "Generate Socratic or discovery questions",
         "description": "Called AUTOMATICALLY when user needs guidance or reflection.",
@@ -1495,7 +1495,7 @@
         }
       }
     },
-    "/api/commitments": {
+    "/api/commitments/create": {
       "post": {
         "summary": "Create or update a commitment",
         "description": "Called AUTOMATICALLY when user mentions goals or commitments.",
@@ -1567,7 +1567,9 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/commitments/active": {
       "get": {
         "summary": "List active commitments",
         "description": "Called AUTOMATICALLY when user asks for progress or at scheduled intervals.",
@@ -1595,7 +1597,7 @@
         }
       }
     },
-    "/api/commitments/{id}/progress": {
+    "/api/commitments/:id/progress": {
       "post": {
         "summary": "Update commitment progress",
         "description": "Called AUTOMATICALLY when progress is detected in logs.",
