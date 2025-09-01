@@ -65,7 +65,10 @@
                     "description": "The actual content to log (auto-extracted from conversation)"
                   }
                 },
-                "required": ["type", "payload"]
+                "required": [
+                  "type",
+                  "payload"
+                ]
               }
             }
           }
@@ -94,7 +97,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/logs": {
@@ -283,7 +298,10 @@
                     "description": "Keywords that triggered this check-in (e.g., 'doubt', 'insecure')"
                   }
                 },
-                "required": ["current_state", "trigger_keywords"]
+                "required": [
+                  "current_state",
+                  "trigger_keywords"
+                ]
               }
             }
           }
@@ -296,7 +314,10 @@
                 "example": {
                   "response": "I notice you’re feeling uncertain about your decision. Let’s explore this...",
                   "exercise": "Try this grounding ritual: [link]",
-                  "questions": ["What’s the worst that could happen?", "When have you trusted yourself before?"]
+                  "questions": [
+                    "What’s the worst that could happen?",
+                    "When have you trusted yourself before?"
+                  ]
                 }
               }
             }
@@ -321,7 +342,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/media/extract-wisdom": {
@@ -340,7 +373,14 @@
                 "properties": {
                   "media_type": {
                     "type": "string",
-                    "enum": ["tv_show", "movie", "book", "podcast", "music", "article"],
+                    "enum": [
+                      "tv_show",
+                      "movie",
+                      "book",
+                      "podcast",
+                      "music",
+                      "article"
+                    ],
                     "description": "Auto-detected media type"
                   },
                   "title": {
@@ -360,7 +400,11 @@
                     "description": "Phrase that triggered this (e.g., 'I read')"
                   }
                 },
-                "required": ["media_type", "title", "trigger_phrase"]
+                "required": [
+                  "media_type",
+                  "title",
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -372,7 +416,10 @@
               "application/json": {
                 "example": {
                   "wisdom": "This book highlights the power of trust—here’s how it applies to you...",
-                  "growth_insights": ["Trust yourself more in decisions", "Explore creative blocks"],
+                  "growth_insights": [
+                    "Trust yourself more in decisions",
+                    "Explore creative blocks"
+                  ],
                   "ritual": {
                     "name": "Reflective Journaling",
                     "link": "https://signal-q.me/rituals/journaling"
@@ -401,7 +448,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/somatic/session": {
@@ -435,7 +494,10 @@
                     "description": "Phrase that triggered this (e.g., 'my body feels')"
                   }
                 },
-                "required": ["body_state", "trigger_phrase"]
+                "required": [
+                  "body_state",
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -473,7 +535,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/wisdom/synthesize": {
@@ -502,16 +576,26 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "enum": ["human_design", "gene_keys", "astrology", "somatic_wisdom", "all"]
+                      "enum": [
+                        "human_design",
+                        "gene_keys",
+                        "astrology",
+                        "somatic_wisdom",
+                        "all"
+                      ]
                     },
-                    "default": ["all"]
+                    "default": [
+                      "all"
+                    ]
                   },
                   "trigger": {
                     "type": "string",
                     "description": "What triggered this (e.g., 'user asked for guidance', 'scheduled')"
                   }
                 },
-                "required": ["trigger"]
+                "required": [
+                  "trigger"
+                ]
               }
             }
           }
@@ -523,7 +607,10 @@
               "application/json": {
                 "example": {
                   "wisdom": "Your Human Design suggests waiting for clarity before deciding...",
-                  "frameworks_used": ["human_design", "astrology"],
+                  "frameworks_used": [
+                    "human_design",
+                    "astrology"
+                  ],
                   "suggested_action": "Meditate on this question: 'What does my gut say?'"
                 }
               }
@@ -549,7 +636,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/patterns/recognize": {
@@ -568,7 +667,12 @@
                 "properties": {
                   "area_of_focus": {
                     "type": "string",
-                    "enum": ["trust_building", "media_consumption", "body_awareness", "overall_growth"],
+                    "enum": [
+                      "trust_building",
+                      "media_consumption",
+                      "body_awareness",
+                      "overall_growth"
+                    ],
                     "default": "overall_growth"
                   },
                   "recent_experiences": {
@@ -624,7 +728,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/standing-tall/practice": {
@@ -658,7 +774,9 @@
                     "description": "Phrase that triggered this (e.g., 'I feel small')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -696,7 +814,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/wisdom/daily-synthesis": {
@@ -712,7 +842,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["today", "week"],
+              "enum": [
+                "today",
+                "week"
+              ],
               "default": "today"
             },
             "description": "Time period for synthesis (auto-set to 'today' if not provided)"
@@ -846,7 +979,10 @@
                     "description": "Logs related to this feedback"
                   }
                 },
-                "required": ["message", "trigger_phrase"]
+                "required": [
+                  "message",
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -858,7 +994,10 @@
               "application/json": {
                 "example": {
                   "status": "saved",
-                  "related_resources": ["log_123", "log_456"]
+                  "related_resources": [
+                    "log_123",
+                    "log_456"
+                  ]
                 }
               }
             }
@@ -883,7 +1022,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/dreams/interpret": {
@@ -917,7 +1068,10 @@
                     "description": "Phrase that triggered this (e.g., 'I dreamed')"
                   }
                 },
-                "required": ["dream_text", "trigger_phrase"]
+                "required": [
+                  "dream_text",
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -929,7 +1083,10 @@
               "application/json": {
                 "example": {
                   "interpretation": "This dream suggests a fear of losing control...",
-                  "archetypal_themes": ["the shadow", "the hero"],
+                  "archetypal_themes": [
+                    "the shadow",
+                    "the hero"
+                  ],
                   "personal_insight": "Your subconscious is processing recent stress.",
                   "suggested_ritual": {
                     "name": "Dream Journaling",
@@ -959,7 +1116,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/energy/optimize": {
@@ -989,7 +1158,10 @@
                     "description": "Phrase that triggered this (e.g., 'I’m exhausted')"
                   }
                 },
-                "required": ["current_energy", "trigger_phrase"]
+                "required": [
+                  "current_energy",
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1033,7 +1205,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/values/clarify": {
@@ -1066,7 +1250,9 @@
                     "description": "Phrase that triggered this (e.g., 'what matters to me')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1081,12 +1267,18 @@
                     {
                       "value": "Creativity",
                       "priority": 1,
-                      "examples": ["Writing your book", "Painting"]
+                      "examples": [
+                        "Writing your book",
+                        "Painting"
+                      ]
                     },
                     {
                       "value": "Trust",
                       "priority": 2,
-                      "examples": ["Deciding to leave your job", "Setting boundaries"]
+                      "examples": [
+                        "Deciding to leave your job",
+                        "Setting boundaries"
+                      ]
                     }
                   ],
                   "decision_framework": "When faced with a choice, ask: 'Does this align with my creativity and trust?'"
@@ -1114,7 +1306,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/creativity/unleash": {
@@ -1144,7 +1348,9 @@
                     "description": "Phrase that triggered this (e.g., 'creative block')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1188,7 +1394,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/abundance/cultivate": {
@@ -1218,7 +1436,9 @@
                     "description": "Phrase that triggered this (e.g., 'I need more money')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1259,7 +1479,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/transitions/navigate": {
@@ -1289,7 +1521,9 @@
                     "description": "Phrase that triggered this (e.g., 'starting a new job')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1330,7 +1564,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/ancestry/heal": {
@@ -1360,7 +1606,9 @@
                     "description": "Phrase that triggered this (e.g., 'my family always')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1401,7 +1649,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/system/health-check": {
@@ -1452,7 +1712,9 @@
                     "description": "Phrase that triggered this (e.g., 'I don’t know what to do')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1492,7 +1754,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/commitments/create": {
@@ -1526,7 +1800,9 @@
                     "description": "Phrase that triggered this (e.g., 'I want to write a book')"
                   }
                 },
-                "required": ["trigger_phrase"]
+                "required": [
+                  "trigger_phrase"
+                ]
               }
             }
           }
@@ -1566,7 +1842,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/commitments/active": {
@@ -1612,6 +1900,16 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
           }
         ],
         "requestBody": {
@@ -1633,7 +1931,9 @@
                     "description": "Logs indicating progress"
                   }
                 },
-                "required": ["progress_update"]
+                "required": [
+                  "progress_update"
+                ]
               }
             }
           }
@@ -1694,7 +1994,12 @@
                   },
                   "time_of_day": {
                     "type": "string",
-                    "enum": ["morning", "afternoon", "evening", "night"],
+                    "enum": [
+                      "morning",
+                      "afternoon",
+                      "evening",
+                      "night"
+                    ],
                     "description": "Auto-detected time of day"
                   },
                   "context": {
@@ -1706,7 +2011,11 @@
                     "description": "What triggered this (e.g., 'user mentioned stress')"
                   }
                 },
-                "required": ["user_state", "time_of_day", "trigger"]
+                "required": [
+                  "user_state",
+                  "time_of_day",
+                  "trigger"
+                ]
               }
             }
           }
@@ -1747,7 +2056,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/patterns/autonomous-detect": {
@@ -1780,7 +2101,10 @@
                     "description": "Auto-detected user state (e.g., 'avoidant')"
                   }
                 },
-                "required": ["recent_interactions", "detected_pattern"]
+                "required": [
+                  "recent_interactions",
+                  "detected_pattern"
+                ]
               }
             }
           }
@@ -1821,7 +2145,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/contracts/create": {
@@ -1854,7 +2190,11 @@
                     "description": "Expected timeline for transformation"
                   }
                 },
-                "required": ["transformation_goal", "current_state", "desired_state"]
+                "required": [
+                  "transformation_goal",
+                  "current_state",
+                  "desired_state"
+                ]
               }
             }
           }
@@ -1867,7 +2207,10 @@
                 "example": {
                   "contract": {
                     "goal": "Publish Book",
-                    "milestones": ["Outline by Oct 1", "First draft by Dec 1"],
+                    "milestones": [
+                      "Outline by Oct 1",
+                      "First draft by Dec 1"
+                    ],
                     "support": "Weekly accountability calls with Aquil"
                   }
                 }
@@ -1894,7 +2237,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/monitoring/metrics": {
@@ -1945,18 +2300,29 @@
                   },
                   "depth_level": {
                     "type": "string",
-                    "enum": ["surface", "deep", "profound"],
+                    "enum": [
+                      "surface",
+                      "deep",
+                      "profound"
+                    ],
                     "default": "deep",
                     "description": "Auto-selected depth based on context"
                   },
                   "voice": {
                     "type": "string",
-                    "enum": ["oracle", "mirror", "guide", "challenger"],
+                    "enum": [
+                      "oracle",
+                      "mirror",
+                      "guide",
+                      "challenger"
+                    ],
                     "default": "oracle",
                     "description": "Auto-selected voice for questioning style"
                   }
                 },
-                "required": ["topic"]
+                "required": [
+                  "topic"
+                ]
               }
             }
           }
@@ -1997,7 +2363,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     },
     "/api/coaching/comb-analysis": {
@@ -2027,13 +2405,20 @@
                     "properties": {
                       "domain": {
                         "type": "string",
-                        "enum": ["health", "career", "relationships", "personal"],
+                        "enum": [
+                          "health",
+                          "career",
+                          "relationships",
+                          "personal"
+                        ],
                         "description": "Auto-detected domain"
                       }
                     }
                   }
                 },
-                "required": ["behavior_goal"]
+                "required": [
+                  "behavior_goal"
+                ]
               }
             }
           }
@@ -2081,7 +2466,19 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique identifier for idempotent operations to prevent duplicate requests",
+            "schema": {
+              "type": "string",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          }
+        ]
       }
     }
   },
@@ -2099,28 +2496,119 @@
             "example": "The request was missing required fields."
           }
         },
-        "required": ["error", "message"]
+        "required": [
+          "error",
+          "message"
+        ]
       }
     }
   },
   "x-openai-autonomous-triggers": {
     "keyword_map": {
-      "wellbeing": ["doubt", "uncertain", "insecure", "anxious", "stress", "overwhelm"],
-      "somatic": ["body", "tight", "shoulders", "chest", "tense", "pain", "breath"],
-      "standing_tall": ["small", "powerless", "intimidated", "voice", "confidence", "assertive"],
-      "media_wisdom": ["read", "watched", "listened", "book", "movie", "podcast", "show"],
-      "creativity": ["block", "stuck", "write", "create", "paint", "draw", "music"],
-      "abundance": ["money", "broke", "wealth", "scarcity", "prosperity", "charging", "rates"],
-      "transitions": ["new job", "move", "change", "transition", "phase", "chapter"],
-      "ancestry": ["family", "mom", "dad", "parents", "generational", "pattern", "lineage"],
-      "values": ["matters", "priority", "values", "important", "decision", "choice"],
-      "goals": ["goal", "commit", "promise", "achieve", "progress", "next step"],
-      "dreams": ["dreamed", "dream", "nightmare", "recurring", "symbolic"]
+      "wellbeing": [
+        "doubt",
+        "uncertain",
+        "insecure",
+        "anxious",
+        "stress",
+        "overwhelm"
+      ],
+      "somatic": [
+        "body",
+        "tight",
+        "shoulders",
+        "chest",
+        "tense",
+        "pain",
+        "breath"
+      ],
+      "standing_tall": [
+        "small",
+        "powerless",
+        "intimidated",
+        "voice",
+        "confidence",
+        "assertive"
+      ],
+      "media_wisdom": [
+        "read",
+        "watched",
+        "listened",
+        "book",
+        "movie",
+        "podcast",
+        "show"
+      ],
+      "creativity": [
+        "block",
+        "stuck",
+        "write",
+        "create",
+        "paint",
+        "draw",
+        "music"
+      ],
+      "abundance": [
+        "money",
+        "broke",
+        "wealth",
+        "scarcity",
+        "prosperity",
+        "charging",
+        "rates"
+      ],
+      "transitions": [
+        "new job",
+        "move",
+        "change",
+        "transition",
+        "phase",
+        "chapter"
+      ],
+      "ancestry": [
+        "family",
+        "mom",
+        "dad",
+        "parents",
+        "generational",
+        "pattern",
+        "lineage"
+      ],
+      "values": [
+        "matters",
+        "priority",
+        "values",
+        "important",
+        "decision",
+        "choice"
+      ],
+      "goals": [
+        "goal",
+        "commit",
+        "promise",
+        "achieve",
+        "progress",
+        "next step"
+      ],
+      "dreams": [
+        "dreamed",
+        "dream",
+        "nightmare",
+        "recurring",
+        "symbolic"
+      ]
     },
     "scheduled_triggers": {
-      "daily_wisdom": ["0 7 * * *", "0 19 * * *"],
-      "evening_ritual": ["0 20 * * *"],
-      "weekly_insights": ["0 8 * * 1"]
+      "daily_wisdom": [
+        "0 7 * * *",
+        "0 19 * * *"
+      ],
+      "evening_ritual": [
+        "0 20 * * *"
+      ],
+      "weekly_insights": [
+        "0 8 * * 1"
+      ]
     }
   },
   "x-openai-conversation-starters": [
