@@ -1920,6 +1920,169 @@
           }
         }
       }
+    },
+    "/api/socratic/question": {
+      "post": {
+        "summary": "Generate Socratic questions for deep inquiry",
+        "description": "Called AUTOMATICALLY when user needs guidance or self-reflection.",
+        "operationId": "socraticQuestions",
+        "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": {
+                    "type": "object",
+                    "description": "Auto-extracted context from conversation"
+                  },
+                  "topic": {
+                    "type": "string",
+                    "description": "Auto-detected topic (e.g., 'career', 'relationships', 'growth')"
+                  },
+                  "depth_level": {
+                    "type": "string",
+                    "enum": ["surface", "deep", "profound"],
+                    "default": "deep",
+                    "description": "Auto-selected depth based on context"
+                  },
+                  "voice": {
+                    "type": "string",
+                    "enum": ["oracle", "mirror", "guide", "challenger"],
+                    "default": "oracle",
+                    "description": "Auto-selected voice for questioning style"
+                  }
+                },
+                "required": ["topic"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Socratic questions generated for deep inquiry",
+            "content": {
+              "application/json": {
+                "example": {
+                  "questions": [
+                    "What would your future self advise you to do?",
+                    "What's the fear beneath this doubt?"
+                  ],
+                  "voice_used": "oracle",
+                  "integration_practice": "Sit with these questions for 5 minutes in silence."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coaching/comb-analysis": {
+      "post": {
+        "summary": "COM-B model behavioral change analysis",
+        "description": "Called AUTOMATICALLY when user mentions behavioral change goals.",
+        "operationId": "combBehavioralAnalysis",
+        "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "behavior_goal": {
+                    "type": "string",
+                    "description": "Auto-extracted behavior goal from conversation"
+                  },
+                  "current_situation": {
+                    "type": "string",
+                    "description": "Auto-extracted current situation description"
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "domain": {
+                        "type": "string",
+                        "enum": ["health", "career", "relationships", "personal"],
+                        "description": "Auto-detected domain"
+                      }
+                    }
+                  }
+                },
+                "required": ["behavior_goal"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "COM-B behavioral analysis with action strategies",
+            "content": {
+              "application/json": {
+                "example": {
+                  "analysis": {
+                    "capability_assessment": "High psychological capability, needs skill building",
+                    "opportunity_assessment": "Strong social support, environmental barriers present",
+                    "motivation_assessment": "High reflective, low automatic motivation"
+                  },
+                  "action_plan": [
+                    "Build specific skills through daily practice",
+                    "Create environmental cues for desired behavior"
+                  ],
+                  "behavioral_strategies": [
+                    "Implementation intentions",
+                    "Habit stacking"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

@@ -1123,9 +1123,17 @@ router.post("/api/creativity/unleash", async (req, env) => {
   try {
     const unleasher = new CreativityUnleasher(env);
     const result = await unleasher.unleash(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'creativity_unleash', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Creativity unleash error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'creativity_unleash', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Creativity unleashing error", message: "Creative flow is always within you, ready to emerge." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1137,9 +1145,17 @@ router.post("/api/abundance/cultivate", async (req, env) => {
   try {
     const cultivator = new AbundanceCultivator(env);
     const result = await cultivator.cultivate(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'abundance_cultivate', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Abundance cultivation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'abundance_cultivate', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Abundance cultivation error", message: "Abundance begins with a mindset of possibility." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1151,9 +1167,17 @@ router.post("/api/transitions/navigate", async (req, env) => {
   try {
     const navigator = new TransitionNavigator(env);
     const result = await navigator.navigate(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'transitions_navigate', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Transition navigation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'transitions_navigate', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Transition navigation error", message: "Every transition carries seeds of renewal and growth." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1165,9 +1189,17 @@ router.post("/api/ancestry/heal", async (req, env) => {
   try {
     const healer = new AncestryHealer(env);
     const result = await healer.heal(data);
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'ancestry_heal', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Ancestry healing error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'ancestry_heal', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Ancestry healing error", message: "You carry your ancestors' strength as you heal old patterns." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1202,9 +1234,17 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
     const core = new AquilCore(env);
     const result = await core.generateDailySynthesis();
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'daily_synthesis', { period: 'today' }, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Daily synthesis error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'daily_synthesis', { period: 'today' }, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       message: "Daily synthesis generation error", 
       fallback_insights: [
@@ -1215,49 +1255,6 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
       daily_practice: "Take a moment to reflect on what you've learned about yourself today"
     }), { status: 500, headers: corsHeaders }));
   }
-});
-router.get("/api/health", async (req, env) => {
-  let d1 = null;
-  try { const { results } = await env.AQUIL_DB.prepare('PRAGMA user_version').all(); d1 = results && results[0] ? results[0].user_version : null; } catch (e) { d1 = String(e); }
-  let kv = null;
-  try { const key = `__health__${Date.now()}`; await env.AQUIL_MEMORIES.put(key, 'ok', { expirationTtl: 10 }); kv = await env.AQUIL_MEMORIES.get(key); } catch (e) { kv = String(e); }
-  let r2 = null;
-  try { const { objects } = await env.AQUIL_STORAGE.list({ prefix: '__health__', limit: 1 }); r2 = Array.isArray(objects) ? objects.length : null; } catch (e) { r2 = String(e); }
-  let ai = null;
-  try { ai = await env.AI.metadata ? await env.AI.metadata() : 'no metadata'; } catch (e) { ai = String(e); }
-  let vector = null;
-  try { vector = env.AQUIL_CONTEXT ? Object.keys(env.AQUIL_CONTEXT).length : 'no binding'; } catch (e) { vector = String(e); }
-  const ok = [d1, kv, r2, ai, vector].every((v) => v !== null && v !== '' && v !== 'no binding');
-  
-  // Enhanced health check with performance metrics
-  const healthStatus = {
-    status: ok ? "healthy" : "degraded",
-    timestamp: new Date().toISOString(),
-    version: "2.0.0",
-    services: {
-      database: d1 !== null && typeof d1 === 'number' ? "connected" : "unavailable",
-      kv_store: kv === 'ok' ? "connected" : "unavailable", 
-      object_storage: typeof r2 === 'number' ? "connected" : "unavailable",
-      ai_service: ai !== null && ai !== 'no metadata' ? "connected" : "unavailable",
-      vector_store: vector !== 'no binding' ? "connected" : "unavailable"
-    },
-    raw_checks: { d1, kv, r2, ai, vector },
-    features: {
-      multi_voice_system: "operational",
-      metamorphic_logging: "operational", 
-      autonomous_patterns: "operational",
-      socratic_questioning: "operational",
-      comb_coaching: "operational",
-      commitment_tracking: "operational"
-    },
-    performance: {
-      uptime_ms: Date.now(),
-      memory_usage: "unknown", // Would need process info in real environment
-      response_time_ms: "< 100ms typical"
-    }
-  };
-  
-  return addCORS(new Response(JSON.stringify(healthStatus), { status: ok ? 200 : 503, headers: corsHeaders }));
 });
 router.post("/api/somatic/session", async (req, env) => {
   let data;
@@ -1308,9 +1305,17 @@ router.get("/api/insights", async (req, env) => {
   try {
     const core = new AquilCore(env);
     const result = await core.generateInsights();
+    
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'personal_insights', {}, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Insights generation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'personal_insights', {}, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       message: "Insights generation error", 
       fallback_insights: [
@@ -2070,7 +2075,6 @@ router.post("/api/contracts/create", async (req, env) => {
     }
 
     // Log the contract creation
-    
     await logMetamorphicEvent(env, {
       kind: "transformation_contract",
       detail: {
@@ -2083,9 +2087,15 @@ router.post("/api/contracts/create", async (req, env) => {
       signal_strength: "high"
     });
 
+    // Log ChatGPT action
+    await logChatGPTAction(env, 'transformation_contract', data, contract);
+
     return addCORS(new Response(JSON.stringify(contract), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Contract creation error:", error);
+    
+    // Log error
+    await logChatGPTAction(env, 'transformation_contract', data, null, error);
     return addCORS(new Response(JSON.stringify({ 
       error: "Contract creation error", 
       message: "Transformation happens with or without contracts. Your commitment to growth is what matters.",
@@ -2108,97 +2118,6 @@ router.post("/vectorize/upsert", async (req, env) => addCORS(await vectorize.ups
 router.post("/vectorize/query", async (req, env) => addCORS(await vectorize.query(req, env)));
 router.post("/ai/embed", async (req, env) => addCORS(await ai.embed(req, env)));
 router.post("/ai/generate", async (req, env) => addCORS(await ai.generate(req, env)));
-
-// Dynamic routing handlers for autonomous endpoints
-router.post("/api/wisdom/:action", async (req, env) => {
-  const url = new URL(req.url);
-  const action = url.pathname.split('/').pop();
-  
-  let body;
-  try { body = await req.json(); } catch {
-    return addCORS(new Response(JSON.stringify({ error: "Malformed JSON" }), { status: 400, headers: corsHeaders }));
-  }
-  
-  try {
-    switch (action) {
-      case "synthesize":
-        return addCORS(await handleWisdomSynthesize(body, env));
-      case "patterns":
-        return addCORS(await handleWisdomPatterns(body, env));
-      case "daily-synthesis":
-        return addCORS(await handleDailyWisdomSynthesis(body, env));
-      default:
-        return addCORS(await handleWisdomSynthesize(body, env));
-    }
-  } catch (error) {
-    console.error(`Error in wisdom/${action}:`, error);
-    return addCORS(new Response(JSON.stringify({ 
-      error: "Internal server error", 
-      action,
-      message: error.message 
-    }), { status: 500, headers: corsHeaders }));
-  }
-});
-
-router.post("/api/wellbeing/:focus", async (req, env) => {
-  const url = new URL(req.url);
-  const focus = url.pathname.split('/').pop();
-  
-  let body;
-  try { body = await req.json(); } catch {
-    return addCORS(new Response(JSON.stringify({ error: "Malformed JSON" }), { status: 400, headers: corsHeaders }));
-  }
-  
-  try {
-    switch (focus) {
-      case "auto":
-        return addCORS(await handleAutonomousWellbeingCheckIn(body, env));
-      case "trust":
-        return addCORS(await handleTrustCheckIn(body, env));
-      case "somatic":
-        return addCORS(await handleSomaticSession(body, env));
-      default:
-        return addCORS(await handleTrustCheckIn(body, env));
-    }
-  } catch (error) {
-    console.error(`Error in wellbeing/${focus}:`, error);
-    return addCORS(new Response(JSON.stringify({ 
-      error: "Internal server error", 
-      focus,
-      message: error.message 
-    }), { status: 500, headers: corsHeaders }));
-  }
-});
-
-router.post("/api/me/:aspect", async (req, env) => {
-  const url = new URL(req.url);
-  const aspect = url.pathname.split('/').pop();
-  
-  let body;
-  try { body = await req.json(); } catch {
-    return addCORS(new Response(JSON.stringify({ error: "Malformed JSON" }), { status: 400, headers: corsHeaders }));
-  }
-  
-  try {
-    switch (aspect) {
-      case "patterns":
-        return addCORS(await handlePersonalPatterns(body, env));
-      case "insights":
-        return addCORS(await handlePersonalInsights(body, env));
-      case "growth":
-        return addCORS(await handlePersonalGrowth(body, env));
-      default:
-        return addCORS(await handlePersonalInsights(body, env));
-    }
-  } catch (error) {
-    console.error(`Error in me/${aspect}:`, error);
-    return addCORS(new Response(JSON.stringify({ 
-      error: "Internal server error", 
-      aspect,
-      message: error.message 
-    }), { status: 500, headers: corsHeaders }));
-  }
-});
 
 // Scheduled trigger endpoint for cron jobs
 router.post("/api/scheduled/trigger", async (req, env) => {
