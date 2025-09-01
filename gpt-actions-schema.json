@@ -1828,7 +1828,7 @@
       "post": {
         "summary": "Create transformation contract",
         "description": "Called when user explicitly requests a structured contract (not autonomous).",
-        "operationId": "createTransformationContract",
+        "operationId": "transformation_contract",
         "x-openai-isConsequential": true,
         "requestBody": {
           "required": true,

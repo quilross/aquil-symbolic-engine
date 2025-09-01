@@ -172,7 +172,7 @@ Create transformation contracts with milestones.
 
 ### 11. System Health & Monitoring
 
-#### GET /api/health
+#### GET /api/system/health-check
 Comprehensive system health check with service status.
 
 #### GET /api/monitoring/metrics

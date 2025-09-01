@@ -8,11 +8,11 @@
 
 ## Logging Design
 
-Aquil uses unified logging across D1 (SQLite), KV, R2, and Vectorize. All logs are written via `/api/log` and can be retrieved via `/api/logs`. Health of all bindings is checked via `/api/health`.
+Aquil uses unified logging across D1 (SQLite), KV, R2, and Vectorize. All logs are written via `/api/log` and can be retrieved via `/api/logs`. Health of all bindings is checked via `/api/system/health-check`.
 
 - **/api/log**: POST endpoint to write logs. Accepts `{ type, payload, session_id, who, level, tags, binary, textOrVector }`.
 - **/api/logs**: GET endpoint to retrieve logs from D1, KV, R2, and Vector. Returns `{ d1, kv, r2, vector }`.
-- **/api/health**: GET endpoint to check health of D1, KV, R2, AI, and Vector bindings. Returns `{ ok, d1, kv, r2, ai, vector }`.
+- **/api/system/health-check**: GET endpoint to check health of D1, KV, R2, AI, and Vector bindings. Returns `{ ok, d1, kv, r2, ai, vector }`.
 
 ### Secret Management
 
@@ -105,7 +105,7 @@ See `LOGGING_SPEC.md` for the structure of metamorphic and event logs and exampl
 3. **Login:** `wrangler login` (use catnip-pieces1@icloud.com)
 4. **Setup:** `npm run setup` (creates D1 database and KV namespace)
 5. **Deploy:** `npm run deploy`
-6. **Test:** Visit https://signal-q.me/api/health
+6. **Test:** Visit https://signal-q.me/api/system/health-check
 
 ### First Session
 
