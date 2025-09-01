@@ -2,7 +2,7 @@ import axios from "axios";
 const base = "http://localhost:8787";
 
 const endpoints = [
-  { method: "get", url: "/api/health", data: null },
+  { method: "get", url: "/api/system/health-check", data: null },
   {
     method: "post",
     url: "/api/trust/check-in",

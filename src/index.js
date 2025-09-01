@@ -118,25 +118,68 @@ function getR2PolicyForAction(operationId) {
   const r2Policies = {
     // Required: Actions that generate significant artifacts/content
     'somatic_healing_session': 'required',
-    'extract_media_wisdom': 'required', 
+    'somaticHealingSession': 'required',
+    'extract_media_wisdom': 'required',
+    'extractMediaWisdom': 'required', 
     'interpret_dream': 'required',
-    'create_transformation_contract': 'required',
+    'interpretDream': 'required',
+    'transformation_contract': 'required',
     
     // Optional: Actions that may generate shareable content
     'trust_check_in': 'optional',
+    'trustCheckIn': 'optional',
     'pattern_recognition': 'optional',
+    'recognizePatterns': 'optional',
     'wisdom_synthesis': 'optional',
+    'synthesizeWisdom': 'optional',
     'personal_insights': 'optional',
+    'getPersonalInsights': 'optional',
     'daily_synthesis': 'optional',
+    'getDailySynthesis': 'optional',
+    'optimize_energy': 'optional',
+    'optimizeEnergy': 'optional',
     
     // N/A: Actions that are purely informational
     'submit_feedback': 'n/a',
+    'submitFeedback': 'n/a',
     'standing_tall_practice': 'n/a',
+    'standingTallPractice': 'n/a',
     'values_clarification': 'n/a',
+    'clarifyValues': 'n/a',
     'creativity_unleash': 'n/a',
+    'unleashCreativity': 'n/a',
     'abundance_cultivate': 'n/a',
+    'cultivateAbundance': 'n/a',
     'transitions_navigate': 'n/a',
-    'ancestry_heal': 'n/a'
+    'navigateTransitions': 'n/a',
+    'ancestry_heal': 'n/a',
+    'healAncestry': 'n/a',
+    'manage_commitment': 'n/a',
+    'manageCommitment': 'n/a',
+    'update_commitment_progress': 'n/a',
+    'updateCommitmentProgress': 'n/a',
+    'log_data_or_event': 'n/a',
+    'logDataOrEvent': 'n/a',
+    'retrieve_logs_or_data_entries': 'n/a',
+    'retrieveLogsOrDataEntries': 'n/a',
+    'retrieve_recent_session_logs': 'n/a',
+    'retrieveRecentSessionLogs': 'n/a',
+    'system_health_check': 'n/a',
+    'systemHealthCheck': 'n/a',
+    'generate_discovery_inquiry': 'n/a',
+    'generateDiscoveryInquiry': 'n/a',
+    'auto_suggest_ritual': 'n/a',
+    'autoSuggestRitual': 'n/a',
+    'autonomous_pattern_detect': 'n/a',
+    'autonomousPatternDetect': 'n/a',
+    'socratic_questions': 'n/a',
+    'socraticQuestions': 'n/a',
+    'comb_behavioral_analysis': 'n/a',
+    'combBehavioralAnalysis': 'n/a',
+    'get_monitoring_metrics': 'n/a',
+    'getMonitoringMetrics': 'n/a',
+    'list_active_commitments': 'n/a',
+    'listActiveCommitments': 'n/a'
   };
   
   return r2Policies[operationId] || 'n/a';
@@ -146,21 +189,64 @@ function getR2PolicyForAction(operationId) {
 function getDomainForAction(operationId) {
   const domains = {
     'trust_check_in': 'trust',
+    'trustCheckIn': 'trust',
     'extract_media_wisdom': 'wisdom',
+    'extractMediaWisdom': 'wisdom',
     'somatic_healing_session': 'healing',
+    'somaticHealingSession': 'healing',
     'interpret_dream': 'consciousness',
+    'interpretDream': 'consciousness',
     'submit_feedback': 'system',
+    'submitFeedback': 'system',
     'pattern_recognition': 'insight',
+    'recognizePatterns': 'insight',
     'standing_tall_practice': 'embodiment',
+    'standingTallPractice': 'embodiment',
     'values_clarification': 'values',
+    'clarifyValues': 'values',
     'creativity_unleash': 'creativity',
+    'unleashCreativity': 'creativity',
     'abundance_cultivate': 'abundance',
+    'cultivateAbundance': 'abundance',
     'transitions_navigate': 'change',
+    'navigateTransitions': 'change',
     'ancestry_heal': 'healing',
+    'healAncestry': 'healing',
     'wisdom_synthesis': 'wisdom',
+    'synthesizeWisdom': 'wisdom',
     'daily_synthesis': 'wisdom',
+    'getDailySynthesis': 'wisdom',
     'personal_insights': 'insight',
-    'create_transformation_contract': 'commitment'
+    'getPersonalInsights': 'insight',
+    'manage_commitment': 'commitment',
+    'manageCommitment': 'commitment',
+    'update_commitment_progress': 'commitment',
+    'updateCommitmentProgress': 'commitment',
+    'transformation_contract': 'commitment',
+    'log_data_or_event': 'system',
+    'logDataOrEvent': 'system',
+    'retrieve_logs_or_data_entries': 'system',
+    'retrieveLogsOrDataEntries': 'system',
+    'retrieve_recent_session_logs': 'system',
+    'retrieveRecentSessionLogs': 'system',
+    'system_health_check': 'system',
+    'systemHealthCheck': 'system',
+    'generate_discovery_inquiry': 'discovery',
+    'generateDiscoveryInquiry': 'discovery',
+    'auto_suggest_ritual': 'ritual',
+    'autoSuggestRitual': 'ritual',
+    'autonomous_pattern_detect': 'insight',
+    'autonomousPatternDetect': 'insight',
+    'socratic_questions': 'discovery',
+    'socraticQuestions': 'discovery',
+    'comb_behavioral_analysis': 'behavior',
+    'combBehavioralAnalysis': 'behavior',
+    'get_monitoring_metrics': 'system',
+    'getMonitoringMetrics': 'system',
+    'list_active_commitments': 'commitment',
+    'listActiveCommitments': 'commitment',
+    'optimize_energy': 'energy',
+    'optimizeEnergy': 'energy'
   };
   
   return domains[operationId] || 'general';
@@ -1267,6 +1353,10 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Wisdom synthesis error:", error);
+    
+    // Log error using logChatGPTAction
+    await logChatGPTAction(env, 'wisdom_synthesis', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ 
       error: "Wisdom synthesis error", 
       message: "Your inner wisdom is always accessible. Trust what emerges when you pause and listen deeply.",
@@ -1536,7 +1626,6 @@ router.post("/api/energy/optimize", async (req, env) => {
     ];
 
     // Log the energy optimization session
-    
     await logMetamorphicEvent(env, {
       kind: "energy_optimization",
       detail: {
@@ -1549,9 +1638,15 @@ router.post("/api/energy/optimize", async (req, env) => {
       signal_strength: "medium"
     });
 
+    // External logging for ChatGPT integration
+    await logChatGPTAction(env, 'optimize_energy', data, optimization);
+
     return addCORS(new Response(JSON.stringify(optimization), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Energy optimization error:", error);
+    
+    // Log error using logChatGPTAction
+    await logChatGPTAction(env, 'optimize_energy', data, null, error);
     return addCORS(new Response(JSON.stringify({ 
       error: "Energy optimization error", 
       message: "Your energy is sacred. Honor your natural rhythms and what truly nourishes you.",
@@ -1713,7 +1808,6 @@ router.post("/api/commitments/create", async (req, env) => {
     const commitmentId = await db.createCommitment(data);
     
     // Log commitment creation
-    
     await logMetamorphicEvent(env, {
       kind: "commitment_created",
       detail: {
@@ -1725,24 +1819,13 @@ router.post("/api/commitments/create", async (req, env) => {
       signal_strength: "high"
     });
     
-    // External logging for ChatGPT integration (D1, KV, R2, Vector)
-    await writeLog(env, {
-      type: 'commitment_creation',
-      payload: {
-        action: 'manage_commitment',
-        input: data,
-        result: {
-          commitment_created: true,
-          commitment_id: commitmentId,
-          title: data.title
-        }
-      },
-      session_id: data.session_id || crypto.randomUUID(),
-      who: 'system',
-      level: 'info',
-      tags: ['commitment', 'creation', 'chatgpt_action'],
-      textOrVector: `Commitment created: ${data.title} - ${data.commitment_type || 'personal'}`
-    });
+    // External logging for ChatGPT integration
+    const result = { 
+      commitment_created: true,
+      commitment_id: commitmentId,
+      title: data.title
+    };
+    await logChatGPTAction(env, 'manage_commitment', data, result);
 
     return addCORS(new Response(JSON.stringify({ 
       commitment_id: commitmentId,
@@ -1758,16 +1841,8 @@ router.post("/api/commitments/create", async (req, env) => {
   } catch (error) {
     console.error("Commitment creation error:", error);
     
-    // Log error to external systems
-    await writeLog(env, {
-      type: 'commitment_creation_error',
-      payload: { action: 'manage_commitment', error: error.message, input: data },
-      session_id: data?.session_id || crypto.randomUUID(),
-      who: 'system', 
-      level: 'error',
-      tags: ['commitment', 'error', 'chatgpt_action'],
-      textOrVector: `Commitment creation error: ${error.message}`
-    });
+    // Log error using logChatGPTAction
+    await logChatGPTAction(env, 'manage_commitment', data, null, error);
     
     return addCORS(new Response(JSON.stringify({ 
       error: "Commitment creation error", 
@@ -1818,7 +1893,6 @@ router.post("/api/commitments/:id/progress", async (req, env) => {
     }
     
     // Log progress update
-    
     await logMetamorphicEvent(env, {
       kind: "commitment_progress",
       detail: {
@@ -1831,6 +1905,14 @@ router.post("/api/commitments/:id/progress", async (req, env) => {
       signal_strength: "medium"
     });
 
+    // External logging for ChatGPT integration
+    const result = { 
+      progress_logged: true,
+      progress_id: progressId,
+      commitment_id: commitmentId
+    };
+    await logChatGPTAction(env, 'update_commitment_progress', data, result);
+
     return addCORS(new Response(JSON.stringify({ 
       progress_id: progressId,
       message: "Your progress has been witnessed and celebrated.",
@@ -1838,6 +1920,9 @@ router.post("/api/commitments/:id/progress", async (req, env) => {
     }), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Commitment progress error:", error);
+    
+    // Log error using logChatGPTAction
+    await logChatGPTAction(env, 'update_commitment_progress', data, null, error);
     return addCORS(new Response(JSON.stringify({ 
       error: "Progress logging error", 
       message: "Your growth is real whether or not it's tracked. Keep going."

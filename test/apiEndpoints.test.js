@@ -86,7 +86,7 @@ SomaticHealer.prototype.generateSession = async function (data) {
 };
 
 const endpoints = [
-  { method: "GET", path: "/api/health", valid: null },
+  { method: "GET", path: "/api/system/health-check", valid: null },
   { method: "GET", path: "/api/logs", valid: null },
   { method: "GET", path: "/api/session-init", valid: null },
   {
