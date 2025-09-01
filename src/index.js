@@ -45,6 +45,7 @@ import {
   autoDetectTags,
   AUTONOMOUS_TRIGGERS 
 } from "./utils/autonomy.js";
+import { transformToCanonicalFormat, applyCursorPagination } from "./utils/canonical-logs.js";
 
 // Enhanced utilities for better error handling and responses
 import { 
@@ -1153,7 +1154,11 @@ router.post("/api/discovery/generate-inquiry", async (req, env) => {
   } catch (error) {
     await logChatGPTAction(env, 'generateDiscoveryInquiry', {}, null, error);
     
-    return addCORS(createErrorResponse(error, 'generateDiscoveryInquiry'));
+    const errorData = await handleError(error, { 
+      endpoint: '/api/discovery/generate-inquiry',
+      method: 'POST' 
+    }, env);
+    return addCORS(createErrorResponse(errorData, 500));
   }
 });
 router.post("/api/ritual/auto-suggest", async (req, env) => {
@@ -1168,7 +1173,11 @@ router.post("/api/ritual/auto-suggest", async (req, env) => {
   } catch (error) {
     await logChatGPTAction(env, 'autoSuggestRitual', {}, null, error);
     
-    return addCORS(createErrorResponse(error, 'autoSuggestRitual'));
+    const errorData = await handleError(error, { 
+      endpoint: '/api/ritual/auto-suggest',
+      method: 'POST' 
+    }, env);
+    return addCORS(createErrorResponse(errorData, 500));
   }
 });
 router.get("/api/system/health-check", async (req, env) => {
@@ -1186,7 +1195,11 @@ router.get("/api/system/health-check", async (req, env) => {
       endpoint: '/api/system/health-check' 
     }, null, error);
     
-    return addCORS(createErrorResponse(error, 'systemHealthCheck'));
+    const errorData = await handleError(error, { 
+      endpoint: '/api/system/health-check',
+      method: 'GET' 
+    }, env);
+    return addCORS(createErrorResponse(errorData, 500));
   }
 });
 router.post("/api/log", async (req, env) => {
@@ -1247,148 +1260,13 @@ router.get("/api/logs", async (req, env) => {
   try {
     const logs = await readLogs(env, { limit, cursor });
     
-    // Standardize log format and de-duplicate
-    const standardizedLogs = new Map(); // Use Map to deduplicate by id
-    
-    // Process D1 logs
-    if (Array.isArray(logs.d1)) {
-      logs.d1.forEach(log => {
-        const originalOperationId = log.kind || 'unknown';
-        const canonical = toCanonical(originalOperationId);
-        
-        const standardLog = {
-          id: log.id || `d1_${log.timestamp}_${Math.random()}`,
-          timestamp: log.timestamp,
-          operationId: canonical,
-          type: log.kind?.includes('error') ? 'action_error' : 'action_success',
-          tags: [
-            `action:${canonical}`,
-            ...(canonical !== originalOperationId ? [`alias:${originalOperationId}`] : []),
-            'domain:system',
-            'source:gpt',
-            `env:${env.ENVIRONMENT || 'production'}`
-          ].concat(log.tags ? JSON.parse(log.tags) : []),
-          stores: ['d1']
-        };
-        
-        // Add originalOperationId if different from canonical
-        if (canonical !== originalOperationId) {
-          standardLog.originalOperationId = originalOperationId;
-        }
-        
-        if (log.kind?.includes('error')) {
-          standardLog.error = {
-            message: log.detail?.error || 'Unknown error',
-            code: log.detail?.code || undefined
-          };
-        }
-        
-        standardizedLogs.set(standardLog.id, standardLog);
-      });
-    }
-    
-    // Process KV logs  
-    if (Array.isArray(logs.kv)) {
-      logs.kv.forEach(log => {
-        const logId = log.id || `kv_${log.timestamp}_${Math.random()}`;
-        const existing = standardizedLogs.get(logId);
-        const originalOperationId = log.type || 'unknown';
-        const canonical = toCanonical(originalOperationId);
-        
-        const standardLog = {
-          id: logId,
-          timestamp: log.timestamp || log.created_at,
-          operationId: canonical,
-          type: log.level === 'error' ? 'action_error' : 'action_success',
-          tags: [
-            `action:${canonical}`,
-            ...(canonical !== originalOperationId ? [`alias:${originalOperationId}`] : []),
-            'domain:system',
-            'source:gpt',
-            `env:${env.ENVIRONMENT || 'production'}`
-          ].concat(log.tags || []),
-          stores: existing ? [...existing.stores, 'kv'] : ['kv']
-        };
-        
-        // Add originalOperationId if different from canonical
-        if (canonical !== originalOperationId) {
-          standardLog.originalOperationId = originalOperationId;
-        }
-        
-        if (log.level === 'error') {
-          standardLog.error = {
-            message: log.payload?.message || 'Unknown error',
-            code: log.payload?.code || undefined
-          };
-        }
-        
-        standardizedLogs.set(logId, { ...existing, ...standardLog });
-      });
-    }
-    
-    // Process R2 logs
-    if (Array.isArray(logs.r2)) {
-      logs.r2.forEach(log => {
-        const logId = log.id || `r2_${log.timestamp}_${Math.random()}`;
-        const existing = standardizedLogs.get(logId);
-        const originalOperationId = log.type || 'unknown';
-        const canonical = toCanonical(originalOperationId);
-        
-        const standardLog = {
-          id: logId,
-          timestamp: log.timestamp || log.created_at,
-          operationId: canonical,
-          type: 'action_success', // R2 typically stores successful actions
-          tags: [
-            `action:${canonical}`,
-            ...(canonical !== originalOperationId ? [`alias:${originalOperationId}`] : []),
-            'domain:system',
-            'source:gpt',
-            `env:${env.ENVIRONMENT || 'production'}`
-          ].concat(log.tags || []),
-          stores: existing ? [...existing.stores, 'r2'] : ['r2'],
-          artifactKey: log.key || undefined
-        };
-        
-        // Add originalOperationId if different from canonical
-        if (canonical !== originalOperationId) {
-          standardLog.originalOperationId = originalOperationId;
-        }
-        
-        standardizedLogs.set(logId, { ...existing, ...standardLog });
-      });
-    }
-    
-    // Convert to array and sort by timestamp (stable sort with logId tiebreaker)
-    const sortedLogs = Array.from(standardizedLogs.values()).sort((a, b) => {
-      const aTime = new Date(a.timestamp || 0).getTime();
-      const bTime = new Date(b.timestamp || 0).getTime();
-      
-      if (aTime !== bTime) {
-        return bTime - aTime; // Newest first
-      }
-      
-      // Stable tiebreaker using logId
-      return a.id.localeCompare(b.id);
-    });
-    
-    // Apply cursor pagination
-    let startIndex = 0;
-    if (cursor) {
-      const cursorIndex = sortedLogs.findIndex(log => log.id === cursor);
-      if (cursorIndex >= 0) {
-        startIndex = cursorIndex + 1;
-      }
-    }
-    
-    const paginatedLogs = sortedLogs.slice(startIndex, startIndex + limit);
-    const nextCursor = paginatedLogs.length === limit && startIndex + limit < sortedLogs.length 
-      ? paginatedLogs[paginatedLogs.length - 1].id 
-      : null;
+    // Use canonical format transformation and pagination
+    const standardizedLogs = transformToCanonicalFormat(logs, env);
+    const paginationResult = applyCursorPagination(standardizedLogs, { cursor, limit });
     
     const response = {
-      items: paginatedLogs,
-      cursor: nextCursor
+      items: paginationResult.items,
+      cursor: paginationResult.cursor
     };
     
     // Log the retrieve operation
@@ -1421,6 +1299,7 @@ router.get("/api/logs/session/:sessionId", async (req, env) => {
     const sessionId = req.params.sessionId;
     const url = new URL(req.url);
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 100);
+    const cursor = url.searchParams.get("cursor");
     
     if (!sessionId) {
       return addCORS(new Response(JSON.stringify({ 
@@ -1432,16 +1311,22 @@ router.get("/api/logs/session/:sessionId", async (req, env) => {
     // Get logs from all stores filtered by session ID
     const logs = await readLogsWithFilters(env, { 
       session_id: sessionId, 
-      limit,
+      limit: 200, // Get more logs to ensure proper pagination after filtering
       orderBy: 'timestamp',
       orderDirection: 'DESC'
     });
     
-    // Standardize the response format
+    // Transform to canonical format (same as /api/logs)
+    const standardizedLogs = transformToCanonicalFormat(logs, env);
+    
+    // Apply cursor pagination
+    const paginationResult = applyCursorPagination(standardizedLogs, { cursor, limit });
+    
+    // Standardize the response format to match /api/logs
     const sessionLogs = {
       session_id: sessionId,
-      items: logs || [],
-      total_count: logs ? logs.length : 0,
+      items: paginationResult.items,
+      cursor: paginationResult.cursor,
       timestamp: new Date().toISOString()
     };
     
@@ -1449,9 +1334,11 @@ router.get("/api/logs/session/:sessionId", async (req, env) => {
     await logChatGPTAction(env, 'retrieveRecentSessionLogs', { 
       sessionId,
       limit,
+      cursor,
       endpoint: '/api/logs/session/:sessionId'
     }, {
-      count: sessionLogs.total_count,
+      count: paginationResult.items.length,
+      hasMore: !!paginationResult.cursor,
       session_id: sessionId
     });
 
@@ -2247,9 +2134,6 @@ router.get("/api/commitments/active", async (req, env) => {
     
     return addCORS(new Response(JSON.stringify({ 
       commitments: [],
-      error: "Could not retrieve commitments",
-      message: "Your growth journey continues regardless of tracking systems."
-    }), { status: 500, headers: corsHeaders }));
       error: "Could not retrieve commitments",
       message: "Your growth journey continues regardless of tracking systems."
     }), { status: 500, headers: corsHeaders }));

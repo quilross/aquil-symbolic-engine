@@ -13,6 +13,7 @@
  */
 
 import { toCanonical } from '../ops/operation-aliases.js';
+import { isGPTCompatMode, safeBinding, safeOperation } from '../utils/gpt-compat.js';
 
 // Helper function to determine R2 policy for an operation
 function getR2PolicyForOperation(operationId) {
@@ -45,36 +46,66 @@ export async function readLogs(env, opts = {}) {
 
   // D1
   try {
-    const { results: d1logs } = await env.AQUIL_DB.prepare(
-      `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?`
-    ).bind(limit).all();
-    results.d1 = d1logs;
+    const db = safeBinding(env, 'AQUIL_DB');
+    if (db) {
+      const { results: d1logs } = await db.prepare(
+        `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?`
+      ).bind(limit).all();
+      results.d1 = d1logs;
+    } else if (isGPTCompatMode(env)) {
+      results.d1 = []; // Empty array in compat mode
+    }
   } catch (e) {
-    results.d1 = String(e);
+    if (isGPTCompatMode(env)) {
+      results.d1 = []; // Empty array in compat mode
+    } else {
+      results.d1 = String(e);
+    }
   }
 
   // KV - Enhanced to return full content + IDs
   try {
     const { getRecentLogs } = await import('./kv.js');
-    results.kv = await getRecentLogs(env, { limit, includeContent: true });
+    results.kv = await safeOperation(env, 
+      () => getRecentLogs(env, { limit, includeContent: true }),
+      [] // Empty array fallback in compat mode
+    );
   } catch (e) {
-    results.kv = String(e);
+    if (isGPTCompatMode(env)) {
+      results.kv = []; // Empty array in compat mode
+    } else {
+      results.kv = String(e);
+    }
   }
 
   // R2 - Enhanced with resonance weaving
   try {
     const { listRecent, progressiveWeaving } = await import('./r2.js');
-    results.r2 = await listRecent(env, { limit });
+    results.r2 = await safeOperation(env,
+      () => listRecent(env, { limit }),
+      [] // Empty array fallback in compat mode
+    );
     
     // Add resonance weaving for recent logs
     try {
-      const resonanceResult = await progressiveWeaving(env, { timeframe: '24h' });
-      results.r2_resonance = resonanceResult.success ? resonanceResult : null;
+      const resonanceResult = await safeOperation(env,
+        () => progressiveWeaving(env, { timeframe: '24h' }),
+        null // Null fallback in compat mode
+      );
+      results.r2_resonance = resonanceResult?.success ? resonanceResult : null;
     } catch (resonanceError) {
-      results.r2_resonance = `resonance_error: ${resonanceError.message}`;
+      if (isGPTCompatMode(env)) {
+        results.r2_resonance = null;
+      } else {
+        results.r2_resonance = `resonance_error: ${resonanceError.message}`;
+      }
     }
   } catch (e) {
-    results.r2 = String(e);
+    if (isGPTCompatMode(env)) {
+      results.r2 = []; // Empty array in compat mode
+    } else {
+      results.r2 = String(e);
+    }
   }
 
   // Vector - Enhanced with dual-mode support
