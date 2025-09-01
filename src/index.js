@@ -1079,9 +1079,17 @@ router.post("/api/standing-tall/practice", async (req, env) => {
   try {
     const standingTall = new StandingTall(env);
     const result = await standingTall.generatePractice(data);
+    
+    // External logging for ChatGPT integration
+    await logChatGPTAction(env, 'standing_tall_practice', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Standing tall error:", error);
+    
+    // Log error to external systems
+    await logChatGPTAction(env, 'standing_tall_practice', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Standing tall processing error", message: "Your inherent dignity and worth are never in question. Stand tall because you belong here." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1093,9 +1101,17 @@ router.post("/api/values/clarify", async (req, env) => {
   try {
     const clarifier = new ValuesClarifier(env);
     const result = await clarifier.clarify(data);
+    
+    // External logging for ChatGPT integration
+    await logChatGPTAction(env, 'values_clarification', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Values clarify error:", error);
+    
+    // Log error to external systems
+    await logChatGPTAction(env, 'values_clarification', data, null, error);
+    
     return addCORS(new Response(JSON.stringify({ error: "Values clarification error", message: "Your values are steady guides even in uncertain times." }), { status: 500, headers: corsHeaders }));
   }
 });
@@ -1164,6 +1180,10 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
   try {
     const core = new AquilCore(env);
     const result = await core.synthesizeWisdom(data);
+    
+    // External logging for ChatGPT integration
+    await logChatGPTAction(env, 'wisdom_synthesis', data, result);
+    
     return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
   } catch (error) {
     console.error("Wisdom synthesis error:", error);
