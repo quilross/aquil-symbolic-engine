@@ -178,15 +178,117 @@ export async function writeLog(
   const timestamp = getNYTimestamp();
   const status = {};
   
+  // Get payload size limit from environment (default 16KB)
+  const maxPayloadBytes = parseInt(env.MAX_PAYLOAD_BYTES || '16384', 10);
+  
+  // Normalize payload to ensure it has required fields
+  const normalizedPayload = {
+    content: payload?.content || payload?.message || JSON.stringify(payload),
+    source: payload?.source || who || 'system',
+    ...payload
+  };
+  
+  // Apply privacy redaction before storing in D1/KV (fail-open)
+  let redactedPayload = normalizedPayload;
+  try {
+    const { redactPayload } = await import('../utils/privacy.js');
+    redactedPayload = redactPayload(normalizedPayload);
+  } catch (redactionError) {
+    // Fail-open: use original payload if redaction fails
+    console.warn('Privacy redaction failed:', redactionError.message);
+    redactedPayload = normalizedPayload;
+  }
+  
+  // Check payload size and handle R2 overflow (fail-open)
+  const payloadStr = JSON.stringify(redactedPayload);
+  const payloadSize = new TextEncoder().encode(payloadStr).length;
+  let finalPayload = redactedPayload;
+  let r2Pointer = null;
+  
+  if (payloadSize > maxPayloadBytes) {
+    // Move bulk data to R2 if available
+    try {
+      if (env.AQUIL_STORAGE) {
+        const r2Key = `overflow/${new Date().toISOString().split('T')[0]}/${id}.json`;
+        
+        // Compress payload for R2 storage
+        const r2Data = JSON.stringify(redactedPayload, null, 2);
+        const encoder = new TextEncoder();
+        const data = encoder.encode(r2Data);
+        
+        // Calculate SHA256 checksum
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const sha256 = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        await env.AQUIL_STORAGE.put(r2Key, data, {
+          customMetadata: {
+            'content-encoding': 'gzip',
+            'x-sha256': sha256,
+            'x-original-size': payloadSize.toString(),
+            'x-timestamp': timestamp,
+            'x-session-id': session_id || 'unknown'
+          }
+        });
+        
+        // Create compact summary for D1/KV storage
+        r2Pointer = r2Key;
+        finalPayload = {
+          _r2_overflow: true,
+          _r2_key: r2Key,
+          _r2_sha256: sha256,
+          _original_size: payloadSize,
+          summary: `Payload too large (${payloadSize} bytes) - stored in R2`,
+          content_preview: (redactedPayload.content || '').substring(0, 200) + '...',
+          type: redactedPayload.type || type,
+          source: redactedPayload.source || who || 'system'
+        };
+        
+        status.r2_overflow = 'success';
+      } else {
+        // R2 not available - truncate payload with warning
+        finalPayload = {
+          _payload_truncated: true,
+          _original_size: payloadSize,
+          _max_size: maxPayloadBytes,
+          summary: `Payload truncated (${payloadSize} > ${maxPayloadBytes} bytes)`,
+          content: payloadStr.substring(0, maxPayloadBytes - 500) + '... [TRUNCATED]'
+        };
+        
+        status.r2_overflow = 'unavailable_truncated';
+        
+        // Track missing store write (fail-open)
+        try {
+          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+          incrementMissingStoreWrite(env, 'r2');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
+      }
+    } catch (r2Error) {
+      // R2 failed - truncate payload
+      finalPayload = {
+        _payload_truncated: true,
+        _r2_error: r2Error.message,
+        _original_size: payloadSize,
+        summary: `R2 overflow failed, payload truncated`,
+        content: payloadStr.substring(0, maxPayloadBytes - 500) + '... [TRUNCATED]'
+      };
+      
+      status.r2_overflow = `error: ${r2Error.message}`;
+      
+      // Track missing store write (fail-open)
+      try {
+        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+        incrementMissingStoreWrite(env, 'r2');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
+    }
+  }
+  
   // D1 - Enhanced with variable payload support and schema enforcement
   try {
-    // Normalize payload to ensure it has required fields
-    const normalizedPayload = {
-      content: payload?.content || payload?.message || JSON.stringify(payload),
-      source: payload?.source || who || 'system',
-      ...payload
-    };
-
     // Try primary table (metamorphic_logs) first
     try {
       await env.AQUIL_DB.prepare(
@@ -197,13 +299,22 @@ export async function writeLog(
           new Date().toISOString(), // Use ISO format instead of Date.now()
           type || 'log',
           level || 'medium',
-          JSON.stringify(normalizedPayload),
+          JSON.stringify(finalPayload),
           session_id || null,
           who || null,
           JSON.stringify(tags || []),
         )
         .run();
       status.d1 = "ok";
+      
+      // Track successful log write (fail-open)
+      try {
+        const { incrementLogWritten } = await import('../utils/metrics.js');
+        incrementLogWritten(env, 'd1');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
+      
     } catch (primaryError) {
       // Fallback to event_log table if metamorphic_logs fails
       try {
@@ -218,29 +329,55 @@ export async function writeLog(
             level || 'info',
             session_id || null,
             JSON.stringify(tags || []),
-            JSON.stringify(normalizedPayload),
+            JSON.stringify(finalPayload),
           )
           .run();
         status.d1 = "ok_fallback";
+        
+        // Track successful log write (fail-open)
+        try {
+          const { incrementLogWritten } = await import('../utils/metrics.js');
+          incrementLogWritten(env, 'd1');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
+        
       } catch (fallbackError) {
         status.d1 = `primary_error: ${primaryError.message}, fallback_error: ${fallbackError.message}`;
+        
+        // Track missing store write (fail-open)
+        try {
+          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+          incrementMissingStoreWrite(env, 'd1');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
       }
     }
   } catch (e) {
     status.d1 = String(e);
+    
+    // Track missing store write (fail-open)
+    try {
+      const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+      incrementMissingStoreWrite(env, 'd1');
+    } catch (metricsError) {
+      // Silent fail for metrics
+    }
   }
 
-  // KV - Respect KV_TTL_SECONDS environment variable
+  // KV - Respect KV_TTL_SECONDS environment variable and use finalPayload
   try {
     const kvData = JSON.stringify({
       id,
       timestamp,
       type,
-      payload,
+      payload: finalPayload,  // Use finalPayload (may be truncated or have R2 pointer)
       session_id,
       who,
       level,
       tags,
+      r2_pointer,  // Include R2 pointer if overflow occurred
     });
     
     // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
@@ -252,8 +389,25 @@ export async function writeLog(
       await env.AQUIL_MEMORIES.put(`log_${id}`, kvData);
     }
     status.kv = "ok";
+    
+    // Track successful log write (fail-open)
+    try {
+      const { incrementLogWritten } = await import('../utils/metrics.js');
+      incrementLogWritten(env, 'kv');
+    } catch (metricsError) {
+      // Silent fail for metrics
+    }
+    
   } catch (e) {
     status.kv = String(e);
+    
+    // Track missing store write (fail-open)
+    try {
+      const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+      incrementMissingStoreWrite(env, 'kv');
+    } catch (metricsError) {
+      // Silent fail for metrics
+    }
   }
 
   // R2 - Store with proper artifact key format: logs/<opId>/<YYYY-MM-DD>/<logId>.json|bin
@@ -274,8 +428,25 @@ export async function writeLog(
       
       status.r2 = "ok";
       status.artifactKey = artifactKey;
+      
+      // Track successful log write (fail-open)
+      try {
+        const { incrementLogWritten } = await import('../utils/metrics.js');
+        incrementLogWritten(env, 'r2');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
+      
     } catch (e) {
       status.r2 = String(e);
+      
+      // Track missing store write (fail-open)
+      try {
+        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+        incrementMissingStoreWrite(env, 'r2');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
     }
   } else {
     // Check if R2 storage is required for this operation type
@@ -291,7 +462,7 @@ export async function writeLog(
         id,
         timestamp,
         type,
-        payload,
+        payload: finalPayload,  // Use finalPayload (with privacy redaction)
         session_id,
         who,
         level,
@@ -307,8 +478,25 @@ export async function writeLog(
       
       status.r2 = "ok";
       status.artifactKey = artifactKey;
+      
+      // Track successful log write (fail-open)
+      try {
+        const { incrementLogWritten } = await import('../utils/metrics.js');
+        incrementLogWritten(env, 'r2');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
+      
     } catch (e) {
       status.r2 = String(e);
+      
+      // Track missing store write (fail-open)
+      try {
+        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+        incrementMissingStoreWrite(env, 'r2');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
     }
     }
   }
@@ -340,9 +528,25 @@ export async function writeLog(
           },
         ]);
         status.vector = "ok";
+        
+        // Track successful log write (fail-open)
+        try {
+          const { incrementLogWritten } = await import('../utils/metrics.js');
+          incrementLogWritten(env, 'vector');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
       }
     } catch (e) {
       status.vector = String(e);
+      
+      // Track missing store write (fail-open)
+      try {
+        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+        incrementMissingStoreWrite(env, 'vector');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
     }
   }
   

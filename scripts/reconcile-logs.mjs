@@ -262,6 +262,14 @@ async function backfillKVLog(env, log) {
   } else {
     await env.AQUIL_MEMORIES.put(kvKey, kvValue);
   }
+  
+  // Track reconcile backfill (fail-open)
+  try {
+    const { incrementReconcileBackfill } = await import('../src/utils/metrics.js');
+    incrementReconcileBackfill(env, 'kv');
+  } catch (metricsError) {
+    // Silent fail for metrics in reconcile script
+  }
 }
 
 async function backfillVectorLog(env, log) {
@@ -276,6 +284,14 @@ async function backfillVectorLog(env, log) {
   };
   
   await env.AQUIL_CONTEXT.upsert([vectorData]);
+  
+  // Track reconcile backfill (fail-open)
+  try {
+    const { incrementReconcileBackfill } = await import('../src/utils/metrics.js');
+    incrementReconcileBackfill(env, 'vector');
+  } catch (metricsError) {
+    // Silent fail for metrics in reconcile script
+  }
 }
 
 async function backfillR2Log(env, log) {
@@ -287,6 +303,14 @@ async function backfillR2Log(env, log) {
   });
   
   await env.AQUIL_STORAGE.put(r2Key, r2Value);
+  
+  // Track reconcile backfill (fail-open)
+  try {
+    const { incrementReconcileBackfill } = await import('../src/utils/metrics.js');
+    incrementReconcileBackfill(env, 'r2');
+  } catch (metricsError) {
+    // Silent fail for metrics in reconcile script
+  }
 }
 
 // CLI handling

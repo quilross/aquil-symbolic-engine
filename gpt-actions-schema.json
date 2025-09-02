@@ -3,7 +3,7 @@
   "info": {
     "title": "Aquil Symbolic Engine API (Autonomous)",
     "description": "Personal AI Wisdom Builder with built-in autonomy for proactive insights, rituals, and growth tracking. Fully compatible with Cloudflare Workers, D1, KV, R2, and Vectorize.",
-    "version": "2.2.0"
+    "version": "2.2.1"
   },
   "servers": [
     {
@@ -86,7 +86,7 @@
                       "description": "Database write status"
                     },
                     "kv": {
-                      "type": "string", 
+                      "type": "string",
                       "description": "KV store status"
                     },
                     "r2": {
