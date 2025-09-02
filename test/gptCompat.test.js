@@ -19,12 +19,12 @@ test("GPT_COMPAT_MODE detection", () => {
   env = { GPT_COMPAT_MODE: false };
   assert.equal(isGPTCompatMode(env), false);
   
-  // Test with missing env
+  // Test with missing env - now defaults to true
   env = {};
-  assert.equal(isGPTCompatMode(env), false);
+  assert.equal(isGPTCompatMode(env), true);
   
-  // Test with null env
-  assert.equal(isGPTCompatMode(null), false);
+  // Test with null env - now defaults to true
+  assert.equal(isGPTCompatMode(null), true);
 });
 
 test("safeBinding with GPT_COMPAT_MODE", () => {
