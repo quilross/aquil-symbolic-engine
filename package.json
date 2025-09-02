@@ -18,7 +18,10 @@
     "guard:patterns": "node scripts/check-banned-patterns.mjs",
     "guard:aliases": "node scripts/check-op-aliases.mjs",
     "reconcile": "node scripts/reconcile-logs.mjs",
-    "accept": "node scripts/acceptance.mjs"
+    "accept": "node scripts/acceptance.mjs",
+    "spec:diff": "node scripts/spec-diff.mjs",
+    "spec:bump": "node scripts/bump-openapi-version.mjs",
+    "spec:commit": "node -e \"process.exit(0)\""
   },
   "keywords": [
     "personal-ai",

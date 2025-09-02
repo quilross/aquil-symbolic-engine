@@ -75,6 +75,19 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
     // Compute canonical operation name for R2 policy and domain classification
     const canonical = toCanonical(operationId);
     
+    // Collect metrics (fail-open)
+    try {
+      const { incrementActionSuccess, incrementActionError } = await import('./utils/metrics.js');
+      if (error) {
+        incrementActionError(env, canonical);
+      } else {
+        incrementActionSuccess(env, canonical);
+      }
+    } catch (metricsError) {
+      // Silently fail - metrics should never break logging
+      console.warn('Metrics collection failed:', metricsError.message);
+    }
+    
     const payload = {
       action: operationId,
       input: data,
@@ -135,6 +148,13 @@ async function checkIdempotency(env, idempotencyKey, operationId) {
     const key = `idempotency:${canonical}:${idempotencyKey}`;
     const cached = await env.AQUIL_MEMORIES.get(key);
     if (cached) {
+      // Track idempotency hit (fail-open)
+      try {
+        const { incrementIdempotencyHit } = await import('./utils/metrics.js');
+        incrementIdempotencyHit(env);
+      } catch (metricsError) {
+        // Silently fail - metrics should never break functionality
+      }
       return JSON.parse(cached);
     }
   } catch (error) {
@@ -2423,6 +2443,20 @@ router.get("/api/monitoring/metrics", async (req, env) => {
     } catch (error) {
       metrics.performance_metrics.log_operation_ms = "failed";
       metrics.error_rates.logging_errors = 1;
+    }
+
+    // Add new counter metrics (fail-open)
+    try {
+      const { getMetrics } = await import('../utils/metrics.js');
+      const metricsCollector = getMetrics(env);
+      const counters = await metricsCollector.getCounters();
+      
+      // Add counters to the response
+      metrics.counters = counters;
+    } catch (error) {
+      // Fail-open: if metrics collection fails, don't break the endpoint
+      console.warn('Failed to collect custom metrics:', error.message);
+      metrics.counters = {};
     }
 
     // System health summary
