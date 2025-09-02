@@ -147,52 +147,53 @@ INSERT OR REPLACE INTO user_profile (
     'Build unshakeable internal trust as my primary navigation system and stand tall in the world instead of shrinking'
 );
 
--- Metamorphic event logs for unified logging system
+-- Metamorphic event logs for unified logging system (canonical schema)
 CREATE TABLE IF NOT EXISTS metamorphic_logs (
-    id TEXT PRIMARY KEY,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    kind TEXT NOT NULL,
-    signal_strength TEXT DEFAULT 'medium',
-    detail TEXT DEFAULT '{}',
-    session_id TEXT,
-    voice_used TEXT,
-    tags TEXT
+  id TEXT PRIMARY KEY,                -- correlation id used across KV/Vector/R2
+  timestamp TEXT NOT NULL,            -- ISO-8601
+  operationId TEXT,
+  originalOperationId TEXT,
+  kind TEXT NOT NULL,                 -- "action_success" | "action_error" | "session" | etc.
+  level TEXT DEFAULT 'info',
+  session_id TEXT,
+  tags TEXT,                          -- JSON array string
+  stores TEXT,                        -- JSON array string
+  artifactKey TEXT,
+  error_message TEXT,
+  error_code TEXT,
+  detail TEXT,                        -- scrubbed JSON summary, not huge payloads
+  env TEXT,
+  source TEXT DEFAULT 'gpt'
 );
 
--- Generic event log for chat messages, metrics, errors, etc.
-CREATE TABLE IF NOT EXISTS event_log (
-    id TEXT PRIMARY KEY,
-    ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-    type TEXT NOT NULL,
-    who TEXT,
-    level TEXT,
-    session_id TEXT,
-    tags TEXT,
-    idx1 TEXT,
-    idx2 TEXT,
-    payload TEXT NOT NULL
-);
+-- Generic event log for chat messages, metrics, errors, etc. (COMPATIBILITY VIEW)
+-- Maps to metamorphic_logs for backwards compatibility
+CREATE VIEW IF NOT EXISTS event_log AS
+SELECT
+  id,
+  timestamp AS ts,
+  kind AS type,
+  source AS who,
+  level,
+  session_id,
+  tags,
+  NULL AS idx1,
+  NULL AS idx2,
+  detail AS payload
+FROM metamorphic_logs;
 
 -- Enhanced indexes for optimal query performance
-CREATE INDEX IF NOT EXISTS idx_metamorphic_timestamp ON metamorphic_logs(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_metamorphic_session ON metamorphic_logs(session_id);
+CREATE INDEX IF NOT EXISTS idx_logs_ts       ON metamorphic_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_logs_op       ON metamorphic_logs(operationId);
+CREATE INDEX IF NOT EXISTS idx_logs_session  ON metamorphic_logs(session_id);
 CREATE INDEX IF NOT EXISTS idx_metamorphic_kind ON metamorphic_logs(kind);
-CREATE INDEX IF NOT EXISTS idx_metamorphic_voice ON metamorphic_logs(voice_used);
-CREATE INDEX IF NOT EXISTS idx_metamorphic_signal ON metamorphic_logs(signal_strength);
+CREATE INDEX IF NOT EXISTS idx_metamorphic_level ON metamorphic_logs(level);
 
 -- Composite indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_metamorphic_kind_timestamp ON metamorphic_logs(kind, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_metamorphic_session_timestamp ON metamorphic_logs(session_id, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_metamorphic_autonomous ON metamorphic_logs(kind, timestamp DESC) WHERE kind = 'autonomous_action';
 
--- Event log indexes (fallback table)
-CREATE INDEX IF NOT EXISTS idx_event_ts ON event_log(ts DESC);
-CREATE INDEX IF NOT EXISTS idx_event_type ON event_log(type);
-CREATE INDEX IF NOT EXISTS idx_event_session ON event_log(session_id);
-CREATE INDEX IF NOT EXISTS idx_event_who ON event_log(who);
-CREATE INDEX IF NOT EXISTS idx_event_level ON event_log(level);
-CREATE INDEX IF NOT EXISTS idx_event_type_ts ON event_log(type, ts DESC);
-CREATE INDEX IF NOT EXISTS idx_event_session_ts ON event_log(session_id, ts DESC);
 
 -- Wisdom and growth tracking indexes
 CREATE INDEX IF NOT EXISTS idx_trust_sessions_timestamp ON trust_sessions(timestamp DESC);
@@ -213,5 +214,3 @@ CREATE INDEX IF NOT EXISTS idx_standing_tall_timestamp ON standing_tall_sessions
 -- Performance optimization: Partial indexes for frequently accessed data
 CREATE INDEX IF NOT EXISTS idx_recent_metamorphic ON metamorphic_logs(timestamp DESC) 
   WHERE timestamp > datetime('now', '-7 days');
-CREATE INDEX IF NOT EXISTS idx_recent_events ON event_log(ts DESC) 
-  WHERE ts > datetime('now', '-7 days');

@@ -36,6 +36,14 @@ export async function ensureD1Indexes(env) {
     {
       name: 'idx_logs_session',
       sql: 'CREATE INDEX IF NOT EXISTS idx_logs_session ON metamorphic_logs(session_id);'
+    },
+    {
+      name: 'idx_logs_kind',
+      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_kind ON metamorphic_logs(kind);'
+    },
+    {
+      name: 'idx_logs_level',
+      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_level ON metamorphic_logs(level);'
     }
   ];
 

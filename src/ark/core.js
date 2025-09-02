@@ -160,22 +160,26 @@ export async function logMetamorphicEvent(env, event) {
         await env.AQUIL_DB.prepare(
           `
                     INSERT INTO metamorphic_logs (
-                        id, timestamp, kind, signal_strength, detail, session_id, voice, tags, idx1, idx2, metadata
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
         )
           .bind(
             enhancedEvent.id,
             enhancedEvent.timestamp,
+            null, // operationId (not used in ark events)
+            null, // originalOperationId (not used in ark events)
             enhancedEvent.kind,
-            enhancedEvent.signal_strength,
-            enhancedEvent.detail,
+            enhancedEvent.signal_strength || 'info', // level (was signal_strength)
             enhancedEvent.session_id,
-            enhancedEvent.voice,
             enhancedEvent.tags,
-            enhancedEvent.idx1,
-            enhancedEvent.idx2,
-            enhancedEvent.metadata,
+            JSON.stringify(['d1']), // stores array
+            null, // artifactKey (not used in ark events)
+            null, // error_message (only for errors)
+            null, // error_code (only for errors)
+            enhancedEvent.detail,
+            null, // env (not used in ark events)
+            enhancedEvent.voice || 'gpt', // source (was voice)
           )
           .run();
       } catch (dbError) {
