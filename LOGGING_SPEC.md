@@ -1,30 +1,51 @@
 # D1 Logging Format Guide
 
-This repository stores long-term history in Cloudflare D1. Two tables may be present:
+This repository stores long-term history in Cloudflare D1. The canonical table is:
 
-- `metamorphic_logs` — primary structured log store
-- `event_log` — legacy fallback table used when `metamorphic_logs` is absent
+- `metamorphic_logs` — primary structured log store with canonical schema
+- `event_log` — compatibility VIEW that maps to metamorphic_logs for backwards compatibility
 
-## Metamorphic Logs
+## Metamorphic Logs (Canonical Schema)
 
-| column            | type | description                                     |
-| ----------------- | ---- | ----------------------------------------------- |
-| `id`              | TEXT | unique log identifier                           |
-| `timestamp`       | TEXT | Philadelphia time at log creation               |
-| `kind`            | TEXT | event category (e.g. `session_init`, `insight`) |
-| `signal_strength` | TEXT | info/warning/error/highlight level              |
-| `detail`          | TEXT | JSON or string payload                          |
-| `session_id`      | TEXT | related conversation id                         |
-| `voice`           | TEXT | mirror/oracle/scientist/strategist              |
-| `tags`            | TEXT | comma‑separated labels                          |
-| `idx1`, `idx2`    | TEXT | optional indexes                                |
-| `metadata`        | TEXT | extra JSON metadata                             |
+| column               | type | description                                      |
+| -------------------- | ---- | ------------------------------------------------ |
+| `id`                 | TEXT | unique log identifier (correlation ID)          |
+| `timestamp`          | TEXT | ISO-8601 timestamp                               |
+| `operationId`        | TEXT | canonical operation identifier                   |
+| `originalOperationId`| TEXT | original operation ID (when different)          |
+| `kind`               | TEXT | event category (e.g. `action_success`, `action_error`) |
+| `level`              | TEXT | log level (info/warning/error/highlight)        |
+| `session_id`         | TEXT | related conversation id                          |
+| `tags`               | TEXT | JSON array string of structured tags            |
+| `stores`             | TEXT | JSON array string of stores containing this log |
+| `artifactKey`        | TEXT | R2 key for associated artifacts                  |
+| `error_message`      | TEXT | error description (for error events)            |
+| `error_code`         | TEXT | error code (for error events)                   |
+| `detail`             | TEXT | JSON payload (scrubbed for privacy)             |
+| `env`                | TEXT | environment (production/staging/dev)            |
+| `source`             | TEXT | source of the log (gpt/system/user)             |
 
-## Event Log Fallback
+## Event Log Compatibility View
 
-When `metamorphic_logs` is missing, the worker writes to `event_log` with fields:
-`id`, `ts` (timestamp), `type` (kind), `who` (voice), `level` (signal_strength),
-`session_id`, `tags`, `idx1`, `idx2`, and `payload` (detail).
+The `event_log` is now a VIEW that maps to `metamorphic_logs` for backwards compatibility:
+
+```sql
+CREATE VIEW event_log AS
+SELECT
+  id,
+  timestamp AS ts,
+  kind AS type,
+  source AS who,
+  level,
+  session_id,
+  tags,
+  NULL AS idx1,
+  NULL AS idx2,
+  detail AS payload
+FROM metamorphic_logs;
+```
+
+This ensures existing fallback code continues to work without modification.
 
 ## API Usage
 
