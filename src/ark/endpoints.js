@@ -4,6 +4,7 @@ import {
   logMetamorphicEvent,
   selectOptimalVoice,
   performHealthChecks,
+  performReadinessChecks,
 } from "./core.js";
 
 // Manifest for GPT: describes all available actions and storage usage
@@ -393,6 +394,18 @@ export async function handleHealthCheck(request, env) {
     JSON.stringify({ ...health, timestamp: getPhiladelphiaTime() }),
     {
       headers: { "Content-Type": "application/json" },
+    },
+  );
+}
+
+// Readiness Check (for deployment gates and canary rollouts)
+export async function handleReadinessCheck(request, env) {
+  const readiness = await performReadinessChecks(env);
+  return new Response(
+    JSON.stringify(readiness),
+    {
+      headers: { "Content-Type": "application/json" },
+      status: 200, // Always 200 for fail-open behavior
     },
   );
 }

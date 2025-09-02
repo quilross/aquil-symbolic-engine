@@ -22,6 +22,104 @@ When investigating issues, check these dashboard panels in order:
 - **Reconciliation Backfills**: Should be zero during normal operation
 - **Idempotency Hits**: Track duplicate request patterns
 
+## Readiness vs Health
+
+### Health Check (/api/system/health-check)
+- **Purpose**: Current system status and operational health
+- **Usage**: Real-time monitoring, alerting, dashboards
+- **Response**: Includes database, KV, logging system status with overall health score
+- **Behavior**: Returns degraded/critical status when issues detected
+
+### Readiness Check (/api/system/readiness)
+- **Purpose**: Deployment gates and canary rollout decisions
+- **Usage**: CI/CD pipelines, deployment automation, canary promotion
+- **Response**: Store ping results, feature flags, recent error aggregation
+- **Behavior**: Fail-open design - always returns 200, actions unaffected even when ready=false
+
+### When to Use Which
+- **Deployment Gates**: Use readiness endpoint to decide if system is ready for traffic increase
+- **Operational Monitoring**: Use health endpoint for dashboards and alerts
+- **Canary Promotion**: Check readiness=true for 10+ minutes before widening canary percentage
+
+```bash
+# Check deployment readiness
+curl -s https://signal-q.me/api/system/readiness | jq '.ready, .stores, .recentErrors'
+
+# Check operational health  
+curl -s https://signal-q.me/api/system/health-check | jq '.status, .overall_health'
+```
+
+## Canary Rollout Procedures
+
+### Enable Canary (5% traffic)
+```bash
+# Set environment variables
+wrangler secret put ENABLE_CANARY # Set to "1"
+wrangler secret put CANARY_PERCENT # Set to "5"
+
+# Deploy and verify
+wrangler deploy
+curl -s https://signal-q.me/api/system/readiness | jq '.flags'
+```
+
+### Monitor Canary Performance
+1. **Watch dashboards** for 10 minutes minimum:
+   - Error rate should remain <1% per operation
+   - No increase in store circuit breaker openings
+   - Readiness endpoint shows ready=true consistently
+
+2. **Check canary assignment logs**:
+```bash
+# Look for canary assignment messages in logs
+wrangler tail --grep "CANARY"
+```
+
+3. **Verify middleware activation**:
+```bash
+# Rate limiting should activate for canary users only
+wrangler tail --grep "RATE_LIMIT"
+```
+
+### Widen Canary (10% → 25% → 50%)
+```bash
+# Gradually increase percentage
+wrangler secret put CANARY_PERCENT # Set to "10", then "25", then "50"
+wrangler deploy
+
+# Wait 10 minutes between increases
+# Verify readiness=true and error rate <1%
+curl -s https://signal-q.me/api/system/readiness | jq '.ready, .recentErrors.action_error_total'
+```
+
+### Disable Canary (Full Rollout)
+```bash
+# Option 1: Keep features, disable canary sampling
+wrangler secret put ENABLE_CANARY # Set to "0"
+
+# Option 2: Enable features globally
+wrangler secret put ENABLE_RATE_LIMIT # Set to "1"
+wrangler secret put ENABLE_REQ_SIZE_CAP # Set to "1"
+wrangler secret put ENABLE_CANARY # Set to "0"
+```
+
+### Kill Switch (Emergency Disable)
+```bash
+# Immediately disable all new middleware regardless of other flags
+wrangler secret put DISABLE_NEW_MW # Set to "1"
+wrangler deploy
+
+# Verify middleware disabled
+curl -s https://signal-q.me/api/system/readiness | jq '.flags.middleware_disabled'
+# Should return true
+```
+
+### Kill Switch Rollback
+```bash
+# Re-enable middleware after issue resolution
+wrangler secret put DISABLE_NEW_MW # Set to "0" or delete
+wrangler deploy
+```
+
 ## The 3 Essential Smoke Tests
 
 Use these curl commands to verify basic system functionality:

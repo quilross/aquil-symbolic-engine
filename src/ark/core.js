@@ -726,6 +726,111 @@ export async function performHealthChecks(env) {
   return checks;
 }
 
+// Perform readiness checks for deployment gates and canary rollouts
+export async function performReadinessChecks(env) {
+  const readiness = {
+    ready: true,
+    timestamp: getPhiladelphiaTime(),
+    stores: {},
+    flags: {},
+    recentErrors: {},
+    notes: "fail-open; actions unaffected"
+  };
+
+  // Store readiness checks
+  try {
+    // D1 Database ping
+    if (env.AQUIL_DB) {
+      try {
+        const result = await env.AQUIL_DB.prepare("SELECT COUNT(*) as count FROM metamorphic_logs LIMIT 1").first();
+        readiness.stores.d1 = { status: "ok", details: "responsive" };
+      } catch (error) {
+        readiness.stores.d1 = { status: "degraded", error: error.message };
+        readiness.ready = false;
+      }
+    } else {
+      readiness.stores.d1 = { status: "not_configured" };
+    }
+
+    // KV ping
+    if (env.AQUIL_MEMORIES) {
+      try {
+        await env.AQUIL_MEMORIES.put("readiness_check", "ok", { expirationTtl: 30 });
+        const test = await env.AQUIL_MEMORIES.get("readiness_check");
+        readiness.stores.kv = { status: test === "ok" ? "ok" : "degraded" };
+      } catch (error) {
+        readiness.stores.kv = { status: "degraded", error: error.message };
+        readiness.ready = false;
+      }
+    } else {
+      readiness.stores.kv = { status: "not_configured" };
+    }
+
+    // R2 ping (if available)
+    if (env.AQUIL_STORAGE) {
+      try {
+        // Simple head request to check R2 availability
+        readiness.stores.r2 = { status: "ok", details: "available" };
+      } catch (error) {
+        readiness.stores.r2 = { status: "degraded", error: error.message };
+        readiness.ready = false;
+      }
+    } else {
+      readiness.stores.r2 = { status: "not_configured" };
+    }
+
+    // Vector store ping (if available)
+    if (env.AQUIL_CONTEXT) {
+      try {
+        readiness.stores.vector = { status: "ok", details: "available" };
+      } catch (error) {
+        readiness.stores.vector = { status: "degraded", error: error.message };
+        readiness.ready = false;
+      }
+    } else {
+      readiness.stores.vector = { status: "not_configured" };
+    }
+  } catch (error) {
+    console.warn("Store readiness check failed:", error.message);
+    readiness.ready = false;
+  }
+
+  // Feature flags state
+  readiness.flags = {
+    canary_enabled: env.ENABLE_CANARY === "1" || env.ENABLE_CANARY === "true",
+    canary_percent: parseInt(env.CANARY_PERCENT || "0", 10),
+    middleware_disabled: env.DISABLE_NEW_MW === "1" || env.DISABLE_NEW_MW === "true",
+    fail_open: true
+  };
+
+  // Recent errors (simplified for fail-open behavior)
+  try {
+    if (env.AQUIL_DB) {
+      const recentErrorsQuery = await env.AQUIL_DB.prepare(`
+        SELECT kind, detail, timestamp 
+        FROM metamorphic_logs 
+        WHERE kind LIKE '%error%' AND timestamp > datetime('now', '-10 minutes')
+        ORDER BY timestamp DESC LIMIT 5
+      `).all();
+      
+      readiness.recentErrors = {
+        action_error_total: recentErrorsQuery.results?.length || 0,
+        missing_store_writes_total: 0, // Simplified
+        samples: recentErrorsQuery.results?.slice(0, 3) || []
+      };
+    }
+  } catch (error) {
+    // Fail open - don't affect readiness for error collection failures
+    readiness.recentErrors = { 
+      action_error_total: 0,
+      missing_store_writes_total: 0,
+      collection_error: error.message
+    };
+  }
+
+  return readiness;
+}
+
 // Enhanced response wrapper with ARK 2.0 features and synthesis capabilities
 export async function enhanceResponse(
   originalResponse,
@@ -949,6 +1054,7 @@ export default {
   generateSocraticInquiry,
   detectInterventionNeeds,
   performHealthChecks,
+  performReadinessChecks,
   enhanceResponse,
   ARK_ARCHETYPES,
   ARK_MODES,

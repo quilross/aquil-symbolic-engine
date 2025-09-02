@@ -126,6 +126,57 @@ Advanced features:
 - User journey success tracking
 - Capacity utilization metrics
 
+## Release SLO Gates
+
+### Canary Promotion Gates
+Before widening canary percentage, the following SLO gates must pass:
+
+#### Pre-Promotion Requirements
+1. **Readiness Gate**: `ready=true` for minimum 10 consecutive minutes
+2. **Error Rate Gate**: <1% error rate per operation over last 10 minutes  
+3. **Store Health Gate**: All configured stores responsive (D1, KV, R2, Vector)
+4. **Recent Errors Gate**: No critical errors in last 5 minutes
+
+#### Automated Checks
+```bash
+# Check readiness gate (10 minute window)
+curl -s https://signal-q.me/api/system/readiness | jq '.ready'
+
+# Check error rate gate (per operation)
+curl -s https://signal-q.me/api/system/readiness | jq '.recentErrors.action_error_total'
+
+# Verify store health
+curl -s https://signal-q.me/api/system/readiness | jq '.stores'
+```
+
+#### Promotion Schedule
+- **5% → 10%**: Wait 10 minutes, verify gates
+- **10% → 25%**: Wait 10 minutes, verify gates  
+- **25% → 50%**: Wait 15 minutes, verify gates
+- **50% → 100%**: Wait 20 minutes, verify gates
+
+#### Rollback Triggers
+Automatic rollback if any condition occurs:
+- Error rate >2% for any operation
+- Readiness returns `ready=false` for >2 minutes
+- Any store circuit breaker opens
+- Kill switch (`DISABLE_NEW_MW=1`) activated
+
+### Production Deployment Gates
+Full production deployments require:
+
+#### Pre-Deployment SLO Check
+- **7-day error rate**: <1% across all operations
+- **Store consistency**: <5 reconciliation backfills/hour  
+- **Circuit breaker history**: <1 activation per store in last 24h
+- **System health**: ≥95% overall health percentage
+
+#### Post-Deployment Validation
+- **Health check**: All stores operational within 2 minutes
+- **Readiness check**: `ready=true` within 5 minutes
+- **Error rate**: Remains <1% for first 10 minutes
+- **Feature flags**: Properly configured and responsive
+
 ## Error Budget Policy
 
 ### Monthly Error Budget

@@ -8,6 +8,55 @@
 import { incrementRateLimitExceeded, incrementRequestSizeExceeded, incrementStoreCircuitOpen } from './metrics.js';
 
 /**
+ * Canary rollout functionality
+ * Determines if a request should receive new middleware based on user/session hash
+ * @param {Request} req - Request object
+ * @param {Object} env - Environment bindings
+ * @returns {boolean} true if request is in canary cohort
+ */
+function isCanaryRequest(req, env) {
+  try {
+    // Check if canary is enabled
+    const canaryEnabled = env.ENABLE_CANARY === '1' || env.ENABLE_CANARY === 'true';
+    if (!canaryEnabled) return false;
+    
+    // Check kill switch
+    const killSwitch = env.DISABLE_NEW_MW === '1' || env.DISABLE_NEW_MW === 'true';
+    if (killSwitch) return false;
+    
+    const canaryPercent = parseInt(env.CANARY_PERCENT || '5', 10);
+    if (canaryPercent <= 0) return false;
+    
+    // Get identifier for consistent hashing (session ID from headers or IP as fallback)
+    const sessionId = req.headers.get('x-session-id') || req.headers.get('session-id');
+    const userAgent = req.headers.get('user-agent') || '';
+    const forwarded = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown';
+    
+    // Create consistent identifier
+    const identifier = sessionId || `${forwarded}-${userAgent.slice(0, 50)}`;
+    
+    // Simple hash function to determine canary assignment
+    let hash = 0;
+    for (let i = 0; i < identifier.length; i++) {
+      const char = identifier.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    const isCanary = Math.abs(hash) % 100 < canaryPercent;
+    
+    if (isCanary) {
+      console.log(`[CANARY] Request ${identifier.slice(0, 20)}... assigned to canary (${canaryPercent}%)`);
+    }
+    
+    return isCanary;
+  } catch (error) {
+    console.warn('Canary assignment error:', error.message);
+    return false; // Fail-safe: not in canary on error
+  }
+}
+
+/**
  * Token bucket rate limiter using KV store
  * @param {Object} env - Environment bindings
  * @param {string} identifier - Client identifier (IP, session, etc.)
@@ -308,16 +357,32 @@ export function addSecurityHeaders(response, env) {
  */
 export async function withOpsMiddleware(req, env, handler) {
   try {
-    // Apply rate limiting middleware
-    const rateLimitResponse = await rateLimitMiddleware(req, env);
-    if (rateLimitResponse) {
-      return addSecurityHeaders(rateLimitResponse, env);
+    // Check canary assignment and kill switch
+    const inCanary = isCanaryRequest(req, env);
+    const killSwitch = env.DISABLE_NEW_MW === '1' || env.DISABLE_NEW_MW === 'true';
+    
+    // Apply rate limiting middleware (only for canary users, unless globally enabled)
+    const rateLimitEnabled = env.ENABLE_RATE_LIMIT === '1' || (inCanary && !killSwitch);
+    if (rateLimitEnabled) {
+      const rateLimitResponse = await rateLimitMiddleware(req, env);
+      if (rateLimitResponse) {
+        return addSecurityHeaders(rateLimitResponse, env);
+      }
     }
     
-    // Apply request size middleware  
-    const sizeResponse = await requestSizeMiddleware(req, env);
-    if (sizeResponse) {
-      return addSecurityHeaders(sizeResponse, env);
+    // Apply request size middleware (only for canary users, unless globally enabled)
+    const sizeLimitEnabled = env.ENABLE_REQ_SIZE_CAP === '1' || (inCanary && !killSwitch);
+    if (sizeLimitEnabled) {
+      const sizeResponse = await requestSizeMiddleware(req, env);
+      if (sizeResponse) {
+        return addSecurityHeaders(sizeResponse, env);
+      }
+    }
+    
+    // Circuit breaker is checked per-store, but we can add a global canary flag
+    if (inCanary && !killSwitch) {
+      // Store canary assignment in request context for circuit breaker checks
+      req.canaryEnabled = true;
     }
     
     // Execute the handler

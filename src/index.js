@@ -5,6 +5,7 @@ import {
   handleDiscoveryInquiry,
   handleRitualSuggestion,
   handleHealthCheck,
+  handleReadinessCheck,
 } from "./ark/endpoints.js";
 import { toCanonical } from "./ops/operation-aliases.js";
 import { 
@@ -1221,6 +1222,37 @@ router.get("/api/system/health-check", async (req, env) => {
       method: 'GET' 
     }, env);
     return addCORS(createErrorResponse(errorData, 500));
+  }
+});
+
+router.get("/api/system/readiness", async (req, env) => {
+  try {
+    const result = await handleReadinessCheck(req, env);
+    const resultData = JSON.parse(await result.clone().text());
+    
+    // Don't log this as a ChatGPT action to avoid adding to schema operations count
+    // This is an operational endpoint, not a user-facing GPT action
+    
+    return addCORS(result);
+  } catch (error) {
+    // Fail-open behavior: return minimal readiness info even on error
+    const failOpenReadiness = {
+      ready: false,
+      timestamp: new Date().toISOString(),
+      stores: { error: "readiness_check_failed" },
+      flags: {
+        canary_enabled: env.ENABLE_CANARY === "1",
+        middleware_disabled: env.DISABLE_NEW_MW === "1",
+        fail_open: true
+      },
+      recentErrors: { collection_error: error.message },
+      notes: "fail-open; actions unaffected"
+    };
+    
+    return addCORS(new Response(JSON.stringify(failOpenReadiness), {
+      headers: { "Content-Type": "application/json" },
+      status: 200 // Always 200 for fail-open
+    }));
   }
 });
 router.post("/api/log", async (req, env) => {
