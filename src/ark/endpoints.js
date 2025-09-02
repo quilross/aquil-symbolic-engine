@@ -257,7 +257,7 @@ async function fetchContinuityLogs(env, limit = 5) {
 
   try {
     const { results } = await env.AQUIL_DB.prepare(
-      "SELECT id, timestamp, kind, detail FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?",
+      "SELECT id, timestamp, kind, detail FROM aquil_logs ORDER BY timestamp DESC LIMIT ?",
     )
       .bind(limit)
       .all();
@@ -469,7 +469,7 @@ export async function handleRetrieveLogs(request, env) {
   };
 
   try {
-    if (await tableExists("metamorphic_logs")) {
+    if (await tableExists("aquil_logs")) {
       const { where, values } = buildWhere({
         type: "kind",
         who: "voice",
@@ -478,7 +478,7 @@ export async function handleRetrieveLogs(request, env) {
         tag: "tags",
       });
       const stmt = env.AQUIL_DB.prepare(
-        `SELECT id, timestamp, kind, detail FROM metamorphic_logs${where} ORDER BY timestamp DESC LIMIT ?`,
+        `SELECT id, timestamp, kind, detail FROM aquil_logs${where} ORDER BY timestamp DESC LIMIT ?`,
       ).bind(...values, limit);
       const { results } = await stmt.all();
       return new Response(

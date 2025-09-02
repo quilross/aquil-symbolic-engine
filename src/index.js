@@ -2800,7 +2800,7 @@ router.get("/api/debug/logs", async (req, env) => {
   
   try {
     // Build query with filters
-    let query = "SELECT * FROM metamorphic_logs";
+    let query = "SELECT * FROM aquil_logs";
     const conditions = [];
     const params = [];
     
