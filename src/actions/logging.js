@@ -49,7 +49,7 @@ export async function readLogs(env, opts = {}) {
     const db = safeBinding(env, 'AQUIL_DB');
     if (db) {
       const { results: d1logs } = await db.prepare(
-        `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?`
+        `SELECT id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?`
       ).bind(limit).all();
       results.d1 = d1logs;
     } else if (isGPTCompatMode(env)) {
@@ -304,20 +304,27 @@ export async function writeLog(
         // Silent fail for metrics
       }
     } else {
-      // Try primary table (metamorphic_logs) first
+      // Try primary table (metamorphic_logs) with canonical schema
       try {
         await env.AQUIL_DB.prepare(
-          "INSERT INTO metamorphic_logs (id, timestamp, kind, signal_strength, detail, session_id, voice_used, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
           .bind(
             id,
             new Date().toISOString(), // Use ISO format instead of Date.now()
-            type || 'log',
-            level || 'medium',
-            JSON.stringify(finalPayload),
+            type || 'log', // operationId 
+            null, // originalOperationId (only if different from canonical)
+            type || 'log', // kind
+            level || 'info', // level (was signal_strength)
             session_id || null,
-            who || null,
-            JSON.stringify(tags || []),
+            JSON.stringify(tags || []), // tags as JSON string
+            JSON.stringify(['d1']), // stores array indicating which stores contain this log
+            r2Pointer, // artifactKey (R2 key if payload overflowed)
+            null, // error_message (only for errors)
+            null, // error_code (only for errors)
+            JSON.stringify(finalPayload), // detail
+            env.ENV || env.ENVIRONMENT || 'unknown', // env
+            who || 'gpt', // source (was who)
           )
           .run();
         status.d1 = "ok";
@@ -331,6 +338,7 @@ export async function writeLog(
         }
         
       } catch (primaryError) {
+        // Note: event_log is now a VIEW, so this fallback should work seamlessly
         // Fallback to event_log table if metamorphic_logs fails
         try {
           await env.AQUIL_DB.prepare(
