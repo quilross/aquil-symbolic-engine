@@ -727,7 +727,7 @@ export class AquilDatabase {
         const results = await this.db
           .prepare(
             `
-          SELECT id, timestamp, kind, detail, session_id, voice_used as voice, signal_strength, tags
+          SELECT id, timestamp, kind, detail, session_id, level, tags
           FROM aquil_logs 
           WHERE timestamp > ?
           ORDER BY timestamp DESC

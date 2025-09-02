@@ -772,7 +772,7 @@ export async function readAutonomousLogs(env, opts = {}) {
 
   // D1 - Filter for autonomous actions with additional filters
   try {
-    let query = `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags 
+    let query = `SELECT id, timestamp, kind, detail, session_id, level, tags 
        FROM aquil_logs 
        WHERE (kind = 'autonomous_action' OR tags LIKE '%autonomous%')`;
     const params = [];
@@ -787,7 +787,7 @@ export async function readAutonomousLogs(env, opts = {}) {
       params.push(filters.session_id);
     }
     if (filters.level) {
-      query += ` AND signal_strength = ?`;
+      query += ` AND level = ?`;
       params.push(filters.level);
     }
     
@@ -984,7 +984,7 @@ export async function readLogsWithFilters(env, filters = {}) {
   } = filters;
   
   const maxLimit = Math.min(parseInt(limit, 10), 200);
-  let query = `SELECT id, timestamp, kind, detail, session_id, voice_used, signal_strength, tags FROM aquil_logs`;
+  let query = `SELECT id, timestamp, kind, detail, session_id, level, tags FROM aquil_logs`;
   const conditions = [];
   const params = [];
   
