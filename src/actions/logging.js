@@ -395,38 +395,61 @@ export async function writeLog(
 
   // KV - Respect KV_TTL_SECONDS environment variable and use finalPayload
   try {
-    const kvData = JSON.stringify({
-      id,
-      timestamp,
-      type,
-      payload: finalPayload,  // Use finalPayload (may be truncated or have R2 pointer)
-      session_id,
-      who,
-      level,
-      tags,
-      r2_pointer,  // Include R2 pointer if overflow occurred
-    });
+    // Check circuit breaker for KV store
+    const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+    const { shouldSkip } = await checkStoreCircuitBreaker(env, 'kv');
     
-    // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
-    const ttlSeconds = parseInt(env.KV_TTL_SECONDS || '0', 10);
-    
-    if (ttlSeconds > 0) {
-      await env.AQUIL_MEMORIES.put(`log_${id}`, kvData, { expirationTtl: ttlSeconds });
+    if (shouldSkip) {
+      status.kv = "circuit_breaker_open";
+      
+      // Track missing store write (fail-open)
+      try {
+        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+        incrementMissingStoreWrite(env, 'kv');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
     } else {
-      await env.AQUIL_MEMORIES.put(`log_${id}`, kvData);
+      const kvData = JSON.stringify({
+        id,
+        timestamp,
+        type,
+        payload: finalPayload,  // Use finalPayload (may be truncated or have R2 pointer)
+        session_id,
+        who,
+        level,
+        tags,
+        r2_pointer,  // Include R2 pointer if overflow occurred
+      });
+      
+      // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
+      const ttlSeconds = parseInt(env.KV_TTL_SECONDS || '0', 10);
+      
+      if (ttlSeconds > 0) {
+        await env.AQUIL_MEMORIES.put(`log_${id}`, kvData, { expirationTtl: ttlSeconds });
+      } else {
+        await env.AQUIL_MEMORIES.put(`log_${id}`, kvData);
+      }
+      status.kv = "ok";
+      
+      // Track successful log write (fail-open)
+      try {
+        const { incrementLogWritten } = await import('../utils/metrics.js');
+        incrementLogWritten(env, 'kv');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
     }
-    status.kv = "ok";
-    
-    // Track successful log write (fail-open)
-    try {
-      const { incrementLogWritten } = await import('../utils/metrics.js');
-      incrementLogWritten(env, 'kv');
-    } catch (metricsError) {
-      // Silent fail for metrics
-    }
-    
   } catch (e) {
     status.kv = String(e);
+    
+    // Record store failure for circuit breaker
+    try {
+      const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+      await recordStoreFailure(env, 'kv');
+    } catch (circuitError) {
+      // Silent fail for circuit breaker
+    }
     
     // Track missing store write (fail-open)
     try {
@@ -440,32 +463,55 @@ export async function writeLog(
   // R2 - Store with proper artifact key format: logs/<opId>/<YYYY-MM-DD>/<logId>.json|bin
   if (binary) {
     try {
-      const operationId = type?.replace(/_error$/, '') || 'unknown';
-      const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
-      const extension = binary.startsWith('data:') ? 'bin' : 'json';
-      const artifactKey = `logs/${operationId}/${date}/${id}.${extension}`;
+      // Check circuit breaker for R2 store
+      const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+      const { shouldSkip } = await checkStoreCircuitBreaker(env, 'r2');
       
-      const bytes = Uint8Array.from(atob(binary), (c) => c.charCodeAt(0));
-      await env.AQUIL_STORAGE.put(artifactKey, bytes, {
-        httpMetadata: {
-          contentType: extension === 'json' ? 'application/json' : 'application/octet-stream',
-          cacheControl: 'max-age=2592000' // 30 days
+      if (shouldSkip) {
+        status.r2 = "circuit_breaker_open";
+        
+        // Track missing store write (fail-open)
+        try {
+          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+          incrementMissingStoreWrite(env, 'r2');
+        } catch (metricsError) {
+          // Silent fail for metrics
         }
-      });
-      
-      status.r2 = "ok";
-      status.artifactKey = artifactKey;
-      
-      // Track successful log write (fail-open)
-      try {
-        const { incrementLogWritten } = await import('../utils/metrics.js');
-        incrementLogWritten(env, 'r2');
-      } catch (metricsError) {
-        // Silent fail for metrics
+      } else {
+        const operationId = type?.replace(/_error$/, '') || 'unknown';
+        const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+        const extension = binary.startsWith('data:') ? 'bin' : 'json';
+        const artifactKey = `logs/${operationId}/${date}/${id}.${extension}`;
+        
+        const bytes = Uint8Array.from(atob(binary), (c) => c.charCodeAt(0));
+        await env.AQUIL_STORAGE.put(artifactKey, bytes, {
+          httpMetadata: {
+            contentType: extension === 'json' ? 'application/json' : 'application/octet-stream',
+            cacheControl: 'max-age=2592000' // 30 days
+          }
+        });
+        
+        status.r2 = "ok";
+        status.artifactKey = artifactKey;
+        
+        // Track successful log write (fail-open)
+        try {
+          const { incrementLogWritten } = await import('../utils/metrics.js');
+          incrementLogWritten(env, 'r2');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
       }
-      
     } catch (e) {
       status.r2 = String(e);
+      
+      // Record store failure for circuit breaker
+      try {
+        const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+        await recordStoreFailure(env, 'r2');
+      } catch (circuitError) {
+        // Silent fail for circuit breaker
+      }
       
       // Track missing store write (fail-open)
       try {
@@ -481,91 +527,138 @@ export async function writeLog(
     if (r2Policy === 'required') {
       // Store JSON log data for required operations
       try {
-      const operationId = type?.replace(/_error$/, '') || 'unknown';
-      const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
-      const artifactKey = `logs/${operationId}/${date}/${id}.json`;
-      
-      const logData = JSON.stringify({
-        id,
-        timestamp,
-        type,
-        payload: finalPayload,  // Use finalPayload (with privacy redaction)
-        session_id,
-        who,
-        level,
-        tags
-      });
-      
-      await env.AQUIL_STORAGE.put(artifactKey, logData, {
-        httpMetadata: {
-          contentType: 'application/json',
-          cacheControl: 'max-age=2592000' // 30 days
+        // Check circuit breaker for R2 store
+        const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+        const { shouldSkip } = await checkStoreCircuitBreaker(env, 'r2');
+        
+        if (shouldSkip) {
+          status.r2 = "circuit_breaker_open";
+          
+          // Track missing store write (fail-open)
+          try {
+            const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+            incrementMissingStoreWrite(env, 'r2');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
+        } else {
+          const operationId = type?.replace(/_error$/, '') || 'unknown';
+          const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+          const artifactKey = `logs/${operationId}/${date}/${id}.json`;
+          
+          const logData = JSON.stringify({
+            id,
+            timestamp,
+            type,
+            payload: finalPayload,  // Use finalPayload (with privacy redaction)
+            session_id,
+            who,
+            level,
+            tags
+          });
+          
+          await env.AQUIL_STORAGE.put(artifactKey, logData, {
+            httpMetadata: {
+              contentType: 'application/json',
+              cacheControl: 'max-age=2592000' // 30 days
+            }
+          });
+          
+          status.r2 = "ok";
+          status.artifactKey = artifactKey;
+          
+          // Track successful log write (fail-open)
+          try {
+            const { incrementLogWritten } = await import('../utils/metrics.js');
+            incrementLogWritten(env, 'r2');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
         }
-      });
-      
-      status.r2 = "ok";
-      status.artifactKey = artifactKey;
-      
-      // Track successful log write (fail-open)
-      try {
-        const { incrementLogWritten } = await import('../utils/metrics.js');
-        incrementLogWritten(env, 'r2');
-      } catch (metricsError) {
-        // Silent fail for metrics
+      } catch (e) {
+        status.r2 = String(e);
+        
+        // Record store failure for circuit breaker
+        try {
+          const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+          await recordStoreFailure(env, 'r2');
+        } catch (circuitError) {
+          // Silent fail for circuit breaker
+        }
+        
+        // Track missing store write (fail-open)
+        try {
+          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+          incrementMissingStoreWrite(env, 'r2');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
       }
-      
-    } catch (e) {
-      status.r2 = String(e);
-      
-      // Track missing store write (fail-open)
-      try {
-        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-        incrementMissingStoreWrite(env, 'r2');
-      } catch (metricsError) {
-        // Silent fail for metrics
-      }
-    }
     }
   }
 
   // Vector
   if (textOrVector) {
     try {
-      let values;
-      if (typeof textOrVector === "string") {
-        // Embed text
-        values = await env.AI.run("@cf/baai/bge-small-en-v1.5", {
-          text: textOrVector,
-        });
-      } else if (Array.isArray(textOrVector)) {
-        values = textOrVector;
-      }
-      if (values) {
-        await env.AQUIL_CONTEXT.upsert([
-          {
-            id: `logvec_${id}`,
-            values,
-            metadata: {
-              type,
-              session_id,
-              who,
-              level,
-              tags,
-            },
-          },
-        ]);
-        status.vector = "ok";
+      // Check circuit breaker for Vector store
+      const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+      const { shouldSkip } = await checkStoreCircuitBreaker(env, 'vector');
+      
+      if (shouldSkip) {
+        status.vector = "circuit_breaker_open";
         
-        // Track successful log write (fail-open)
+        // Track missing store write (fail-open)
         try {
-          const { incrementLogWritten } = await import('../utils/metrics.js');
-          incrementLogWritten(env, 'vector');
+          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+          incrementMissingStoreWrite(env, 'vector');
         } catch (metricsError) {
           // Silent fail for metrics
+        }
+      } else {
+        let values;
+        if (typeof textOrVector === "string") {
+          // Embed text
+          values = await env.AI.run("@cf/baai/bge-small-en-v1.5", {
+            text: textOrVector,
+          });
+        } else if (Array.isArray(textOrVector)) {
+          values = textOrVector;
+        }
+        if (values) {
+          await env.AQUIL_CONTEXT.upsert([
+            {
+              id: `logvec_${id}`,
+              values,
+              metadata: {
+                type,
+                session_id,
+                who,
+                level,
+                tags,
+              },
+            },
+          ]);
+          status.vector = "ok";
+          
+          // Track successful log write (fail-open)
+          try {
+            const { incrementLogWritten } = await import('../utils/metrics.js');
+            incrementLogWritten(env, 'vector');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
         }
       }
     } catch (e) {
       status.vector = String(e);
+      
+      // Record store failure for circuit breaker
+      try {
+        const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+        await recordStoreFailure(env, 'vector');
+      } catch (circuitError) {
+        // Silent fail for circuit breaker
+      }
       
       // Track missing store write (fail-open)
       try {
@@ -595,10 +688,18 @@ export async function writeLog(
     if (status.vector === "ok") stores.push('vector');
     else if (status.vector && !safeBinding(env, 'AQUIL_CONTEXT')) missingStores.push('vector');
     
+    // Add circuit breaker status
+    const circuitBreakerOpen = [];
+    if (status.d1 === "circuit_breaker_open") circuitBreakerOpen.push('d1');
+    if (status.kv === "circuit_breaker_open") circuitBreakerOpen.push('kv');
+    if (status.r2 === "circuit_breaker_open") circuitBreakerOpen.push('r2');
+    if (status.vector === "circuit_breaker_open") circuitBreakerOpen.push('vector');
+    
     return {
       ...status,
       stores,
       missingStores,
+      circuitBreakerOpen,
       success: true // Always return success in GPT_COMPAT_MODE
     };
   }
