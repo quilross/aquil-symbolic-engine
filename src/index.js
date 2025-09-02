@@ -2489,6 +2489,69 @@ router.get("/api/monitoring/metrics", async (req, env) => {
   }
 });
 
+// Alert rules endpoint (flag-gated)
+router.get("/api/monitoring/alerts", async (req, env) => {
+  try {
+    // Check if alert export is enabled
+    const enableAlertExport = env.ENABLE_ALERT_EXPORT === '1' || env.ENABLE_ALERT_EXPORT === true;
+    
+    if (!enableAlertExport) {
+      return addCORS(new Response(JSON.stringify({ 
+        error: "Alert export disabled",
+        message: "Set ENABLE_ALERT_EXPORT=1 to access alert rules" 
+      }), { status: 404, headers: corsHeaders }));
+    }
+
+    // Read alert rules from the ops/alerts/rules.yaml file
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    
+    try {
+      const rulesPath = path.join(process.cwd(), 'ops', 'alerts', 'rules.yaml');
+      const rulesContent = await fs.readFile(rulesPath, 'utf8');
+      
+      return addCORS(new Response(rulesContent, { 
+        status: 200, 
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/x-yaml'
+        }
+      }));
+    } catch (fileError) {
+      console.warn('Alert rules file not found:', fileError.message);
+      
+      // Return a minimal alert configuration if file is missing
+      const fallbackRules = `# Alert Rules (Fallback)
+groups:
+  - name: aquil_basic
+    rules:
+      - alert: SystemCheck
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "System monitoring check"
+`;
+      
+      return addCORS(new Response(fallbackRules, { 
+        status: 200, 
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/x-yaml'
+        }
+      }));
+    }
+  } catch (error) {
+    console.error("Alert rules error:", error);
+    
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Alert system error",
+      message: "Unable to retrieve alert rules"
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
+
 // Transformation contract tracking system
 router.post("/api/contracts/create", async (req, env) => {
   let data;

@@ -196,3 +196,18 @@ export function incrementReconcileBackfill(env, store) {
   const metrics = getMetrics(env);
   metrics.increment('reconcile_backfills_total', { store });
 }
+
+export function incrementStoreCircuitOpen(env, store) {
+  const metrics = getMetrics(env);
+  metrics.increment('store_circuit_open_total', { store });
+}
+
+export function incrementRateLimitExceeded(env, identifier) {
+  const metrics = getMetrics(env);
+  metrics.increment('rate_limit_exceeded_total', { identifier });
+}
+
+export function incrementRequestSizeExceeded(env) {
+  const metrics = getMetrics(env);
+  metrics.increment('request_size_exceeded_total');
+}

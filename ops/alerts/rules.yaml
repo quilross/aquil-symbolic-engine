@@ -1,0 +1,83 @@
+# Alert Rules for Aquil Symbolic Engine
+# These are warn-only starter alerts designed for operational visibility
+# Enable with ENABLE_ALERT_EXPORT=1 environment variable
+
+groups:
+  - name: aquil_operations
+    interval: 60s
+    rules:
+      - alert: HighActionErrorRate
+        expr: action_error_total / (action_error_total + action_success_total) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          component: actions
+        annotations:
+          summary: "High error rate detected for operation {{ $labels.operationId }}"
+          description: "Operation {{ $labels.operationId }} has error rate {{ $value | humanizePercentage }} over the last 10 minutes"
+          runbook_url: "https://signal-q.me/docs/runbook.md#high-error-rate"
+
+      - alert: MissingStoreWrites
+        expr: missing_store_writes_total{store} > baseline * 2
+        for: 15m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "Elevated missing writes for store {{ $labels.store }}"
+          description: "Store {{ $labels.store }} has {{ $value }} missing writes, which is above baseline"
+          runbook_url: "https://signal-q.me/docs/runbook.md#missing-store-writes"
+
+      - alert: ReconciliationBackfills
+        expr: reconcile_backfills_total{store} > 0
+        for: 60m
+        labels:
+          severity: info
+          component: reconciliation
+        annotations:
+          summary: "Reconciliation backfills detected for store {{ $labels.store }}"
+          description: "Store {{ $labels.store }} has had {{ $value }} backfills in the last hour - investigate data consistency"
+          runbook_url: "https://signal-q.me/docs/runbook.md#reconciliation-backfills"
+
+      - alert: StoreCircuitBreakerOpen
+        expr: increase(store_circuit_open_total{store}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "Circuit breaker opened for store {{ $labels.store }}"
+          description: "Store {{ $labels.store }} circuit breaker has opened {{ $value }} times in the last 5 minutes"
+          runbook_url: "https://signal-q.me/docs/runbook.md#circuit-breaker-open"
+
+      - alert: SystemHealthDegraded
+        expr: system_health_percentage < 80
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "System health degraded"
+          description: "Overall system health is {{ $value }}% - multiple components may be affected"
+          runbook_url: "https://signal-q.me/docs/runbook.md#system-health"
+
+  - name: aquil_performance
+    interval: 30s
+    rules:
+      - alert: HighLatencyP95
+        expr: http_request_duration_p95 > 5000
+        for: 10m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "High P95 latency detected"
+          description: "P95 response latency is {{ $value }}ms over the last 10 minutes"
+          runbook_url: "https://signal-q.me/docs/runbook.md#high-latency"
+
+# Note: baseline values should be configured based on historical data
+# Set baseline variables in your monitoring system:
+# - baseline_d1_missing_writes
+# - baseline_kv_missing_writes  
+# - baseline_r2_missing_writes
+# - baseline_vector_missing_writes
