@@ -289,50 +289,38 @@ export async function writeLog(
   
   // D1 - Enhanced with variable payload support and schema enforcement
   try {
-    // Try primary table (metamorphic_logs) first
-    try {
-      await env.AQUIL_DB.prepare(
-        "INSERT INTO metamorphic_logs (id, timestamp, kind, signal_strength, detail, session_id, voice_used, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      )
-        .bind(
-          id,
-          new Date().toISOString(), // Use ISO format instead of Date.now()
-          type || 'log',
-          level || 'medium',
-          JSON.stringify(finalPayload),
-          session_id || null,
-          who || null,
-          JSON.stringify(tags || []),
-        )
-        .run();
-      status.d1 = "ok";
+    // Check circuit breaker for D1 store
+    const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+    const { shouldSkip } = await checkStoreCircuitBreaker(env, 'd1');
+    
+    if (shouldSkip) {
+      status.d1 = "circuit_breaker_open";
       
-      // Track successful log write (fail-open)
+      // Track missing store write (fail-open)
       try {
-        const { incrementLogWritten } = await import('../utils/metrics.js');
-        incrementLogWritten(env, 'd1');
+        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+        incrementMissingStoreWrite(env, 'd1');
       } catch (metricsError) {
         // Silent fail for metrics
       }
-      
-    } catch (primaryError) {
-      // Fallback to event_log table if metamorphic_logs fails
+    } else {
+      // Try primary table (metamorphic_logs) first
       try {
         await env.AQUIL_DB.prepare(
-          "INSERT INTO event_log (id, ts, type, who, level, session_id, tags, payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO metamorphic_logs (id, timestamp, kind, signal_strength, detail, session_id, voice_used, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )
           .bind(
             id,
-            new Date().toISOString(),
+            new Date().toISOString(), // Use ISO format instead of Date.now()
             type || 'log',
-            who || 'system',
-            level || 'info',
-            session_id || null,
-            JSON.stringify(tags || []),
+            level || 'medium',
             JSON.stringify(finalPayload),
+            session_id || null,
+            who || null,
+            JSON.stringify(tags || []),
           )
           .run();
-        status.d1 = "ok_fallback";
+        status.d1 = "ok";
         
         // Track successful log write (fail-open)
         try {
@@ -342,20 +330,59 @@ export async function writeLog(
           // Silent fail for metrics
         }
         
-      } catch (fallbackError) {
-        status.d1 = `primary_error: ${primaryError.message}, fallback_error: ${fallbackError.message}`;
-        
-        // Track missing store write (fail-open)
+      } catch (primaryError) {
+        // Fallback to event_log table if metamorphic_logs fails
         try {
-          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-          incrementMissingStoreWrite(env, 'd1');
-        } catch (metricsError) {
-          // Silent fail for metrics
+          await env.AQUIL_DB.prepare(
+            "INSERT INTO event_log (id, ts, type, who, level, session_id, tags, payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          )
+            .bind(
+              id,
+              new Date().toISOString(),
+              type || 'log',
+              who || 'system',
+              level || 'info',
+              session_id || null,
+              JSON.stringify(tags || []),
+              JSON.stringify(finalPayload),
+            )
+            .run();
+          status.d1 = "ok_fallback";
+          
+          // Track successful log write (fail-open)
+          try {
+            const { incrementLogWritten } = await import('../utils/metrics.js');
+            incrementLogWritten(env, 'd1');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
+          
+        } catch (fallbackError) {
+          status.d1 = `primary_error: ${primaryError.message}, fallback_error: ${fallbackError.message}`;
+          
+          // Record store failure for circuit breaker
+          await recordStoreFailure(env, 'd1');
+          
+          // Track missing store write (fail-open)
+          try {
+            const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+            incrementMissingStoreWrite(env, 'd1');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
         }
       }
     }
   } catch (e) {
     status.d1 = String(e);
+    
+    // Record store failure for circuit breaker
+    try {
+      const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+      await recordStoreFailure(env, 'd1');
+    } catch (circuitError) {
+      // Silent fail for circuit breaker
+    }
     
     // Track missing store write (fail-open)
     try {

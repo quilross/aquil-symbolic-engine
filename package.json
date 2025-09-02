@@ -21,7 +21,8 @@
     "accept": "node scripts/acceptance.mjs",
     "spec:diff": "node scripts/spec-diff.mjs",
     "spec:bump": "node scripts/bump-openapi-version.mjs",
-    "spec:commit": "node -e \"process.exit(0)\""
+    "spec:commit": "node -e \"process.exit(0)\"",
+    "ci:spec-bump-check": "node scripts/check-spec-bump.mjs"
   },
   "keywords": [
     "personal-ai",

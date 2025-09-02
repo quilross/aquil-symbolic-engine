@@ -1,0 +1,163 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Aquil Symbolic Engine - Operations Metrics",
+    "tags": ["aquil", "operations", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "schemaVersion": 27,
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Action Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "action_success_total{operationId}",
+            "legendFormat": "{{operationId}} Success"
+          },
+          {
+            "expr": "action_error_total{operationId}",
+            "legendFormat": "{{operationId}} Errors"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.01},
+                {"color": "red", "value": 0.05}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Store Write Status", 
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "logs_written_total{store}",
+            "legendFormat": "{{store}} Written"
+          },
+          {
+            "expr": "missing_store_writes_total{store}",
+            "legendFormat": "{{store}} Missing"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Reconciliation & Idempotency",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "reconcile_backfills_total{store}",
+            "legendFormat": "{{store}} Backfills"
+          },
+          {
+            "expr": "idempotency_hits_total",
+            "legendFormat": "Idempotency Hits"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 1},
+                {"color": "red", "value": 10}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Error Rate by Operation",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "action_error_total{operationId} / (action_error_total{operationId} + action_success_total{operationId})",
+            "legendFormat": "{{operationId}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.01},
+                {"color": "red", "value": 0.05}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Store Circuit Breaker Status",
+        "type": "stat", 
+        "targets": [
+          {
+            "expr": "store_circuit_open_total{store}",
+            "legendFormat": "{{store}} Circuit Opens"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 1},
+                {"color": "red", "value": 5}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 24, "x": 0, "y": 16}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Alerts",
+          "datasource": "-- Grafana --",
+          "type": "dashboard",
+          "iconColor": "red",
+          "enable": true
+        }
+      ]
+    }
+  }
+}
