@@ -1,6 +1,21 @@
 # Observability & Logging System
 
-This document explains the multi-store logging architecture, tagging system, R2 lifecycle policy, reconciliation process, and idempotency features.
+## 60-Second "No-Surprises" Checklist
+
+> **For whenever the schema changes—this is for humans, not CI.**
+
+- **Op count = 30**  
+  `jq '[.paths[]|.[]|select(.operationId)]|length' gpt-actions-schema.json`
+- **Canonical opIds** only (alias layer handles any snake\_case at runtime).
+- **Server URL =** `https://signal-q.me` (no localhost).
+- **No auth schemes** (as intended).
+- **POST/PUT** have optional `Idempotency-Key`.
+- **Responses** are JSON with tiny examples.
+- **Bump `info.version`** (use `npm run spec:bump`) and **click "Refresh Actions"** in the GPT builder.
+
+---
+
+This document explains the multi-store logging architecture, tagging system, R2 lifecycle policy, reconciliation process, idempotency features, and new observability enhancements.
 
 ## Architecture Overview
 
@@ -329,6 +344,96 @@ All error logs use standardized format:
 3. **Scrub Data**: Remove sensitive information
 4. **Store Consistently**: Across all appropriate stores
 5. **Return Gracefully**: User-friendly error response
+
+## Observability Enhancements
+
+### New Metrics (v2.2+)
+
+The `/api/monitoring/metrics` endpoint now includes additional counters for operational visibility:
+
+#### Counter Metrics
+- **`logs_written_total{store="d1|kv|vector|r2"}`**: Total successful log writes per store
+- **`action_success_total{operationId}`**: Successful actions by operation 
+- **`action_error_total{operationId}`**: Failed actions by operation
+- **`missing_store_writes_total{store}`**: Failed writes when store unavailable (fail-open behavior)
+- **`idempotency_hits_total`**: Cache hits from duplicate requests
+- **`reconcile_backfills_total{store}`**: Successful backfills during reconciliation
+
+#### Usage Examples
+```bash
+# Check current metrics
+curl -s https://signal-q.me/api/monitoring/metrics | jq '.counters'
+
+# Monitor error rates
+curl -s https://signal-q.me/api/monitoring/metrics | \
+  jq '.counters.action_error_total // []'
+```
+
+### Payload Size Management
+
+#### MAX_PAYLOAD_BYTES Environment Variable
+- **Default**: `16384` (16KB)
+- **Behavior**: When payload exceeds limit:
+  1. **R2 Available**: Move bulk data to R2 with gzip compression and SHA256 checksum
+  2. **R2 Unavailable**: Truncate payload with preservation summary
+  3. **D1/KV Storage**: Always store compact summary or pointer
+
+#### R2 Overflow Handling
+- **Compression**: `content-encoding: gzip` metadata
+- **Integrity**: `x-sha256` checksum for verification
+- **Metadata**: Original size, timestamp, session ID stored as custom metadata
+
+### Privacy & Security
+
+#### Automatic Secret Redaction
+Before storing in D1/KV, payloads are automatically scanned for sensitive fields:
+- **Patterns**: `authorization`, `api_key`, `cookie`, `password`, `token`, `secret` (case-insensitive)
+- **Behavior**: Replace values with `[REDACTED]` while preserving structure
+- **Fail-Open**: Original payload used if redaction fails
+
+#### Vector Hygiene
+- Text sent to embeddings undergoes scrubbing and truncation
+- No raw secrets or PII should reach the vector index
+- Consistent with existing `scrubAndTruncateForEmbedding` function
+
+### D1 Performance Insurance
+
+#### Safe Index Creation
+Indexes are created on application startup using `IF NOT EXISTS`:
+```sql
+CREATE INDEX IF NOT EXISTS idx_logs_ts ON metamorphic_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_logs_op ON metamorphic_logs(operationId);  
+CREATE INDEX IF NOT EXISTS idx_logs_session ON metamorphic_logs(session_id);
+```
+
+- **Non-Destructive**: Uses `IF NOT EXISTS` to avoid conflicts
+- **Fail-Open**: Logs and continues on index creation errors
+- **Background**: Runs via `ctx.waitUntil()` to avoid blocking requests
+
+### OpenAPI Automation
+
+#### Version Management
+```bash
+# Compare current schema with last committed version
+npm run spec:diff
+
+# Auto-increment patch version (1.2.3 → 1.2.4)
+npm run spec:bump
+
+# No-op placeholder for auto-commit workflows
+npm run spec:commit
+```
+
+#### CI Integration
+- **Operation Count Validation**: Fails if not exactly 30 operations
+- **Schema Change Detection**: Generates diff in PR comments
+- **Version Bump Reminder**: Warns if schema changed but version not bumped
+
+### Alias Convergence Milestone
+
+**Current State**: Alias layer active for backward compatibility  
+**Future Path**: Rename handlers to canonical names, keep alias layer for external GPT compatibility  
+**Timeline**: Post-hardening phase to avoid breaking changes during critical stability period
 
 ## CI/CD Guardrails
 

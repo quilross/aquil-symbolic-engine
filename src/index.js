@@ -2801,6 +2801,16 @@ router.get("/api/debug/health", async (req, env) => {
 router.all("*", () => addCORS(new Response(JSON.stringify({ error: "Not found", message: "Route not found" }), { status: 404, headers: corsHeaders })));
 export default {
   async fetch(request, env, ctx) {
+    // Initialize D1 indexes if needed (fail-open)
+    try {
+      const { ensureD1Indexes } = await import('./utils/d1-indexes.js');
+      // Run async without blocking the request
+      ctx.waitUntil(ensureD1Indexes(env));
+    } catch (error) {
+      // Silently fail - index creation should never break requests
+      console.warn('D1 index initialization failed:', error.message);
+    }
+    
     attachLocalVectorContext(env);
     return router.fetch(request, env, ctx);
   },
