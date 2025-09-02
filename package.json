@@ -17,7 +17,8 @@
     "guard:schema": "node scripts/check-schema-consistency.mjs",
     "guard:patterns": "node scripts/check-banned-patterns.mjs",
     "guard:aliases": "node scripts/check-op-aliases.mjs",
-    "reconcile": "node scripts/reconcile-logs.mjs"
+    "reconcile": "node scripts/reconcile-logs.mjs",
+    "accept": "node scripts/acceptance.mjs"
   },
   "keywords": [
     "personal-ai",

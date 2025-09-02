@@ -215,6 +215,19 @@ Prevents duplicate processing and ensures consistent responses for identical req
 - **Scope**: Per operation type
 - **Response**: Returns cached result if key exists
 
+### Currently Supported Endpoints
+The following endpoints honor the `Idempotency-Key` header:
+
+1. **`POST /api/trust/check-in`** (operationId: `trust_check_in`)
+   - Used for trust state check-ins and analysis
+   - Key format: `idempotency:trust_check_in:<provided-key>`
+
+2. **`POST /api/somatic/session`** (operationId: `somatic_healing_session`)
+   - Used for somatic healing session generation
+   - Key format: `idempotency:somatic_healing_session:<provided-key>`
+
+**Note**: Other POST endpoints (36 additional endpoints) do not currently support idempotency. Future implementations may extend this support based on user needs and endpoint criticality.
+
 ### Example Usage
 ```bash
 curl -X POST https://signal-q.me/api/trust/check-in \
