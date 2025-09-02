@@ -6,10 +6,15 @@
 /**
  * Check if GPT compatibility mode is enabled
  * @param {Object} env - Environment object
- * @returns {boolean} True if GPT_COMPAT_MODE is enabled
+ * @returns {boolean} True if GPT_COMPAT_MODE is enabled (defaults to true)
  */
 export function isGPTCompatMode(env) {
-  return env?.GPT_COMPAT_MODE === 'true' || env?.GPT_COMPAT_MODE === true;
+  // Default GPT_COMPAT_MODE to 1 (true) as per requirements
+  const mode = env?.GPT_COMPAT_MODE;
+  if (mode === undefined || mode === null) {
+    return true; // Default to fail-open mode
+  }
+  return mode === 'true' || mode === true || mode === '1' || mode === 1;
 }
 
 /**

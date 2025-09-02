@@ -345,6 +345,33 @@ export async function writeLog(
       status.vector = String(e);
     }
   }
+  
+  // Add stores metadata for GPT compatibility mode
+  if (isGPTCompatMode(env)) {
+    const stores = [];
+    const missingStores = [];
+    
+    // Check which stores were attempted and their status
+    if (status.d1 === "ok" || status.d1 === "ok_fallback") stores.push('d1');
+    else if (status.d1 && !safeBinding(env, 'AQUIL_DB')) missingStores.push('d1');
+    
+    if (status.kv === "ok") stores.push('kv');
+    else if (status.kv && !safeBinding(env, 'AQUIL_MEMORIES')) missingStores.push('kv');
+    
+    if (status.r2 === "ok") stores.push('r2');
+    else if (status.r2 && !safeBinding(env, 'AQUIL_STORAGE')) missingStores.push('r2');
+    
+    if (status.vector === "ok") stores.push('vector');
+    else if (status.vector && !safeBinding(env, 'AQUIL_CONTEXT')) missingStores.push('vector');
+    
+    return {
+      ...status,
+      stores,
+      missingStores,
+      success: true // Always return success in GPT_COMPAT_MODE
+    };
+  }
+  
   return status;
 }
 

@@ -10,10 +10,26 @@ function createEnv() {
         bind: () => ({
           all: async () => ({ results: [] }),
           run: async () => ({}),
+          first: async () => ({ test: 1 }),
         }),
+        // Fixed: add first() method directly on prepare() for health checks  
+        first: async () => ({ test: 1 }),
+        run: async () => ({}),
       }),
     },
-    AQUIL_MEMORIES: {},
+    AQUIL_MEMORIES: {
+      get: async (key) => null,
+      put: async (key, value, options) => true,
+    },
+    AQUIL_STORAGE: {
+      get: async (key) => null,
+      put: async (key, value) => true,
+    },
+    AQUIL_CONTEXT: {
+      query: async () => ({ matches: [] }),
+      upsert: async () => ({ success: true }),
+    },
+    AI: { run: async () => ({ response: "{}" }) },
   };
 }
 

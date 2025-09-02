@@ -61,6 +61,35 @@ function bodyFor(path) {
   }
 }
 
+// Create proper test environment matching wrangler.toml bindings
+const testEnv = {
+  AQUIL_DB: {
+    prepare: () => ({
+      bind: () => ({
+        all: async () => ({ results: [] }),
+        run: async () => ({}),
+        first: async () => ({ test: 1 }),
+      }),
+      // Fixed: add first() method directly on prepare() for health checks
+      first: async () => ({ test: 1 }),
+      run: async () => ({}),
+    }),
+  },
+  AQUIL_MEMORIES: {
+    get: async (key) => null,
+    put: async (key, value, options) => true,
+  },
+  AQUIL_STORAGE: {
+    get: async (key) => null,
+    put: async (key, value) => true,
+  },
+  AQUIL_CONTEXT: {
+    query: async () => ({ matches: [] }),
+    upsert: async () => ({ success: true }),
+  },
+  AI: { run: async () => ({ response: "{}" }) },
+};
+
 for (const ep of endpoints) {
   test(`${ep.method.toUpperCase()} ${ep.path} responds`, async () => {
     const init = { method: ep.method.toUpperCase() };
@@ -70,7 +99,7 @@ for (const ep of endpoints) {
     }
     const res = await worker.fetch(
       new Request("http://localhost" + ep.path, init),
-      {},
+      testEnv, // Fixed: use proper test environment instead of empty object
     );
     assert.notEqual(res.status, 404);
   });
