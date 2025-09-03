@@ -178,6 +178,13 @@ export async function writeLog(
   const timestamp = getNYTimestamp();
   const status = {};
   
+  // Convert to canonical operation ID for consistent logging
+  const operationId = toCanonical(type || 'log');
+  const originalOperationId = (type && type !== operationId) ? type : null;
+  
+  // Track which stores will receive this log
+  const storesUsed = [];
+  
   // Get payload size limit from environment (default 16KB)
   const maxPayloadBytes = parseInt(env.MAX_PAYLOAD_BYTES || '16384', 10);
   
@@ -306,19 +313,20 @@ export async function writeLog(
     } else {
       // Try primary table (metamorphic_logs) with canonical schema
       try {
+        // Use INSERT OR IGNORE for idempotency safety
         await env.AQUIL_DB.prepare(
-          "INSERT INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT OR IGNORE INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
           .bind(
             id,
             new Date().toISOString(), // Use ISO format instead of Date.now()
-            type || 'log', // operationId 
-            null, // originalOperationId (only if different from canonical)
-            type || 'log', // kind
+            operationId, // Use canonical operationId 
+            originalOperationId, // originalOperationId (when different from canonical)
+            operationId, // kind (use canonical operation as kind)
             level || 'info', // level (was signal_strength)
             session_id || null,
             JSON.stringify(tags || []), // tags as JSON string
-            JSON.stringify(['d1']), // stores array indicating which stores contain this log
+            JSON.stringify(['d1']), // stores array - will be updated after all stores processed
             r2Pointer, // artifactKey (R2 key if payload overflowed)
             null, // error_message (only for errors)
             null, // error_code (only for errors)
@@ -328,6 +336,7 @@ export async function writeLog(
           )
           .run();
         status.d1 = "ok";
+        storesUsed.push('d1');
         
         // Track successful log write (fail-open)
         try {
@@ -410,6 +419,7 @@ export async function writeLog(
         await env.AQUIL_MEMORIES.put(`log_${id}`, kvData);
       }
       status.kv = "ok";
+      storesUsed.push('kv');
       
       // Track successful log write (fail-open)
       try {
@@ -472,6 +482,7 @@ export async function writeLog(
         
         status.r2 = "ok";
         status.artifactKey = artifactKey;
+        storesUsed.push('r2');
         
         // Track successful log write (fail-open)
         try {
@@ -545,6 +556,7 @@ export async function writeLog(
           
           status.r2 = "ok";
           status.artifactKey = artifactKey;
+          storesUsed.push('r2');
           
           // Track successful log write (fail-open)
           try {
@@ -618,6 +630,7 @@ export async function writeLog(
             },
           ]);
           status.vector = "ok";
+          storesUsed.push('vector');
           
           // Track successful log write (fail-open)
           try {
@@ -646,6 +659,19 @@ export async function writeLog(
       } catch (metricsError) {
         // Silent fail for metrics
       }
+    }
+  }
+  
+  // Update D1 stores array with final list of successful stores
+  if (status.d1 === "ok" && storesUsed.length > 0) {
+    try {
+      // Update the stores column in D1 with the actual stores that succeeded
+      await env.AQUIL_DB.prepare(
+        "UPDATE metamorphic_logs SET stores = ? WHERE id = ?"
+      ).bind(JSON.stringify(storesUsed), id).run();
+    } catch (updateError) {
+      // Fail silently - the log is already written, this is just metadata enhancement
+      console.warn('Failed to update stores array in D1:', updateError.message);
     }
   }
   

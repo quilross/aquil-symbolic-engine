@@ -16,6 +16,18 @@ const rootDir = path.join(__dirname, '..');
 
 const BANNED_PATTERNS = [
   {
+    pattern: 'INSERT INTO event_log',
+    description: 'Legacy event_log table insert (use metamorphic_logs)',
+    searchPaths: ['src/', 'test/', 'scripts/'],
+    excludePaths: ['scripts/check-banned-patterns.mjs'] // Exclude self-reference
+  },
+  {
+    pattern: 'INSERT INTO aquil_logs',
+    description: 'Legacy aquil_logs table insert (use metamorphic_logs)',
+    searchPaths: ['src/', 'test/', 'scripts/'],
+    excludePaths: ['scripts/check-banned-patterns.mjs'] // Exclude self-reference
+  },
+  {
     pattern: 'AQUIL_VECTORIZE',
     description: 'Legacy vectorize binding',
     searchPaths: ['src/', 'test/', 'docs/', '*.md', '*.js', '*.mjs', '*.json'],
