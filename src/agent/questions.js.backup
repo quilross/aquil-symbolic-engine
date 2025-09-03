@@ -83,28 +83,30 @@ export async function generateQuestions(env, { voice, pressLevel, text, context 
  */
 async function callDiscoveryEndpoint(env, { voice, pressLevel, text, context }) {
   try {
-    // Generate questions using existing pattern from main index.js
-    const socraticQuestions = {
-      mirror: [
-        "What does your body tell you about this?",
-        "How does this land in your heart right now?"
-      ],
-      oracle: [
-        "What pattern wants to reveal itself here?",
-        "What deeper wisdom is seeking expression?"
-      ],
-      scientist: [
-        "What evidence do you have for this?", 
-        "What would you need to test this hypothesis?"
-      ],
-      strategist: [
-        "What's the first concrete step you could take?",
-        "What resources do you need to move forward?"
-      ]
+    // For internal calls, we need to import and call the handler directly
+    const { handleDiscoveryInquiry } = await import('../ark/endpoints.js');
+    
+    // Create a mock request object
+    const mockRequest = {
+      json: async () => ({
+        topic: text,
+        voice_preference: voice,
+        depth_level: Math.min(pressLevel, 3), // Map 1-4 to 1-3
+        context: context.session_id || 'unknown'
+      })
     };
     
-    const questions = socraticQuestions[voice] || socraticQuestions.oracle;
-    return [questions[Math.floor(Math.random() * questions.length)]];
+    const response = await handleDiscoveryInquiry(mockRequest, env);
+    const result = await response.json();
+    
+    // Extract questions from response
+    if (result.questions && Array.isArray(result.questions)) {
+      return result.questions;
+    } else if (result.question) {
+      return [result.question];
+    }
+    
+    return [];
   } catch (error) {
     console.warn('Discovery endpoint call failed:', error);
     return [];
@@ -120,6 +122,7 @@ async function callDiscoveryEndpoint(env, { voice, pressLevel, text, context }) 
 async function callSocraticEndpoint(env, { voice, text, context }) {
   try {
     // Generate socratic questions using existing pattern from main index.js
+    // We'll return a simple socratic question based on voice
     const socraticQuestions = {
       mirror: [
         "What does your body tell you about this?",
@@ -169,7 +172,6 @@ async function callContradictionsEndpoint(env, { text, context }) {
     console.warn('Contradictions endpoint call failed:', error);
     return [];
   }
-}
 
 /**
  * Get template question based on press level and voice
