@@ -14,10 +14,9 @@ const QUERY_MAP = {
     method: "first",
   },
   insertLog: {
-    // Use the existing event_log table to avoid D1 errors when
-    // metamorphic_logs is not present in the schema.
-    sql: "INSERT INTO event_log (id, type, payload) VALUES (?, ?, ?)",
-    paramTypes: ["string", "string", "string"],
+    // Use metamorphic_logs with canonical schema
+    sql: "INSERT INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    paramTypes: ["string", "string", "string", "string", "string", "string", "string", "string", "string", "string", "string", "string", "string", "string", "string"],
     method: "run",
   },
 };

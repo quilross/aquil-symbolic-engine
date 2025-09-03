@@ -153,17 +153,32 @@ export async function logAutonomousAction(action, body, env) {
       payload: JSON.stringify(body)
     };
 
-    // Log to D1 database
+    // Log to D1 database with canonical schema
     if (env.AQUIL_DB) {
-      await env.AQUIL_DB.prepare(`
-        INSERT INTO event_log (id, type, payload, created_at)
-        VALUES (?, ?, ?, ?)
-      `).bind(
-        logEntry.id,
-        logEntry.type,
-        JSON.stringify(logEntry),
-        logEntry.timestamp
-      ).run();
+      try {
+        await env.AQUIL_DB.prepare(`
+          INSERT INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          logEntry.id,
+          logEntry.timestamp,
+          logEntry.type, // operationId
+          null, // originalOperationId
+          'autonomous_action', // kind
+          'info', // level
+          null, // session_id
+          JSON.stringify(['autonomous']), // tags
+          JSON.stringify(['d1']), // stores
+          null, // artifactKey
+          null, // error_message
+          null, // error_code
+          JSON.stringify(logEntry), // detail
+          env.ENV || env.ENVIRONMENT || 'unknown', // env
+          'autonomous' // source
+        ).run();
+      } catch (dbError) {
+        console.warn('Failed to log autonomous action to metamorphic_logs:', dbError.message);
+      }
     }
 
     // Also log to KV for quick access
