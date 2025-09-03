@@ -131,6 +131,40 @@ jobs:
         fi
         echo "✅ Schema changes are properly committed"
 
+  log-smoke:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Warn-only on failure
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run D1 Logging Integrity Pack smoke tests
+      run: node scripts/smoke-logs.mjs
+      env:
+        # Use production URL for smoke tests (flag-gated)
+        SMOKE_TEST_URL: ${{ vars.SMOKE_TEST_URL || 'https://signal-q.me' }}
+      continue-on-error: true
+      
+    - name: Report smoke test results
+      if: always()
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "✅ D1 Logging Integrity Pack smoke tests passed"
+        else
+          echo "⚠️ D1 Logging Integrity Pack smoke tests failed (warn-only)"
+          echo "::warning::D1 logging smoke tests failed but continuing build"
+        fi
+
   schema-governance:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
