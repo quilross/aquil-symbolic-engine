@@ -766,4 +766,137 @@ export class PatternRecognizer {
       ],
     };
   }
+  
+  async exposeContradictions(data) {
+    try {
+      const { input, session_id } = data;
+      
+      if (!input || typeof input !== 'string') {
+        return {
+          questions: ["What feels most true to you right now?"],
+          contradictions: [],
+          message: "Clarity often emerges when we explore deeper."
+        };
+      }
+      
+      // Analyze input for contradictory elements
+      const contradictions = await this.identifyContradictions(input);
+      
+      // Generate targeted questions to explore contradictions
+      const questions = this.generateContradictionQuestions(contradictions, input);
+      
+      return {
+        questions: questions.slice(0, 3), // Max 3 questions
+        contradictions: contradictions,
+        message: contradictions.length > 0 
+          ? "Contradictions often reveal deeper truths seeking integration."
+          : "Your expression shows coherence - trust what emerges."
+      };
+    } catch (error) {
+      console.error("Contradiction analysis error:", error);
+      return {
+        questions: ["What part of this feels most true to you right now?"],
+        contradictions: [],
+        message: "Sometimes contradictions reveal our fullest humanity."
+      };
+    }
+  }
+  
+  async identifyContradictions(input) {
+    const text = input.toLowerCase();
+    const contradictions = [];
+    
+    // Look for explicit contradictory language
+    const contradictoryPairs = [
+      ['want', 'don\'t want'],
+      ['need', 'don\'t need'],
+      ['love', 'hate'],
+      ['excited', 'scared'],
+      ['confident', 'doubt'],
+      ['ready', 'not ready'],
+      ['sure', 'unsure'],
+      ['yes', 'no'],
+      ['should', 'shouldn\'t']
+    ];
+    
+    for (const [pos, neg] of contradictoryPairs) {
+      if (text.includes(pos) && text.includes(neg)) {
+        contradictions.push({
+          type: 'explicit_contradiction',
+          elements: [pos, neg],
+          description: `Tension between ${pos} and ${neg}`
+        });
+      }
+    }
+    
+    // Look for emotional contradictions
+    const positiveEmotions = ['happy', 'excited', 'confident', 'calm', 'peaceful'];
+    const negativeEmotions = ['sad', 'angry', 'frustrated', 'anxious', 'worried'];
+    
+    let hasPositive = positiveEmotions.some(emotion => text.includes(emotion));
+    let hasNegative = negativeEmotions.some(emotion => text.includes(emotion));
+    
+    if (hasPositive && hasNegative) {
+      contradictions.push({
+        type: 'emotional_contradiction',
+        description: 'Mixed emotional signals present'
+      });
+    }
+    
+    // Look for action contradictions
+    const actionWords = ['will', 'going to', 'planning', 'decided'];
+    const hesitationWords = ['maybe', 'might', 'possibly', 'not sure'];
+    
+    let hasAction = actionWords.some(word => text.includes(word));
+    let hasHesitation = hesitationWords.some(word => text.includes(word));
+    
+    if (hasAction && hasHesitation) {
+      contradictions.push({
+        type: 'action_contradiction',
+        description: 'Tension between commitment and uncertainty'
+      });
+    }
+    
+    return contradictions;
+  }
+  
+  generateContradictionQuestions(contradictions, input) {
+    if (contradictions.length === 0) {
+      return [
+        "What feels most alive and true in what you shared?",
+        "What wants your attention in this moment?"
+      ];
+    }
+    
+    const questions = [];
+    
+    for (const contradiction of contradictions) {
+      switch (contradiction.type) {
+        case 'explicit_contradiction':
+          questions.push(`You mentioned both ${contradiction.elements[0]} and ${contradiction.elements[1]} - what's the deeper truth that holds both?`);
+          break;
+        case 'emotional_contradiction':
+          questions.push("What part of you is feeling positive and what part is feeling challenged right now?");
+          break;
+        case 'action_contradiction':
+          questions.push("What would it look like to honor both your desire to move forward and your need for clarity?");
+          break;
+        default:
+          questions.push("What wants integration in this tension you're experiencing?");
+      }
+    }
+    
+    // Add generic contradiction questions if we don't have enough
+    const genericQuestions = [
+      "What would happen if both sides of this contradiction were allowed to be true?",
+      "What is this tension trying to teach you about yourself?",
+      "How might these contradictory parts be trying to protect or serve you?"
+    ];
+    
+    while (questions.length < 2 && genericQuestions.length > 0) {
+      questions.push(genericQuestions.shift());
+    }
+    
+    return questions;
+  }
 }
