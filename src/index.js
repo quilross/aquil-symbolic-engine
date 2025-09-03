@@ -1492,6 +1492,32 @@ router.post("/api/patterns/recognize", async (req, env) => {
     return addCORS(new Response(JSON.stringify({ error: "Pattern processing error", message: "Pattern recognition is happening even when systems are offline - your awareness itself is the most powerful tool for growth." }), { status: 500, headers: corsHeaders }));
   }
 });
+router.post("/api/patterns/expose-contradictions", async (req, env) => {
+  let data;
+  try { data = await req.json(); } catch {
+    return addCORS(new Response(JSON.stringify({ error: "Malformed JSON", message: "Request body must be valid JSON." }), { status: 400, headers: corsHeaders }));
+  }
+  try {
+    const recognizer = new PatternRecognizer(env);
+    const result = await recognizer.exposeContradictions(data);
+    
+    // External logging for ChatGPT integration
+    await logChatGPTAction(env, 'expose_contradictions', data, result);
+    
+    return addCORS(new Response(JSON.stringify(result), { status: 200, headers: corsHeaders }));
+  } catch (error) {
+    console.error("Contradiction exposure error:", error);
+    
+    // Log error to external systems
+    await logChatGPTAction(env, 'expose_contradictions', data, null, error);
+    
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Contradiction analysis error", 
+      message: "Contradictions often reveal deeper truths seeking integration.",
+      questions: ["What part of this feels most true to you right now?"]
+    }), { status: 500, headers: corsHeaders }));
+  }
+});
 router.post("/api/standing-tall/practice", async (req, env) => {
   let data;
   try { data = await req.json(); } catch {

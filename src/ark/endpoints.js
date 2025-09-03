@@ -327,6 +327,58 @@ export async function handleDiscoveryInquiry(request, env) {
     });
   }
   const { context = {}, session_id } = data;
+  const userInput = context.input || data.topic || "";
+  
+  // Check if conversational engine is enabled
+  if (env.ENABLE_CONVERSATIONAL_ENGINE === '1' && userInput) {
+    try {
+      // Import and run the conversational engine
+      const { runEngine } = await import('../agent/engine.js');
+      const engineResult = await runEngine(env, session_id || generateId(), userInput);
+      
+      // Generate response using engine output
+      const voice = engineResult.voice || selectOptimalVoice(userInput, context);
+      
+      // Compose response: short reflection + engine questions + optional micro-commitment
+      let response = generateReflection(userInput, voice, engineResult.cues);
+      
+      if (engineResult.questions && engineResult.questions.length > 0) {
+        response += "\n\n" + engineResult.questions.join("\n\n");
+      }
+      
+      if (engineResult.micro) {
+        response += "\n\n" + engineResult.micro;
+      }
+      
+      await logMetamorphicEvent(env, {
+        kind: "discovery_inquiry_with_engine",
+        detail: { 
+          response,
+          engine_voice: engineResult.voice,
+          press_level: engineResult.pressLevel,
+          cues: engineResult.cues
+        },
+        session_id,
+        voice,
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          inquiry: response, 
+          voice_used: voice,
+          questions: engineResult.questions,
+          press_level: engineResult.pressLevel,
+          engine_active: true
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    } catch (engineError) {
+      console.warn('Conversational engine failed, falling back to standard flow:', engineError);
+      // Fall through to standard processing
+    }
+  }
+  
+  // Standard processing (original logic)
   const voice = selectOptimalVoice(context.input || "", context);
   let question;
   try {
@@ -538,4 +590,51 @@ export async function handleLog(request, env) {
   return new Response(JSON.stringify({ status: "ok", id }), {
     headers: { "Content-Type": "application/json" },
   });
+}
+
+/**
+ * Generate a short reflection based on voice and cues
+ * @param {string} userInput - User input text
+ * @param {string} voice - Selected voice
+ * @param {string[]} cues - Detection cues
+ * @returns {string} - Reflection text
+ */
+function generateReflection(userInput, voice, cues = []) {
+  const hasAvoidance = cues.includes('hedging') || cues.includes('vague');
+  const hasTopicShift = cues.includes('topic_shift');
+  const hasOverwhelm = voice === 'mirror' && (userInput.toLowerCase().includes('overwhelm') || userInput.toLowerCase().includes('stuck'));
+  
+  const reflections = {
+    mirror: {
+      normal: "I hear you.",
+      avoidance: "I notice some uncertainty in what you shared.",
+      overwhelm: "It sounds like a lot is happening for you right now.",
+      topic_shift: "I sense we've moved to something new."
+    },
+    oracle: {
+      normal: "There's wisdom in what you're exploring.",
+      avoidance: "Something deeper wants to be seen here.",
+      overwhelm: "The fog often clears when we slow down.",
+      topic_shift: "A new thread is weaving itself into our conversation."
+    },
+    scientist: {
+      normal: "Let's examine this more closely.",
+      avoidance: "I'd like to understand this more specifically.",
+      overwhelm: "Let's break this down into manageable pieces.",
+      topic_shift: "You've introduced a new variable."
+    },
+    strategist: {
+      normal: "Let's get clear on next steps.",
+      avoidance: "Clarity will help us move forward.",
+      overwhelm: "Let's prioritize what needs your attention.",
+      topic_shift: "This shifts our focus - let's align on direction."
+    }
+  };
+  
+  const voiceReflections = reflections[voice] || reflections.mirror;
+  
+  if (hasOverwhelm) return voiceReflections.overwhelm;
+  if (hasTopicShift) return voiceReflections.topic_shift;
+  if (hasAvoidance) return voiceReflections.avoidance;
+  return voiceReflections.normal;
 }

@@ -101,6 +101,7 @@ export const OP_ALIASES = {
   
   // Pattern recognition
   'pattern_recognition': 'recognizePatterns',
+  'expose_contradictions': 'recognizePatterns', // Alias to existing pattern recognition
   
   // Standing tall
   'standing_tall_practice': 'standingTallPractice',
