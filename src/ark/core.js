@@ -183,26 +183,7 @@ export async function logMetamorphicEvent(env, event) {
           )
           .run();
       } catch (dbError) {
-        // Fallback to existing event_log table structure
-        await env.AQUIL_DB.prepare(
-          `
-                    INSERT INTO event_log (id, ts, type, who, level, session_id, tags, idx1, idx2, payload)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `,
-        )
-          .bind(
-            eventId,
-            phillyTime,
-            enhancedEvent.kind,
-            enhancedEvent.voice,
-            enhancedEvent.signal_strength,
-            enhancedEvent.session_id,
-            enhancedEvent.tags,
-            enhancedEvent.idx1,
-            enhancedEvent.idx2,
-            enhancedEvent.detail,
-          )
-          .run();
+        console.warn('Failed to log to metamorphic_logs:', dbError.message);
       }
     }
 
