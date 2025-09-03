@@ -1,7 +1,7 @@
 /**
  * D1 Performance Insurance - Safe Index Creation
  * 
- * Creates performance indexes on the aquil_logs table if they don't exist.
+ * Creates performance indexes on the metamorphic_logs table if they don't exist.
  * Uses IF NOT EXISTS to avoid conflicts and logs/continues on error (fail-open).
  */
 
@@ -27,23 +27,23 @@ export async function ensureD1Indexes(env) {
   const indexes = [
     {
       name: 'idx_logs_ts',
-      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_ts ON aquil_logs(timestamp);'
+      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_ts ON metamorphic_logs(timestamp);'
     },
     {
       name: 'idx_logs_op', 
-      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_op ON aquil_logs(operationId);'
+      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_op ON metamorphic_logs(operationId);'
     },
     {
       name: 'idx_logs_session',
-      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_session ON aquil_logs(session_id);'
+      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_session ON metamorphic_logs(session_id);'
     },
     {
       name: 'idx_logs_kind',
-      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_kind ON aquil_logs(kind);'
+      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_kind ON metamorphic_logs(kind);'
     },
     {
       name: 'idx_logs_level',
-      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_level ON aquil_logs(level);'
+      sql: 'CREATE INDEX IF NOT EXISTS idx_logs_level ON metamorphic_logs(level);'
     }
   ];
 
@@ -71,21 +71,21 @@ export async function ensureD1Indexes(env) {
 }
 
 /**
- * Optional: Check if aquil_logs table exists
+ * Optional: Check if metamorphic_logs table exists
  * @param {Object} env - Environment bindings
  * @returns {Promise<boolean>} True if table exists
  */
-export async function checkAquilLogsTable(env) {
+export async function checkMetamorphicLogsTable(env) {
   try {
     if (!env.AQUIL_DB) return false;
     
     const result = await env.AQUIL_DB.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='aquil_logs'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='metamorphic_logs'"
     ).first();
     
     return !!result;
   } catch (error) {
-    console.warn('Failed to check aquil_logs table:', error.message);
+    console.warn('Failed to check metamorphic_logs table:', error.message);
     return false;
   }
 }

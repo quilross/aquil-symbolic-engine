@@ -1167,7 +1167,7 @@ router.post("/api/discovery/generate-inquiry", async (req, env) => {
   try {
     const body = await req.json();
     const result = await handleDiscoveryInquiry(req, env);
-    const resultData = JSON.parse(result.body || '{}');
+    const resultData = await result.clone().json();
     
     await logChatGPTAction(env, 'generateDiscoveryInquiry', body, resultData);
     
@@ -1186,7 +1186,7 @@ router.post("/api/ritual/auto-suggest", async (req, env) => {
   try {
     const body = await req.json();
     const result = await handleRitualSuggestion(req, env);
-    const resultData = JSON.parse(result.body || '{}');
+    const resultData = await result.clone().json();
     
     await logChatGPTAction(env, 'autoSuggestRitual', body, resultData);
     
@@ -2800,7 +2800,7 @@ router.get("/api/debug/logs", async (req, env) => {
   
   try {
     // Build query with filters
-    let query = "SELECT * FROM aquil_logs";
+    let query = "SELECT * FROM metamorphic_logs";
     const conditions = [];
     const params = [];
     

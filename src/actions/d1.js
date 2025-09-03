@@ -15,9 +15,9 @@ export async function getLogs(env, limit = 10) {
   }
 
   try {
-    if (await tableExists(env.AQUIL_DB, "aquil_logs")) {
+    if (await tableExists(env.AQUIL_DB, "metamorphic_logs")) {
       const { results } = await env.AQUIL_DB.prepare(
-        "SELECT id, timestamp, kind, detail FROM aquil_logs ORDER BY timestamp DESC LIMIT ?",
+        "SELECT id, timestamp, kind, detail FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?",
       )
         .bind(limit)
         .all();

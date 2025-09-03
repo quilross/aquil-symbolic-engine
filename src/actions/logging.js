@@ -49,7 +49,7 @@ export async function readLogs(env, opts = {}) {
     const db = safeBinding(env, 'AQUIL_DB');
     if (db) {
       const { results: d1logs } = await db.prepare(
-        `SELECT id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source FROM aquil_logs ORDER BY timestamp DESC LIMIT ?`
+        `SELECT id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?`
       ).bind(limit).all();
       results.d1 = d1logs;
     } else if (isGPTCompatMode(env)) {
@@ -304,10 +304,10 @@ export async function writeLog(
         // Silent fail for metrics
       }
     } else {
-      // Try primary table (aquil_logs) with canonical schema
+      // Try primary table (metamorphic_logs) with canonical schema
       try {
         await env.AQUIL_DB.prepare(
-          "INSERT INTO aquil_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
           .bind(
             id,
@@ -338,46 +338,17 @@ export async function writeLog(
         }
         
       } catch (primaryError) {
-        // Note: event_log is now a VIEW, so this fallback should work seamlessly
-        // Fallback to event_log table if aquil_logs fails
+        status.d1 = `primary_error: ${primaryError.message}`;
+        
+        // Record store failure for circuit breaker
+        await recordStoreFailure(env, 'd1');
+        
+        // Track missing store write (fail-open)
         try {
-          await env.AQUIL_DB.prepare(
-            "INSERT INTO event_log (id, ts, type, who, level, session_id, tags, payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          )
-            .bind(
-              id,
-              new Date().toISOString(),
-              type || 'log',
-              who || 'system',
-              level || 'info',
-              session_id || null,
-              JSON.stringify(tags || []),
-              JSON.stringify(finalPayload),
-            )
-            .run();
-          status.d1 = "ok_fallback";
-          
-          // Track successful log write (fail-open)
-          try {
-            const { incrementLogWritten } = await import('../utils/metrics.js');
-            incrementLogWritten(env, 'd1');
-          } catch (metricsError) {
-            // Silent fail for metrics
-          }
-          
-        } catch (fallbackError) {
-          status.d1 = `primary_error: ${primaryError.message}, fallback_error: ${fallbackError.message}`;
-          
-          // Record store failure for circuit breaker
-          await recordStoreFailure(env, 'd1');
-          
-          // Track missing store write (fail-open)
-          try {
-            const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-            incrementMissingStoreWrite(env, 'd1');
-          } catch (metricsError) {
-            // Silent fail for metrics
-          }
+          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+          incrementMissingStoreWrite(env, 'd1');
+        } catch (metricsError) {
+          // Silent fail for metrics
         }
       }
     }
@@ -773,7 +744,7 @@ export async function readAutonomousLogs(env, opts = {}) {
   // D1 - Filter for autonomous actions with additional filters
   try {
     let query = `SELECT id, timestamp, kind, detail, session_id, level, tags 
-       FROM aquil_logs 
+       FROM metamorphic_logs 
        WHERE (kind = 'autonomous_action' OR tags LIKE '%autonomous%')`;
     const params = [];
     
@@ -855,7 +826,7 @@ export async function getAutonomousStats(env, timeframe = '24h') {
     try {
       const { results } = await env.AQUIL_DB.prepare(
         `SELECT kind, detail, tags, timestamp
-         FROM aquil_logs 
+         FROM metamorphic_logs 
          WHERE (kind = 'autonomous_action' OR tags LIKE '%autonomous%') 
          AND timestamp > ?
          ORDER BY timestamp DESC`
@@ -984,7 +955,7 @@ export async function readLogsWithFilters(env, filters = {}) {
   } = filters;
   
   const maxLimit = Math.min(parseInt(limit, 10), 200);
-  let query = `SELECT id, timestamp, kind, detail, session_id, level, tags FROM aquil_logs`;
+  let query = `SELECT id, timestamp, kind, detail, session_id, level, tags FROM metamorphic_logs`;
   const conditions = [];
   const params = [];
   

@@ -156,10 +156,10 @@ export async function logMetamorphicEvent(env, event) {
     // Log to database with fallback handling
     if (env.AQUIL_DB) {
       try {
-        // Try to use aquil_logs table first
+        // Try to use metamorphic_logs table first
         await env.AQUIL_DB.prepare(
           `
-                    INSERT INTO aquil_logs (
+                    INSERT INTO metamorphic_logs (
                         id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
@@ -746,7 +746,7 @@ export async function performReadinessChecks(env) {
     // D1 Database ping
     if (env.AQUIL_DB) {
       try {
-        const result = await env.AQUIL_DB.prepare("SELECT COUNT(*) as count FROM aquil_logs LIMIT 1").first();
+        const result = await env.AQUIL_DB.prepare("SELECT COUNT(*) as count FROM metamorphic_logs LIMIT 1").first();
         readiness.stores.d1 = { status: "ok", details: "responsive" };
       } catch (error) {
         readiness.stores.d1 = { status: "degraded", error: error.message };
@@ -812,7 +812,7 @@ export async function performReadinessChecks(env) {
     if (env.AQUIL_DB) {
       const recentErrorsQuery = await env.AQUIL_DB.prepare(`
         SELECT kind, detail, timestamp 
-        FROM aquil_logs 
+        FROM metamorphic_logs 
         WHERE kind LIKE '%error%' AND timestamp > datetime('now', '-10 minutes')
         ORDER BY timestamp DESC LIMIT 5
       `).all();

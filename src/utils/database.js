@@ -722,13 +722,13 @@ export class AquilDatabase {
     try {
       const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
       
-      // Try aquil_logs first
+      // Try metamorphic_logs first
       try {
         const results = await this.db
           .prepare(
             `
           SELECT id, timestamp, kind, detail, session_id, level, tags
-          FROM aquil_logs 
+          FROM metamorphic_logs 
           WHERE timestamp > ?
           ORDER BY timestamp DESC
         `,
