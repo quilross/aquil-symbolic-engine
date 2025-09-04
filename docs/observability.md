@@ -347,6 +347,39 @@ All error logs use standardized format:
 
 ## Observability Enhancements
 
+### Comprehensive Schema Synchronization Audit (v2.2+)
+
+New automated audit system to ensure OpenAPI schema and code remain synchronized:
+
+```bash
+# Run full synchronization audit (all 4 requirement areas)
+npm run audit:comprehensive
+
+# Get specific git-style fix suggestions for critical issues
+npm run audit:fix-suggestions
+```
+
+**Audit Coverage:**
+- **OpenAPI Spec & Handlers Consistency**: Operation count (30), missing handlers, parameter alignment, canonicalization
+- **Behavioral Engine Integration**: Engine modules, endpoint integration, logging compliance with 15 canonical fields
+- **Fail-Open Behavior**: Try-catch blocks, environment defaults, health endpoints always return 200
+- **Custom GPT Functional Checks**: Runtime operation execution, dynamic voice & pressing features, progressive enhancement
+
+**Example Output:**
+```
+🎯 OVERALL ASSESSMENT:
+✅ Schema and handlers are fully synchronized. All 30 operations have implementations, 
+   and behavioral engines are integrated with fail-open safety. Custom GPT calls will function as expected.
+```
+
+Or with issues detected:
+```
+⚠️  46 total issues found. Critical fixes needed:
+   • Implement 21 missing operation handlers
+   • Fix 3 behavioral engine integration issues  
+   • Address 1 fail-open behavior gaps
+```
+
 ### New Metrics (v2.2+)
 
 The `/api/monitoring/metrics` endpoint now includes additional counters for operational visibility:
