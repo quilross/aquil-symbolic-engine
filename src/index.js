@@ -21,6 +21,9 @@ import {
   handleReadinessCheck,
 } from "./ark/endpoints.js";
 
+// Behavioral engine
+import { runEngine } from "./agent/engine.js";
+
 // ARK endpoints for autonomous functionality
 import { 
   arkLog, 
@@ -61,6 +64,7 @@ import { toCanonical } from "./ops/operation-aliases.js";
 import { logMetamorphicEvent } from "./ark/core.js";
 import { AquilDatabase } from "./utils/database.js";
 import { AquilAI } from "./utils/ai-helpers.js";
+import { safeBinding } from "./utils/gpt-compat.js";
 import { 
   detectTriggers, 
   callAutonomousEndpoint, 
@@ -103,6 +107,9 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
   try {
     const canonical = toCanonical(operationId);
     
+    // Track successful store writes
+    const stores = [];
+    
     // Collect metrics (fail-open)
     try {
       const { incrementActionSuccess, incrementActionError } = await import('./utils/metrics.js');
@@ -126,6 +133,9 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
     let binary = null;
     if (r2Policy !== 'n/a' && result && !error) {
       binary = generateArtifactForAction(canonical, result);
+      if (binary) {
+        stores.push('r2');
+      }
     }
     
     // Standardized tags for ChatGPT actions
@@ -146,7 +156,7 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
       : `${canonical.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`;
     
     textOrVector = scrubAndTruncateForEmbedding(textOrVector);
-    
+
     await writeLog(env, {
       type: error ? `${canonical}_error` : canonical,
       payload,
@@ -155,8 +165,13 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
       level: error ? 'error' : 'info',
       tags: standardTags,
       binary,
-      textOrVector
+      textOrVector,
+      stores  // Add stores tracking
     });
+    
+    // Track successful D1 write
+    stores.push('d1');
+    
   } catch (logError) {
     console.warn('Failed to log ChatGPT action:', logError);
   }
@@ -165,6 +180,130 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
 // =============================================================================
 // UTILITY FUNCTIONS
 // =============================================================================
+
+/**
+ * Query metamorphic_logs with cursor pagination and stable sort
+ */
+async function queryMetamorphicLogs(env, { limit = 20, after = null, sessionId = null, since = null }) {
+  try {
+    const db = safeBinding(env, 'AQUIL_DB');
+    if (!db) {
+      return []; // Fail-open
+    }
+
+    let query = `
+      SELECT id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source 
+      FROM metamorphic_logs 
+      WHERE 1=1
+    `;
+    const params = [];
+
+    // Filter by session if provided
+    if (sessionId) {
+      query += ` AND session_id = ?`;
+      params.push(sessionId);
+    }
+
+    // Filter by since timestamp if provided
+    if (since) {
+      query += ` AND timestamp >= ?`;
+      params.push(since);
+    }
+
+    // Cursor pagination with stable sort
+    if (after && after.ts && after.id) {
+      query += ` AND (timestamp < ? OR (timestamp = ? AND id < ?))`;
+      params.push(after.ts, after.ts, after.id);
+    }
+
+    query += ` ORDER BY timestamp DESC, id DESC LIMIT ?`;
+    params.push(limit);
+
+    const { results } = await db.prepare(query).bind(...params).all();
+    
+    // Transform to canonical format
+    return results.map(toCanonicalLogItem);
+  } catch (error) {
+    console.warn('queryMetamorphicLogs error:', error);
+    return []; // Fail-open
+  }
+}
+
+/**
+ * Gather readiness status for all systems
+ */
+async function gatherReadinessStatus(env) {
+  const status = {
+    ready: true,
+    summary: "All systems operational",
+    errors: [],
+    flags: {
+      conversationalEngine: env.ENABLE_CONVERSATIONAL_ENGINE === '1',
+      gptCompatMode: !!(env.GPT_COMPAT_MODE || !env.AQUIL_DB)
+    }
+  };
+
+  try {
+    // Check D1 connection
+    const db = safeBinding(env, 'AQUIL_DB');
+    if (db) {
+      await db.prepare('SELECT 1').first();
+    } else {
+      status.errors.push('D1 database not available');
+      status.ready = false;
+    }
+  } catch (error) {
+    status.errors.push(`D1 error: ${error.message}`);
+    status.ready = false;
+  }
+
+  try {
+    // Check KV connection
+    const kv = safeBinding(env, 'AQUIL_CONTEXT');
+    if (kv) {
+      await kv.get('health-check', { type: 'text' });
+    } else {
+      status.errors.push('KV store not available');
+      status.ready = false;
+    }
+  } catch (error) {
+    status.errors.push(`KV error: ${error.message}`);
+    status.ready = false;
+  }
+
+  // In fail-open mode, don't fail on store issues
+  if (env.GPT_COMPAT_MODE === '1' && !status.ready) {
+    status.ready = true;
+    status.summary = "Running in fail-open mode with partial functionality";
+  }
+
+  return status;
+}
+
+/**
+ * Transform database row to canonical log item format
+ */
+function toCanonicalLogItem(row) {
+  return {
+    id: row.id,
+    timestamp: row.timestamp,
+    operationId: row.operationId,
+    originalOperationId: row.originalOperationId,
+    kind: row.kind,
+    level: row.level || 'info',
+    session_id: row.session_id,
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    stores: row.stores ? JSON.parse(row.stores) : [],
+    artifactKey: row.artifactKey,
+    error: row.error_message ? {
+      message: row.error_message,
+      code: row.error_code
+    } : null,
+    detail: row.detail ? JSON.parse(row.detail) : null,
+    env: row.env,
+    source: row.source || 'gpt'
+  };
+}
 
 /**
  * Scrub PII and truncate text for safe vector embedding
@@ -304,11 +443,40 @@ router.get("/api/session-init", async (req, env) => {
 router.post("/api/discovery/generate-inquiry", async (req, env) => {
   try {
     const result = await handleDiscoveryInquiry(req, env);
-    const resultData = await result.clone().json();
+    const data = await result.clone().json();
     
-    await logChatGPTAction(env, 'generateDiscoveryInquiry', {}, resultData);
+    // Wire conversational engine if enabled
+    if (env.ENABLE_CONVERSATIONAL_ENGINE === '1') {
+      const body = await req.clone().json();
+      const userText = body.prompt || body.text || '';
+      const sessionId = data.session_id || extractSessionId(req) || crypto.randomUUID();
+      
+      try {
+        const probe = await runEngine(env, sessionId, userText);
+        // Blend engine output into existing response fields
+        data.voice_used = probe.voice;
+        data.press_level = probe.pressLevel;
+        if (probe.questions && probe.questions.length > 0) {
+          data.questions = probe.questions;
+        }
+        if (probe.micro) {
+          data.micro_commitment = probe.micro;
+        }
+        
+        await logChatGPTAction(env, 'conversationalProbe', 
+          { sessionId, userText }, 
+          { questions: probe.questions, micro: probe.micro }
+        ).catch(() => {});
+      } catch (engineError) {
+        console.warn('Conversational engine failed:', engineError.message);
+      }
+    }
     
-    return addCORS(result);
+    await logChatGPTAction(env, 'generateDiscoveryInquiry', {}, data);
+    
+    return addCORS(new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" }
+    }));
   } catch (error) {
     await logChatGPTAction(env, 'generateDiscoveryInquiry', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
@@ -326,7 +494,39 @@ router.get("/api/system/health-check", async (req, env) => {
     return addCORS(result);
   } catch (error) {
     await logChatGPTAction(env, 'systemHealthCheck', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
+    // Always return 200 for health checks (fail-open)
+    return addCORS(new Response(JSON.stringify({ 
+      ready: false, 
+      summary: "Health check failed", 
+      errors: [error.message], 
+      flags: {} 
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }));
+  }
+});
+
+// Readiness check endpoint (always returns 200)
+router.get("/api/system/readiness", async (req, env) => {
+  try {
+    const status = await gatherReadinessStatus(env);
+    await logChatGPTAction(env, 'systemHealthCheck', {}, status);
+    return addCORS(new Response(JSON.stringify(status), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }));
+  } catch (error) {
+    await logChatGPTAction(env, 'systemHealthCheck', {}, null, error);
+    return addCORS(new Response(JSON.stringify({ 
+      ready: false, 
+      summary: "Readiness check failed", 
+      errors: [error.message], 
+      flags: {} 
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    }));
   }
 });
 
@@ -359,19 +559,56 @@ router.post("/api/log", async (req, env) => {
 router.get("/api/logs", async (req, env) => {
   try {
     const url = new URL(req.url);
-    const limit = parseInt(url.searchParams.get('limit') || '20', 10);
-    const session_id = url.searchParams.get('session_id');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+    const cursor = url.searchParams.get('cursor');
+    const sessionId = url.searchParams.get('sessionId') || url.searchParams.get('session_id');
+    const since = url.searchParams.get('since');
+
+    // Decode cursor → {ts,id}
+    let after = null;
+    if (cursor) {
+      try {
+        after = JSON.parse(Buffer.from(cursor, 'base64').toString('utf8'));
+      } catch {
+        // Invalid cursor, ignore
+      }
+    }
+
+    // Query metamorphic_logs with stable sort
+    const items = await queryMetamorphicLogs(env, { limit, after, sessionId, since });
     
-    const results = await readLogs(env, { limit, session_id });
-    
+    // Generate next cursor if we have full page
+    let nextCursor = null;
+    if (items.length === limit && items.length > 0) {
+      const lastItem = items[items.length - 1];
+      nextCursor = Buffer.from(JSON.stringify({ 
+        ts: lastItem.timestamp, 
+        id: lastItem.id 
+      })).toString('base64');
+    }
+
+    // Log the retrieval (non-blocking)
+    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', 
+      { limit, sessionId, since }, 
+      { count: items.length, cursor: !!nextCursor }
+    ).catch(() => {});
+
     return addCORS(new Response(JSON.stringify({
-      logs: results.d1 || results.kv || results.r2 || [],
-      session_id
+      items,
+      cursor: nextCursor
     }), {
       headers: { "Content-Type": "application/json" }
     }));
   } catch (error) {
-    return addCORS(createErrorResponse({ error: error.message }, 500));
+    // Fail-open
+    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', {}, null, error).catch(() => {});
+    return addCORS(new Response(JSON.stringify({
+      items: [],
+      cursor: null,
+      warnings: ['fail-open: logs unavailable']
+    }), {
+      headers: { "Content-Type": "application/json" }
+    }));
   }
 });
 
@@ -407,6 +644,32 @@ router.post("/api/somatic/session", async (req, env) => {
     const somaticHealer = new SomaticHealer();
     const session = await somaticHealer.generateSession(body);
     
+    // Wire conversational engine if enabled
+    if (env.ENABLE_CONVERSATIONAL_ENGINE === '1') {
+      const userText = body.text || body.description || '';
+      const sessionId = body.session_id || crypto.randomUUID();
+      
+      try {
+        const probe = await runEngine(env, sessionId, userText);
+        // Blend engine output into existing response fields
+        session.voice_used = probe.voice;
+        session.press_level = probe.pressLevel;
+        if (probe.questions && probe.questions.length > 0) {
+          session.integration_questions = probe.questions;
+        }
+        if (probe.micro) {
+          session.micro_commitment = probe.micro;
+        }
+        
+        await logChatGPTAction(env, 'conversationalProbe', 
+          { sessionId, userText }, 
+          { questions: probe.questions, micro: probe.micro }
+        ).catch(() => {});
+      } catch (engineError) {
+        console.warn('Conversational engine failed:', engineError.message);
+      }
+    }
+    
     await logChatGPTAction(env, 'somaticHealingSession', body, session);
     
     return addCORS(createWisdomResponse(session));
@@ -439,6 +702,32 @@ router.post("/api/patterns/recognize", async (req, env) => {
     const recognizer = new PatternRecognizer();
     const patterns = await recognizer.recognizePatterns(body);
     
+    // Wire conversational engine if enabled
+    if (env.ENABLE_CONVERSATIONAL_ENGINE === '1') {
+      const userText = body.text || body.prompt || '';
+      const sessionId = body.session_id || crypto.randomUUID();
+      
+      try {
+        const probe = await runEngine(env, sessionId, userText);
+        // Blend engine output into existing response fields
+        patterns.voice_used = probe.voice;
+        patterns.press_level = probe.pressLevel;
+        if (probe.questions && probe.questions.length > 0) {
+          patterns.follow_up_questions = probe.questions;
+        }
+        if (probe.micro) {
+          patterns.micro_commitment = probe.micro;
+        }
+        
+        await logChatGPTAction(env, 'conversationalProbe', 
+          { sessionId, userText }, 
+          { questions: probe.questions, micro: probe.micro }
+        ).catch(() => {});
+      } catch (engineError) {
+        console.warn('Conversational engine failed:', engineError.message);
+      }
+    }
+    
     await logChatGPTAction(env, 'recognizePatterns', body, patterns);
     
     return addCORS(createPatternResponse(patterns));
@@ -465,6 +754,388 @@ router.post("/api/standing-tall/practice", async (req, env) => {
 });
 
 // =============================================================================
+// MISSING OPERATION HANDLERS (STUBS)
+// =============================================================================
+
+// Wisdom synthesis
+router.post("/api/wisdom/synthesize", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "synthesizeWisdom feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "synthesizeWisdom"
+    };
+    
+    await logChatGPTAction(env, 'synthesizeWisdom', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'synthesizeWisdom', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Daily synthesis
+router.get("/api/wisdom/daily-synthesis", async (req, env) => {
+  try {
+    const result = { 
+      status: "coming_soon", 
+      message: "getDailySynthesis feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "getDailySynthesis"
+    };
+    
+    await logChatGPTAction(env, 'getDailySynthesis', {}, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'getDailySynthesis', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Personal insights
+router.get("/api/insights", async (req, env) => {
+  try {
+    const result = { 
+      status: "coming_soon", 
+      message: "getPersonalInsights feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "getPersonalInsights"
+    };
+    
+    await logChatGPTAction(env, 'getPersonalInsights', {}, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'getPersonalInsights', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Submit feedback
+router.post("/api/feedback", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "submitFeedback feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "submitFeedback"
+    };
+    
+    await logChatGPTAction(env, 'submitFeedback', body, result);
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'submitFeedback', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Dream interpretation
+router.post("/api/dreams/interpret", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "interpretDream feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "interpretDream"
+    };
+    
+    await logChatGPTAction(env, 'interpretDream', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'interpretDream', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Energy optimization
+router.post("/api/energy/optimize", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "optimizeEnergy feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "optimizeEnergy"
+    };
+    
+    await logChatGPTAction(env, 'optimizeEnergy', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'optimizeEnergy', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Values clarification
+router.post("/api/values/clarify", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "clarifyValues feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "clarifyValues"
+    };
+    
+    await logChatGPTAction(env, 'clarifyValues', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'clarifyValues', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Creativity unleashing
+router.post("/api/creativity/unleash", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "unleashCreativity feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "unleashCreativity"
+    };
+    
+    await logChatGPTAction(env, 'unleashCreativity', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'unleashCreativity', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Abundance cultivation
+router.post("/api/abundance/cultivate", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "cultivateAbundance feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "cultivateAbundance"
+    };
+    
+    await logChatGPTAction(env, 'cultivateAbundance', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'cultivateAbundance', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Transition navigation
+router.post("/api/transitions/navigate", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "navigateTransitions feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "navigateTransitions"
+    };
+    
+    await logChatGPTAction(env, 'navigateTransitions', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'navigateTransitions', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Ancestry healing
+router.post("/api/ancestry/heal", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "healAncestry feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "healAncestry"
+    };
+    
+    await logChatGPTAction(env, 'healAncestry', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'healAncestry', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Commitment management
+router.post("/api/commitments/create", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "manageCommitment feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "manageCommitment"
+    };
+    
+    await logChatGPTAction(env, 'manageCommitment', body, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'manageCommitment', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// List active commitments
+router.get("/api/commitments/active", async (req, env) => {
+  try {
+    const result = { 
+      status: "coming_soon", 
+      message: "listActiveCommitments feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "listActiveCommitments",
+      commitments: []
+    };
+    
+    await logChatGPTAction(env, 'listActiveCommitments', {}, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'listActiveCommitments', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Update commitment progress  
+router.post("/api/commitments/:id/progress", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "updateCommitmentProgress feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "updateCommitmentProgress"
+    };
+    
+    await logChatGPTAction(env, 'updateCommitmentProgress', body, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'updateCommitmentProgress', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Auto-suggest ritual
+router.post("/api/ritual/auto-suggest", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "autoSuggestRitual feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "autoSuggestRitual"
+    };
+    
+    await logChatGPTAction(env, 'autoSuggestRitual', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'autoSuggestRitual', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Autonomous pattern detection
+router.post("/api/patterns/autonomous-detect", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "autonomousPatternDetect feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "autonomousPatternDetect"
+    };
+    
+    await logChatGPTAction(env, 'autonomousPatternDetect', body, result);
+    return addCORS(createPatternResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'autonomousPatternDetect', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Transformation contract
+router.post("/api/contracts/create", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "transformation_contract feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "transformation_contract"
+    };
+    
+    await logChatGPTAction(env, 'transformation_contract', body, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'transformation_contract', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Monitoring metrics
+router.get("/api/monitoring/metrics", async (req, env) => {
+  try {
+    const result = { 
+      status: "coming_soon", 
+      message: "getMonitoringMetrics feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "getMonitoringMetrics",
+      metrics: {}
+    };
+    
+    await logChatGPTAction(env, 'getMonitoringMetrics', {}, result);
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'getMonitoringMetrics', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Socratic questions
+router.post("/api/socratic/question", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "socraticQuestions feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "socraticQuestions"
+    };
+    
+    await logChatGPTAction(env, 'socraticQuestions', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'socraticQuestions', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// COM-B behavioral analysis
+router.post("/api/coaching/comb-analysis", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "combBehavioralAnalysis feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "combBehavioralAnalysis"
+    };
+    
+    await logChatGPTAction(env, 'combBehavioralAnalysis', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'combBehavioralAnalysis', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
 // FALLBACK AND ERROR HANDLING
 // =============================================================================
 
@@ -476,13 +1147,34 @@ router.all("*", () => {
       "/api/session-init",
       "/api/discovery/generate-inquiry", 
       "/api/system/health-check",
+      "/api/system/readiness",
       "/api/log",
       "/api/logs",
       "/api/trust/check-in",
       "/api/somatic/session",
       "/api/media/extract-wisdom",
       "/api/patterns/recognize",
-      "/api/standing-tall/practice"
+      "/api/patterns/autonomous-detect",
+      "/api/standing-tall/practice",
+      "/api/wisdom/synthesize",
+      "/api/wisdom/daily-synthesis",
+      "/api/insights",
+      "/api/feedback",
+      "/api/dreams/interpret",
+      "/api/energy/optimize",
+      "/api/values/clarify",
+      "/api/creativity/unleash",
+      "/api/abundance/cultivate",
+      "/api/transitions/navigate",
+      "/api/ancestry/heal",
+      "/api/commitments/create",
+      "/api/commitments/active",
+      "/api/commitments/:id/progress",
+      "/api/ritual/auto-suggest",
+      "/api/contracts/create",
+      "/api/monitoring/metrics",
+      "/api/socratic/question",
+      "/api/coaching/comb-analysis"
     ]
   }, 404));
 });
