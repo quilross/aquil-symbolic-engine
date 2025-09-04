@@ -462,11 +462,8 @@ router.post("/api/discovery/generate-inquiry", async (req, env) => {
         if (probe.micro) {
           data.micro_commitment = probe.micro;
         }
-        
-        await logChatGPTAction(env, 'conversationalProbe', 
-          { sessionId, userText }, 
-          { questions: probe.questions, micro: probe.micro }
-        ).catch(() => {});
+        // Add engine info to logging payload
+        data.engine_probe = { questions: probe.questions, micro: probe.micro };
       } catch (engineError) {
         console.warn('Conversational engine failed:', engineError.message);
       }
@@ -660,11 +657,8 @@ router.post("/api/somatic/session", async (req, env) => {
         if (probe.micro) {
           session.micro_commitment = probe.micro;
         }
-        
-        await logChatGPTAction(env, 'conversationalProbe', 
-          { sessionId, userText }, 
-          { questions: probe.questions, micro: probe.micro }
-        ).catch(() => {});
+        // Add engine info to logging payload
+        session.engine_probe = { questions: probe.questions, micro: probe.micro };
       } catch (engineError) {
         console.warn('Conversational engine failed:', engineError.message);
       }
@@ -718,11 +712,8 @@ router.post("/api/patterns/recognize", async (req, env) => {
         if (probe.micro) {
           patterns.micro_commitment = probe.micro;
         }
-        
-        await logChatGPTAction(env, 'conversationalProbe', 
-          { sessionId, userText }, 
-          { questions: probe.questions, micro: probe.micro }
-        ).catch(() => {});
+        // Add engine info to logging payload
+        patterns.engine_probe = { questions: probe.questions, micro: probe.micro };
       } catch (engineError) {
         console.warn('Conversational engine failed:', engineError.message);
       }

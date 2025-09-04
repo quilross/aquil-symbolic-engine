@@ -75,10 +75,7 @@ export const OP_CANON = {
   transformation_contract: 'transformation_contract', // Note: this one stays snake_case in schema
   
   // Behavioral analysis
-  combBehavioralAnalysis: 'combBehavioralAnalysis',
-  
-  // Internal operations (not in schema but used for logging)
-  conversationalProbe: 'conversationalProbe'
+  combBehavioralAnalysis: 'combBehavioralAnalysis'
 };
 
 // Aliases = implementation variants (snake_case, legacy) → canonical
@@ -152,9 +149,6 @@ export const OP_ALIASES = {
   
   // Behavioral analysis
   'comb_behavioral_analysis': 'combBehavioralAnalysis',
-  
-  // Internal operations
-  'conversational_probe': 'conversationalProbe',
   
   // Session initialization (legacy alias)
   'sessionInit': 'retrieveRecentSessionLogs'
