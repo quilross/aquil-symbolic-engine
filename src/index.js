@@ -46,6 +46,9 @@ import {
   readLogsWithFilters 
 } from "./actions/logging.js";
 
+// Dream interpretation utilities
+import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from "./utils/dream-interpreter.js";
+
 // Core AI modules for personal growth
 import { SomaticHealer } from "./src-core-somatic-healer.js";
 import { TrustBuilder } from "./src-core-trust-builder.js";
@@ -824,22 +827,148 @@ router.post("/api/feedback", async (req, env) => {
 
 // Dream interpretation
 router.post("/api/dreams/interpret", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "interpretDream feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "interpretDream"
-    };
-    
-    await logChatGPTAction(env, 'interpretDream', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'interpretDream', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
+  return await interpretDreamHandler(req, env);
 });
+
+/**
+ * Production handler for dream interpretation
+ * Parses input safely, runs interpretation, returns structured results
+ */
+async function interpretDreamHandler(req, env) {
+  const started = Date.now();
+  const warnings = [];
+  let sessionId = undefined;
+  
+  try {
+    // Parse input safely
+    const body = await req.clone().json().catch(() => ({}));
+    
+    // Handle both schema formats (text vs dream_text)
+    const text = (body?.text || body?.dream_text || '').toString().trim();
+    const context = body?.context || {};
+    
+    // Extract or generate session ID
+    sessionId = body?.sessionId || body?.session_id || extractSessionId(req, body) || crypto.randomUUID();
+    
+    // Handle idempotency
+    const idempotencyKey = req.headers.get('idempotency-key');
+    let stableId = sessionId;
+    if (idempotencyKey) {
+      // Create stable ID from sessionId + idempotency key for D1 INSERT OR IGNORE
+      const hash = crypto.createHash('sha256').update(sessionId + idempotencyKey).digest('hex');
+      stableId = `dream_${hash.substring(0, 16)}`;
+    }
+
+    // Preprocessing - guard against short input
+    if (!text || text.length < 20) {
+      const interpretation = {
+        themes: [],
+        symbols: [],
+        tensions: [],
+        invitations: [],
+        summary: "Dream text too short to interpret meaningfully."
+      };
+      
+      try {
+        await logChatGPTAction(env, 'interpretDream', { sessionId, text: text || '' }, { interpretation, warnings: ['short_input'] });
+      } catch (logError) {
+        warnings.push('logging_fail');
+      }
+      
+      return addCORS(new Response(JSON.stringify({ sessionId, interpretation, warnings: ['short_input'] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }));
+    }
+
+    // Normalize text
+    const normalizedText = text.replace(/\s+/g, ' ').trim();
+
+    // Optional engine cues (fail-open)
+    let engine;
+    if (env.ENABLE_CONVERSATIONAL_ENGINE === '1') {
+      try {
+        engine = await runEngine(env, sessionId, normalizedText);
+      } catch (e) {
+        warnings.push('engine_fail');
+        console.warn('Engine failed for dream interpretation:', e.message);
+      }
+    }
+
+    // Optional motifs from pattern recognition (fail-open)
+    let motifs = [];
+    try {
+      motifs = await maybeRecognizePatterns(env, normalizedText);
+    } catch (e) {
+      warnings.push('patterns_fail');
+      console.warn('Pattern recognition failed for dream interpretation:', e.message);
+    }
+
+    // Build interpretation (deterministic + cues)
+    const interpretation = buildInterpretation(normalizedText, motifs, engine);
+
+    // Logging with R2 artifact (fail-open)
+    try {
+      await logChatGPTAction(
+        env,
+        'interpretDream',
+        { sessionId: stableId, text: safeTruncated(normalizedText, 1000) },
+        { interpretation, motifs: motifs.slice(0, 8) }
+      );
+    } catch (e) {
+      warnings.push('logging_fail');
+      console.warn('Logging failed for dream interpretation:', e.message);
+    }
+
+    // Build response payload
+    const payload = { sessionId, interpretation };
+    
+    // Include engine data if available
+    if (engine) {
+      payload.engine = {
+        voice: engine.voice,
+        pressLevel: engine.pressLevel,
+        questions: engine.questions,
+        micro: engine.micro
+      };
+    }
+    
+    // Include warnings if any
+    if (warnings.length) {
+      payload.warnings = warnings;
+    }
+
+    return addCORS(new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+
+  } catch (err) {
+    // Absolute fail-open - never crash
+    console.error('Dream interpretation error:', err);
+    
+    try {
+      await logChatGPTAction(env, 'interpretDream', { sessionId }, null, err);
+    } catch (logError) {
+      // Even logging can fail in fail-open mode
+    }
+    
+    return addCORS(new Response(JSON.stringify({
+      sessionId: sessionId || crypto.randomUUID(),
+      interpretation: {
+        themes: [],
+        symbols: [],
+        tensions: [],
+        invitations: [],
+        summary: "Unable to interpret at this time."
+      },
+      warnings: ['fail_open']
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+}
 
 // Energy optimization
 router.post("/api/energy/optimize", async (req, env) => {
