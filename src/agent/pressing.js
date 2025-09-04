@@ -89,7 +89,7 @@ export function detectOverwhelm(text, sensitivity = 0.5) {
   }
   
   // Calculate overwhelm score
-  const overwhelmScore = (overwhelmCount * 0.6) + (stressCount * 0.3);
+  let overwhelmScore = (overwhelmCount * 0.6) + (stressCount * 0.3);
   
   // Check physical indicators
   const physicalIndicators = [
