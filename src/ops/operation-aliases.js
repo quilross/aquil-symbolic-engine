@@ -148,7 +148,10 @@ export const OP_ALIASES = {
   'autonomous_pattern_detect': 'autonomousPatternDetect',
   
   // Behavioral analysis
-  'comb_behavioral_analysis': 'combBehavioralAnalysis'
+  'comb_behavioral_analysis': 'combBehavioralAnalysis',
+  
+  // Session initialization (legacy alias)
+  'sessionInit': 'retrieveRecentSessionLogs'
 };
 
 /**
