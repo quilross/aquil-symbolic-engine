@@ -172,7 +172,7 @@ function getNYTimestamp() {
 
 export async function writeLog(
   env,
-  { type, payload, session_id, who, level, tags, binary, textOrVector },
+  { type, payload, session_id, who, level, tags, binary, textOrVector, stores = [] }
 ) {
   const id = generateId();
   const timestamp = getNYTimestamp();
@@ -182,8 +182,8 @@ export async function writeLog(
   const operationId = toCanonical(type || 'log');
   const originalOperationId = (type && type !== operationId) ? type : null;
   
-  // Track which stores will receive this log
-  const storesUsed = [];
+  // Track which stores will receive this log (start with passed stores)
+  const storesUsed = [...stores];
   
   // Get payload size limit from environment (default 16KB)
   const maxPayloadBytes = parseInt(env.MAX_PAYLOAD_BYTES || '16384', 10);
