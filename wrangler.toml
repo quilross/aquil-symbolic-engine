@@ -1,46 +1,38 @@
-name = "aquil-symbolic-engine"
+name = "aquil-prod"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"] # allows Node-style modules if needed
 
-# ----------------------------------------------------
-# 🚀 Production Environment
-# ----------------------------------------------------
-[env.production]
-
-name = "aquil-prod"
 route = { pattern = "signal-q.me/*", zone_name = "signal-q.me" }
 account_id = "b07412f2f2389e8b537051bc092f3376"
 
-[[env.production.d1_databases]]
+[[d1_databases]]
 binding       = "AQUIL_DB"
 database_name = "aquil-wisdom-db"
 database_id   = "62d83066-2966-4510-9145-d65d520312f4"
 
-[[env.production.kv_namespaces]]
+[[kv_namespaces]]
 binding = "AQUIL_MEMORIES"
 id      = "633c8059669c4b73bb5ca78d2efdb5db"
 preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
 
-[[env.production.r2_buckets]]
+[[r2_buckets]]
 binding     = "AQUIL_STORAGE"
 bucket_name = "aquil-wisdom-storage"
 
-
-[[env.production.vectorize]]
+[[vectorize]]
 binding   = "AQUIL_CONTEXT"
 index_name = "aquil-context-index"
 
-[[env.production.services]]
+[[services]]
 binding     = "AI_GATEWAY_PROD"
 service     = "aquil-gateway"
 environment = "production"
 
-
-[env.production.ai]
+[ai]
 binding = "AQUIL_AI"
 
-[env.production.vars]
+[vars]
 VECTOR_API_KEY   = "${CLOUDFLARE_API_TOKEN}"
 ARK_VERSION      = "2.0"
 TIMEZONE         = "America/New_York"
@@ -48,61 +40,7 @@ AUTO_SESSION_INIT = "true"
 VOICE_ADAPTATION = "true"
 
 # Scheduled triggers for autonomous actions
-[env.production.triggers]
-crons = [
-  "0 7 * * *",   # Daily wisdom synthesis (morning)
-  "0 19 * * *",  # Daily wisdom synthesis (evening)
-  "0 20 * * *",  # Evening ritual suggestions
-  "0 8 * * 1"    # Weekly insights (Monday morning)
-]
-
-# ----------------------------------------------------
-# 🧪 Development Environment
-# ----------------------------------------------------
-[env.development]
-
-name = "aquil-dev"
-account_id = "b07412f2f2389e8b537051bc092f3376"
-
-[[env.development.d1_databases]]
-binding = "AQUIL_DB"
-database_name = "aquil-wisdom-db-dev"
-database_id = "2f6bcebb-5e63-4f76-bd58-03930bf5b323"
-preview_database_id = "ff7b029d-caf7-4879-b4c4-9ba46f1c86ff"
-
-[[env.development.kv_namespaces]]
-binding = "AQUIL_MEMORIES"
-id      = "633c8059669c4b73bb5ca78d2efdb5db"
-preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
-
-[[env.development.r2_buckets]]
-binding = "AQUIL_STORAGE"
-bucket_name = "aquil-wisdom-storage"
-preview_bucket_name = "aquil-wisdom-storage-dev-preview"
-
-[[env.development.vectorize]]
-binding   = "AQUIL_CONTEXT"
-index_name = "aquil-context-index-dev"
-
-[[env.development.services]]
-binding     = "AI_GATEWAY_DEV"
-service     = "aquil-gateway-dev"
-environment = "development"
-
-[env.development.ai]
-binding = "AI"
-
-[env.development.vars]
-ENVIRONMENT     = "development"
-API_VERSION     = "v2"
-VECTOR_API_KEY  = "${CLOUDFLARE_API_TOKEN}"
-ARK_VERSION     = "2.0"
-TIMEZONE        = "America/New_York"
-AUTO_SESSION_INIT = "true"
-VOICE_ADAPTATION = "true"
-
-# Scheduled triggers for autonomous actions (development)
-[env.development.triggers]
+[triggers]
 crons = [
   "0 7 * * *",   # Daily wisdom synthesis (morning)
   "0 19 * * *",  # Daily wisdom synthesis (evening)

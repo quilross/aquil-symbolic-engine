@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Aquil Symbolic Engine API (Essential 30)",
-    "description": "Personal AI Wisdom Builder with core functionality for ChatGPT integration. Streamlined to 30 operations.",
+    "title": "Aquil Production API (Essential 29)",
+    "description": "Personal AI Wisdom Builder with core functionality for ChatGPT integration. Streamlined to 29 operations.",
     "version": "2.2.2"
   },
   "servers": [

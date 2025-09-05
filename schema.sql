@@ -1,4 +1,4 @@
--- Aquil Symbolic Engine Database Schema
+-- Aquil Production Database Schema
 -- Personal AI wisdom and trust building system
 
 -- User profile and preferences  

@@ -5,7 +5,7 @@
 
 BASE_URL="https://signal-q.me"
 
-echo "🧪 Testing Aquil Symbolic Engine API Endpoints"
+echo "🧪 Testing Aquil Production API Endpoints"
 echo "=============================================="
 echo "Base URL: $BASE_URL"
 echo ""

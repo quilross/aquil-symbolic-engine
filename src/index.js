@@ -1,5 +1,5 @@
 /**
- * Aquil Symbolic Engine - Main Entry Point
+ * Aquil Production - Main Entry Point
  * Personal AI Wisdom Builder optimized for ChatGPT integration
  * 
  * This is the primary worker that handles all API requests for:

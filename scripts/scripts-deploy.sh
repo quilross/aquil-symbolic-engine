@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Aquil Symbolic Engine Deployment Script
+# Aquil Production Deployment Script
 # Automates the complete deployment process to Cloudflare
 
 set -e
 
-echo "🌱 Aquil Symbolic Engine - Deployment Script"
+echo "🌱 Aquil Production - Deployment Script"
 echo "============================================="
 
 # Check if we're in the right directory
@@ -67,7 +67,7 @@ echo ""
 echo "🎉 Deployment Complete!"
 echo "======================="
 echo ""
-echo "✅ Your Aquil Symbolic Engine is now live at:"
+echo "✅ Your Aquil Production System is now live at:"
 echo "   https://signal-q.me"
 echo ""
 echo "🧪 Test your deployment:"

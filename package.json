@@ -1,12 +1,12 @@
 {
-  "name": "aquil-symbolic-engine",
+  "name": "aquil-prod",
   "version": "2.0.0",
   "description": "Personal AI Wisdom Builder & Trust Reinforcement System",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy --env production",
+    "deploy": "wrangler deploy",
     "setup": "node setup.js",
     "tail": "wrangler tail",
     "db:init": "wrangler d1 execute AQUIL_DB --file=schema.sql --env production",
@@ -54,7 +54,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/aquil-symbolic-engine.git"
+    "url": "git+https://github.com/quilross/aquil-symbolic-engine.git"
   },
   "engines": {
     "node": ">=18.0.0"
