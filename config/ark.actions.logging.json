@@ -1,32 +1,311 @@
 {
-  "name": "ark-actions.logging-retrieval",
-  "version": "1.0.1",
-  "updatedAt": "2025-09-05T21:35:00Z",
-  "description": "Centralized actions config for Ark 2.0 logging & retrieval. Extracted from index.js.",
-  "stores": { "kv": "AQUIL_MEMORIES", "d1": "AQUIL_DB" },
-
-  "routes": {
-    "kvWrite": "/api/logs/kv-write",
-    "d1Insert": "/api/logs/d1-insert",
-    "promote": "/api/logs/promote",
-    "retrieve": "/api/logs/retrieve",
-    "retrieveLatest": "/api/logs/latest",
-    "retrievalMeta": "/api/logs/retrieval-meta"
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Aquil Logging & Retrieval API",
+    "description": "Primary actions schema for all logging, retrieval, and search operations across D1, KV, R2, and Vectorize storage systems.",
+    "version": "1.1.0"
   },
-
-  "enums": {
-    "logTypes": ["session","voice-change","insight","breakthrough","commitment","api-failure","session-end"],
-    "storedIn": ["KV","D1"]
+  "servers": [
+    {
+      "url": "https://signal-q.me",
+      "description": "Aquil's personal AI domain (Production)"
+    }
+  ],
+  "paths": {
+    "/api/log": {
+      "post": {
+        "summary": "Log any data or conversation event",
+        "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, or any meaningful moment.",
+        "operationId": "logDataOrEvent",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "default": "chat_message" },
+                  "who": { "type": "string", "default": "user" },
+                  "level": { "type": "string", "default": "info" },
+                  "payload": { "type": "object" }
+                },
+                "required": ["payload"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Log stored successfully" }
+        }
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "summary": "Retrieve conversation history",
+        "description": "Use AUTOMATICALLY to gather context at conversation start.",
+        "operationId": "retrieveLogsOrDataEntries",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20, "maximum": 200 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of log entries",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "type": "object" } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Advanced logging operations (KV, D1, promotion)",
+        "description": "Consolidated endpoint for advanced logging with storage control and data promotion.",
+        "operationId": "advancedLoggingOperations",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "operation": { 
+                    "type": "string", 
+                    "enum": ["kv-write", "d1-insert", "promote", "retrieve", "latest", "retrieval-meta"],
+                    "description": "Type of logging operation"
+                  },
+                  "payload": { "type": "object", "description": "Operation-specific data" },
+                  "id": { "type": "string" },
+                  "type": { "type": "string" },
+                  "detail": { "type": "string" },
+                  "storedIn": { "type": "string", "enum": ["KV", "D1"] },
+                  "filters": { "type": "object", "description": "For retrieve operations" }
+                },
+                "required": ["operation"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Advanced logging operation results" }
+        }
+      }
+    },
+    "/api/session-init": {
+      "get": {
+        "summary": "Initialize conversation with recent context",
+        "description": "Called AUTOMATICALLY at conversation start.",
+        "operationId": "retrieveRecentSessionLogs",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 7, "maximum": 200 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent session context",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "type": "object" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/logs": {
+      "post": {
+        "summary": "Search logs using vector similarity",
+        "description": "Use to find contextually similar logs and insights.",
+        "operationId": "searchLogs",
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" },
+                  "limit": { "type": "integer", "default": 5, "maximum": 20 }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vector search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    },
+                    "total": { "type": "integer" },
+                    "query": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/r2": {
+      "post": {
+        "summary": "Search R2 storage objects",
+        "description": "Search stored content in R2 bucket by metadata and content.",
+        "operationId": "searchR2Storage",
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" },
+                  "type": { "type": "string", "enum": ["all", "resonance", "logbin"], "default": "all" },
+                  "limit": { "type": "integer", "default": 5, "maximum": 20 }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "R2 search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "objects": { "type": "array", "items": { "type": "object" } },
+                    "total": { "type": "integer" },
+                    "query": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rag/search": {
+      "post": {
+        "summary": "RAG semantic search with AI generation",
+        "description": "Retrieval-augmented generation search combining vector similarity with AI synthesis.",
+        "operationId": "ragSearch",
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" },
+                  "limit": { "type": "integer", "default": 5, "maximum": 10 },
+                  "includeGeneration": { "type": "boolean", "default": true }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "RAG search with generated insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "retrieved": { "type": "array", "items": { "type": "object" } },
+                    "generated": { "type": "string" },
+                    "query": { "type": "string" },
+                    "relevance_scores": { "type": "array", "items": { "type": "number" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   },
-
-  "validation": {
-    "uuidV4": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-    "maxDetailLength": 4000,
-    "timestampFormat": "iso8601"
+  "components": {
+    "schemas": {
+      "LogEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "type": { "type": "string" },
+          "who": { "type": "string" },
+          "level": { "type": "string" },
+          "payload": { "type": "object" },
+          "storedIn": { "type": "string", "enum": ["KV", "D1"] }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "content": { "type": "string" },
+          "metadata": { "type": "object" },
+          "relevance_score": { "type": "number" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
   },
-
-  "guards": {
-    "kvFirst": true,
-    "promotionRule": "Promote to D1 when type is breakthrough|commitment|api-failure or log repeats > 2 in 24h."
+  "x-ark-metadata": {
+    "stores": { "kv": "AQUIL_MEMORIES", "d1": "AQUIL_DB" },
+    "routes": {
+      "kvWrite": "/api/logs/kv-write",
+      "d1Insert": "/api/logs/d1-insert",
+      "promote": "/api/logs/promote",
+      "retrieve": "/api/logs/retrieve",
+      "retrieveLatest": "/api/logs/latest",
+      "retrievalMeta": "/api/logs/retrieval-meta"
+    },
+    "enums": {
+      "logTypes": ["session","voice-change","insight","breakthrough","commitment","api-failure","session-end"],
+      "storedIn": ["KV","D1"]
+    },
+    "validation": {
+      "uuidV4": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "maxDetailLength": 4000,
+      "timestampFormat": "iso8601"
+    },
+    "guards": {
+      "kvFirst": true,
+      "promotionRule": "Promote to D1 when type is breakthrough|commitment|api-failure or log repeats > 2 in 24h."
+    }
   }
 }

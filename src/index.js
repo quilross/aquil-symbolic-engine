@@ -71,13 +71,13 @@ import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.
 import { handleScheduledTriggers } from "./utils/autonomy.js";
 
 // Pull routes + validation constants from JSON
-const Routes = actions.routes
-const MAX_DETAIL = actions.validation?.maxDetailLength ?? 4000
+const Routes = actions['x-ark-metadata'].routes
+const MAX_DETAIL = actions['x-ark-metadata'].validation?.maxDetailLength ?? 4000
 
 // Build sets/regex from JSON so the config owns the contract
-const LOG_TYPES = new Set(actions.enums?.logTypes ?? [])
-const STORED_IN = new Set(actions.enums?.storedIn ?? [])
-const UUID_V4 = new RegExp(actions.validation?.uuidV4 ?? '^[0-9a-fA-F-]{36}$')
+const LOG_TYPES = new Set(actions['x-ark-metadata'].enums?.logTypes ?? [])
+const STORED_IN = new Set(actions['x-ark-metadata'].enums?.storedIn ?? [])
+const UUID_V4 = new RegExp(actions['x-ark-metadata'].validation?.uuidV4 ?? '^[0-9a-fA-F-]{36}$')
 
 // ISO 8601 checker (lightweight; keeps your current semantics)
 function isIso(ts) {
@@ -1125,6 +1125,65 @@ router.get("/api/logs", async (req, env) => {
         "X-Warning": "fail-open: logs unavailable"
       }
     }));
+  }
+});
+
+// Advanced logging operations handler
+router.post("/api/logs", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { operation, payload, id, type, detail, storedIn, filters } = body;
+    
+    if (!operation) {
+      return addCORS(new Response(JSON.stringify({ 
+        error: "Missing operation field",
+        supported: ["kv-write", "d1-insert", "promote", "retrieve", "latest", "retrieval-meta"]
+      }), { status: 400, headers: { "Content-Type": "application/json" } }));
+    }
+
+    let result;
+    
+    switch (operation) {
+      case "kv-write":
+        result = await handleKvWrite(req, env, payload);
+        break;
+      case "d1-insert":
+        result = await handleD1Insert(req, env, payload);
+        break;
+      case "promote":
+        result = await handlePromote(req, env, { id, type, detail, storedIn });
+        break;
+      case "retrieve":
+        result = await handleRetrieve(req, env, filters || {});
+        break;
+      case "latest":
+        result = await handleRetrieveLatest(req, env, filters || {});
+        break;
+      case "retrieval-meta":
+        result = await handleRetrievalMeta(req, env, filters || {});
+        break;
+      default:
+        return addCORS(new Response(JSON.stringify({ 
+          error: `Unsupported operation: ${operation}`,
+          supported: ["kv-write", "d1-insert", "promote", "retrieve", "latest", "retrieval-meta"]
+        }), { status: 400, headers: { "Content-Type": "application/json" } }));
+    }
+
+    await logChatGPTAction(env, 'advancedLoggingOperations', 
+      { operation, type, storedIn }, 
+      { success: true, operation }
+    ).catch(() => {});
+
+    return addCORS(new Response(JSON.stringify(result), {
+      headers: { "Content-Type": "application/json" }
+    }));
+  } catch (error) {
+    console.error('Advanced logging operation error:', error);
+    await logChatGPTAction(env, 'advancedLoggingOperations', {}, null, error).catch(() => {});
+    return addCORS(new Response(JSON.stringify({ 
+      error: "Internal server error",
+      message: error.message 
+    }), { status: 500, headers: { "Content-Type": "application/json" } }));
   }
 });
 
