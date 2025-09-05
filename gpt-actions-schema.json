@@ -292,6 +292,153 @@
         }
       }
     },
+    "/api/r2/list": {
+      "get": {
+        "summary": "List stored logs and content from R2 storage",
+        "description": "Use AUTOMATICALLY to retrieve stored logs, resonance threads, and artifacts. Called by the system without user prompts.",
+        "operationId": "retrieveR2StoredContent",
+        "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "prefix",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by key prefix (e.g., 'resonance/', 'logbin_')"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 50
+            },
+            "description": "Number of items to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of stored items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "size": {
+                        "type": "integer"
+                      },
+                      "uploaded": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/r2/get": {
+      "get": {
+        "summary": "Retrieve specific content from R2 storage",
+        "description": "Use AUTOMATICALLY to get stored content by key. Called by the system without user prompts.",
+        "operationId": "getR2StoredContent",
+        "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The R2 object key to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retrieved content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/logs": {
+      "post": {
+        "summary": "Search through logs using vector similarity",
+        "description": "Use AUTOMATICALLY to find contextually similar logs and insights. Called by the system without user prompts.",
+        "operationId": "searchLogs",
+        "x-openai-isConsequential": false,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Search query text for semantic matching"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "Number of results to return"
+                  }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vector search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "matches": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/trust/check-in": {
       "post": {
         "summary": "Trust and self-confidence building session",

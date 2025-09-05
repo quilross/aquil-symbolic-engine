@@ -7,6 +7,15 @@ import {
   performReadinessChecks,
 } from "./core.js";
 
+// Helper function to safely parse JSON values
+const parseValue = (val) => {
+  try {
+    return JSON.parse(val);
+  } catch {
+    return val;
+  }
+};
+
 // Manifest for GPT: describes all available actions and storage usage
 export const ARK_MANIFEST = [
   {
@@ -247,21 +256,13 @@ async function aiCall(env, model, messages) {
 async function fetchContinuityLogs(env, limit = 5) {
   if (!env.AQUIL_DB) return [];
 
-  const parse = (val) => {
-    try {
-      return JSON.parse(val);
-    } catch {
-      return val;
-    }
-  };
-
   try {
     const { results } = await env.AQUIL_DB.prepare(
       "SELECT id, timestamp, kind, detail FROM metamorphic_logs ORDER BY timestamp DESC LIMIT ?",
     )
       .bind(limit)
       .all();
-    return results.map((r) => ({ ...r, detail: parse(r.detail) }));
+    return results.map((r) => ({ ...r, detail: parseValue(r.detail) }));
   } catch {
     try {
       const { results } = await env.AQUIL_DB.prepare(
@@ -269,7 +270,7 @@ async function fetchContinuityLogs(env, limit = 5) {
       )
         .bind(limit)
         .all();
-      return results.map((r) => ({ ...r, detail: parse(r.detail) }));
+      return results.map((r) => ({ ...r, detail: parseValue(r.detail) }));
     } catch {
       return [];
     }
@@ -483,14 +484,6 @@ export async function handleRetrieveLogs(request, env) {
     tag: url.searchParams.get("tag"),
   };
 
-  const parse = (val) => {
-    try {
-      return JSON.parse(val);
-    } catch {
-      return val;
-    }
-  };
-
   const buildWhere = (map) => {
     const clauses = [];
     const values = [];
@@ -534,7 +527,7 @@ export async function handleRetrieveLogs(request, env) {
       ).bind(...values, limit);
       const { results } = await stmt.all();
       return new Response(
-        JSON.stringify(results.map((r) => ({ ...r, detail: parse(r.detail) }))),
+        JSON.stringify(results.map((r) => ({ ...r, detail: parseValue(r.detail) }))),
         {
           headers: { "Content-Type": "application/json" },
         },
@@ -553,7 +546,7 @@ export async function handleRetrieveLogs(request, env) {
       ).bind(...values, limit);
       const { results } = await stmt.all();
       return new Response(
-        JSON.stringify(results.map((r) => ({ ...r, detail: parse(r.detail) }))),
+        JSON.stringify(results.map((r) => ({ ...r, detail: parseValue(r.detail) }))),
         {
           headers: { "Content-Type": "application/json" },
         },

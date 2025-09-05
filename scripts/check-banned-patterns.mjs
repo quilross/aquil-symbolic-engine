@@ -90,7 +90,7 @@ async function checkBannedPatterns() {
             const relativePath = path.relative(rootDir, file);
             
             // Skip excluded paths
-            if (banned.excludePaths && banned.excludePaths.some(excludePath => 
+            if (banned.excludePaths?.some(excludePath => 
               relativePath.includes(excludePath)
             )) {
               continue;

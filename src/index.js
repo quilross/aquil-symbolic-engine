@@ -16,86 +16,55 @@ import crypto from 'crypto';
 import {
   handleSessionInit,
   handleDiscoveryInquiry,
-  handleRitualSuggestion,
   handleHealthCheck,
-  handleReadinessCheck,
 } from "./ark/endpoints.js";
 
 // Behavioral engine
 import { runEngine } from "./agent/engine.js";
 
-// ARK endpoints for autonomous functionality
-import { 
-  arkLog, 
-  arkRetrieve, 
-  arkMemories, 
-  arkVector, 
-  arkResonance, 
-  arkStatus, 
-  arkFilter, 
-  arkAutonomous 
-} from "./ark/ark-endpoints.js";
-
 // Logging and data persistence
 import { 
-  writeLog, 
-  readLogs, 
-  writeAutonomousLog, 
-  readAutonomousLogs, 
-  getAutonomousStats, 
-  readLogsWithFilters 
+  writeLog 
 } from "./actions/logging.js";
 
 // Dream interpretation utilities
 import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from "./utils/dream-interpreter.js";
 
+// D1 and Vector database actions
+import { exec as d1Exec } from "./actions/d1.js";
+import { query as vectorQuery, upsert as vectorUpsert } from "./actions/vectorize.js";
+
+// R2 storage actions
+import { put as r2Put, get as r2Get } from "./actions/r2.js";
+
 // Core AI modules for personal growth
 import { SomaticHealer } from "./src-core-somatic-healer.js";
-import { TrustBuilder } from "./src-core-trust-builder.js";
-import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
-import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
-import { StandingTall } from "./src-core-standing-tall.js";
 import { ValuesClarifier } from "./src-core-values-clarifier.js";
 import { CreativityUnleasher } from "./src-core-creativity-unleasher.js";
 import { AbundanceCultivator } from "./src-core-abundance-cultivator.js";
 import { TransitionNavigator } from "./src-core-transition-navigator.js";
 import { AncestryHealer } from "./src-core-ancestry-healer.js";
-import { AquilCore } from "./src-core-aquil-core.js";
+import { TrustBuilder } from "./src-core-trust-builder.js";
+import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
+import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
+import { StandingTall } from "./src-core-standing-tall.js";
 
 // Utilities
 import { toCanonical } from "./ops/operation-aliases.js";
-import { logMetamorphicEvent } from "./ark/core.js";
-import { AquilDatabase } from "./utils/database.js";
-import { AquilAI } from "./utils/ai-helpers.js";
 import { safeBinding } from "./utils/gpt-compat.js";
-import { 
-  detectTriggers, 
-  callAutonomousEndpoint, 
-  handleScheduledTriggers,
-  autoDetectTags,
-  AUTONOMOUS_TRIGGERS 
-} from "./utils/autonomy.js";
+import { handleScheduledTriggers } from "./utils/autonomy.js";
 
 // Response utilities
 import { 
-  handleError, 
-  createErrorResponse, 
-  withErrorHandling,
-  handleHealthCheckError 
+  createErrorResponse
 } from "./utils/error-handler.js";
 import { 
   createSuccessResponse,
-  createSimpleErrorResponse,
   handleCORSPreflight,
-  addCORSToResponse,
-  createAutonomousResponse,
-  createHealthResponse,
   extractSessionId,
   createWisdomResponse,
   createPatternResponse,
-  createSessionInitResponse,
-  createCommitmentResponse,
-  createFallbackResponse
+  createCommitmentResponse
 } from "./utils/response-helpers.js";
 
 // =============================================================================
@@ -214,7 +183,7 @@ async function queryMetamorphicLogs(env, { limit = 20, after = null, sessionId =
     }
 
     // Cursor pagination with stable sort
-    if (after && after.ts && after.id) {
+    if (after?.ts && after?.id) {
       query += ` AND (timestamp < ? OR (timestamp = ? AND id < ?))`;
       params.push(after.ts, after.ts, after.id);
     }
@@ -593,21 +562,22 @@ router.get("/api/logs", async (req, env) => {
       { count: items.length, cursor: !!nextCursor }
     ).catch(() => {});
 
-    return addCORS(new Response(JSON.stringify({
-      items,
-      cursor: nextCursor
-    }), {
-      headers: { "Content-Type": "application/json" }
+    // Return array format for ChatGPT compatibility
+    return addCORS(new Response(JSON.stringify(items), {
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Next-Cursor": nextCursor || "",
+        "X-Total-Count": items.length.toString()
+      }
     }));
   } catch (error) {
-    // Fail-open
+    // Fail-open with array format
     await logChatGPTAction(env, 'retrieveLogsOrDataEntries', {}, null, error).catch(() => {});
-    return addCORS(new Response(JSON.stringify({
-      items: [],
-      cursor: null,
-      warnings: ['fail-open: logs unavailable']
-    }), {
-      headers: { "Content-Type": "application/json" }
+    return addCORS(new Response(JSON.stringify([]), {
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Warning": "fail-open: logs unavailable"
+      }
     }));
   }
 });
@@ -755,12 +725,15 @@ router.post("/api/standing-tall/practice", async (req, env) => {
 router.post("/api/wisdom/synthesize", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "synthesizeWisdom feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "synthesizeWisdom"
-    };
+    
+    // Use MediaWisdomExtractor to extract wisdom from the input
+    const wisdom = new MediaWisdomExtractor(env);
+    const result = await wisdom.extractWisdom({
+      media_type: "synthesis_request",
+      title: "Wisdom Synthesis",
+      your_reaction: body.reflection || body.input || "Synthesis request",
+      content_summary: body.content || body.text || "User requested wisdom synthesis"
+    });
     
     await logChatGPTAction(env, 'synthesizeWisdom', body, result);
     return addCORS(createWisdomResponse(result));
@@ -773,12 +746,14 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
 // Daily synthesis
 router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
-    const result = { 
-      status: "coming_soon", 
-      message: "getDailySynthesis feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "getDailySynthesis"
-    };
+    // Create a daily synthesis by extracting wisdom from recent activities
+    const wisdom = new MediaWisdomExtractor(env);
+    const result = await wisdom.extractWisdom({
+      media_type: "daily_synthesis",
+      title: "Daily Wisdom Synthesis",
+      your_reaction: "Reflecting on today's insights and learnings",
+      content_summary: "Daily synthesis of wisdom and insights for personal growth"
+    });
     
     await logChatGPTAction(env, 'getDailySynthesis', {}, result);
     return addCORS(createWisdomResponse(result));
@@ -791,12 +766,14 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
 // Personal insights
 router.get("/api/insights", async (req, env) => {
   try {
-    const result = { 
-      status: "coming_soon", 
-      message: "getPersonalInsights feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "getPersonalInsights"
-    };
+    // Generate personal insights by extracting wisdom
+    const wisdom = new MediaWisdomExtractor(env);
+    const result = await wisdom.extractWisdom({
+      media_type: "personal_insights",
+      title: "Personal Growth Insights",
+      your_reaction: "Seeking personal insights and guidance",
+      content_summary: "Request for personalized insights based on current life patterns and growth areas"
+    });
     
     await logChatGPTAction(env, 'getPersonalInsights', {}, result);
     return addCORS(createWisdomResponse(result));
@@ -810,14 +787,28 @@ router.get("/api/insights", async (req, env) => {
 router.post("/api/feedback", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "submitFeedback feature is being implemented",
+    
+    // Store feedback in logs for analysis
+    const feedbackLog = {
+      type: 'user_feedback',
+      feedback: body.feedback || body.message || body.text,
+      rating: body.rating,
+      context: body.context,
       timestamp: new Date().toISOString(),
-      operation: "submitFeedback"
+      user_id: body.user_id,
+      session_id: body.session_id
     };
     
-    await logChatGPTAction(env, 'submitFeedback', body, result);
+    await logChatGPTAction(env, 'submitFeedback', body, feedbackLog);
+    
+    const result = {
+      status: "success",
+      message: "Feedback received and logged for analysis",
+      timestamp: new Date().toISOString(),
+      operation: "submitFeedback",
+      feedback_id: crypto.randomUUID()
+    };
+    
     return addCORS(createSuccessResponse(result));
   } catch (error) {
     await logChatGPTAction(env, 'submitFeedback', {}, null, error);
@@ -835,9 +826,8 @@ router.post("/api/dreams/interpret", async (req, env) => {
  * Parses input safely, runs interpretation, returns structured results
  */
 async function interpretDreamHandler(req, env) {
-  const started = Date.now();
   const warnings = [];
-  let sessionId = undefined;
+  let sessionId;
   
   try {
     // Parse input safely
@@ -845,7 +835,6 @@ async function interpretDreamHandler(req, env) {
     
     // Handle both schema formats (text vs dream_text)
     const text = (body?.text || body?.dream_text || '').toString().trim();
-    const context = body?.context || {};
     
     // Extract or generate session ID
     sessionId = body?.sessionId || body?.session_id || extractSessionId(req, body) || crypto.randomUUID();
@@ -974,12 +963,17 @@ async function interpretDreamHandler(req, env) {
 router.post("/api/energy/optimize", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "optimizeEnergy feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "optimizeEnergy"
+    const healer = new SomaticHealer(env);
+    
+    // Use generateSession to create an energy optimization session
+    const sessionData = {
+      body_sensation: body.energy_level || "low energy",
+      emotional_state: body.context || "seeking energy optimization",
+      physical_description: body.focus_area || "general energy improvement",
+      context: `Energy optimization request: ${JSON.stringify(body)}`
     };
+    
+    const result = await healer.generateSession(sessionData);
     
     await logChatGPTAction(env, 'optimizeEnergy', body, result);
     return addCORS(createWisdomResponse(result));
@@ -993,12 +987,8 @@ router.post("/api/energy/optimize", async (req, env) => {
 router.post("/api/values/clarify", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "clarifyValues feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "clarifyValues"
-    };
+    const valuesClarifier = new ValuesClarifier(env);
+    const result = await valuesClarifier.clarify(body);
     
     await logChatGPTAction(env, 'clarifyValues', body, result);
     return addCORS(createWisdomResponse(result));
@@ -1012,12 +1002,8 @@ router.post("/api/values/clarify", async (req, env) => {
 router.post("/api/creativity/unleash", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "unleashCreativity feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "unleashCreativity"
-    };
+    const creativityUnleasher = new CreativityUnleasher(env);
+    const result = await creativityUnleasher.unleash(body);
     
     await logChatGPTAction(env, 'unleashCreativity', body, result);
     return addCORS(createWisdomResponse(result));
@@ -1031,12 +1017,8 @@ router.post("/api/creativity/unleash", async (req, env) => {
 router.post("/api/abundance/cultivate", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "cultivateAbundance feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "cultivateAbundance"
-    };
+    const abundanceCultivator = new AbundanceCultivator(env);
+    const result = await abundanceCultivator.cultivate(body);
     
     await logChatGPTAction(env, 'cultivateAbundance', body, result);
     return addCORS(createWisdomResponse(result));
@@ -1050,12 +1032,8 @@ router.post("/api/abundance/cultivate", async (req, env) => {
 router.post("/api/transitions/navigate", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "navigateTransitions feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "navigateTransitions"
-    };
+    const transitionNavigator = new TransitionNavigator(env);
+    const result = await transitionNavigator.navigate(body);
     
     await logChatGPTAction(env, 'navigateTransitions', body, result);
     return addCORS(createWisdomResponse(result));
@@ -1069,12 +1047,8 @@ router.post("/api/transitions/navigate", async (req, env) => {
 router.post("/api/ancestry/heal", async (req, env) => {
   try {
     const body = await req.json();
-    const result = { 
-      status: "coming_soon", 
-      message: "healAncestry feature is being implemented",
-      timestamp: new Date().toISOString(),
-      operation: "healAncestry"
-    };
+    const ancestryHealer = new AncestryHealer(env);
+    const result = await ancestryHealer.heal(body);
     
     await logChatGPTAction(env, 'healAncestry', body, result);
     return addCORS(createWisdomResponse(result));
@@ -1256,6 +1230,426 @@ router.post("/api/coaching/comb-analysis", async (req, env) => {
 });
 
 // =============================================================================
+// R2 STORAGE ENDPOINTS
+// =============================================================================
+
+// R2 List endpoint for ChatGPT retrieval
+router.get("/api/r2/list", async (req, env) => {
+  try {
+    const url = new URL(req.url);
+    const prefix = url.searchParams.get('prefix');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10', 10), 50);
+    
+    const listOptions = { limit };
+    if (prefix) {
+      listOptions.prefix = prefix;
+    }
+    
+    const r2Objects = await env.AQUIL_STORAGE.list(listOptions);
+    const results = [];
+    
+    for (const obj of r2Objects.objects || []) {
+      let objectType;
+      if (obj.key.startsWith('resonance/')) {
+        objectType = 'resonance_thread';
+      } else if (obj.key.startsWith('logbin_')) {
+        objectType = 'logbin_data';
+      } else {
+        objectType = 'stored_content';
+      }
+      
+      results.push({
+        key: obj.key,
+        size: obj.size,
+        uploaded: obj.uploaded,
+        type: objectType
+      });
+    }
+    
+    await logChatGPTAction(env, 'retrieveR2StoredContent', { prefix, limit }, { count: results.length });
+    
+    return addCORS(new Response(JSON.stringify(results), {
+      headers: { "Content-Type": "application/json" }
+    }));
+  } catch (error) {
+    console.error('R2 list error:', error);
+    await logChatGPTAction(env, 'retrieveR2StoredContent', {}, null, error);
+    return addCORS(new Response(JSON.stringify([]), {
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Warning": "fail-open: R2 list unavailable"
+      }
+    }));
+  }
+});
+
+// R2 Put endpoint
+router.post("/api/r2/put", async (req, env) => {
+  try {
+    return await r2Put(req, env);
+  } catch (error) {
+    console.error('R2 put error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// R2 Get endpoint
+router.get("/api/r2/get", async (req, env) => {
+  try {
+    return await r2Get(req, env);
+  } catch (error) {
+    console.error('R2 get error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// D1 DATABASE ENDPOINTS
+// =============================================================================
+
+// D1 Query endpoint
+router.post("/api/d1/query", async (req, env) => {
+  try {
+    return await d1Exec(req, env);
+  } catch (error) {
+    console.error('D1 query error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// VECTORIZE ENDPOINTS  
+// =============================================================================
+
+// Vector query endpoint
+router.post("/api/vectorize/query", async (req, env) => {
+  try {
+    return await vectorQuery(req, env);
+  } catch (error) {
+    console.error('Vector query error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Vector upsert endpoint
+router.post("/api/vectorize/upsert", async (req, env) => {
+  try {
+    return await vectorUpsert(req, env);
+  } catch (error) {
+    console.error('Vector upsert error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// RAG (RETRIEVAL-AUGMENTED GENERATION) ENDPOINTS
+// =============================================================================
+
+// Semantic search and retrieval endpoint
+router.post("/api/rag/search", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { 
+      query, 
+      text = query, 
+      mode = "semantic_recall", 
+      topK = 5, 
+      threshold = 0.7 
+    } = body;
+    
+    if (!text) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Import the semantic recall functions
+    const { semanticRecall, transformativeInquiry } = await import("./actions/vectorize.js");
+    
+    let result;
+    if (mode === "transformative_inquiry") {
+      result = await transformativeInquiry(env, { text, topK });
+    } else {
+      result = await semanticRecall(env, { text, topK, threshold });
+    }
+    
+    await logChatGPTAction(env, 'ragSearch', body, result);
+    
+    return addCORS({
+      success: true,
+      query: text,
+      mode,
+      timestamp: new Date().toISOString(),
+      ...result
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'ragSearch', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Memory retrieval endpoint - get logs with context
+router.post("/api/rag/memory", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { 
+      query, 
+      text = query, 
+      include_insights = true, 
+      topK = 10,
+      threshold = 0.6 
+    } = body;
+    
+    if (!text) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Use semantic recall to find relevant memories
+    const { semanticRecall } = await import("./actions/vectorize.js");
+    const memories = await semanticRecall(env, { text, topK, threshold });
+    
+    // Also get recent logs from D1 for additional context
+    const recentLogs = await queryMetamorphicLogs(env, { limit: 5 });
+    
+    const result = {
+      query: text,
+      semantic_memories: memories,
+      recent_context: recentLogs,
+      total_memories: memories.matches?.length || 0,
+      search_mode: "memory_retrieval",
+      insights: include_insights ? {
+        message: "These memories and logs represent your journey of growth and self-discovery",
+        guidance: "Look for patterns, themes, and evolution in your thoughts and experiences"
+      } : null
+    };
+    
+    await logChatGPTAction(env, 'memoryRetrieval', body, result);
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: result
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'memoryRetrieval', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Debug endpoint to check vector dimensions  
+router.post("/api/debug/vector-dimensions", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { text = "test" } = body;
+    
+    // Test with the large model that should produce 1024 dimensions
+    const embedding = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text });
+    
+    return addCORS({
+      success: true,
+      text,
+      model: "@cf/baai/bge-large-en-v1.5",
+      dimensions: embedding?.data?.length || "unknown",
+      has_data: !!embedding?.data,
+      sample: embedding?.data?.slice(0, 3) || [],
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// RAG (RETRIEVAL-AUGMENTED GENERATION) ENDPOINTS
+// =============================================================================
+
+// Simple vector search that works like logging
+router.post("/api/search/logs", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { query, limit = 5 } = body;
+    
+    if (!query) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Create embedding using exact same pattern as logging.js
+    const embedding = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", {
+      text: query,
+    });
+    const values = embedding.data?.[0] || embedding;
+    
+    if (!Array.isArray(values)) {
+      return addCORS(createErrorResponse({ error: "Failed to create embedding" }, 500));
+    }
+    
+    // Query vector database
+    const results = await env.AQUIL_CONTEXT.query({
+      vector: values,
+      topK: limit,
+      includeMetadata: true,
+    });
+    
+    // Get full log content for matches
+    const matches = [];
+    for (const match of results.matches || []) {
+      try {
+        const logKey = match.id.replace('logvec_', 'log_');
+        const logContent = await env.AQUIL_MEMORIES.get(logKey);
+        if (logContent) {
+          const parsedLog = JSON.parse(logContent);
+          matches.push({
+            id: match.id,
+            score: match.score,
+            log_text: parsedLog.detail?.content || parsedLog.detail?.message || "No content",
+            timestamp: parsedLog.timestamp,
+            operation: parsedLog.operationId,
+            metadata: match.metadata,
+            full_log: parsedLog
+          });
+        }
+      } catch (e) {
+        // Skip failed log retrievals
+      }
+    }
+    
+    await logChatGPTAction(env, 'searchLogs', body, { query, matches: matches.length });
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        query,
+        matches,
+        total: matches.length,
+        message: `Found ${matches.length} relevant logs for "${query}"`
+      }
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'searchLogs', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// R2 Content Search endpoint - Search through resonance threads and stored artifacts
+router.post("/api/search/r2", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { query, type = "all", limit = 5 } = body;
+    
+    if (!query) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Start with a simple listing approach to avoid timeouts
+    let listOptions = { limit: Math.min(limit * 2, 20) }; // Get more than needed, filter later
+    if (type === "resonance") {
+      listOptions.prefix = "resonance/";
+    } else if (type === "logbin") {
+      listOptions.prefix = "logbin_";
+    }
+    
+    const r2Objects = await env.AQUIL_STORAGE.list(listOptions);
+    const results = [];
+    
+    // Return metadata first, content search can be a separate endpoint
+    for (const obj of r2Objects.objects || []) {
+      results.push({
+        key: obj.key,
+        size: obj.size,
+        uploaded: obj.uploaded,
+        type: obj.key.startsWith('resonance/') ? 'resonance_thread' : 'logbin_data'
+      });
+      
+      if (results.length >= limit) break;
+    }
+    
+    await logChatGPTAction(env, 'searchR2', body, { query, results: results.length });
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        query,
+        type,
+        objects: results,
+        total: results.length,
+        message: `Found ${results.length} R2 objects (use /api/r2/get to retrieve content)`,
+        note: "This endpoint lists R2 objects. Use /api/r2/get?key=<key> to retrieve specific content."
+      }
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'searchR2', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Helper function for simple relevance scoring
+function calculateSimpleRelevance(content, query) {
+  const matches = (content.match(new RegExp(query, 'gi')) || []).length;
+  const density = matches / content.length * 1000; // matches per 1000 chars
+  return matches + density;
+}
+
+// R2 Resonance Weaving Search - Find patterns and threads
+router.post("/api/search/resonance", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { theme, timeframe = "7d", session_id } = body;
+    
+    if (!theme) {
+      return addCORS(createErrorResponse({ error: "Theme or pattern to search for is required" }, 400));
+    }
+    
+    // Use the progressive weaving function to find resonance patterns
+    const { progressiveWeaving } = await import("./actions/r2.js");
+    const resonanceData = await progressiveWeaving(env, { session_id, timeframe });
+    
+    // Filter resonance data based on theme
+    const matches = [];
+    if (resonanceData?.threads) {
+      for (const thread of resonanceData.threads) {
+        const threadContent = JSON.stringify(thread).toLowerCase();
+        const themeLower = theme.toLowerCase();
+        
+        if (threadContent.includes(themeLower)) {
+          matches.push({
+            ...thread,
+            relevance: calculateSimpleRelevance(threadContent, themeLower)
+          });
+        }
+      }
+    }
+    
+    // Sort by relevance
+    matches.sort((a, b) => b.relevance - a.relevance);
+    
+    await logChatGPTAction(env, 'searchResonance', body, { theme, matches: matches.length });
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        theme,
+        timeframe,
+        session_id,
+        resonance_threads: matches,
+        total: matches.length,
+        full_weaving: resonanceData,
+        message: `Found ${matches.length} resonance patterns related to "${theme}"`
+      }
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'searchResonance', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
 // FALLBACK AND ERROR HANDLING
 // =============================================================================
 
@@ -1294,7 +1688,12 @@ router.all("*", () => {
       "/api/contracts/create",
       "/api/monitoring/metrics",
       "/api/socratic/question",
-      "/api/coaching/comb-analysis"
+      "/api/coaching/comb-analysis",
+      "/api/r2/put",
+      "/api/r2/get",
+      "/api/d1/query",
+      "/api/vectorize/query",
+      "/api/vectorize/upsert"
     ]
   }, 404));
 });

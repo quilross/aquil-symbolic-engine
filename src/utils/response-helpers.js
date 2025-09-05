@@ -126,8 +126,9 @@ export async function createAutonomousResponse(actionData, env = null, options =
  * Create health check response with system status
  */
 export function createHealthResponse(healthData, overallStatus = 'healthy') {
-  const statusCode = overallStatus === 'healthy' ? 200 : 
-                    overallStatus === 'degraded' ? 206 : 503;
+  let statusCode = 200; // default healthy
+  if (overallStatus === 'degraded') statusCode = 206;
+  else if (overallStatus !== 'healthy') statusCode = 503;
 
   return createSuccessResponse({
     status: overallStatus,
@@ -379,7 +380,7 @@ export function extractSessionId(request, body = null) {
   
   // Generate new session ID if none found
   if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
   
   return sessionId;

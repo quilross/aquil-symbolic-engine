@@ -110,7 +110,7 @@ export async function readLogs(env, opts = {}) {
 
   // Vector - Enhanced with dual-mode support
   try {
-    const { queryVector } = await import('./vectorize.js');
+    await import('./vectorize.js');
     results.vector = {
       status: 'Available modes: semantic_recall, transformative_inquiry, legacy',
       modes: ['semantic_recall', 'transformative_inquiry', 'legacy'],
@@ -196,14 +196,14 @@ export async function writeLog(
   };
   
   // Apply privacy redaction before storing in D1/KV (fail-open)
-  let redactedPayload = normalizedPayload;
+  let redactedPayload;
   try {
     const { redactPayload } = await import('../utils/privacy.js');
     redactedPayload = redactPayload(normalizedPayload);
   } catch (redactionError) {
     // Fail-open: use original payload if redaction fails
-    console.warn('Privacy redaction failed:', redactionError.message);
     redactedPayload = normalizedPayload;
+    console.warn('Privacy redaction failed:', redactionError.message);
   }
   
   // Check payload size and handle R2 overflow (fail-open)
@@ -384,7 +384,7 @@ export async function writeLog(
   // KV - Respect KV_TTL_SECONDS environment variable and use finalPayload
   try {
     // Check circuit breaker for KV store
-    const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+    const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
     const { shouldSkip } = await checkStoreCircuitBreaker(env, 'kv');
     
     if (shouldSkip) {
@@ -407,7 +407,7 @@ export async function writeLog(
         who,
         level,
         tags,
-        r2_pointer,  // Include R2 pointer if overflow occurred
+        r2Pointer,  // Include R2 pointer if overflow occurred
       });
       
       // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
@@ -453,7 +453,7 @@ export async function writeLog(
   if (binary) {
     try {
       // Check circuit breaker for R2 store
-      const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+      const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
       const { shouldSkip } = await checkStoreCircuitBreaker(env, 'r2');
       
       if (shouldSkip) {
@@ -518,7 +518,7 @@ export async function writeLog(
       // Store JSON log data for required operations
       try {
         // Check circuit breaker for R2 store
-        const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+        const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
         const { shouldSkip } = await checkStoreCircuitBreaker(env, 'r2');
         
         if (shouldSkip) {
@@ -592,7 +592,7 @@ export async function writeLog(
   if (textOrVector) {
     try {
       // Check circuit breaker for Vector store
-      const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+      const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
       const { shouldSkip } = await checkStoreCircuitBreaker(env, 'vector');
       
       if (shouldSkip) {
@@ -609,9 +609,10 @@ export async function writeLog(
         let values;
         if (typeof textOrVector === "string") {
           // Embed text
-          values = await env.AI.run("@cf/baai/bge-small-en-v1.5", {
+          const embedding = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", {
             text: textOrVector,
           });
+          values = embedding.data?.[0] || embedding;
         } else if (Array.isArray(textOrVector)) {
           values = textOrVector;
         }
@@ -834,7 +835,10 @@ export async function readAutonomousLogs(env, opts = {}) {
 // Enhanced autonomous action statistics with better analytics
 export async function getAutonomousStats(env, timeframe = '24h') {
   try {
-    const hoursBack = timeframe === '24h' ? 24 : timeframe === '7d' ? 168 : timeframe === '30d' ? 720 : 24;
+    let hoursBack = 24; // default
+    if (timeframe === '7d') hoursBack = 168;
+    else if (timeframe === '30d') hoursBack = 720;
+    
     const cutoffTime = new Date(Date.now() - (hoursBack * 60 * 60 * 1000)).toISOString();
     
     const stats = {
@@ -868,7 +872,6 @@ export async function getAutonomousStats(env, timeframe = '24h') {
         
         try {
           const detail = JSON.parse(row.detail || '{}');
-          const tags = JSON.parse(row.tags || '[]');
           
           // Count actions by type
           if (detail.action) {
@@ -1039,7 +1042,7 @@ export async function readLogsWithFilters(env, filters = {}) {
         const detail = JSON.parse(row.detail || '{}');
         
         // Add computed fields for autonomous logs
-        if (row.kind === 'autonomous_action' || (row.tags && row.tags.includes('autonomous'))) {
+        if (row.kind === 'autonomous_action' || row.tags?.includes('autonomous')) {
           processed.autonomous_metadata = {
             trace_id: detail.trace_id || null,
             confidence_score: detail.confidence_score || null,

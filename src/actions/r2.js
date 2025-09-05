@@ -12,7 +12,7 @@ export async function listRecent(env, { prefix = "logbin_", limit = 20 } = {}) {
 
 // Store resonance threads in R2
 export async function storeResonanceThread(env, threadData) {
-  const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const threadId = `thread_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   const threadKey = `resonance/${threadId}.json`;
   
   try {
@@ -39,7 +39,7 @@ export async function storeResonanceThread(env, threadData) {
 // Weave micro-threads from single log entry (sparse data support)
 export async function weaveMicroThread(env, logEntry) {
   try {
-    const { content, type, session_id, timestamp, tags = [] } = logEntry;
+    const { content, session_id, timestamp, tags = [] } = logEntry;
     
     // Extract themes and patterns from single entry
     const themes = extractThemes(content);
@@ -358,9 +358,7 @@ function traceSomaticPatterns(bodySignals) {
       .sort(([,a], [,b]) => b - a)
       .slice(0, 3)
       .map(([signal, count]) => ({ signal, frequency: count })),
-    body_awareness_level: bodySignals.length > 0 ? 'active' : 'minimal',
-    somatic_themes: bodySignals.includes('tension') ? 'stress_holding' : 
-                   bodySignals.includes('breath_awareness') ? 'conscious_breathing' : 'general_awareness'
+    body_awareness_level: bodySignals.length > 0 ? 'active' : 'minimal'
   };
 }
 
@@ -503,9 +501,30 @@ export async function get(req, env) {
   const url = new URL(req.url);
   const key = url.searchParams.get("key");
   if (!key) return send(400, { error: "key required" });
+  
   const obj = await env.AQUIL_STORAGE.get(key);
   if (!obj) return send(404, { error: "not_found" });
-  const buf = await obj.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-  return send(200, { key, base64 });
+  
+  // For ChatGPT compatibility, try to return JSON if it's JSON content
+  try {
+    const text = await obj.text();
+    // Try to parse as JSON first
+    const jsonContent = JSON.parse(text);
+    return send(200, { 
+      key, 
+      content: jsonContent,
+      contentType: 'application/json',
+      size: obj.size 
+    });
+  } catch (jsonError) {
+    // If not JSON, fall back to base64 for binary content
+    const buf = await obj.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    return send(200, { 
+      key, 
+      base64, 
+      contentType: 'application/octet-stream',
+      size: obj.size 
+    });
+  }
 }

@@ -3,19 +3,24 @@
 // Ensure a vector embedding from text or vector
 export async function ensureVector(
   env,
-  { text, vector, model = "@cf/baai/bge-small-en-v1.5" } = {},
+  { text, vector, model = "@cf/baai/bge-large-en-v1.5" } = {},
 ) {
   if (vector) {
     return vector;
   }
   if (text) {
     // Use Cloudflare AI binding to embed text
-    const embedding = await env.AI.run(model, { text });
-    // Convert to Float32Array if needed
-    if (embedding?.data) {
-      return new Float32Array(embedding.data);
+    const embedding = await env.AQUIL_AI.run(model, { text });
+    
+    // Use the same format as the working logging code
+    const values = embedding.data?.[0] || embedding;
+    
+    if (Array.isArray(values)) {
+      return new Float32Array(values);
     }
-    return embedding;
+    
+    console.error('Unexpected embedding format:', { embedding, values });
+    throw new Error(`Invalid embedding format: values is not an array`);
   }
   throw new Error("No text or vector provided for embedding");
 }
@@ -23,7 +28,7 @@ export async function ensureVector(
 // Query vector database by text (LEGACY - preserved for existing functionality)
 export async function queryByText(
   env,
-  { text, topK = 5, model = "@cf/baai/bge-small-en-v1.5" } = {},
+  { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5" } = {},
 ) {
   const vector = await ensureVector(env, { text, model });
   const results = await env.AQUIL_CONTEXT.query({
@@ -43,7 +48,7 @@ export async function queryByText(
 // Mode 1: Semantic Recall - Direct nearest-neighbor log retrieval
 export async function semanticRecall(
   env,
-  { text, topK = 5, model = "@cf/baai/bge-small-en-v1.5", threshold = 0.7 } = {},
+  { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5", threshold = 0.7 } = {},
 ) {
   try {
     const vector = await ensureVector(env, { text, model });
@@ -103,7 +108,7 @@ export async function semanticRecall(
 // Mode 2: Transformative Inquiry - Reframe into growth questions (PRESERVED)
 export async function transformativeInquiry(
   env,
-  { text, topK = 3, model = "@cf/baai/bge-small-en-v1.5" } = {},
+  { text, topK = 3, model = "@cf/baai/bge-large-en-v1.5" } = {},
 ) {
   try {
     // Get semantic matches first
@@ -212,7 +217,7 @@ function generateOverallGuidance(inquiries, currentQuery) {
 // Unified Vector Query - Supports both modes
 export async function queryVector(
   env,
-  { text, mode = 'semantic_recall', topK = 5, model = "@cf/baai/bge-small-en-v1.5", threshold = 0.7 } = {},
+  { text, mode = 'semantic_recall', topK = 5, model = "@cf/baai/bge-large-en-v1.5", threshold = 0.7 } = {},
 ) {
   switch (mode) {
     case 'semantic_recall':
@@ -236,12 +241,12 @@ export async function upsert(req, env) {
     text,
     vector,
     metadata,
-    model = "@cf/baai/bge-small-en-v1.5",
+    model = "@cf/baai/bge-large-en-v1.5",
   } = await readJSON(req);
   let v = vector;
   try {
     if (!v && text) {
-      const embedding = await env.AI.run(model, { text });
+      const embedding = await env.AQUIL_AI.run(model, { text });
       v = embedding.data[0];
     }
     if (!id || !Array.isArray(v))
@@ -254,22 +259,40 @@ export async function upsert(req, env) {
 }
 
 export async function query(req, env) {
-  const {
-    text,
-    vector,
-    topK = 5,
-    model = "@cf/baai/bge-small-en-v1.5",
-  } = await readJSON(req);
-  let v = vector;
   try {
-    if (!v && text) {
-      const embedding = await env.AI.run(model, { text });
-      v = embedding.data[0];
+    const {
+      text,
+      vector,
+      topK = 5,
+      model = "@cf/baai/bge-large-en-v1.5",
+      mode = "semantic_recall",
+      threshold = 0.7
+    } = await readJSON(req);
+
+    // If text is provided, use RAG with semantic recall or transformative inquiry
+    if (text) {
+      const result = await queryVector(env, { text, mode, topK, model, threshold });
+      return send(200, { 
+        success: true,
+        query: text,
+        mode,
+        ...result
+      });
     }
-    if (!Array.isArray(v))
-      return send(400, { error: "vector or text required" });
+
+    // Fallback to basic vector query for vector-only queries
+    let v = vector;
+    if (!v) {
+      return send(400, { error: "text or vector required for query" });
+    }
+    
+    if (!Array.isArray(v)) {
+      return send(400, { error: "vector must be an array" });
+    }
+    
     const results = await env.AQUIL_CONTEXT.query(v, { topK });
     return send(200, { results });
+    
   } catch (e) {
     return send(500, { error: "vector_query_error", message: String(e) });
   }

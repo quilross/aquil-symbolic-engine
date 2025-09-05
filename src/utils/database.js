@@ -41,15 +41,14 @@ export class AquilDatabase {
 
   async updateUserProfile(updates) {
     try {
-      const { preferences, personality_data, ...otherUpdates } = updates;
+      const { preferences, personality_data } = updates;
 
       await this.db
         .prepare(
           `
         UPDATE user_profile 
         SET preferences = ?, personality_data = ?, updated_at = datetime('now')
-        WHERE id = ?
-      `,
+        WHERE user_id = ?`
         )
         .bind(
           JSON.stringify(preferences || {}),
@@ -73,7 +72,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `trust_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `trust_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -110,7 +109,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `media_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `media_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -146,7 +145,7 @@ export class AquilDatabase {
   // Somatic session storage
   async saveSomaticSession(sessionData) {
     try {
-      const id = `somatic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `somatic_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -180,7 +179,7 @@ export class AquilDatabase {
   // Standing tall session storage
   async saveStandingTallSession(sessionData) {
     try {
-      const id = `standing_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `standing_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -219,7 +218,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `pattern_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `pattern_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -252,7 +251,7 @@ export class AquilDatabase {
   // Wisdom synthesis storage
   async saveWisdomSynthesis(synthesisData) {
     try {
-      const id = `synthesis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `synthesis_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -464,7 +463,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `values_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `values_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -501,7 +500,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `creativity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `creativity_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -538,7 +537,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `abundance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `abundance_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -575,7 +574,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `transition_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `transition_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -612,7 +611,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `ancestry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `ancestry_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -649,7 +648,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `wisdom_synthesis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `wisdom_synthesis_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -684,7 +683,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `daily_synthesis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `daily_synthesis_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -813,7 +812,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `commitment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `commitment_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
       const now = new Date().toISOString();
 
       await this.db
@@ -906,7 +905,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `progress_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `progress_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(
@@ -942,7 +941,7 @@ export class AquilDatabase {
     }
     
     try {
-      const id = `breakthrough_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `breakthrough_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
       await this.db
         .prepare(

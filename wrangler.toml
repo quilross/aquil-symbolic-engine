@@ -73,6 +73,7 @@ preview_database_id = "ff7b029d-caf7-4879-b4c4-9ba46f1c86ff"
 [[env.development.kv_namespaces]]
 binding = "AQUIL_MEMORIES"
 id      = "633c8059669c4b73bb5ca78d2efdb5db"
+preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
 
 [[env.development.r2_buckets]]
 binding = "AQUIL_STORAGE"

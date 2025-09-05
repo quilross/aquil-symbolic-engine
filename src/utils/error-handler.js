@@ -5,7 +5,7 @@
 
 import { logMetamorphicEvent } from '../ark/core.js';
 import { corsHeaders } from './cors.js';
-import { isGPTCompatMode, safeLog } from './gpt-compat.js';
+import { safeLog } from './gpt-compat.js';
 
 /**
  * Categorize errors for better debugging and monitoring
@@ -56,7 +56,7 @@ export async function handleError(error, context = {}, env = null) {
 
   const category = categorizeError(error);
   const timestamp = new Date().toISOString();
-  const errorId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const errorId = `error_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
   // Create comprehensive error log
   const errorLog = {

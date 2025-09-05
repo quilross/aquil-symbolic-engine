@@ -287,10 +287,9 @@ export function selectOptimalVoice(userInput, context = {}) {
   }
 
   // Check for explicit voice triggers
-  for (const [voiceName, voice] of Object.entries(VOICE_SYSTEM)) {
+  for (const [, voice] of Object.entries(VOICE_SYSTEM)) {
     if (
-      voice.triggers &&
-      voice.triggers.some((trigger) => input.includes(trigger.toLowerCase()))
+      voice.triggers?.some((trigger) => input.includes(trigger.toLowerCase()))
     ) {
       return voice.id;
     }
@@ -701,12 +700,14 @@ export async function performHealthChecks(env) {
   ).length;
 
   checks.overall_health = passedChecks / totalChecks;
-  checks.status =
-    checks.overall_health >= 0.8
-      ? "healthy"
-      : checks.overall_health >= 0.6
-        ? "degraded"
-        : "critical";
+  
+  if (checks.overall_health >= 0.8) {
+    checks.status = "healthy";
+  } else if (checks.overall_health >= 0.6) {
+    checks.status = "degraded";
+  } else {
+    checks.status = "critical";
+  }
 
   return checks;
 }
@@ -727,7 +728,7 @@ export async function performReadinessChecks(env) {
     // D1 Database ping
     if (env.AQUIL_DB) {
       try {
-        const result = await env.AQUIL_DB.prepare("SELECT COUNT(*) as count FROM metamorphic_logs LIMIT 1").first();
+        await env.AQUIL_DB.prepare("SELECT COUNT(*) as count FROM metamorphic_logs LIMIT 1").first();
         readiness.stores.d1 = { status: "ok", details: "responsive" };
       } catch (error) {
         readiness.stores.d1 = { status: "degraded", error: error.message };
