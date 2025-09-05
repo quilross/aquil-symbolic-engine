@@ -3,12 +3,10 @@ main = "src/index.js"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"] # allows Node-style modules if needed
 
-route = { pattern = "signal-q.me/*", zone_name = "signal-q.me" }
-
-# Additional route for logging subdomain
-[[routes]]
-pattern = "logging.signal-q.me/*"
-zone_name = "signal-q.me"
+routes = [
+  { pattern = "signal-q.me/*", zone_name = "signal-q.me" },
+  { pattern = "logging.signal-q.me/*", zone_name = "signal-q.me" }
+]
 
 account_id = "b07412f2f2389e8b537051bc092f3376"
 
