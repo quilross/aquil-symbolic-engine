@@ -1720,9 +1720,12 @@ router.post("/api/r2/put", async (req, env) => {
 // R2 Get endpoint
 router.get("/api/r2/get", async (req, env) => {
   try {
-    return await r2Get(req, env);
+    const result = await r2Get(req, env);
+    await logChatGPTAction(env, 'getR2StoredContent', { url: req.url }, result);
+    return result;
   } catch (error) {
     console.error('R2 get error:', error);
+    await logChatGPTAction(env, 'getR2StoredContent', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -1846,7 +1849,7 @@ router.post("/api/rag/memory", async (req, env) => {
       } : null
     };
     
-    await logChatGPTAction(env, 'memoryRetrieval', body, result);
+    await logChatGPTAction(env, 'ragMemoryConsolidation', body, result);
     
     return addCORS({
       success: true,
@@ -1855,7 +1858,7 @@ router.post("/api/rag/memory", async (req, env) => {
     });
     
   } catch (error) {
-    await logChatGPTAction(env, 'memoryRetrieval', {}, null, error);
+    await logChatGPTAction(env, 'ragMemoryConsolidation', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -1990,7 +1993,7 @@ router.post("/api/search/r2", async (req, env) => {
       if (results.length >= limit) break;
     }
     
-    await logChatGPTAction(env, 'searchR2', body, { query, results: results.length });
+    await logChatGPTAction(env, 'searchR2Storage', body, { query, results: results.length });
     
     return addCORS({
       success: true,
@@ -2006,7 +2009,7 @@ router.post("/api/search/r2", async (req, env) => {
     });
     
   } catch (error) {
-    await logChatGPTAction(env, 'searchR2', {}, null, error);
+    await logChatGPTAction(env, 'searchR2Storage', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
