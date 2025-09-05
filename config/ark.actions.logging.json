@@ -1,0 +1,13 @@
+{
+  "guards": {
+    "maxDetailLength": 4000
+  },
+  "routes": {
+    "kvWrite": "/api/logs/kv-write",
+    "d1Insert": "/api/logs/d1-insert", 
+    "promote": "/api/logs/promote",
+    "retrieve": "/api/logs/retrieve",
+    "retrieveLatest": "/api/logs/latest",
+    "retrievalMeta": "/api/logs/retrieval-meta"
+  }
+}
