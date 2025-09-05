@@ -140,7 +140,15 @@
             "description": "Retrieved content",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": { "type": "string" },
+                    "content": { "type": "string" },
+                    "size": { "type": "integer" },
+                    "uploaded": { "type": "string" }
+                  }
+                }
               }
             }
           }
@@ -173,7 +181,17 @@
             "description": "Vector search results",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    },
+                    "total": { "type": "integer" },
+                    "query": { "type": "string" }
+                  }
+                }
               }
             }
           }
