@@ -573,24 +573,18 @@
         }
       }
     },
-    "/api/wisdom/daily-synthesis": {
+    "/api/wisdom/insights": {
       "get": {
-        "summary": "Daily wisdom and insights summary",
-        "description": "Called to get daily wisdom synthesis.",
-        "operationId": "getDailySynthesis",
-        "x-openai-autonomous": true,
-        "responses": {
-          "200": { "description": "Daily synthesis results" }
-        }
-      }
-    },
-    "/api/insights": {
-      "get": {
-        "summary": "Get personal insights and breakthroughs",
-        "description": "Called to retrieve accumulated personal insights.",
-        "operationId": "getPersonalInsights",
+        "summary": "Get wisdom synthesis and personal insights",
+        "description": "Consolidated endpoint for daily synthesis and accumulated insights.",
+        "operationId": "getWisdomAndInsights",
         "x-openai-autonomous": true,
         "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["daily", "accumulated", "both"], "default": "both" }
+          },
           {
             "name": "focus_area",
             "in": "query",
@@ -598,7 +592,7 @@
           }
         ],
         "responses": {
-          "200": { "description": "Personal insights results" }
+          "200": { "description": "Wisdom synthesis and insights results" }
         }
       }
     },

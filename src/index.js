@@ -309,8 +309,7 @@ function getR2PolicyForAction(operationId) {
     'trustCheckIn': 'optional',
     'recognizePatterns': 'optional',
     'synthesizeWisdom': 'optional',
-    'getPersonalInsights': 'optional',
-    'getDailySynthesis': 'optional',
+    'getWisdomAndInsights': 'optional',
     'optimizeEnergy': 'optional',
   };
   
@@ -328,6 +327,7 @@ function getDomainForAction(operationId) {
     'extractMediaWisdom': 'wisdom',
     'recognizePatterns': 'patterns',
     'synthesizeWisdom': 'wisdom',
+    'getWisdomAndInsights': 'wisdom',
     'systemHealthCheck': 'system',
     'logDataOrEvent': 'logging',
     'generateDiscoveryInquiry': 'discovery',
@@ -1122,6 +1122,52 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
 });
 
 // Daily synthesis
+// Consolidated wisdom and insights endpoint
+router.get("/api/wisdom/insights", async (req, env) => {
+  try {
+    const { type = 'both', focus_area } = req.query;
+    const wisdom = new MediaWisdomExtractor(env);
+    
+    let result;
+    
+    if (type === 'daily' || type === 'both') {
+      const dailyResult = await wisdom.extractWisdom({
+        media_type: "daily_synthesis",
+        title: "Daily Wisdom Synthesis",
+        your_reaction: "Reflecting on today's insights and learnings",
+        content_summary: `Daily synthesis of wisdom and insights${focus_area ? ` focused on ${focus_area}` : ''}`
+      });
+      
+      if (type === 'daily') {
+        result = dailyResult;
+      } else {
+        result = { daily: dailyResult };
+      }
+    }
+    
+    if (type === 'accumulated' || type === 'both') {
+      const insightsResult = await wisdom.extractWisdom({
+        media_type: "personal_insights", 
+        title: "Personal Growth Insights",
+        your_reaction: "Seeking personal insights and guidance",
+        content_summary: `Personal insights based on current life patterns${focus_area ? ` in ${focus_area}` : ''}`
+      });
+      
+      if (type === 'accumulated') {
+        result = insightsResult;
+      } else if (type === 'both') {
+        result.accumulated = insightsResult;
+      }
+    }
+    
+    await logChatGPTAction(env, 'getWisdomAndInsights', { type, focus_area }, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'getWisdomAndInsights', { type, focus_area }, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
 router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
     // Create a daily synthesis by extracting wisdom from recent activities
@@ -2049,8 +2095,7 @@ router.all("*", () => {
       "/api/patterns/autonomous-detect",
       "/api/standing-tall/practice",
       "/api/wisdom/synthesize",
-      "/api/wisdom/daily-synthesis",
-      "/api/insights",
+      "/api/wisdom/insights",
       "/api/feedback",
       "/api/dreams/interpret",
       "/api/energy/optimize",
