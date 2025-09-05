@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Aquil Production API (Essential 29)",
-    "description": "Personal AI Wisdom Builder with core functionality for ChatGPT integration. Streamlined to 29 operations.",
-    "version": "2.2.2"
+    "title": "Aquil Production API (Complete Infrastructure)",
+    "description": "Personal AI Wisdom Builder with full Cloudflare Worker bindings support. Includes D1, KV, R2, Vectorize, and AI infrastructure plus personal growth tools.",
+    "version": "2.3.0"
   },
   "servers": [
     {
@@ -188,6 +188,218 @@
                       "type": "array",
                       "items": { "type": "object" }
                     },
+                    "total": { "type": "integer" },
+                    "query": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/d1/query": {
+      "post": {
+        "summary": "Direct D1 database queries",
+        "description": "Execute SQL queries against the D1 database. Use for complex data operations.",
+        "operationId": "queryD1Database",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sql": { "type": "string" },
+                  "params": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["sql"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": { "type": "array", "items": { "type": "object" } },
+                    "success": { "type": "boolean" },
+                    "meta": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vectorize/query": {
+      "post": {
+        "summary": "Query vector index for similarity search",
+        "description": "Search the vectorize index for semantically similar content.",
+        "operationId": "queryVectorIndex", 
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vector": { "type": "array", "items": { "type": "number" } },
+                  "topK": { "type": "integer", "default": 5, "maximum": 20 },
+                  "namespace": { "type": "string" }
+                },
+                "required": ["vector"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vector search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "matches": { "type": "array", "items": { "type": "object" } },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vectorize/upsert": {
+      "post": {
+        "summary": "Store vectors in the index",
+        "description": "Add or update vectors in the vectorize index.",
+        "operationId": "upsertVectors",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vectors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "values": { "type": "array", "items": { "type": "number" } },
+                        "metadata": { "type": "object" }
+                      }
+                    }
+                  },
+                  "namespace": { "type": "string" }
+                },
+                "required": ["vectors"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upsert results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "upsertedCount": { "type": "integer" },
+                    "success": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rag/search": {
+      "post": {
+        "summary": "RAG semantic search with AI generation",
+        "description": "Retrieval-augmented generation search combining vector similarity with AI synthesis.",
+        "operationId": "ragSearch",
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" },
+                  "limit": { "type": "integer", "default": 5, "maximum": 10 },
+                  "includeGeneration": { "type": "boolean", "default": true }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "RAG search with generated insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "retrieved": { "type": "array", "items": { "type": "object" } },
+                    "generated": { "type": "string" },
+                    "query": { "type": "string" },
+                    "relevance_scores": { "type": "array", "items": { "type": "number" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/r2": {
+      "post": {
+        "summary": "Search R2 storage objects",
+        "description": "Search stored content in R2 bucket by metadata and content.",
+        "operationId": "searchR2Storage",
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" },
+                  "type": { "type": "string", "enum": ["all", "resonance", "logbin"], "default": "all" },
+                  "limit": { "type": "integer", "default": 5, "maximum": 20 }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "R2 search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "objects": { "type": "array", "items": { "type": "object" } },
                     "total": { "type": "integer" },
                     "query": { "type": "string" }
                   }
@@ -614,13 +826,12 @@
         }
       }
     },
-    "/api/relationships/deepen": {
+    "/api/rag/memory": {
       "post": {
-        "summary": "Deepen relationships and connections",
-        "description": "Called when discussing relationships or social connections.",
-        "operationId": "deepenRelationships",
+        "summary": "RAG memory consolidation and learning",
+        "description": "Store and consolidate insights for future retrieval using RAG.",
+        "operationId": "ragMemoryConsolidation",
         "x-openai-isConsequential": true,
-        "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -628,167 +839,152 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "relationship_type": { "type": "string" },
-                  "current_dynamics": { "type": "string" },
-                  "growth_areas": { "type": "array", "items": { "type": "string" } }
+                  "content": { "type": "string" },
+                  "type": { "type": "string", "enum": ["insight", "pattern", "wisdom", "reflection"] },
+                  "metadata": { "type": "object" },
+                  "importance": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 }
                 },
-                "required": ["relationship_type", "current_dynamics"]
+                "required": ["content", "type"]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Relationship deepening results" }
+          "200": {
+            "description": "Memory consolidation results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stored": { "type": "boolean" },
+                    "memory_id": { "type": "string" },
+                    "embedding_created": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
-    "/api/purpose/align": {
-      "post": {
-        "summary": "Align with life purpose and meaning",
-        "description": "Called when discussing life purpose or meaning.",
-        "operationId": "alignWithPurpose",
-        "x-openai-isConsequential": true,
-        "x-openai-autonomous": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "current_purpose_sense": { "type": "string" },
-                  "life_areas": { "type": "array", "items": { "type": "string" } },
-                  "meaning_sources": { "type": "array", "items": { "type": "string" } }
-                },
-                "required": ["current_purpose_sense"]
+    "/api/system/readiness": {
+      "get": {
+        "summary": "System readiness and component status",
+        "description": "Check if all Cloudflare Worker bindings are ready and operational.",
+        "operationId": "systemReadinessCheck",
+        "responses": {
+          "200": {
+            "description": "Detailed system readiness report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ready": { "type": "boolean" },
+                    "components": {
+                      "type": "object",
+                      "properties": {
+                        "d1_database": { "type": "boolean" },
+                        "kv_storage": { "type": "boolean" },
+                        "r2_storage": { "type": "boolean" },
+                        "vectorize": { "type": "boolean" },
+                        "ai_gateway": { "type": "boolean" }
+                      }
+                    },
+                    "timestamp": { "type": "string" }
+                  }
+                }
               }
             }
           }
-        },
-        "responses": {
-          "200": { "description": "Purpose alignment results" }
-        }
-      }
-    },
-    "/api/shadow/integrate": {
-      "post": {
-        "summary": "Shadow integration and wholeness",
-        "description": "Called when discussing difficult emotions or shadow aspects.",
-        "operationId": "integrateShadowAspects",
-        "x-openai-isConsequential": true,
-        "x-openai-autonomous": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "shadow_aspects": { "type": "array", "items": { "type": "string" } },
-                  "triggers": { "type": "array", "items": { "type": "string" } },
-                  "integration_intention": { "type": "string" }
-                },
-                "required": ["shadow_aspects", "integration_intention"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Shadow integration results" }
-        }
-      }
-    },
-    "/api/intuition/develop": {
-      "post": {
-        "summary": "Develop intuition and inner knowing",
-        "description": "Called when discussing intuition or inner guidance.",
-        "operationId": "developIntuition",
-        "x-openai-isConsequential": true,
-        "x-openai-autonomous": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "intuitive_experiences": { "type": "array", "items": { "type": "string" } },
-                  "decision_context": { "type": "string" },
-                  "inner_guidance_quality": { "type": "string" }
-                },
-                "required": ["decision_context"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Intuition development results" }
-        }
-      }
-    },
-    "/api/gratitude/practice": {
-      "post": {
-        "summary": "Gratitude practice and appreciation",
-        "description": "Called when expressing gratitude or appreciation.",
-        "operationId": "practiceGratitude",
-        "x-openai-isConsequential": true,
-        "x-openai-autonomous": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "gratitude_items": { "type": "array", "items": { "type": "string" } },
-                  "appreciation_depth": { "type": "string" },
-                  "life_areas": { "type": "array", "items": { "type": "string" } }
-                },
-                "required": ["gratitude_items"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Gratitude practice results" }
-        }
-      }
-    },
-    "/api/healing/emotional": {
-      "post": {
-        "summary": "Emotional healing and processing",
-        "description": "Called when processing difficult emotions or trauma.",
-        "operationId": "processEmotionalHealing",
-        "x-openai-isConsequential": true,
-        "x-openai-autonomous": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "emotions_present": { "type": "array", "items": { "type": "string" } },
-                  "healing_intention": { "type": "string" },
-                  "support_needed": { "type": "string" }
-                },
-                "required": ["emotions_present", "healing_intention"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Emotional healing results" }
         }
       }
     },
     "/api/system/health-check": {
       "get": {
-        "summary": "System health and readiness check",
-        "description": "Check system operational status.",
-        "operationId": "systemHealthCheck",
+        "summary": "Comprehensive personal development toolkit",
+        "description": "Multi-purpose endpoint for personal growth: gratitude practice, emotional healing, intuition development, purpose alignment, relationship deepening, shadow integration, and system health.",
+        "operationId": "comprehensivePersonalDevelopment",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": { 
+              "type": "string", 
+              "enum": ["health", "gratitude", "healing", "intuition", "purpose", "relationships", "shadow", "discovery", "socratic", "ritual"],
+              "description": "Type of development or system function to access"
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "System status report" }
+          "200": { 
+            "description": "Results based on type parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string" },
+                    "result": { "type": "object" },
+                    "insights": { "type": "array", "items": { "type": "string" } },
+                    "next_steps": { "type": "array", "items": { "type": "string" } },
+                    "timestamp": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Personal development session with dynamic type",
+        "description": "Consolidated endpoint supporting gratitude, healing, intuition, purpose, relationships, shadow work, discovery, socratic questioning, and ritual suggestions through request body type.",
+        "operationId": "personalDevelopmentSession",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { 
+                    "type": "string", 
+                    "enum": ["gratitude", "healing", "intuition", "purpose", "relationships", "shadow", "discovery", "socratic", "ritual"],
+                    "description": "Type of personal development session"
+                  },
+                  "content": { "type": "object", "description": "Session content - varies by type" },
+                  "focus": { "type": "string" },
+                  "context": { "type": "string" },
+                  "goals": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["type", "content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { 
+            "description": "Personal development session results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_type": { "type": "string" },
+                    "insights": { "type": "array", "items": { "type": "string" } },
+                    "practices": { "type": "array", "items": { "type": "string" } },
+                    "next_steps": { "type": "array", "items": { "type": "string" } },
+                    "session_id": { "type": "string" },
+                    "timestamp": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
