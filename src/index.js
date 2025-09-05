@@ -19,6 +19,15 @@ import {
   handleHealthCheck,
 } from "./ark/endpoints.js";
 
+// ARK enhanced endpoints
+import {
+  arkLog,
+  arkRetrieve,
+  arkMemories,
+  arkVector,
+  arkResonance
+} from "./ark/ark-endpoints.js";
+
 // Behavioral engine
 import { runEngine } from "./agent/engine.js";
 
@@ -36,6 +45,9 @@ import { query as vectorQuery, upsert as vectorUpsert } from "./actions/vectoriz
 
 // R2 storage actions
 import { put as r2Put, get as r2Get } from "./actions/r2.js";
+
+// KV storage actions
+import { log as kvLog, get as kvGet } from "./actions/kv.js";
 
 // Core AI modules for personal growth
 import { SomaticHealer } from "./src-core-somatic-healer.js";
@@ -1769,6 +1781,33 @@ router.post("/api/vectorize/upsert", async (req, env) => {
 });
 
 // =============================================================================
+// KV STORAGE ENDPOINTS
+// =============================================================================
+
+// KV Put endpoint
+router.post("/api/kv/log", async (req, env) => {
+  try {
+    return await kvLog(req, env);
+  } catch (error) {
+    console.error('KV log error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// KV Get endpoint
+router.get("/api/kv/get", async (req, env) => {
+  try {
+    const result = await kvGet(req, env);
+    await logChatGPTAction(env, 'getKVStoredData', { url: req.url }, result);
+    return result;
+  } catch (error) {
+    console.error('KV get error:', error);
+    await logChatGPTAction(env, 'getKVStoredData', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
 // RAG (RETRIEVAL-AUGMENTED GENERATION) ENDPOINTS
 // =============================================================================
 
@@ -2077,6 +2116,70 @@ router.post("/api/search/resonance", async (req, env) => {
 });
 
 // =============================================================================
+// ARK ENHANCED ENDPOINTS
+// =============================================================================
+
+// Enhanced unified logging with multi-store status tracking
+router.post("/api/ark/log", async (req, env) => {
+  try {
+    const result = await arkLog(req, env);
+    await logChatGPTAction(env, 'arkEnhancedLog', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedLog', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced unified retrieval with resonance weaving support
+router.get("/api/ark/retrieve", async (req, env) => {
+  try {
+    const result = await arkRetrieve(req, env);
+    await logChatGPTAction(env, 'arkEnhancedRetrieve', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedRetrieve', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced KV operations with full content support
+router.get("/api/ark/memories", async (req, env) => {
+  try {
+    const result = await arkMemories(req, env);
+    await logChatGPTAction(env, 'arkEnhancedMemories', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedMemories', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced vector operations with dual-mode support
+router.post("/api/ark/vector", async (req, env) => {
+  try {
+    const result = await arkVector(req, env);
+    await logChatGPTAction(env, 'arkEnhancedVector', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedVector', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced R2 resonance weaving operations
+router.post("/api/ark/resonance", async (req, env) => {
+  try {
+    const result = await arkResonance(req, env);
+    await logChatGPTAction(env, 'arkEnhancedResonance', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedResonance', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
 // FALLBACK AND ERROR HANDLING
 // =============================================================================
 
@@ -2117,9 +2220,16 @@ router.all("*", () => {
       "/api/coaching/comb-analysis",
       "/api/r2/put",
       "/api/r2/get",
+      "/api/kv/log",
+      "/api/kv/get",
       "/api/d1/query",
       "/api/vectorize/query",
-      "/api/vectorize/upsert"
+      "/api/vectorize/upsert",
+      "/api/ark/log",
+      "/api/ark/retrieve",
+      "/api/ark/memories",
+      "/api/ark/vector",
+      "/api/ark/resonance"
     ]
   }, 404));
 });
