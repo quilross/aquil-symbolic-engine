@@ -1,0 +1,32 @@
+{
+  "name": "ark-actions.logging-retrieval",
+  "version": "1.0.1",
+  "updatedAt": "2025-09-05T21:35:00Z",
+  "description": "Centralized actions config for Ark 2.0 logging & retrieval. Extracted from index.js.",
+  "stores": { "kv": "AQUIL_MEMORIES", "d1": "AQUIL_DB" },
+
+  "routes": {
+    "kvWrite": "/api/logs/kv-write",
+    "d1Insert": "/api/logs/d1-insert",
+    "promote": "/api/logs/promote",
+    "retrieve": "/api/logs/retrieve",
+    "retrieveLatest": "/api/logs/latest",
+    "retrievalMeta": "/api/logs/retrieval-meta"
+  },
+
+  "enums": {
+    "logTypes": ["session","voice-change","insight","breakthrough","commitment","api-failure","session-end"],
+    "storedIn": ["KV","D1"]
+  },
+
+  "validation": {
+    "uuidV4": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+    "maxDetailLength": 4000,
+    "timestampFormat": "iso8601"
+  },
+
+  "guards": {
+    "kvFirst": true,
+    "promotionRule": "Promote to D1 when type is breakthrough|commitment|api-failure or log repeats > 2 in 24h."
+  }
+}

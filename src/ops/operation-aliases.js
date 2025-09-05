@@ -158,7 +158,38 @@ export const OP_ALIASES = {
   'searchR2': 'searchR2Storage',
   
   // Session initialization (legacy alias)
-  'sessionInit': 'retrieveRecentSessionLogs'
+  'sessionInit': 'retrieveRecentSessionLogs',
+  
+  // ARK enhanced logging operations (map to existing canonical operations)
+  'arkEnhancedLog': 'logDataOrEvent',
+  'arkEnhancedRetrieve': 'retrieveLogsOrDataEntries',
+  'arkEnhancedMemories': 'retrieveR2StoredContent',
+  'arkEnhancedVector': 'ragSearch',
+  'arkEnhancedResonance': 'ragMemoryConsolidation',
+  'arkSystemStatus': 'systemHealthCheck',
+  'arkAdvancedFilter': 'searchLogs',
+  'arkAutonomousLog': 'logDataOrEvent',
+  
+  // Extracted logging endpoints (map to appropriate canonical operations)
+  'kvWrite': 'logDataOrEvent',
+  'd1Insert': 'logDataOrEvent',
+  'promote': 'logDataOrEvent',
+  'retrieve': 'retrieveLogsOrDataEntries',
+  'retrieveLatest': 'retrieveLogsOrDataEntries',
+  'retrievalMeta': 'retrieveLogsOrDataEntries',
+  
+  // Other implementation variants detected by guard
+  'comprehensivePersonalDevelopment': 'somaticHealingSession',
+  'personalDevelopmentSession': 'somaticHealingSession',
+  'getWisdomAndInsights': 'getPersonalInsights',
+  'autoSuggestRitual': 'somaticHealingSession',
+  'autonomousPatternDetect': 'recognizePatterns',
+  'transformation_contract': 'manageCommitment',
+  'getMonitoringMetrics': 'systemHealthCheck',
+  'socraticQuestions': 'generateDiscoveryInquiry',
+  'combBehavioralAnalysis': 'recognizePatterns',
+  'getKVStoredData': 'retrieveLogsOrDataEntries',
+  'searchResonance': 'searchR2Storage'
 };
 
 /**

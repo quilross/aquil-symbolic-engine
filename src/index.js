@@ -12,6 +12,9 @@
 import { Router } from 'itty-router';
 import crypto from 'crypto';
 
+// === BEGIN EXTRACTION PATCH ===
+import actions from '../config/ark.actions.logging.json' with { type: 'json' };
+
 // Core endpoint handlers
 import {
   handleSessionInit,
@@ -64,10 +67,160 @@ import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
 import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
 import { StandingTall } from "./src-core-standing-tall.js";
 
+import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
+import { handleScheduledTriggers } from "./utils/autonomy.js";
+
+// Pull routes + validation constants from JSON
+const Routes = actions.routes
+const MAX_DETAIL = actions.validation?.maxDetailLength ?? 4000
+
+// Build sets/regex from JSON so the config owns the contract
+const LOG_TYPES = new Set(actions.enums?.logTypes ?? [])
+const STORED_IN = new Set(actions.enums?.storedIn ?? [])
+const UUID_V4 = new RegExp(actions.validation?.uuidV4 ?? '^[0-9a-fA-F-]{36}$')
+
+// ISO 8601 checker (lightweight; keeps your current semantics)
+function isIso(ts) {
+  try {
+    const d = new Date(ts)
+    return !isNaN(d.getTime())
+  } catch { return false }
+}
+
+// Minimal shared helpers
+async function readJson(req) {
+  try { return await req.json() } catch { return null }
+}
+function json(data, init = {}) {
+  return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' }, ...init })
+}
+
+async function ensureSchema(env) {
+  // idempotent
+  await env.AQUIL_DB.exec?.(`
+    CREATE TABLE IF NOT EXISTS logs (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL,
+      detail TEXT,
+      timestamp TEXT NOT NULL,
+      storedIn TEXT NOT NULL CHECK (storedIn IN ('KV','D1'))
+    );
+    CREATE TABLE IF NOT EXISTS retrieval_meta (
+      id INTEGER PRIMARY KEY CHECK (id=1),
+      lastRetrieved TEXT,
+      retrievalCount INTEGER NOT NULL DEFAULT 0
+    );
+    INSERT OR IGNORE INTO retrieval_meta (id,lastRetrieved,retrievalCount) VALUES (1,NULL,0);
+  `)
+}
+
+function validateLog(payload) {
+  if (!payload || typeof payload !== 'object') return 'Invalid body'
+  const { id, type, detail, timestamp, storedIn } = payload
+  if (!UUID_V4.test(id)) return 'id must be uuid v4'
+  if (!LOG_TYPES.has(type)) return `type must be one of ${[...LOG_TYPES].join(',')}`
+  if (detail != null && typeof detail !== 'string') return 'detail must be string'
+  if (detail && detail.length > MAX_DETAIL) return `detail exceeds ${MAX_DETAIL} chars`
+  if (!isIso(timestamp)) return 'timestamp must be ISO 8601'
+  if (!STORED_IN.has(storedIn)) return `storedIn must be one of ${[...STORED_IN].join(',')}`
+  return null
+}
+
+async function handleKvWrite(env, req) {
+  const body = await readJson(req)
+  const err = validateLog(body)
+  if (err) return json({ ok: false, error: err }, { status: 400 })
+  if (body.storedIn !== 'KV') return json({ ok: false, error: 'storedIn must be KV' }, { status: 400 })
+  const key = `log:${body.id}`
+  await env.AQUIL_MEMORIES.put(key, JSON.stringify(body))
+  return json({ ok: true, key, id: body.id })
+}
+
+async function handleD1Insert(env, req) {
+  await ensureSchema(env)
+  const body = await readJson(req)
+  const err = validateLog(body)
+  if (err) return json({ ok: false, error: err }, { status: 400 })
+  if (body.storedIn !== 'D1') return json({ ok: false, error: 'storedIn must be D1' }, { status: 400 })
+  await env.AQUIL_DB.prepare(
+    'INSERT INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(body.id, body.type, body.detail ?? null, body.timestamp, 'D1').run()
+  return json({ ok: true, rowId: 1, id: body.id })
+}
+
+async function handlePromote(env, req) {
+  await ensureSchema(env)
+  const body = await readJson(req)
+  const id = body?.id
+  if (!id || !UUID_V4.test(id)) return json({ ok: false, error: 'invalid id' }, { status: 400 })
+  const key = `log:${id}`
+  const v = await env.AQUIL_MEMORIES.get(key)
+  if (!v) return json({ ok: false, error: 'not found in KV' }, { status: 404 })
+  const log = JSON.parse(v)
+  const err = validateLog(log)
+  if (err) return json({ ok: false, error: `invalid KV log: ${err}` }, { status: 400 })
+  await env.AQUIL_DB.prepare(
+    'INSERT OR IGNORE INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(log.id, log.type, log.detail ?? null, log.timestamp, 'D1').run()
+  return json({ ok: true, promotedId: id })
+}
+
+async function handleRetrieve(env, req) {
+  await ensureSchema(env)
+  const q = await readJson(req) || {}
+  const { source = 'any', types, from, to, limit = 100, afterId, order = 'desc' } = q
+
+  if (types && (!Array.isArray(types) || types.some(t => !LOG_TYPES.has(t)))) {
+    return json({ ok: false, error: 'invalid types' }, { status: 400 })
+  }
+  if (from && !isIso(from)) return json({ ok: false, error: 'invalid from' }, { status: 400 })
+  if (to && !isIso(to)) return json({ ok: false, error: 'invalid to' }, { status: 400 })
+  const lim = Math.max(1, Math.min(Number(limit) || 100, 500))
+  const ord = order === 'asc' ? 'ASC' : 'DESC'
+
+  const clauses = []
+  const params = []
+  if (types?.length) { clauses.push(`type IN (${types.map(() => '?').join(',')})`); params.push(...types) }
+  if (from) { clauses.push('timestamp >= ?'); params.push(from) }
+  if (to)   { clauses.push('timestamp <= ?'); params.push(to) }
+  if (afterId) { clauses.push('id > ?'); params.push(afterId) }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
+  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ${where} ORDER BY timestamp ${ord} LIMIT ?`
+  params.push(lim)
+  const res = await env.AQUIL_DB.prepare(sql).bind(...params).all()
+  let items = res.results || []
+
+  return json({ ok: true, items })
+}
+
+async function handleRetrieveLatest(env, req) {
+  await ensureSchema(env)
+  const url = new URL(req.url)
+  const n = Number(url.searchParams.get('limit') || '25')
+  const limit = Math.max(1, Math.min(isFinite(n) ? n : 25, 200))
+  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ORDER BY timestamp DESC LIMIT ?`
+  const res = await env.AQUIL_DB.prepare(sql).bind(limit).all()
+  return json({ ok: true, items: res.results || [] })
+}
+
+async function handleRetrievalMeta(env, req) {
+  await ensureSchema(env)
+  let ts
+  try { ts = (await req.json())?.timestamp } catch {}
+  const timestamp = (ts && isIso(ts)) ? ts : new Date().toISOString()
+  await env.AQUIL_DB.prepare(
+    'UPDATE retrieval_meta SET lastRetrieved=?1, retrievalCount=retrievalCount+1 WHERE id=1'
+  ).bind(timestamp).run()
+  const res = await env.AQUIL_DB.prepare(
+    'SELECT lastRetrieved, retrievalCount FROM retrieval_meta WHERE id=1'
+  ).all()
+  const row = (res.results && res.results[0]) || { lastRetrieved: null, retrievalCount: 0 }
+  return json(row)
+}
+// === END EXTRACTION PATCH ===
+
 // Utilities
 import { toCanonical } from "./ops/operation-aliases.js";
-import { safeBinding } from "./utils/gpt-compat.js";
-import { handleScheduledTriggers } from "./utils/autonomy.js";
 
 // Response utilities
 import { 
@@ -2219,6 +2372,77 @@ router.post("/api/ark/autonomous", async (req, env) => {
 });
 
 // =============================================================================
+// EXTRACTED LOGGING ENDPOINTS (config-driven)
+// =============================================================================
+
+// Logging endpoints using extracted config
+router.post(Routes.kvWrite, async (req, env) => {
+  try {
+    const result = await handleKvWrite(env, req);
+    await logChatGPTAction(env, 'kvWrite', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'kvWrite', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.d1Insert, async (req, env) => {
+  try {
+    const result = await handleD1Insert(env, req);
+    await logChatGPTAction(env, 'd1Insert', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'd1Insert', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.promote, async (req, env) => {
+  try {
+    const result = await handlePromote(env, req);
+    await logChatGPTAction(env, 'promote', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'promote', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.retrieve, async (req, env) => {
+  try {
+    const result = await handleRetrieve(env, req);
+    await logChatGPTAction(env, 'retrieve', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'retrieve', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.get(Routes.retrieveLatest, async (req, env) => {
+  try {
+    const result = await handleRetrieveLatest(env, req);
+    await logChatGPTAction(env, 'retrieveLatest', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'retrieveLatest', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.retrievalMeta, async (req, env) => {
+  try {
+    const result = await handleRetrievalMeta(env, req);
+    await logChatGPTAction(env, 'retrievalMeta', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'retrievalMeta', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
 // FALLBACK AND ERROR HANDLING
 // =============================================================================
 
@@ -2233,6 +2457,12 @@ router.all("*", () => {
       "/api/system/readiness",
       "/api/log",
       "/api/logs",
+      "/api/logs/kv-write",
+      "/api/logs/d1-insert", 
+      "/api/logs/promote",
+      "/api/logs/retrieve",
+      "/api/logs/latest",
+      "/api/logs/retrieval-meta",
       "/api/trust/check-in",
       "/api/somatic/session",
       "/api/media/extract-wisdom",
