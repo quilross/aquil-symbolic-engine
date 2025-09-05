@@ -299,19 +299,20 @@ export async function handleSessionInit(request, env) {
   // Log initiation
   await logMetamorphicEvent(env, {
     kind: "session_init",
-    detail: { continuity_count: continuity.length },
+    detail: { 
+      continuity_count: continuity.length,
+      opening: mirrorOpening,
+      session_id: sessionId,
+      voice: "mirror",
+      timestamp: getPhiladelphiaTime()
+    },
     session_id: sessionId,
     voice: "mirror",
   });
 
+  // Return array of recent session logs as per schema
   return new Response(
-    JSON.stringify({
-      session_id: sessionId,
-      continuity,
-      opening: mirrorOpening,
-      voice: "mirror",
-      timestamp: getPhiladelphiaTime(),
-    }),
+    JSON.stringify(continuity),
     { headers: { "Content-Type": "application/json" } },
   );
 }
