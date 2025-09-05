@@ -25,7 +25,10 @@ import {
   arkRetrieve,
   arkMemories,
   arkVector,
-  arkResonance
+  arkResonance,
+  arkStatus,
+  arkFilter,
+  arkAutonomous
 } from "./ark/ark-endpoints.js";
 
 // Behavioral engine
@@ -2179,6 +2182,42 @@ router.post("/api/ark/resonance", async (req, env) => {
   }
 });
 
+// ARK system status and health check
+router.get("/api/ark/status", async (req, env) => {
+  try {
+    const result = await arkStatus(req, env);
+    await logChatGPTAction(env, 'arkSystemStatus', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkSystemStatus', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Advanced log filtering
+router.post("/api/ark/filter", async (req, env) => {
+  try {
+    const result = await arkFilter(req, env);
+    await logChatGPTAction(env, 'arkAdvancedFilter', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkAdvancedFilter', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Autonomous action logging
+router.post("/api/ark/autonomous", async (req, env) => {
+  try {
+    const result = await arkAutonomous(req, env);
+    await logChatGPTAction(env, 'arkAutonomousLog', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkAutonomousLog', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
 // =============================================================================
 // FALLBACK AND ERROR HANDLING
 // =============================================================================
@@ -2229,7 +2268,10 @@ router.all("*", () => {
       "/api/ark/retrieve",
       "/api/ark/memories",
       "/api/ark/vector",
-      "/api/ark/resonance"
+      "/api/ark/resonance",
+      "/api/ark/status",
+      "/api/ark/filter",
+      "/api/ark/autonomous"
     ]
   }, 404));
 });

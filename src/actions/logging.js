@@ -1032,7 +1032,16 @@ export async function readLogsWithFilters(env, filters = {}) {
   params.push(maxLimit);
   
   try {
-    const { results } = await env.AQUIL_DB.prepare(query).bind(...params).all();
+    const db = safeBinding(env, 'AQUIL_DB');
+    if (!db) {
+      // In GPT compatibility mode, return empty array when D1 is not available
+      if (isGPTCompatMode(env)) {
+        return [];
+      }
+      throw new Error('D1 database not available');
+    }
+    
+    const { results } = await db.prepare(query).bind(...params).all();
     
     // Post-process results for enhanced autonomous analysis
     const processedResults = results.map(row => {
