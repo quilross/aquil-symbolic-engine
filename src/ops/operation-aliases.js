@@ -10,6 +10,18 @@ export const OP_CANON = {
   retrieveLogsOrDataEntries: 'retrieveLogsOrDataEntries', 
   retrieveRecentSessionLogs: 'retrieveRecentSessionLogs',
   
+  // R2 storage operations
+  retrieveR2StoredContent: 'retrieveR2StoredContent',
+  getR2StoredContent: 'getR2StoredContent',
+  
+  // Search operations
+  searchLogs: 'searchLogs',
+  ragSearch: 'ragSearch',
+  searchR2Storage: 'searchR2Storage',
+  
+  // RAG operations
+  ragMemoryConsolidation: 'ragMemoryConsolidation',
+  
   // Trust and confidence building
   trustCheckIn: 'trustCheckIn',
   
@@ -53,11 +65,9 @@ export const OP_CANON = {
   
   // System operations
   systemHealthCheck: 'systemHealthCheck',
-  getMonitoringMetrics: 'getMonitoringMetrics',
   
   // Discovery and questions
   generateDiscoveryInquiry: 'generateDiscoveryInquiry',
-  socraticQuestions: 'socraticQuestions',
   
   // Feedback
   submitFeedback: 'submitFeedback',
@@ -65,17 +75,7 @@ export const OP_CANON = {
   // Commitments
   manageCommitment: 'manageCommitment',
   listActiveCommitments: 'listActiveCommitments',
-  updateCommitmentProgress: 'updateCommitmentProgress',
-  
-  // Autonomy and rituals
-  autoSuggestRitual: 'autoSuggestRitual',
-  autonomousPatternDetect: 'autonomousPatternDetect',
-  
-  // Transformation contracts
-  transformation_contract: 'transformation_contract', // Note: this one stays snake_case in schema
-  
-  // Behavioral analysis
-  combBehavioralAnalysis: 'combBehavioralAnalysis'
+  updateCommitmentProgress: 'updateCommitmentProgress'
 };
 
 // Aliases = implementation variants (snake_case, legacy) → canonical
@@ -84,6 +84,18 @@ export const OP_ALIASES = {
   'log_data_or_event': 'logDataOrEvent',
   'retrieve_logs_or_data_entries': 'retrieveLogsOrDataEntries',
   'retrieve_recent_session_logs': 'retrieveRecentSessionLogs',
+  
+  // R2 storage operations
+  'retrieve_r2_stored_content': 'retrieveR2StoredContent',
+  'get_r2_stored_content': 'getR2StoredContent',
+  
+  // Search operations
+  'search_logs': 'searchLogs',
+  'rag_search': 'ragSearch',
+  'search_r2_storage': 'searchR2Storage',
+  
+  // RAG operations
+  'rag_memory_consolidation': 'ragMemoryConsolidation',
   
   // Trust building
   'trust_check_in': 'trustCheckIn',
@@ -129,11 +141,9 @@ export const OP_ALIASES = {
   
   // System
   'system_health_check': 'systemHealthCheck',
-  'get_monitoring_metrics': 'getMonitoringMetrics',
   
   // Discovery
   'generate_discovery_inquiry': 'generateDiscoveryInquiry',
-  'socratic_questions': 'socraticQuestions',
   
   // Feedback
   'submit_feedback': 'submitFeedback',
@@ -143,12 +153,9 @@ export const OP_ALIASES = {
   'list_active_commitments': 'listActiveCommitments',
   'update_commitment_progress': 'updateCommitmentProgress',
   
-  // Autonomy
-  'auto_suggest_ritual': 'autoSuggestRitual',
-  'autonomous_pattern_detect': 'autonomousPatternDetect',
-  
-  // Behavioral analysis
-  'comb_behavioral_analysis': 'combBehavioralAnalysis',
+  // Legacy aliases for cleanup
+  'memoryRetrieval': 'ragMemoryConsolidation',
+  'searchR2': 'searchR2Storage',
   
   // Session initialization (legacy alias)
   'sessionInit': 'retrieveRecentSessionLogs'

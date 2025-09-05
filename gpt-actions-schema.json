@@ -198,51 +198,12 @@
         }
       }
     },
-    "/api/d1/query": {
+    "/api/commitments/create": {
       "post": {
-        "summary": "Direct D1 database queries",
-        "description": "Execute SQL queries against the D1 database. Use for complex data operations.",
-        "operationId": "queryD1Database",
+        "summary": "Create and manage personal commitments",
+        "description": "Called to create or update personal commitments and micro-practices.",
+        "operationId": "manageCommitment",
         "x-openai-isConsequential": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "sql": { "type": "string" },
-                  "params": { "type": "array", "items": { "type": "string" } }
-                },
-                "required": ["sql"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Query results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "results": { "type": "array", "items": { "type": "object" } },
-                    "success": { "type": "boolean" },
-                    "meta": { "type": "object" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/vectorize/query": {
-      "post": {
-        "summary": "Query vector index for similarity search",
-        "description": "Search the vectorize index for semantically similar content.",
-        "operationId": "queryVectorIndex", 
         "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
@@ -251,38 +212,37 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "vector": { "type": "array", "items": { "type": "number" } },
-                  "topK": { "type": "integer", "default": 5, "maximum": 20 },
-                  "namespace": { "type": "string" }
+                  "action": { "type": "string", "enum": ["create", "update"] },
+                  "commitment": { "type": "string" },
+                  "timeframe": { "type": "string" },
+                  "micro_practice": { "type": "boolean" }
                 },
-                "required": ["vector"]
+                "required": ["action", "commitment"]
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Vector search results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "matches": { "type": "array", "items": { "type": "object" } },
-                    "count": { "type": "integer" }
-                  }
-                }
-              }
-            }
-          }
+          "200": { "description": "Commitment management results" }
         }
       }
     },
-    "/api/vectorize/upsert": {
+    "/api/commitments/active": {
+      "get": {
+        "summary": "List active commitments",
+        "description": "Called to retrieve current active commitments and their progress.",
+        "operationId": "listActiveCommitments",
+        "x-openai-autonomous": true,
+        "responses": {
+          "200": { "description": "Active commitments list" }
+        }
+      }
+    },
+    "/api/commitments/progress": {
       "post": {
-        "summary": "Store vectors in the index",
-        "description": "Add or update vectors in the vectorize index.",
-        "operationId": "upsertVectors",
+        "summary": "Update commitment progress",
+        "description": "Called to update progress on existing commitments.",
+        "operationId": "updateCommitmentProgress",
         "x-openai-isConsequential": true,
         "requestBody": {
           "required": true,
@@ -291,39 +251,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "vectors": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": { "type": "string" },
-                        "values": { "type": "array", "items": { "type": "number" } },
-                        "metadata": { "type": "object" }
-                      }
-                    }
-                  },
-                  "namespace": { "type": "string" }
+                  "commitment_id": { "type": "string" },
+                  "progress": { "type": "string" },
+                  "completion_status": { "type": "string", "enum": ["in_progress", "completed", "paused"] }
                 },
-                "required": ["vectors"]
+                "required": ["commitment_id", "progress"]
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Upsert results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "upsertedCount": { "type": "integer" },
-                    "success": { "type": "boolean" }
-                  }
-                }
-              }
-            }
-          }
+          "200": { "description": "Progress update results" }
         }
       }
     },
@@ -573,18 +511,13 @@
         }
       }
     },
-    "/api/wisdom/insights": {
+    "/api/wisdom/daily-synthesis": {
       "get": {
-        "summary": "Get wisdom synthesis and personal insights",
-        "description": "Consolidated endpoint for daily synthesis and accumulated insights.",
-        "operationId": "getWisdomAndInsights",
+        "summary": "Get daily wisdom synthesis",
+        "description": "Called to get daily accumulated insights and wisdom synthesis.",
+        "operationId": "getDailySynthesis",
         "x-openai-autonomous": true,
         "parameters": [
-          {
-            "name": "type",
-            "in": "query",
-            "schema": { "type": "string", "enum": ["daily", "accumulated", "both"], "default": "both" }
-          },
           {
             "name": "focus_area",
             "in": "query",
@@ -592,7 +525,25 @@
           }
         ],
         "responses": {
-          "200": { "description": "Wisdom synthesis and insights results" }
+          "200": { "description": "Daily wisdom synthesis results" }
+        }
+      }
+    },
+    "/api/insights": {
+      "get": {
+        "summary": "Get personal insights and patterns",
+        "description": "Called to get accumulated personal insights and growth patterns.",
+        "operationId": "getPersonalInsights",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "focus_area",
+            "in": "query",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Personal insights results" }
         }
       }
     },
@@ -620,6 +571,33 @@
         },
         "responses": {
           "200": { "description": "Feedback submitted successfully" }
+        }
+      }
+    },
+    "/api/discovery/generate-inquiry": {
+      "post": {
+        "summary": "Generate discovery questions and inquiries",
+        "description": "Called to generate deep questions for self-discovery and exploration.",
+        "operationId": "generateDiscoveryInquiry",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "focus_area": { "type": "string" },
+                  "depth_level": { "type": "string", "enum": ["surface", "medium", "deep"] },
+                  "context": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Discovery inquiry results" }
         }
       }
     },
@@ -796,7 +774,7 @@
       "post": {
         "summary": "Ancestral healing and lineage work",
         "description": "Called when discussing family patterns or ancestral healing.",
-        "operationId": "healAncestralPatterns",
+        "operationId": "healAncestry",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
         "requestBody": {
@@ -862,14 +840,14 @@
         }
       }
     },
-    "/api/system/readiness": {
+    "/api/system/health-check": {
       "get": {
-        "summary": "System readiness and component status",
-        "description": "Check if all Cloudflare Worker bindings are ready and operational.",
-        "operationId": "systemReadinessCheck",
+        "summary": "System health check and readiness status",
+        "description": "Check system health and readiness of all Cloudflare Worker bindings.",
+        "operationId": "systemHealthCheck",
         "responses": {
           "200": {
-            "description": "Detailed system readiness report",
+            "description": "System health and readiness report",
             "content": {
               "application/json": {
                 "schema": {
@@ -886,93 +864,6 @@
                         "ai_gateway": { "type": "boolean" }
                       }
                     },
-                    "timestamp": { "type": "string" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/system/health-check": {
-      "get": {
-        "summary": "Comprehensive personal development toolkit",
-        "description": "Multi-purpose endpoint for personal growth: gratitude practice, emotional healing, intuition development, purpose alignment, relationship deepening, shadow integration, and system health.",
-        "operationId": "comprehensivePersonalDevelopment",
-        "parameters": [
-          {
-            "name": "type",
-            "in": "query",
-            "required": true,
-            "schema": { 
-              "type": "string", 
-              "enum": ["health", "gratitude", "healing", "intuition", "purpose", "relationships", "shadow", "discovery", "socratic", "ritual"],
-              "description": "Type of development or system function to access"
-            }
-          }
-        ],
-        "responses": {
-          "200": { 
-            "description": "Results based on type parameter",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "type": { "type": "string" },
-                    "result": { "type": "object" },
-                    "insights": { "type": "array", "items": { "type": "string" } },
-                    "next_steps": { "type": "array", "items": { "type": "string" } },
-                    "timestamp": { "type": "string" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Personal development session with dynamic type",
-        "description": "Consolidated endpoint supporting gratitude, healing, intuition, purpose, relationships, shadow work, discovery, socratic questioning, and ritual suggestions through request body type.",
-        "operationId": "personalDevelopmentSession",
-        "x-openai-isConsequential": true,
-        "x-openai-autonomous": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "type": { 
-                    "type": "string", 
-                    "enum": ["gratitude", "healing", "intuition", "purpose", "relationships", "shadow", "discovery", "socratic", "ritual"],
-                    "description": "Type of personal development session"
-                  },
-                  "content": { "type": "object", "description": "Session content - varies by type" },
-                  "focus": { "type": "string" },
-                  "context": { "type": "string" },
-                  "goals": { "type": "array", "items": { "type": "string" } }
-                },
-                "required": ["type", "content"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { 
-            "description": "Personal development session results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "session_type": { "type": "string" },
-                    "insights": { "type": "array", "items": { "type": "string" } },
-                    "practices": { "type": "array", "items": { "type": "string" } },
-                    "next_steps": { "type": "array", "items": { "type": "string" } },
-                    "session_id": { "type": "string" },
                     "timestamp": { "type": "string" }
                   }
                 }
