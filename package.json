@@ -26,7 +26,8 @@
     "spec:commit": "node -e \"process.exit(0)\"",
     "ci:spec-bump-check": "node scripts/check-spec-bump.mjs",
     "audit:comprehensive": "node scripts/comprehensive-audit.mjs",
-    "audit:fix-suggestions": "node scripts/fix-suggestions.mjs"
+    "audit:fix-suggestions": "node scripts/fix-suggestions.mjs",
+    "validate:schemas": "node scripts/validate-schemas.mjs"
   },
   "keywords": [
     "personal-ai",
