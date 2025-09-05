@@ -1,0 +1,17 @@
+{
+  "artifacts": [
+    {
+      "id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "name": "Personal Trust Profile Snapshot",
+      "type": "profile",
+      "createdAt": "2024-01-15T14:22:30Z",
+      "r2Key": "profiles/trust-profile-2024-01-15.json",
+      "data": {
+        "trustLevel": 7,
+        "primaryChallenges": ["self-doubt", "decision-making"],
+        "strengths": ["intuition", "creativity"],
+        "snapshot_version": "v1.0"
+      }
+    }
+  ]
+}

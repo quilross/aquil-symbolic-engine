@@ -1,0 +1,14 @@
+{
+  "patterns": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "embedding": [0.1, -0.3, 0.8, 0.2, -0.1, 0.4, 0.7, -0.2],
+      "source": "log",
+      "createdAt": "2024-01-15T16:45:12Z",
+      "metadata": {
+        "theme": "self-trust_building",
+        "confidence": 0.85
+      }
+    }
+  ]
+}
