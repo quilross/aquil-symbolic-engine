@@ -12,7 +12,7 @@
     }
   ],
   "paths": {
-    "/api/log": {
+    "/logging/api/log": {
       "post": {
         "summary": "Log any data or conversation event",
         "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, or any meaningful moment.",
@@ -41,7 +41,7 @@
         }
       }
     },
-    "/api/logs": {
+    "/logging/api/logs": {
       "get": {
         "summary": "Retrieve conversation history",
         "description": "Use AUTOMATICALLY to gather context at conversation start.",
@@ -99,7 +99,7 @@
         }
       }
     },
-    "/api/session-init": {
+    "/logging/api/session-init": {
       "get": {
         "summary": "Initialize conversation with recent context",
         "description": "Called AUTOMATICALLY at conversation start.",
@@ -124,7 +124,7 @@
         }
       }
     },
-    "/api/search/logs": {
+    "/logging/api/search/logs": {
       "post": {
         "summary": "Search logs using vector similarity",
         "description": "Use to find contextually similar logs and insights.",
@@ -167,7 +167,7 @@
         }
       }
     },
-    "/api/search/r2": {
+    "/logging/api/search/r2": {
       "post": {
         "summary": "Search R2 storage objects",
         "description": "Search stored content in R2 bucket by metadata and content.",
@@ -208,7 +208,7 @@
         }
       }
     },
-    "/api/rag/search": {
+    "/logging/api/rag/search": {
       "post": {
         "summary": "RAG semantic search with AI generation",
         "description": "Retrieval-augmented generation search combining vector similarity with AI synthesis.",
@@ -287,12 +287,12 @@
   "x-ark-metadata": {
     "stores": { "kv": "AQUIL_MEMORIES", "d1": "AQUIL_DB" },
     "routes": {
-      "kvWrite": "/api/logs/kv-write",
-      "d1Insert": "/api/logs/d1-insert",
-      "promote": "/api/logs/promote",
-      "retrieve": "/api/logs/retrieve",
-      "retrieveLatest": "/api/logs/latest",
-      "retrievalMeta": "/api/logs/retrieval-meta"
+      "kvWrite": "/logging/api/logs/kv-write",
+      "d1Insert": "/logging/api/logs/d1-insert",
+      "promote": "/logging/api/logs/promote",
+      "retrieve": "/logging/api/logs/retrieve",
+      "retrieveLatest": "/logging/api/logs/latest",
+      "retrievalMeta": "/logging/api/logs/retrieval-meta"
     },
     "enums": {
       "logTypes": ["session","voice-change","insight","breakthrough","commitment","api-failure","session-end"],
