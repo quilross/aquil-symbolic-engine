@@ -1,3 +1,16 @@
+/**
+ * @typedef {Object} LogEntry
+ * @property {string} type - Log entry type (e.g., "insight")
+ * @property {string} [who] - Who is logging (e.g., "user")
+ * @property {string} [level] - Log level (e.g., "info")
+ */
+
+/**
+ * @typedef {Object} R2Record
+ * @property {string} key - Human-readable R2 storage key
+ * @property {string} value - JSON-encoded string data
+ */
+
 // List recent logbin keys from R2 (LEGACY - preserved)
 export async function listRecent(env, { prefix = "logbin_", limit = 20 } = {}) {
   const result = await env.AQUIL_STORAGE.list({ prefix, limit });
@@ -483,6 +496,93 @@ function generateGrowthInvitation(themes, logCount) {
   
   return `Through ${logCount} moments of reflection, you're weaving a unique pattern of growth. What wants to emerge next?`;
 }
+
+// =============================================================================
+// STRUCTURED R2 STORAGE HELPERS
+// =============================================================================
+
+/**
+ * Store structured JSON data in R2 with logging breadcrumb
+ * @param {string} key - Human-readable R2 storage key (e.g., "hd_chart_aquil.json")
+ * @param {Object} data - JavaScript object to be stored as JSON
+ * @param {Object} env - Cloudflare environment bindings
+ * @returns {Promise<{success: boolean, key?: string, error?: string}>}
+ */
+export async function storeR2Record(env, key, data) {
+  try {
+    // Stringify the data to JSON
+    const jsonString = JSON.stringify(data, null, 2);
+    
+    // Store in R2 with proper metadata
+    await env.AQUIL_STORAGE.put(key, jsonString, {
+      httpMetadata: {
+        contentType: 'application/json',
+        cacheControl: 'max-age=86400'
+      },
+      customMetadata: {
+        'x-stored-at': new Date().toISOString(),
+        'x-data-type': 'structured_json',
+        'x-size': jsonString.length.toString()
+      }
+    });
+    
+    // Leave a breadcrumb in D1/KV/Vector by calling the existing logging system
+    // This uses the same pattern as other functions that call writeLog
+    try {
+      const { writeLog } = await import('./logging.js');
+      await writeLog(env, {
+        type: `r2_store_${key.replace('.json', '').replace(/[^a-zA-Z0-9_]/g, '_')}`,
+        payload: {
+          content: `Stored structured data in R2`,
+          r2_key: key,
+          data_size: jsonString.length,
+          timestamp: new Date().toISOString()
+        },
+        session_id: crypto.randomUUID(),
+        who: 'system',
+        level: 'info',
+        tags: ['r2_storage', 'structured_data'],
+        textOrVector: `Stored structured JSON data with key: ${key}`
+      });
+    } catch (loggingError) {
+      // R2 storage succeeded, but logging failed - this is acceptable
+      console.warn('R2 storage succeeded but logging breadcrumb failed:', loggingError.message);
+    }
+    
+    return { success: true, key };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Retrieve and parse structured JSON data from R2
+ * @param {string} key - R2 storage key to retrieve
+ * @param {Object} env - Cloudflare environment bindings
+ * @returns {Promise<{success: boolean, data?: Object, error?: string}>}
+ */
+export async function getR2Record(env, key) {
+  try {
+    const obj = await env.AQUIL_STORAGE.get(key);
+    if (!obj) {
+      return { success: false, error: 'Record not found' };
+    }
+    
+    // Get the text content
+    const jsonString = await obj.text();
+    
+    // Parse JSON safely
+    try {
+      const data = JSON.parse(jsonString);
+      return { success: true, data };
+    } catch (parseError) {
+      return { success: false, error: `Invalid JSON data: ${parseError.message}` };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 import { send, readJSON } from "../utils/http.js";
 
 export async function put(req, env) {
