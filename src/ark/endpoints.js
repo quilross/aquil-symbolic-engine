@@ -322,14 +322,44 @@ export async function handleDiscoveryInquiry(request, env) {
   let data;
   try {
     data = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Malformed JSON" }), {
+  } catch (parseError) {
+    return new Response(JSON.stringify({ 
+      error: "Invalid JSON format",
+      details: "Please provide valid JSON in the request body",
+      example: { context: { input: "I want to explore my creativity" }, session_id: "optional-session-id" }
+    }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
+  
   const { context = {}, session_id } = data;
   const userInput = context.input || data.topic || "";
+  
+  // Validate that some form of input is provided
+  if (!userInput || typeof userInput !== 'string' || userInput.trim().length === 0) {
+    return new Response(JSON.stringify({
+      error: "Input required for discovery inquiry",
+      details: "Please provide context.input or topic describing what you want to explore",
+      example: { context: { input: "I want to understand my patterns around commitment" } }
+    }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  
+  // Validate input length for meaningful processing
+  const trimmedInput = userInput.trim();
+  if (trimmedInput.length > 2000) {
+    return new Response(JSON.stringify({
+      error: "Input too long for discovery inquiry",
+      details: `Please limit input to 2000 characters (current: ${trimmedInput.length})`,
+      suggestion: "Try focusing on one specific aspect you'd like to explore"
+    }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   
   // Check if conversational engine is enabled
   if (env.ENABLE_CONVERSATIONAL_ENGINE === '1' && userInput) {

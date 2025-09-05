@@ -7,6 +7,9 @@
 
 import { incrementRateLimitExceeded, incrementRequestSizeExceeded, incrementStoreCircuitOpen } from './metrics.js';
 
+// Constants for middleware configuration
+const CIRCUIT_BREAKER_TTL = 3600; // 1 hour (in seconds)
+
 /**
  * Canary rollout functionality
  * Determines if a request should receive new middleware based on user/session hash
@@ -279,11 +282,14 @@ export async function recordStoreFailure(env, store) {
     
     // Store updated state
     await env.AQUIL_MEMORIES.put(key, JSON.stringify(breaker), {
-      expirationTtl: 3600 // 1 hour
+      expirationTtl: CIRCUIT_BREAKER_TTL
     });
   } catch (error) {
-    // Fail silently - circuit breaker shouldn't break operations
-    console.warn('Store failure recording failed:', error.message);
+    // Graceful degradation - circuit breaker state persistence failure shouldn't halt operations
+    console.warn('Circuit breaker state persistence failed:', error.message, {
+      storeId: storeId,
+      failureCount: breaker.failureCount
+    });
   }
 }
 

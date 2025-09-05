@@ -12,6 +12,28 @@
 import { Router } from 'itty-router';
 import crypto from 'crypto';
 
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+// TTL Constants (in seconds)
+const TTL = {
+  HEALTH_CHECK: 60,           // Health check cache: 1 minute
+  READINESS_CHECK: 30,        // Readiness check cache: 30 seconds  
+  CIRCUIT_BREAKER: 3600,      // Circuit breaker state: 1 hour
+  METRICS: 86400 * 30,        // Metrics retention: 30 days
+  AUTONOMOUS_LOGS: 86400 * 7, // Autonomous action logs: 7 days
+  SESSION_STATE: 604800       // Session state: 7 days (default)
+};
+
+// Validation Constants
+const VALIDATION = {
+  MAX_INPUT_LENGTH: 2000,     // Maximum user input length
+  MIN_INPUT_LENGTH: 1,        // Minimum meaningful input length
+  MAX_BATCH_SIZE: 50,         // Maximum items per batch operation
+  DEFAULT_LIMIT: 20           // Default pagination limit
+};
+
 // Core endpoint handlers
 import {
   handleSessionInit,
@@ -938,7 +960,9 @@ router.get("/api/logs", async (req, env) => {
     await logChatGPTAction(env, 'retrieveLogsOrDataEntries', 
       { limit, sessionId, since }, 
       { count: items.length, cursor: !!nextCursor }
-    ).catch(() => {});
+    ).catch((loggingError) => {
+      console.warn('Failed to log retrieval action:', loggingError.message);
+    });
 
     // Return array format for ChatGPT compatibility
     return addCORS(new Response(JSON.stringify(items), {
@@ -950,7 +974,9 @@ router.get("/api/logs", async (req, env) => {
     }));
   } catch (error) {
     // Fail-open with array format
-    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', {}, null, error).catch(() => {});
+    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', {}, null, error).catch((loggingError) => {
+      console.warn('Failed to log error for retrieveLogsOrDataEntries:', loggingError.message);
+    });
     return addCORS(new Response(JSON.stringify([]), {
       headers: { 
         "Content-Type": "application/json",
@@ -969,8 +995,20 @@ router.post("/api/trust/check-in", async (req, env) => {
   try {
     const body = await req.json();
     
+    // Improved validation with helpful error messages
     if (!body.current_state) {
-      return addCORS(createErrorResponse({ error: "current_state required" }, 400));
+      return addCORS(createErrorResponse({ 
+        error: "current_state required",
+        details: "Please provide your current emotional or trust state for analysis",
+        example: { current_state: "feeling uncertain about this relationship" }
+      }, 400));
+    }
+    
+    if (typeof body.current_state !== 'string' || body.current_state.trim().length === 0) {
+      return addCORS(createErrorResponse({ 
+        error: "current_state must be a non-empty string",
+        details: "Describe your current trust-related feelings or situation"
+      }, 400));
     }
     
     const trustBuilder = new TrustBuilder();
@@ -981,7 +1019,10 @@ router.post("/api/trust/check-in", async (req, env) => {
     return addCORS(createWisdomResponse(analysis));
   } catch (error) {
     await logChatGPTAction(env, 'trustCheckIn', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
+    return addCORS(createErrorResponse({ 
+      error: error.message,
+      helpText: "Trust check-ins help you understand relationship patterns. Try describing how you're feeling about trust right now."
+    }, 500));
   }
 });
 
@@ -989,6 +1030,19 @@ router.post("/api/trust/check-in", async (req, env) => {
 router.post("/api/somatic/session", async (req, env) => {
   try {
     const body = await req.json();
+    
+    // Validate required inputs for somatic healing
+    if (!body.text && !body.description && !body.body_state) {
+      return addCORS(createErrorResponse({
+        error: "Somatic session requires input about your body/emotional state",
+        details: "Please describe what you're experiencing in your body or emotions",
+        example: { 
+          text: "I feel tension in my shoulders and anxiety in my chest",
+          body_state: "stressed, tired, disconnected"
+        }
+      }, 400));
+    }
+    
     const somaticHealer = new SomaticHealer();
     const session = await somaticHealer.generateSession(body);
     
@@ -2025,6 +2079,70 @@ router.post("/api/search/resonance", async (req, env) => {
     await logChatGPTAction(env, 'searchResonance', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
+});
+
+// =============================================================================
+// STUB IMPLEMENTATIONS FOR MISSING SCHEMA OPERATIONS
+// =============================================================================
+// These provide friendly responses for operations defined in schema but not yet implemented
+
+// Direct D1 queries (stub)
+router.post("/api/d1/query", async (req, env) => {
+  await logChatGPTAction(env, 'queryD1Database', {}, null, new Error('Not yet implemented'));
+  return addCORS(createErrorResponse({
+    error: "Direct D1 queries not yet implemented",
+    details: "For security reasons, direct database access is restricted",
+    alternatives: "Use /api/logs or specific endpoints like /api/discovery/generate-inquiry"
+  }, 501));
+});
+
+// Vector operations (stub)
+router.post("/api/vectorize/query", async (req, env) => {
+  await logChatGPTAction(env, 'queryVectorIndex', {}, null, new Error('Not yet implemented'));
+  return addCORS(createErrorResponse({
+    error: "Direct vector queries not yet implemented",
+    details: "Vector search is integrated into other endpoints",
+    alternatives: "Try /api/search/logs for semantic search of your data"
+  }, 501));
+});
+
+router.post("/api/vectorize/upsert", async (req, env) => {
+  await logChatGPTAction(env, 'upsertVectors', {}, null, new Error('Not yet implemented'));
+  return addCORS(createErrorResponse({
+    error: "Direct vector upserts not available",
+    details: "Vectors are automatically generated when you log data",
+    alternatives: "Use /api/log to store data which automatically creates vectors"
+  }, 501));
+});
+
+// Ancestral healing (stub)
+router.post("/api/ancestry/heal", async (req, env) => {
+  await logChatGPTAction(env, 'healAncestralPatterns', {}, null, new Error('Not yet implemented'));
+  return addCORS(createErrorResponse({
+    error: "Ancestral healing module not yet ready",
+    details: "This deep healing feature is in development",
+    alternatives: "Try /api/somatic/session for body-based healing work"
+  }, 501));
+});
+
+// RAG memory consolidation (stub)
+router.post("/api/rag/memory", async (req, env) => {
+  await logChatGPTAction(env, 'ragMemoryConsolidation', {}, null, new Error('Not yet implemented'));
+  return addCORS(createErrorResponse({
+    error: "RAG memory consolidation not yet available",
+    details: "Advanced memory processing is in development",
+    alternatives: "Your memories are being stored automatically with /api/log"
+  }, 501));
+});
+
+// System readiness (stub)
+router.get("/api/system/readiness", async (req, env) => {
+  await logChatGPTAction(env, 'systemReadinessCheck', {}, null, new Error('Not yet implemented'));
+  return addCORS(createErrorResponse({
+    error: "Detailed readiness checks not yet implemented",
+    details: "Basic health monitoring is available",
+    alternatives: "Use /api/system/health-check for system status"
+  }, 501));
 });
 
 // =============================================================================

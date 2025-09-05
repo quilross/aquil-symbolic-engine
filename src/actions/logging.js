@@ -671,8 +671,11 @@ export async function writeLog(
         "UPDATE metamorphic_logs SET stores = ? WHERE id = ?"
       ).bind(JSON.stringify(storesUsed), id).run();
     } catch (updateError) {
-      // Fail silently - the log is already written, this is just metadata enhancement
-      console.warn('Failed to update stores array in D1:', updateError.message);
+      // Graceful degradation - log is written successfully, metadata update failure is non-critical
+      console.warn('Failed to update stores metadata in D1:', updateError.message, {
+        logId: id,
+        storesUsed: storesUsed
+      });
     }
   }
   

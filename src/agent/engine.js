@@ -149,7 +149,8 @@ async function loadState(env, session_id) {
  */
 async function saveState(env, session_id, state) {
   if (!env.AQUIL_MEMORIES) {
-    return; // Fail silently if KV not available
+    console.warn('KV store (AQUIL_MEMORIES) not available for session state persistence');
+    return; // Graceful degradation when KV not configured
   }
   
   try {
@@ -166,8 +167,11 @@ async function saveState(env, session_id, state) {
     }
     
   } catch (error) {
-    console.warn('Failed to save state:', error);
-    // Fail silently - don't break the conversation
+    console.warn('Failed to save session state:', error.message, {
+      sessionId: session_id,
+      stateSize: JSON.stringify(state).length
+    });
+    // Graceful degradation - conversation continues without state persistence
   }
 }
 
@@ -207,8 +211,12 @@ async function logEngine(env, input, output) {
     
     await writeLog(env, logData);
   } catch (error) {
-    console.warn('Failed to log engine action:', error);
-    // Fail silently - logging should never break functionality
+    console.warn('Failed to log engine action:', error.message, {
+      sessionId: input.session_id,
+      voice: input.voice,
+      endpoint: 'behavioral_engine'
+    });
+    // Graceful degradation - logging failures don't interrupt user experience
   }
 }
 
