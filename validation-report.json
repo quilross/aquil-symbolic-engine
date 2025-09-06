@@ -21,7 +21,7 @@
     "implementationGaps": [],
     "configurationIssues": [],
     "errorHandlingIssues": [
-      "Mismatched try/catch blocks: 88 try, 97 catch"
+      "Mismatched try/catch blocks: 90 try, 99 catch"
     ]
   },
   "overall": {

@@ -1,0 +1,312 @@
+{
+  "summary": {
+    "totalOperations": 43,
+    "aligned": 35,
+    "misaligned": 8,
+    "missingEndpoints": 0,
+    "successRate": 81.4
+  },
+  "results": [
+    {
+      "operationId": "manageCommitment",
+      "path": "/api/commitments/create",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "listActiveCommitments",
+      "path": "/api/commitments/active",
+      "method": "GET",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "updateCommitmentProgress",
+      "path": "/api/commitments/progress",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "queryD1Database",
+      "path": "/api/d1/query",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "storeInKV",
+      "path": "/api/kv/log",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "upsertVectors",
+      "path": "/api/vectorize/upsert",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "trustCheckIn",
+      "path": "/api/trust/check-in",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "somaticHealingSession",
+      "path": "/api/somatic/session",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "extractMediaWisdom",
+      "path": "/api/media/extract-wisdom",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "recognizePatterns",
+      "path": "/api/patterns/recognize",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "standingTallPractice",
+      "path": "/api/standing-tall/practice",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "synthesizeWisdom",
+      "path": "/api/wisdom/synthesize",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "getDailySynthesis",
+      "path": "/api/wisdom/daily-synthesis",
+      "method": "GET",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "getPersonalInsights",
+      "path": "/api/insights",
+      "method": "GET",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "submitFeedback",
+      "path": "/api/feedback",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "generateDiscoveryInquiry",
+      "path": "/api/discovery/generate-inquiry",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "interpretDream",
+      "path": "/api/dreams/interpret",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "optimizeEnergy",
+      "path": "/api/energy/optimize",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "clarifyValues",
+      "path": "/api/values/clarify",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "unleashCreativity",
+      "path": "/api/creativity/unleash",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "cultivateAbundance",
+      "path": "/api/abundance/cultivate",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "navigateTransitions",
+      "path": "/api/transitions/navigate",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "healAncestry",
+      "path": "/api/ancestry/heal",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "ragMemoryConsolidation",
+      "path": "/api/rag/memory",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "trackMoodAndEmotions",
+      "path": "/api/mood/track",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "setPersonalGoals",
+      "path": "/api/goals/set",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "designHabits",
+      "path": "/api/habits/design",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "systemHealthCheck",
+      "path": "/api/system/health-check",
+      "method": "GET",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "logDataOrEvent",
+      "path": "/api/log",
+      "method": "POST",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "retrieveLogsOrDataEntries",
+      "path": "/api/logs",
+      "method": "GET",
+      "source": "main",
+      "status": "aligned"
+    },
+    {
+      "operationId": "logDataOrEvent",
+      "path": "/api/log",
+      "method": "POST",
+      "source": "logging",
+      "status": "aligned"
+    },
+    {
+      "operationId": "retrieveLogsOrDataEntries",
+      "path": "/api/logs",
+      "method": "GET",
+      "source": "logging",
+      "status": "aligned"
+    },
+    {
+      "operationId": "advancedLoggingOperations",
+      "path": "/api/logs",
+      "method": "POST",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "retrieveRecentSessionLogs",
+      "path": "/api/session-init",
+      "method": "GET",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "searchLogs",
+      "path": "/api/search/logs",
+      "method": "POST",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "searchR2Storage",
+      "path": "/api/search/r2",
+      "method": "POST",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "ragSearch",
+      "path": "/api/rag/search",
+      "method": "POST",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "getConversationAnalytics",
+      "path": "/api/analytics/insights",
+      "method": "GET",
+      "source": "logging",
+      "status": "aligned"
+    },
+    {
+      "operationId": "exportConversationData",
+      "path": "/api/export/conversation",
+      "method": "POST",
+      "source": "logging",
+      "status": "aligned"
+    },
+    {
+      "operationId": "retrieveR2StoredContent",
+      "path": "/api/r2/list",
+      "method": "GET",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "getR2StoredContent",
+      "path": "/api/r2/get",
+      "method": "GET",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "retrieveFromKV",
+      "path": "/api/kv/get",
+      "method": "GET",
+      "source": "logging",
+      "status": "misaligned"
+    },
+    {
+      "operationId": "queryVectorIndex",
+      "path": "/api/vectorize/query",
+      "method": "POST",
+      "source": "logging",
+      "status": "aligned"
+    }
+  ]
+}
