@@ -7,10 +7,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getAllCanonical, getAllAliases, toCanonical } from '../src/ops/operation-aliases.js';
+import { getAllCanonical, getAllAliases, toCanonical } from '../../backend/ops/operation-aliases.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', '..');
 
 async function checkOperationAliases() {
   let exitCode = 0;
@@ -21,7 +21,7 @@ async function checkOperationAliases() {
 
   try {
     // 1. Load canonical operations from schema
-    const schemaPath = path.join(rootDir, 'gpt-actions-schema.json');
+    const schemaPath = path.join(rootDir, 'config/gpt-actions-schema.json');
     const schemaContent = fs.readFileSync(schemaPath, 'utf8');
     const schema = JSON.parse(schemaContent);
     

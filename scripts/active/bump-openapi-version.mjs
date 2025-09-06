@@ -2,7 +2,7 @@
 /**
  * OpenAPI Version Bump Tool
  * 
- * Automatically bumps the version in gpt-actions-schema.json according to semver rules:
+ * Automatically bumps the version in config/gpt-actions-schema.json according to semver rules:
  * - If version is semver (x.y.z), bump patch (x.y.z+1)
  * - If version is missing or non-semver, set to 0.0.1
  * - Preserves existing formatting and field order
@@ -13,8 +13,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
-const schemaPath = path.join(rootDir, 'gpt-actions-schema.json');
+const rootDir = path.resolve(__dirname, '..', '..');
+const schemaPath = path.join(rootDir, 'config/gpt-actions-schema.json');
 
 function isSemver(version) {
   if (!version || typeof version !== 'string') return false;
@@ -29,7 +29,7 @@ function bumpPatchVersion(version) {
 function bumpVersion() {
   // Check if schema file exists
   if (!fs.existsSync(schemaPath)) {
-    console.error('❌ gpt-actions-schema.json not found');
+    console.error('❌ config/gpt-actions-schema.json not found');
     process.exit(1);
   }
   
@@ -39,7 +39,7 @@ function bumpVersion() {
   try {
     schema = JSON.parse(originalContent);
   } catch (error) {
-    console.error('❌ Invalid JSON in gpt-actions-schema.json:', error.message);
+    console.error('❌ Invalid JSON in config/gpt-actions-schema.json:', error.message);
     process.exit(1);
   }
   
@@ -82,7 +82,7 @@ function bumpVersion() {
   // Only write if content actually changed
   if (updatedContent !== originalContent) {
     fs.writeFileSync(schemaPath, updatedContent + '\n');
-    console.log(`✅ Updated gpt-actions-schema.json`);
+    console.log(`✅ Updated config/gpt-actions-schema.json`);
     console.log(`📋 New version: ${newVersion}`);
   } else {
     console.log(`➖ No changes needed (version already ${newVersion})`);

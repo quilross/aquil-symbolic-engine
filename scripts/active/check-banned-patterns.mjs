@@ -12,46 +12,46 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', '..');
 
 const BANNED_PATTERNS = [
   {
     pattern: 'INSERT INTO event_log',
     description: 'Legacy event_log table insert (use metamorphic_logs)',
-    searchPaths: ['src/', 'test/', 'scripts/'],
+    searchPaths: ['backend/', 'test/', 'scripts/'],
     excludePaths: ['scripts/check-banned-patterns.mjs'] // Exclude self-reference
   },
   {
     pattern: 'INSERT INTO aquil_logs',
     description: 'Legacy aquil_logs table insert (use metamorphic_logs)',
-    searchPaths: ['src/', 'test/', 'scripts/'],
+    searchPaths: ['backend/', 'test/', 'scripts/'],
     excludePaths: ['scripts/check-banned-patterns.mjs'] // Exclude self-reference
   },
   {
     pattern: 'AQUIL_VECTORIZE',
     description: 'Legacy vectorize binding',
-    searchPaths: ['src/', 'test/', 'docs/', '*.md', '*.js', '*.mjs', '*.json'],
+    searchPaths: ['backend/', 'test/', 'docs/', '*.md', '*.js', '*.mjs', '*.json'],
     excludePaths: ['scripts/check-banned-patterns.mjs'] // Exclude self-reference
   },
   {
     pattern: '/api/health[^-]',
     description: 'Legacy health endpoint (use /api/system/health-check)',
-    searchPaths: ['src/', 'test/', 'docs/', '*.md']
+    searchPaths: ['backend/', 'test/', 'docs/', '*.md']
   },
   {
     pattern: '/api/wellbeing/',
     description: 'Removed wellbeing endpoint',
-    searchPaths: ['src/', 'test/', 'docs/', '*.md']
+    searchPaths: ['backend/', 'test/', 'docs/', '*.md']
   },
   {
     pattern: '/api/me/',
     description: 'Removed me endpoint',
-    searchPaths: ['src/', 'test/', 'docs/', '*.md']
+    searchPaths: ['backend/', 'test/', 'docs/', '*.md']
   },
   {
     pattern: '/api/wisdom/',
     description: 'Legacy wisdom endpoint pattern (should be /api/wisdom/synthesize or /api/wisdom/daily-synthesis)',
-    searchPaths: ['src/', 'test/', 'docs/', '*.md'],
+    searchPaths: ['backend/', 'test/', 'docs/', '*.md'],
     allowedExceptions: ['/api/wisdom/synthesize', '/api/wisdom/daily-synthesis']
   }
 ];

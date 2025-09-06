@@ -10,11 +10,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { getAllCanonical, getAllAliases, toCanonical } from '../src/ops/operation-aliases.js';
+import { getAllCanonical, getAllAliases, toCanonical } from '../../backend/ops/operation-aliases.js';
 
 const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', '..');
 
 async function checkSchemaConsistency() {
   console.log('🔍 Checking GPT Actions Schema Consistency...\n');
@@ -23,10 +23,10 @@ async function checkSchemaConsistency() {
   const errors = [];
   
   try {
-    // 1. Parse gpt-actions-schema.json and collect operationIds
-    const schemaPath = path.join(rootDir, 'gpt-actions-schema.json');
+    // 1. Parse config/gpt-actions-schema.json and collect operationIds
+    const schemaPath = path.join(rootDir, 'config/gpt-actions-schema.json');
     if (!fs.existsSync(schemaPath)) {
-      errors.push('❌ gpt-actions-schema.json not found');
+      errors.push('❌ config/gpt-actions-schema.json not found');
       exitCode = 1;
     } else {
       const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
@@ -62,7 +62,7 @@ async function checkSchemaConsistency() {
       
       // 2. Check implementation consistency using alias system
       try {
-        const { stdout } = await execAsync('grep -r "logChatGPTAction" src/ --include="*.js" || true');
+        const { stdout } = await execAsync('grep -r "logChatGPTAction" backend/ --include="*.js" || true');
         const implementedOps = new Set();
         
         // Extract operationIds from logChatGPTAction calls

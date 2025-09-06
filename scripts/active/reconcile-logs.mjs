@@ -7,10 +7,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { toCanonical } from '../src/ops/operation-aliases.js';
+import { toCanonical } from '../../backend/ops/operation-aliases.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', '..');
 
 async function reconcileLogs(options = {}) {
   const { 
@@ -265,7 +265,7 @@ async function backfillKVLog(env, log) {
   
   // Track reconcile backfill (fail-open)
   try {
-    const { incrementReconcileBackfill } = await import('../src/utils/metrics.js');
+    const { incrementReconcileBackfill } = await import('../../backend/utils/metrics.js');
     incrementReconcileBackfill(env, 'kv');
   } catch (metricsError) {
     // Silent fail for metrics in reconcile script
@@ -287,7 +287,7 @@ async function backfillVectorLog(env, log) {
   
   // Track reconcile backfill (fail-open)
   try {
-    const { incrementReconcileBackfill } = await import('../src/utils/metrics.js');
+    const { incrementReconcileBackfill } = await import('../../backend/utils/metrics.js');
     incrementReconcileBackfill(env, 'vector');
   } catch (metricsError) {
     // Silent fail for metrics in reconcile script
@@ -306,7 +306,7 @@ async function backfillR2Log(env, log) {
   
   // Track reconcile backfill (fail-open)
   try {
-    const { incrementReconcileBackfill } = await import('../src/utils/metrics.js');
+    const { incrementReconcileBackfill } = await import('../../backend/utils/metrics.js');
     incrementReconcileBackfill(env, 'r2');
   } catch (metricsError) {
     // Silent fail for metrics in reconcile script

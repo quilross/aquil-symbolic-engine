@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', '..', '..');
 
 // Colors for output
 const colors = {
@@ -34,7 +34,7 @@ function colorize(text, color) {
 // Load operation aliases module
 let toCanonical, getAllCanonical, getAllAliases;
 try {
-  const aliases = await import(path.join(rootDir, 'src/ops/operation-aliases.js'));
+  const aliases = await import(path.join(rootDir, 'backend/ops/operation-aliases.js'));
   toCanonical = aliases.toCanonical;
   getAllCanonical = aliases.getAllCanonical;
   getAllAliases = aliases.getAllAliases;
@@ -83,9 +83,9 @@ async function checkSchemaConsistency() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
   // Load schema
-  const schemaPath = path.join(rootDir, 'gpt-actions-schema.json');
+  const schemaPath = path.join(rootDir, 'config/gpt-actions-schema.json');
   if (!fs.existsSync(schemaPath)) {
-    console.log(colorize('❌ gpt-actions-schema.json not found', 'red'));
+    console.log(colorize('❌ config/gpt-actions-schema.json not found', 'red'));
     return;
   }
   
@@ -261,7 +261,7 @@ async function checkParameterAlignment(operationDetails, implementedOps) {
  */
 async function checkIdempotencyUsage(operationId) {
   try {
-    const indexPath = path.join(rootDir, 'src/index.js');
+    const indexPath = path.join(rootDir, 'backend/index.js');
     const content = fs.readFileSync(indexPath, 'utf8');
     
     // Look for idempotency-related code near the operation
@@ -292,9 +292,9 @@ async function checkBehavioralEngineIntegration() {
   
   // Check if behavioral engine files exist and analyze their intent
   const engineFiles = [
-    { file: 'src/agent/engine.js', module: 'Behavioral Engine' },
-    { file: 'src/agent/voice.js', module: 'Voice Selector' },
-    { file: 'src/agent/pressing.js', module: 'Pressing Engine' }
+    { file: 'backend/agent/engine.js', module: 'Behavioral Engine' },
+    { file: 'backend/agent/voice.js', module: 'Voice Selector' },
+    { file: 'backend/agent/pressing.js', module: 'Pressing Engine' }
   ];
   
   for (const { file, module } of engineFiles) {
@@ -437,7 +437,7 @@ function checkMainEngineLogic(content) {
 async function checkEndpointEngineIntegration() {
   console.log(colorize('\n🔗 Endpoint Engine Integration Check:', 'blue'));
   
-  const indexPath = path.join(rootDir, 'src/index.js');
+  const indexPath = path.join(rootDir, 'backend/index.js');
   if (!fs.existsSync(indexPath)) {
     console.log(colorize('❌ Main index.js not found', 'red'));
     return;
@@ -473,7 +473,7 @@ async function checkEndpointEngineIntegration() {
 async function checkLoggingCompliance() {
   console.log(colorize('\n📊 Logging Compliance Check:', 'blue'));
   
-  const indexPath = path.join(rootDir, 'src/index.js');
+  const indexPath = path.join(rootDir, 'backend/index.js');
   const content = fs.readFileSync(indexPath, 'utf8');
   
   // Check for proper logChatGPTAction usage
@@ -522,9 +522,9 @@ async function checkFailOpenBehavior() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
   const files = [
-    'src/index.js',
-    'src/agent/engine.js',
-    'src/utils/metrics.js'
+    'backend/index.js',
+    'backend/agent/engine.js',
+    'backend/utils/metrics.js'
   ];
   
   for (const file of files) {
@@ -607,7 +607,7 @@ async function analyzeFailOpenBehavior(filePath, fileName) {
 async function checkHealthEndpoints() {
   console.log(colorize('\n🏥 Health Endpoint Check:', 'blue'));
   
-  const indexPath = path.join(rootDir, 'src/index.js');
+  const indexPath = path.join(rootDir, 'backend/index.js');
   const content = fs.readFileSync(indexPath, 'utf8');
   
   // Look for health check endpoints
@@ -645,7 +645,7 @@ async function checkCustomGPTFunctionality() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
   // Load schema operations
-  const schemaPath = path.join(rootDir, 'gpt-actions-schema.json');
+  const schemaPath = path.join(rootDir, 'config/gpt-actions-schema.json');
   const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
   
   const schemaOperations = [];
@@ -695,7 +695,7 @@ async function checkCustomGPTFunctionality() {
 async function checkDynamicFeatures() {
   console.log(colorize('\n🎭 Dynamic Voice & Pressing Check:', 'blue'));
   
-  const enginePath = path.join(rootDir, 'src/agent/engine.js');
+  const enginePath = path.join(rootDir, 'backend/agent/engine.js');
   if (fs.existsSync(enginePath)) {
     const content = fs.readFileSync(enginePath, 'utf8');
     
@@ -734,7 +734,7 @@ async function checkDynamicFeatures() {
 async function checkProgressiveEnhancement() {
   console.log(colorize('\n📈 Progressive Enhancement Check:', 'blue'));
   
-  const indexPath = path.join(rootDir, 'src/index.js');
+  const indexPath = path.join(rootDir, 'backend/index.js');
   const content = fs.readFileSync(indexPath, 'utf8');
   
   // Check for micro commitments

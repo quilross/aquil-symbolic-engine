@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
+const rootDir = path.resolve(__dirname, '..', '..', '..');
 
 // Colors for output
 const colors = {
@@ -41,7 +41,7 @@ function generateCriticalHandlerFixes() {
   console.log(colorize('\n📝 1. Fix: Add retrieveLogsOrDataEntries handler', 'yellow'));
   console.log('   **Issue:** Operation defined in schema but returns 404');
   console.log('   **Impact:** GPT cannot retrieve conversation history');
-  console.log('   **File:** src/index.js');
+  console.log('   **File:** backend/index.js');
   console.log('');
   console.log(colorize('   Git-style diff suggestion:', 'blue'));
   console.log('   ```diff');
@@ -66,7 +66,7 @@ function generateCriticalHandlerFixes() {
   console.log(colorize('\n📝 2. Fix: Integrate behavioral engine in discovery endpoint', 'yellow'));
   console.log('   **Issue:** /api/discovery/generate-inquiry doesn\'t use runEngine()');
   console.log('   **Impact:** No dynamic voice selection or pressing logic');
-  console.log('   **File:** src/index.js');
+  console.log('   **File:** backend/index.js');
   console.log('');
   console.log(colorize('   Git-style diff suggestion:', 'blue'));
   console.log('   ```diff');
@@ -104,7 +104,7 @@ function generateCriticalHandlerFixes() {
   console.log(colorize('\n📝 3. Fix: Ensure health check always returns 200', 'yellow'));
   console.log('   **Issue:** Health endpoint may not always return HTTP 200');
   console.log('   **Impact:** Fail-open requirement not met');
-  console.log('   **File:** src/index.js');
+  console.log('   **File:** backend/index.js');
   console.log('');
   console.log(colorize('   Git-style diff suggestion:', 'blue'));
   console.log('   ```diff');
@@ -135,7 +135,7 @@ function generateCriticalHandlerFixes() {
   console.log(colorize('\n📝 4. Fix: Add missing readiness endpoint', 'yellow'));
   console.log('   **Issue:** /api/system/readiness endpoint missing');
   console.log('   **Impact:** Fail-open requirement incomplete');
-  console.log('   **File:** src/index.js');
+  console.log('   **File:** backend/index.js');
   console.log('');
   console.log(colorize('   Git-style diff suggestion:', 'blue'));
   console.log('   ```diff');
@@ -165,7 +165,7 @@ function generateCriticalHandlerFixes() {
   console.log(colorize('\n📝 5. Fix: Add stores array tracking in logging', 'yellow'));
   console.log('   **Issue:** No stores array updates in logChatGPTAction');
   console.log('   **Impact:** Cannot track which stores successfully received logs');
-  console.log('   **File:** src/index.js (logChatGPTAction function)');
+  console.log('   **File:** backend/index.js (logChatGPTAction function)');
   console.log('');
   console.log(colorize('   Git-style diff suggestion:', 'blue'));
   console.log('   ```diff');
@@ -213,7 +213,7 @@ function generateQuickStubFixes() {
     { operation: 'clarifyValues', path: '/api/values/clarify', method: 'POST' }
   ];
   
-  console.log(colorize('   File: src/index.js', 'yellow'));
+  console.log(colorize('   File: backend/index.js', 'yellow'));
   console.log('   ```javascript');
   console.log('   // === STUB HANDLERS FOR IMMEDIATE GPT COMPATIBILITY ===');
   

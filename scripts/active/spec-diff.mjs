@@ -2,7 +2,7 @@
 /**
  * OpenAPI Spec Diff Tool
  * 
- * Compares the current gpt-actions-schema.json against the last committed version
+ * Compares the current config/gpt-actions-schema.json against the last committed version
  * and prints a concise, human-readable diff for GPT builder refresh decisions.
  */
 
@@ -15,8 +15,8 @@ import crypto from 'crypto';
 
 const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.join(__dirname, '..');
-const schemaPath = path.join(rootDir, 'gpt-actions-schema.json');
+const rootDir = path.resolve(__dirname, '..', '..');
+const schemaPath = path.join(rootDir, 'config/gpt-actions-schema.json');
 
 function extractOperationIds(schema) {
   const operations = [];
@@ -42,7 +42,7 @@ function hashContent(content) {
 
 async function getCommittedSchema() {
   try {
-    const { stdout } = await execAsync('git show HEAD:gpt-actions-schema.json', { cwd: rootDir });
+    const { stdout } = await execAsync('git show HEAD:config/gpt-actions-schema.json', { cwd: rootDir });
     return JSON.parse(stdout);
   } catch (error) {
     console.log('⚠️  No committed schema found (new file or first commit)');
@@ -55,7 +55,7 @@ async function generateSpecDiff() {
   
   // Read current schema
   if (!fs.existsSync(schemaPath)) {
-    console.log('❌ Current gpt-actions-schema.json not found');
+    console.log('❌ Current config/gpt-actions-schema.json not found');
     process.exit(1);
   }
   

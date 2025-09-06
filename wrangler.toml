@@ -1,5 +1,5 @@
 name = "aquil-prod"
-main = "src/index.js"
+main = "backend/index.js"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"] # allows Node-style modules if needed
 

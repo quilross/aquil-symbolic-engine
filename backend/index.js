@@ -56,16 +56,16 @@ import { put as r2Put, get as r2Get } from "./actions/r2.js";
 import { log as kvLog, get as kvGet } from "./actions/kv.js";
 
 // Core AI modules for personal growth
-import { SomaticHealer } from "./src-core-somatic-healer.js";
-import { ValuesClarifier } from "./src-core-values-clarifier.js";
-import { CreativityUnleasher } from "./src-core-creativity-unleasher.js";
-import { AbundanceCultivator } from "./src-core-abundance-cultivator.js";
-import { TransitionNavigator } from "./src-core-transition-navigator.js";
-import { AncestryHealer } from "./src-core-ancestry-healer.js";
-import { TrustBuilder } from "./src-core-trust-builder.js";
-import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
-import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
-import { StandingTall } from "./src-core-standing-tall.js";
+import { SomaticHealer } from "./core/somatic-healer.js";
+import { ValuesClarifier } from "./core/values-clarifier.js";
+import { CreativityUnleasher } from "./core/creativity-unleasher.js";
+import { AbundanceCultivator } from "./core/abundance-cultivator.js";
+import { TransitionNavigator } from "./core/transition-navigator.js";
+import { AncestryHealer } from "./core/ancestry-healer.js";
+import { TrustBuilder } from "./core/trust-builder.js";
+import { MediaWisdomExtractor } from "./core/media-wisdom.js";
+import { PatternRecognizer } from "./core/pattern-recognizer.js";
+import { StandingTall } from "./core/standing-tall.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
 import { handleScheduledTriggers } from "./utils/autonomy.js";

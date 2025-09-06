@@ -12,7 +12,7 @@
  */
 
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -56,7 +56,7 @@ async function runAcceptanceTests() {
   try {
     // 1. Op-cap check (must be 30)
     info('1. Checking operation count...');
-    const schemaPath = join(__dirname, '..', 'gpt-actions-schema.json');
+    const schemaPath = resolve(__dirname, '..', '..', 'config/gpt-actions-schema.json');
     const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
     
     const operations = [];
