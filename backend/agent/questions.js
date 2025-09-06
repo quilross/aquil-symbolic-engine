@@ -156,7 +156,7 @@ async function callSocraticEndpoint(env, { voice, text, context }) {
 async function callContradictionsEndpoint(env, { text, context }) {
   try {
     // Import the PatternRecognizer and call exposeContradictions directly
-    const { PatternRecognizer } = await import('../src-core-pattern-recognizer.js');
+    const { PatternRecognizer } = await import('../core/pattern-recognizer.js');
     
     const recognizer = new PatternRecognizer(env);
     const result = await recognizer.exposeContradictions({

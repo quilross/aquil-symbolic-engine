@@ -3,8 +3,8 @@
  * Your personal guide for discovering what truly matters to you
  */
 
-import { AquilDatabase } from "./utils/database.js";
-import { AquilAI } from "./utils/ai-helpers.js";
+import { AquilDatabase } from "../utils/database.js";
+import { AquilAI } from "../utils/ai-helpers.js";
 
 export class ValuesClarifier {
   constructor(env) {

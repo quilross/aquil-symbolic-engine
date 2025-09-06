@@ -3,8 +3,8 @@
  * Part of ARK 2.0's metabolizing system for transforming ancestral wounds into wisdom
  */
 
-import { AquilDatabase } from "./utils/database.js";
-import { AquilAI } from "./utils/ai-helpers.js";
+import { AquilDatabase } from "../utils/database.js";
+import { AquilAI } from "../utils/ai-helpers.js";
 
 export class AncestryHealer {
   constructor(env) {

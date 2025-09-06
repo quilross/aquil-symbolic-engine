@@ -3,8 +3,8 @@
  * Helps you see the deeper patterns in your trust building journey
  */
 
-import { AquilDatabase } from "./utils/database.js";
-import { AquilAI } from "./utils/ai-helpers.js";
+import { AquilDatabase } from "../utils/database.js";
+import { AquilAI } from "../utils/ai-helpers.js";
 
 export class PatternRecognizer {
   constructor(env) {

@@ -3,8 +3,8 @@
  * Part of ARK 2.0's metabolizing system for transforming creative resistance into flow
  */
 
-import { AquilDatabase } from "./utils/database.js";
-import { AquilAI } from "./utils/ai-helpers.js";
+import { AquilDatabase } from "../utils/database.js";
+import { AquilAI } from "../utils/ai-helpers.js";
 
 export class CreativityUnleasher {
   constructor(env) {
