@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChatGPT Actions Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .metric { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { color: #28a745; }
+        .warning { color: #ffc107; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>🚀 ChatGPT Actions Dashboard</h1>
+    <div id="metrics"></div>
+    
+    <script>
+        async function loadMetrics() {
+            const response = await fetch('/api/dashboard/metrics');
+            const data = await response.json();
+            
+            document.getElementById('metrics').innerHTML = `
+                <div class="metric">
+                    <h3>📊 Operation Performance</h3>
+                    <p>Total Calls: ${data.totalCalls}</p>
+                    <p>Success Rate: ${(data.successRate * 100).toFixed(1)}%</p>
+                    <p>Avg Response Time: ${data.avgResponseTime}ms</p>
+                </div>
+                <div class="metric">
+                    <h3>🎯 Most Used Operations</h3>
+                    ${data.topOperations.map(op => `<p>${op.name}: ${op.calls} calls</p>`).join('')}
+                </div>
+            `;
+        }
+        
+        loadMetrics();
+        setInterval(loadMetrics, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>

@@ -1071,6 +1071,146 @@
         }
       }
     },
+    "/api/mood/track": {
+      "post": {
+        "summary": "Track mood and emotional states",
+        "description": "Called when user mentions feelings, emotions, mood changes, or emotional states. Triggers on: 'feeling sad', 'happy today', 'mood is', 'emotionally', 'my feelings'.",
+        "operationId": "trackMoodAndEmotions",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_mood": { "type": "string", "description": "Current emotional state" },
+                  "mood_scale": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Mood rating 1-10" },
+                  "triggers": { "type": "array", "items": { "type": "string" }, "description": "What influenced this mood" },
+                  "context": { "type": "string", "description": "Situational context" }
+                },
+                "required": ["current_mood", "mood_scale"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mood tracking with emotional insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mood_insights": { "type": "string", "description": "Emotional insights and patterns" },
+                    "mood_trends": { "type": "array", "items": { "type": "string" }, "description": "Identified mood patterns" },
+                    "emotional_guidance": { "type": "string", "description": "Emotional regulation guidance" },
+                    "mood_boosters": { "type": "array", "items": { "type": "string" }, "description": "Mood improvement suggestions" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["mood_insights", "emotional_guidance"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/goals/set": {
+      "post": {
+        "summary": "Set and track personal goals",
+        "description": "Called when user discusses goals, aspirations, or future plans. Triggers on: 'my goal is', 'want to achieve', 'planning to', 'aspire to', goal-setting.",
+        "operationId": "setPersonalGoals",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "goal_description": { "type": "string", "description": "Goal description and details" },
+                  "goal_category": { "type": "string", "enum": ["personal", "professional", "health", "relationships", "financial", "creative"], "description": "Goal category" },
+                  "timeline": { "type": "string", "description": "Desired timeline for achievement" },
+                  "motivation": { "type": "string", "description": "Why this goal matters" }
+                },
+                "required": ["goal_description", "goal_category"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Goal setting with action plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "goal_id": { "type": "string", "description": "Unique goal identifier" },
+                    "action_plan": { "type": "array", "items": { "type": "string" }, "description": "Step-by-step action plan" },
+                    "milestones": { "type": "array", "items": { "type": "object" }, "description": "Key milestones and checkpoints" },
+                    "success_metrics": { "type": "array", "items": { "type": "string" }, "description": "How to measure success" },
+                    "potential_obstacles": { "type": "array", "items": { "type": "string" }, "description": "Anticipated challenges" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["goal_id", "action_plan", "milestones"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/habits/design": {
+      "post": {
+        "summary": "Design and optimize habits",
+        "description": "Called when user wants to build new habits or break old ones. Triggers on: 'want to start', 'habit', 'routine', 'stop doing', 'build consistency'.",
+        "operationId": "designHabits",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "habit_type": { "type": "string", "enum": ["build", "break", "modify"], "description": "Type of habit change" },
+                  "habit_description": { "type": "string", "description": "Detailed habit description" },
+                  "current_frequency": { "type": "string", "description": "Current frequency if existing habit" },
+                  "desired_outcome": { "type": "string", "description": "What success looks like" }
+                },
+                "required": ["habit_type", "habit_description"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Habit design with implementation strategy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "habit_plan": { "type": "string", "description": "Detailed habit implementation plan" },
+                    "trigger_design": { "type": "string", "description": "Habit trigger and cue design" },
+                    "reward_system": { "type": "array", "items": { "type": "string" }, "description": "Reward and motivation system" },
+                    "tracking_method": { "type": "string", "description": "How to track progress" },
+                    "difficulty_progression": { "type": "array", "items": { "type": "string" }, "description": "Gradual difficulty increase" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["habit_plan", "trigger_design"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/health-check": {
       "get": {
         "summary": "System health check and readiness status",

@@ -290,6 +290,85 @@
         }
       }
     },
+    "/api/analytics/insights": {
+      "get": {
+        "summary": "Get conversation analytics and insights",
+        "description": "Automatically called to analyze conversation patterns and provide usage insights.",
+        "operationId": "getConversationAnalytics",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "timeframe",
+            "in": "query",
+            "description": "Analysis timeframe (day, week, month)",
+            "schema": { "type": "string", "enum": ["day", "week", "month"], "default": "week" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation analytics and patterns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversation_patterns": { "type": "array", "items": { "type": "string" }, "description": "Identified conversation patterns" },
+                    "growth_indicators": { "type": "array", "items": { "type": "string" }, "description": "Signs of personal growth" },
+                    "engagement_metrics": { "type": "object", "description": "Engagement and usage metrics" },
+                    "insights_summary": { "type": "string", "description": "Key insights summary" },
+                    "recommendations": { "type": "array", "items": { "type": "string" }, "description": "Personalized recommendations" }
+                  },
+                  "required": ["conversation_patterns", "insights_summary"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/export/conversation": {
+      "post": {
+        "summary": "Export conversation data",
+        "description": "Export conversation history in various formats for backup or analysis.",
+        "operationId": "exportConversationData",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "format": { "type": "string", "enum": ["json", "csv", "pdf"], "default": "json", "description": "Export format" },
+                  "date_range": { "type": "object", "description": "Date range for export" },
+                  "include_analytics": { "type": "boolean", "default": true, "description": "Include analytics data" }
+                },
+                "required": ["format"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Exported conversation data with download link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "export_url": { "type": "string", "description": "Download URL for export file" },
+                    "file_size": { "type": "string", "description": "File size in human readable format" },
+                    "record_count": { "type": "integer", "description": "Number of records exported" },
+                    "export_id": { "type": "string", "description": "Unique export identifier" }
+                  },
+                  "required": ["export_url", "record_count", "export_id"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/r2/list": {
       "get": {
         "summary": "List stored content from R2",
