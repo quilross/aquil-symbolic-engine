@@ -772,7 +772,7 @@
     "/api/trust/check-in": {
       "post": {
         "summary": "Trust and self-confidence building",
-        "description": "Called when user expresses self-doubt, anxiety, fear of judgment, mentions feeling unsafe, or needs confidence support. Triggers on: 'I don't trust myself', 'feeling anxious', 'not confident about', 'scared to try', 'doubt', 'uncertainty'.",
+        "description": "Called when user expresses self-doubt, anxiety, fear of judgment, mentions feeling unsafe, or needs confidence support. CREATES trust-building insights and confidence strategies. Triggers on: 'I don't trust myself', 'feeling anxious', 'not confident about', 'scared to try', 'doubt', 'uncertainty'.",
         "operationId": "trustCheckIn",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -3334,7 +3334,7 @@
     "/api/mood/track": {
       "post": {
         "summary": "Track mood and emotional states",
-        "description": "Called when user mentions feelings, emotions, mood changes, or emotional states. Triggers on: 'feeling sad', 'happy today', 'mood is', 'emotionally', 'my feelings'.",
+        "description": "Called when user mentions feelings, emotions, mood changes, or emotional states. TRACKS and ANALYZES emotional patterns for mood insights and regulation. Triggers on: 'feeling sad', 'happy today', 'mood is', 'emotionally', 'my feelings'.",
         "operationId": "trackMoodAndEmotions",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -3638,7 +3638,7 @@
     "/api/habits/design": {
       "post": {
         "summary": "Design and optimize habits",
-        "description": "Called when user wants to build new habits or break old ones. Triggers on: 'want to start', 'habit', 'routine', 'stop doing', 'build consistency'.",
+        "description": "Called when user wants to build new habits or break old ones. DESIGNS personalized habit systems and CREATES behavior change strategies. Triggers on: 'want to start', 'habit', 'routine', 'stop doing', 'build consistency'.",
         "operationId": "designHabits",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -3897,7 +3897,7 @@
       "post": {
         "summary": "Log conversation events and insights",
         "description": "Called AUTOMATICALLY to log chat messages, insights, breakthroughs, and meaningful moments. Triggers on: conversation events, emotional moments, insights, breakthroughs, important statements.",
-        "operationId": "logDataOrEvent",
+        "operationId": "logConversationEvent",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
         "requestBody": {
@@ -4026,7 +4026,7 @@
       "get": {
         "summary": "Retrieve conversation history and context",
         "description": "Called AUTOMATICALLY to gather conversation history and context for continuity. Essential for understanding user's journey and maintaining conversation flow. Triggers on: conversation start, context needed, history review.",
-        "operationId": "retrieveLogsOrDataEntries",
+        "operationId": "retrieveConversationHistory",
         "x-openai-autonomous": true,
         "parameters": [
           {

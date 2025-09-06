@@ -26,12 +26,29 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "default": "chat_message", "description": "Event type (chat_message, insight, breakthrough, emotion, etc.)" },
-                  "who": { "type": "string", "default": "user", "description": "Who generated this event (user, assistant, system)" },
-                  "level": { "type": "string", "default": "info", "description": "Importance level (debug, info, significant, breakthrough)" },
-                  "payload": { "type": "object", "description": "Event data and context" }
+                  "type": {
+                    "type": "string",
+                    "default": "chat_message",
+                    "description": "Event type (chat_message, insight, breakthrough, emotion, etc.)"
+                  },
+                  "who": {
+                    "type": "string",
+                    "default": "user",
+                    "description": "Who generated this event (user, assistant, system)"
+                  },
+                  "level": {
+                    "type": "string",
+                    "default": "info",
+                    "description": "Importance level (debug, info, significant, breakthrough)"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "description": "Event data and context"
+                  }
                 },
-                "required": ["payload"]
+                "required": [
+                  "payload"
+                ]
               }
             }
           }
@@ -44,12 +61,79 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "logged": { "type": "boolean" },
-                    "log_id": { "type": "string" },
-                    "timestamp": { "type": "string" },
-                    "storage_location": { "type": "string" }
+                    "logged": {
+                      "type": "boolean"
+                    },
+                    "log_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    },
+                    "storage_location": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["logged", "log_id"]
+                  "required": [
+                    "logged",
+                    "log_id"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid log data or parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Logging operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -68,7 +152,11 @@
             "name": "limit",
             "in": "query",
             "description": "Number of entries to retrieve (1-200). Higher numbers provide more context but may slow response.",
-            "schema": { "type": "integer", "default": 20, "maximum": 200 },
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 200
+            },
             "example": 50
           }
         ],
@@ -80,13 +168,92 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "logs": { "type": "array", "items": { "type": "object" }, "description": "Conversation log entries" },
-                    "context_summary": { "type": "string", "description": "Overall conversation context" },
-                    "key_themes": { "type": "array", "items": { "type": "string" }, "description": "Major conversation themes" },
-                    "total_entries": { "type": "integer" },
-                    "time_span": { "type": "string", "description": "Time period covered" }
+                    "logs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "description": "Conversation log entries"
+                    },
+                    "context_summary": {
+                      "type": "string",
+                      "description": "Overall conversation context"
+                    },
+                    "key_themes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Major conversation themes"
+                    },
+                    "total_entries": {
+                      "type": "integer"
+                    },
+                    "time_span": {
+                      "type": "string",
+                      "description": "Time period covered"
+                    }
                   },
-                  "required": ["logs", "total_entries"]
+                  "required": [
+                    "logs",
+                    "total_entries"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -105,19 +272,50 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "operation": { 
-                    "type": "string", 
-                    "enum": ["kv-write", "d1-insert", "promote", "retrieve", "latest", "retrieval-meta"],
-                    "description": "Type of logging operation"
+                  "operation": {
+                    "type": "string",
+                    "enum": [
+                      "kv-write",
+                      "d1-insert",
+                      "promote",
+                      "retrieve",
+                      "latest",
+                      "retrieval-meta"
+                    ],
+                    "description": "Type of logging operation to perform"
                   },
-                  "payload": { "type": "object", "description": "Operation-specific data" },
-                  "id": { "type": "string" },
-                  "type": { "type": "string" },
-                  "detail": { "type": "string" },
-                  "storedIn": { "type": "string", "enum": ["KV", "D1"] },
-                  "filters": { "type": "object", "description": "For retrieve operations" }
+                  "payload": {
+                    "type": "object",
+                    "description": "Operation-specific data and parameters"
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the log entry or operation"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Log entry type or category"
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "Detailed information about the log entry"
+                  },
+                  "storedIn": {
+                    "type": "string",
+                    "enum": [
+                      "KV",
+                      "D1"
+                    ],
+                    "description": "Storage location indicator (KV store or D1 database)"
+                  },
+                  "filters": {
+                    "type": "object",
+                    "description": "Filter criteria for retrieve operations"
+                  }
                 },
-                "required": ["operation"]
+                "required": [
+                  "operation"
+                ]
               }
             }
           }
@@ -130,13 +328,87 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean", "description": "Operation success status" },
-                    "operation": { "type": "string", "description": "Operation type executed" },
-                    "result": { "type": "object", "description": "Operation-specific results" },
-                    "timestamp": { "type": "string", "description": "Operation timestamp" },
-                    "message": { "type": "string", "description": "Operation status message" }
+                    "success": {
+                      "type": "boolean",
+                      "description": "Operation success status"
+                    },
+                    "operation": {
+                      "type": "string",
+                      "description": "Operation type executed"
+                    },
+                    "result": {
+                      "type": "object",
+                      "description": "Operation-specific results"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Operation timestamp"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Operation status message"
+                    }
                   },
-                  "required": ["success", "operation"]
+                  "required": [
+                    "success",
+                    "operation"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -155,7 +427,11 @@
             "name": "limit",
             "in": "query",
             "description": "Number of recent entries to retrieve (1-200). Default 7 provides good context without overwhelming.",
-            "schema": { "type": "integer", "default": 7, "maximum": 200 },
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "maximum": 200
+            },
             "example": 10
           }
         ],
@@ -167,13 +443,91 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "recent_logs": { "type": "array", "items": { "type": "object" }, "description": "Recent conversation events" },
-                    "session_summary": { "type": "string", "description": "Summary of recent activity" },
-                    "context_flags": { "type": "array", "items": { "type": "string" }, "description": "Important context indicators" },
-                    "total_entries": { "type": "integer" },
-                    "timestamp": { "type": "string" }
+                    "recent_logs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "description": "Recent conversation events"
+                    },
+                    "session_summary": {
+                      "type": "string",
+                      "description": "Summary of recent activity"
+                    },
+                    "context_flags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Important context indicators"
+                    },
+                    "total_entries": {
+                      "type": "integer"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["recent_logs", "total_entries"]
+                  "required": [
+                    "recent_logs",
+                    "total_entries"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -194,10 +548,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "query": { "type": "string" },
-                  "limit": { "type": "integer", "default": 5, "maximum": 20 }
+                  "query": {
+                    "type": "string",
+                    "description": "Search query text for vector similarity matching"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "default": 5,
+                    "maximum": 20,
+                    "description": "Maximum number of results to return"
+                  }
                 },
-                "required": ["query"]
+                "required": [
+                  "query"
+                ]
               }
             }
           }
@@ -212,11 +576,73 @@
                   "properties": {
                     "results": {
                       "type": "array",
-                      "items": { "type": "object" }
+                      "items": {
+                        "type": "object"
+                      }
                     },
-                    "total": { "type": "integer" },
-                    "query": { "type": "string" }
+                    "total": {
+                      "type": "integer"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -237,11 +663,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "query": { "type": "string" },
-                  "type": { "type": "string", "enum": ["all", "resonance", "logbin"], "default": "all" },
-                  "limit": { "type": "integer", "default": 5, "maximum": 20 }
+                  "query": {
+                    "type": "string",
+                    "description": "Search query for R2 stored content and metadata"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "resonance",
+                      "logbin"
+                    ],
+                    "default": "all",
+                    "description": "Type of R2 content to search (all, resonance threads, or logbin data)"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "default": 5,
+                    "maximum": 20,
+                    "description": "Maximum number of objects to return"
+                  }
                 },
-                "required": ["query"]
+                "required": [
+                  "query"
+                ]
               }
             }
           }
@@ -254,10 +699,75 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "objects": { "type": "array", "items": { "type": "object" } },
-                    "total": { "type": "integer" },
-                    "query": { "type": "string" }
+                    "objects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -268,7 +778,7 @@
     "/api/rag/search": {
       "post": {
         "summary": "RAG semantic search with AI generation",
-        "description": "Called for retrieval-augmented generation search combining vector similarity with AI synthesis. Provides intelligent insights when deep knowledge analysis is needed.",
+        "description": "Called AUTOMATICALLY for retrieval-augmented generation search combining vector similarity with AI synthesis. Triggers on: 'analyze my patterns', 'find insights', 'what have I learned', 'synthesize knowledge', deep analysis needs.",
         "operationId": "ragSearch",
         "x-openai-autonomous": true,
         "requestBody": {
@@ -278,11 +788,25 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "query": { "type": "string" },
-                  "limit": { "type": "integer", "default": 5, "maximum": 10 },
-                  "includeGeneration": { "type": "boolean", "default": true }
+                  "query": {
+                    "type": "string",
+                    "description": "Query text for retrieval-augmented generation search"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "default": 5,
+                    "maximum": 10,
+                    "description": "Maximum number of retrieved items for generation"
+                  },
+                  "includeGeneration": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to include AI-generated insights with retrieval results"
+                  }
                 },
-                "required": ["query"]
+                "required": [
+                  "query"
+                ]
               }
             }
           }
@@ -295,11 +819,81 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "retrieved": { "type": "array", "items": { "type": "object" } },
-                    "generated": { "type": "string" },
-                    "query": { "type": "string" },
-                    "relevance_scores": { "type": "array", "items": { "type": "number" } }
+                    "retrieved": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "generated": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "relevance_scores": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -318,7 +912,15 @@
             "name": "timeframe",
             "in": "query",
             "description": "Analysis timeframe (day, week, month)",
-            "schema": { "type": "string", "enum": ["day", "week", "month"], "default": "week" }
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ],
+              "default": "week"
+            }
           }
         ],
         "responses": {
@@ -329,13 +931,96 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "conversation_patterns": { "type": "array", "items": { "type": "string" }, "description": "Identified conversation patterns" },
-                    "growth_indicators": { "type": "array", "items": { "type": "string" }, "description": "Signs of personal growth" },
-                    "engagement_metrics": { "type": "object", "description": "Engagement and usage metrics" },
-                    "insights_summary": { "type": "string", "description": "Key insights summary" },
-                    "recommendations": { "type": "array", "items": { "type": "string" }, "description": "Personalized recommendations" }
+                    "conversation_patterns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Identified conversation patterns"
+                    },
+                    "growth_indicators": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Signs of personal growth"
+                    },
+                    "engagement_metrics": {
+                      "type": "object",
+                      "description": "Engagement and usage metrics"
+                    },
+                    "insights_summary": {
+                      "type": "string",
+                      "description": "Key insights summary"
+                    },
+                    "recommendations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Personalized recommendations"
+                    }
                   },
-                  "required": ["conversation_patterns", "insights_summary"]
+                  "required": [
+                    "conversation_patterns",
+                    "insights_summary"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -356,11 +1041,29 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "format": { "type": "string", "enum": ["json", "csv", "pdf"], "default": "json", "description": "Export format" },
-                  "date_range": { "type": "object", "description": "Date range for export" },
-                  "include_analytics": { "type": "boolean", "default": true, "description": "Include analytics data" }
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "csv",
+                      "pdf"
+                    ],
+                    "default": "json",
+                    "description": "Export format"
+                  },
+                  "date_range": {
+                    "type": "object",
+                    "description": "Date range for export"
+                  },
+                  "include_analytics": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include analytics data"
+                  }
                 },
-                "required": ["format"]
+                "required": [
+                  "format"
+                ]
               }
             }
           }
@@ -373,12 +1076,84 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "export_url": { "type": "string", "description": "Download URL for export file" },
-                    "file_size": { "type": "string", "description": "File size in human readable format" },
-                    "record_count": { "type": "integer", "description": "Number of records exported" },
-                    "export_id": { "type": "string", "description": "Unique export identifier" }
+                    "export_url": {
+                      "type": "string",
+                      "description": "Download URL for export file"
+                    },
+                    "file_size": {
+                      "type": "string",
+                      "description": "File size in human readable format"
+                    },
+                    "record_count": {
+                      "type": "integer",
+                      "description": "Number of records exported"
+                    },
+                    "export_id": {
+                      "type": "string",
+                      "description": "Unique export identifier"
+                    }
                   },
-                  "required": ["export_url", "record_count", "export_id"]
+                  "required": [
+                    "export_url",
+                    "record_count",
+                    "export_id"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -396,12 +1171,18 @@
           {
             "name": "prefix",
             "in": "query",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "limit",
-            "in": "query", 
-            "schema": { "type": "integer", "default": 10, "maximum": 50 }
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 50
+            }
           }
         ],
         "responses": {
@@ -412,22 +1193,95 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "items": { 
-                      "type": "array", 
-                      "items": { 
+                    "items": {
+                      "type": "array",
+                      "items": {
                         "type": "object",
                         "properties": {
-                          "key": { "type": "string" },
-                          "size": { "type": "integer" },
-                          "uploaded": { "type": "string" }
+                          "key": {
+                            "type": "string"
+                          },
+                          "size": {
+                            "type": "integer"
+                          },
+                          "uploaded": {
+                            "type": "string"
+                          }
                         },
-                        "required": ["key"]
+                        "required": [
+                          "key"
+                        ]
                       }
                     },
-                    "total": { "type": "integer", "description": "Total number of items" },
-                    "prefix": { "type": "string", "description": "Prefix filter used" }
+                    "total": {
+                      "type": "integer",
+                      "description": "Total number of items"
+                    },
+                    "prefix": {
+                      "type": "string",
+                      "description": "Prefix filter used"
+                    }
                   },
-                  "required": ["items", "total"]
+                  "required": [
+                    "items",
+                    "total"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -446,7 +1300,9 @@
             "name": "key",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -457,12 +1313,79 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "key": { "type": "string" },
-                    "content": { "type": "string" },
-                    "size": { "type": "integer" },
-                    "uploaded": { "type": "string" }
+                    "key": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "integer"
+                    },
+                    "uploaded": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["key", "content"]
+                  "required": [
+                    "key",
+                    "content"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -473,7 +1396,7 @@
     "/api/kv/get": {
       "get": {
         "summary": "Retrieve data from KV storage",
-        "description": "Called for direct KV retrieval when fast key-value data access is needed. Provides immediate access to cached information and configuration data.",
+        "description": "Called AUTOMATICALLY for direct KV retrieval when fast key-value data access is needed. Triggers on: 'get my data', 'retrieve settings', 'load preferences', cached data access needs.",
         "operationId": "retrieveFromKV",
         "x-openai-autonomous": true,
         "parameters": [
@@ -481,7 +1404,9 @@
             "name": "key",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -492,10 +1417,72 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "value": { "type": "object" },
-                    "metadata": { "type": "object" }
+                    "value": {
+                      "type": "object"
+                    },
+                    "metadata": {
+                      "type": "object"
+                    }
                   },
-                  "required": ["value"]
+                  "required": [
+                    "value"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -507,7 +1494,7 @@
       "post": {
         "summary": "Query vector index for similarity search",
         "description": "Called when vector index semantic search is needed for finding semantically similar content. Provides similarity scores and relevance matching for knowledge discovery.",
-        "operationId": "queryVectorIndex", 
+        "operationId": "queryVectorIndex",
         "x-openai-autonomous": true,
         "requestBody": {
           "required": true,
@@ -516,11 +1503,27 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "vector": { "type": "array", "items": { "type": "number" } },
-                  "topK": { "type": "integer", "default": 5, "maximum": 20 },
-                  "namespace": { "type": "string" }
+                  "vector": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "description": "Query vector for similarity search (array of numerical embeddings)"
+                  },
+                  "topK": {
+                    "type": "integer",
+                    "default": 5,
+                    "maximum": 20,
+                    "description": "Number of most similar vectors to return"
+                  },
+                  "namespace": {
+                    "type": "string",
+                    "description": "Optional namespace to scope the vector search"
+                  }
                 },
-                "required": ["vector"]
+                "required": [
+                  "vector"
+                ]
               }
             }
           }
@@ -533,21 +1536,91 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "matches": { 
-                      "type": "array", 
-                      "items": { 
+                    "matches": {
+                      "type": "array",
+                      "items": {
                         "type": "object",
                         "properties": {
-                          "id": { "type": "string" },
-                          "score": { "type": "number" },
-                          "metadata": { "type": "object" }
+                          "id": {
+                            "type": "string"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "metadata": {
+                            "type": "object"
+                          }
                         },
-                        "required": ["id", "score"]
+                        "required": [
+                          "id",
+                          "score"
+                        ]
                       }
                     },
-                    "count": { "type": "integer" }
+                    "count": {
+                      "type": "integer"
+                    }
                   },
-                  "required": ["matches", "count"]
+                  "required": [
+                    "matches",
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or request format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
                 }
               }
             }
@@ -561,36 +1634,73 @@
       "LogEntry": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "timestamp": { "type": "string", "format": "date-time" },
-          "type": { "type": "string" },
-          "who": { "type": "string" },
-          "level": { "type": "string" },
-          "payload": { "type": "object" },
-          "storedIn": { "type": "string", "enum": ["KV", "D1"] }
+          "id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string"
+          },
+          "who": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "storedIn": {
+            "type": "string",
+            "enum": [
+              "KV",
+              "D1"
+            ]
+          }
         }
       },
       "SearchResult": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "content": { "type": "string" },
-          "metadata": { "type": "object" },
-          "relevance_score": { "type": "number" },
-          "timestamp": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "relevance_score": {
+            "type": "number"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "Error": {
         "type": "object",
         "properties": {
-          "error": { "type": "string" },
-          "message": { "type": "string" }
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
         }
       }
     }
   },
   "x-ark-metadata": {
-    "stores": { "kv": "AQUIL_MEMORIES", "d1": "AQUIL_DB" },
+    "stores": {
+      "kv": "AQUIL_MEMORIES",
+      "d1": "AQUIL_DB"
+    },
     "routes": {
       "kvWrite": "/api/logs/kv-write",
       "d1Insert": "/api/logs/d1-insert",
@@ -600,8 +1710,19 @@
       "retrievalMeta": "/api/logs/retrieval-meta"
     },
     "enums": {
-      "logTypes": ["session","voice-change","insight","breakthrough","commitment","api-failure","session-end"],
-      "storedIn": ["KV","D1"]
+      "logTypes": [
+        "session",
+        "voice-change",
+        "insight",
+        "breakthrough",
+        "commitment",
+        "api-failure",
+        "session-end"
+      ],
+      "storedIn": [
+        "KV",
+        "D1"
+      ]
     },
     "validation": {
       "uuidV4": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
