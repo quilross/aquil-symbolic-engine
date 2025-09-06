@@ -497,7 +497,7 @@ function getDomainForAction(operationId) {
     'synthesizeWisdom': 'wisdom',
     'getWisdomAndInsights': 'wisdom',
     'systemHealthCheck': 'system',
-    'logConversationEvent': 'logging',
+    'logDataOrEvent': 'logging',
     'generateDiscoveryInquiry': 'discovery',
     'autoSuggestRitual': 'ritual'
   };
@@ -1059,13 +1059,13 @@ router.post("/api/log", async (req, env) => {
       textOrVector: body.message || body.content || JSON.stringify(body.payload || body)
     });
     
-    await logChatGPTAction(env, 'logConversationEvent', body, result);
+    await logChatGPTAction(env, 'logDataOrEvent', body, result);
     
     return addCORS(new Response(JSON.stringify(result), {
       headers: { "Content-Type": "application/json" }
     }));
   } catch (error) {
-    await logChatGPTAction(env, 'logConversationEvent', {}, null, error);
+    await logChatGPTAction(env, 'logDataOrEvent', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -1103,7 +1103,7 @@ router.get("/api/logs", async (req, env) => {
     }
 
     // Log the retrieval (non-blocking)
-    await logChatGPTAction(env, 'retrieveConversationHistory', 
+    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', 
       { limit, sessionId, since }, 
       { count: items.length, cursor: !!nextCursor }
     ).catch(() => {});
@@ -1118,7 +1118,7 @@ router.get("/api/logs", async (req, env) => {
     }));
   } catch (error) {
     // Fail-open with array format
-    await logChatGPTAction(env, 'retrieveConversationHistory', {}, null, error).catch(() => {});
+    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', {}, null, error).catch(() => {});
     return addCORS(new Response(JSON.stringify([]), {
       headers: { 
         "Content-Type": "application/json",
@@ -1169,7 +1169,7 @@ router.post("/api/logs", async (req, env) => {
         }), { status: 400, headers: { "Content-Type": "application/json" } }));
     }
 
-    await logChatGPTAction(env, 'logConversationEvent', 
+    await logChatGPTAction(env, 'logDataOrEvent', 
       { operation, type, storedIn }, 
       { success: true, operation }
     ).catch(() => {});
@@ -1179,7 +1179,7 @@ router.post("/api/logs", async (req, env) => {
     }));
   } catch (error) {
     console.error('Advanced logging operation error:', error);
-    await logChatGPTAction(env, 'logConversationEvent', {}, null, error).catch(() => {});
+    await logChatGPTAction(env, 'logDataOrEvent', {}, null, error).catch(() => {});
     return addCORS(new Response(JSON.stringify({ 
       error: "Internal server error",
       message: error.message 
