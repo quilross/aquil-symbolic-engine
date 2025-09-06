@@ -1,0 +1,1343 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Aquil Production API (Complete Infrastructure)",
+    "description": "Personal AI Wisdom Builder with full Cloudflare Worker bindings support. Includes D1, KV, R2, Vectorize, and AI infrastructure plus personal growth tools.",
+    "version": "2.3.0"
+  },
+  "servers": [
+    {
+      "url": "https://signal-q.me",
+      "description": "Aquil's personal AI domain (Production)"
+    }
+  ],
+  "paths": {
+    "/api/commitments/create": {
+      "post": {
+        "summary": "Create and manage personal commitments",
+        "description": "Called to create or update personal commitments and micro-practices.",
+        "operationId": "manageCommitment",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": { "type": "string", "enum": ["create", "update"] },
+                  "commitment": { "type": "string" },
+                  "timeframe": { "type": "string" },
+                  "micro_practice": { "type": "boolean" }
+                },
+                "required": ["action", "commitment"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Commitment management results with tracking info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "commitment_id": { "type": "string", "description": "Unique commitment identifier" },
+                    "status": { "type": "string", "enum": ["created", "updated"], "description": "Operation result" },
+                    "commitment_details": { "type": "object", "description": "Full commitment information" },
+                    "tracking_plan": { "type": "array", "items": { "type": "string" }, "description": "Suggested tracking methods" },
+                    "next_steps": { "type": "array", "items": { "type": "string" }, "description": "Recommended next actions" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["commitment_id", "status"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/commitments/active": {
+      "get": {
+        "summary": "List active commitments",
+        "description": "Called to retrieve current active commitments and their progress.",
+        "operationId": "listActiveCommitments",
+        "x-openai-autonomous": true,
+        "responses": {
+          "200": {
+            "description": "Active commitments with progress tracking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active_commitments": { "type": "array", "items": { "type": "object" }, "description": "List of current commitments" },
+                    "completion_summary": { "type": "object", "description": "Overall progress summary" },
+                    "upcoming_milestones": { "type": "array", "items": { "type": "string" }, "description": "Next important milestones" },
+                    "recommendations": { "type": "string", "description": "Guidance based on current progress" },
+                    "total_count": { "type": "integer", "description": "Total number of active commitments" }
+                  },
+                  "required": ["active_commitments", "total_count"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/commitments/progress": {
+      "post": {
+        "summary": "Update commitment progress",
+        "description": "Called to update progress on existing commitments.",
+        "operationId": "updateCommitmentProgress",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "commitment_id": { "type": "string" },
+                  "progress": { "type": "string" },
+                  "completion_status": { "type": "string", "enum": ["in_progress", "completed", "paused"] }
+                },
+                "required": ["commitment_id", "progress"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Progress update results with insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "updated": { "type": "boolean", "description": "Whether update was successful" },
+                    "progress_percentage": { "type": "number", "description": "Calculated progress percentage" },
+                    "milestone_reached": { "type": "boolean", "description": "Whether a milestone was reached" },
+                    "insights": { "type": "array", "items": { "type": "string" }, "description": "Progress insights and observations" },
+                    "next_actions": { "type": "array", "items": { "type": "string" }, "description": "Recommended next steps" },
+                    "celebration": { "type": "string", "description": "Celebration or encouragement message" }
+                  },
+                  "required": ["updated", "progress_percentage"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/d1/query": {
+      "post": {
+        "summary": "Direct D1 database queries",
+        "description": "Called when complex database operations or custom SQL queries are needed. Triggers on: 'query the database', 'run SQL', 'database lookup', 'custom data query', 'search database records'.",
+        "operationId": "queryD1Database",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sql": { "type": "string" },
+                  "params": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["sql"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": { "type": "array", "items": { "type": "object" } },
+                    "success": { "type": "boolean" },
+                    "meta": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kv/log": {
+      "post": {
+        "summary": "Store data in KV storage",
+        "description": "Called when fast key-value storage is needed for quick data access. Triggers on: 'save this data', 'store quickly', 'cache this information', 'remember this setting', 'store configuration'.",
+        "operationId": "storeInKV",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string" },
+                  "value": { "type": "object" },
+                  "expirationTtl": { "type": "integer" }
+                },
+                "required": ["key", "value"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "KV storage result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "key": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vectorize/upsert": {
+      "post": {
+        "summary": "Store vectors in the index",
+        "description": "Called when vector embeddings need to be stored for semantic search. Triggers on: 'index this content', 'create embeddings', 'store for similarity search', 'add to vector database', 'semantic indexing'.",
+        "operationId": "upsertVectors",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vectors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "values": { "type": "array", "items": { "type": "number" } },
+                        "metadata": { "type": "object" }
+                      }
+                    }
+                  },
+                  "namespace": { "type": "string" }
+                },
+                "required": ["vectors"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upsert results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "upsertedCount": { "type": "integer" },
+                    "success": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trust/check-in": {
+      "post": {
+        "summary": "Trust and self-confidence building",
+        "description": "Called when user expresses self-doubt, anxiety, fear of judgment, mentions feeling unsafe, or needs confidence support. Triggers on phrases like 'I don't trust myself', 'feeling anxious', 'not confident about', 'scared to try', 'doubt', 'uncertainty'.",
+        "operationId": "trustCheckIn",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_state": { "type": "string", "description": "Current emotional/trust state description" },
+                  "trust_level": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Self-assessed trust level 1-10" }
+                },
+                "required": ["current_state"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trust building session results with insights and recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "trust_score": { "type": "number", "description": "Calculated trust score 0-10" },
+                    "insights": { "type": "array", "items": { "type": "string" }, "description": "Trust-building insights" },
+                    "recommendations": { "type": "string", "description": "Specific trust-building actions" },
+                    "confidence_patterns": { "type": "array", "items": { "type": "string" } },
+                    "session_id": { "type": "string" },
+                    "voice_used": { "type": "string" }
+                  },
+                  "required": ["trust_score", "insights", "recommendations"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/somatic/session": {
+      "post": {
+        "summary": "Somatic healing and body wisdom",
+        "description": "Called when user mentions physical sensations, body awareness, tension, stress, breathing, or embodied emotions. Triggers on: 'feeling tight', 'body tension', 'breathing', 'physical sensation', 'stress in my body'.",
+        "operationId": "somaticHealingSession",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body_state": { "type": "string", "description": "Current physical/emotional state in the body" },
+                  "intention": { "type": "string", "description": "Healing intention or desired outcome" }
+                },
+                "required": ["body_state"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Somatic session results with embodied insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "body_wisdom": { "type": "string", "description": "Insights from body awareness" },
+                    "somatic_practices": { "type": "array", "items": { "type": "string" }, "description": "Recommended body practices" },
+                    "tension_areas": { "type": "array", "items": { "type": "string" }, "description": "Areas of tension identified" },
+                    "breathing_guidance": { "type": "string", "description": "Specific breathing recommendations" },
+                    "emotional_release": { "type": "string", "description": "Emotional insights from body work" },
+                    "session_id": { "type": "string" },
+                    "voice_used": { "type": "string" }
+                  },
+                  "required": ["body_wisdom", "somatic_practices"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/extract-wisdom": {
+      "post": {
+        "summary": "Extract wisdom from media consumption",
+        "description": "Called when user discusses consuming, watching, or reading media content (movies, books, music, podcasts, videos). Triggers on: 'watched a movie', 'reading this book', 'listened to', 'saw this documentary', media reactions and reviews.",
+        "operationId": "extractMediaWisdom",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "media_type": { "type": "string" },
+                  "title": { "type": "string" },
+                  "personal_reaction": { "type": "string" }
+                },
+                "required": ["media_type", "title", "personal_reaction"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Media wisdom extraction with insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "extracted_wisdom": { "type": "string", "description": "Key wisdom and insights from the media" },
+                    "personal_connections": { "type": "array", "items": { "type": "string" }, "description": "How insights connect to user's life" },
+                    "actionable_takeaways": { "type": "array", "items": { "type": "string" }, "description": "Practical applications" },
+                    "emotional_resonance": { "type": "string", "description": "Emotional impact and significance" },
+                    "related_themes": { "type": "array", "items": { "type": "string" }, "description": "Connected themes and patterns" },
+                    "session_id": { "type": "string" },
+                    "media_type": { "type": "string" }
+                  },
+                  "required": ["extracted_wisdom", "personal_connections"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patterns/recognize": {
+      "post": {
+        "summary": "Recognize behavioral and emotional patterns",
+        "description": "Called when user mentions repeated behaviors, habits, emotional patterns, cycles, or asks 'why do I always...?'. Triggers on: recurring themes, 'I keep doing', 'this always happens', 'pattern', 'cycle', behavioral loops.",
+        "operationId": "recognizePatterns",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pattern_description": { "type": "string", "description": "Description of the observed pattern" },
+                  "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly", "situational"], "description": "How often this pattern occurs" },
+                  "context": { "type": "string", "description": "Situations where pattern appears" }
+                },
+                "required": ["pattern_description"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pattern recognition results with insights and recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "identified_patterns": { "type": "array", "items": { "type": "string" }, "description": "Recognized behavioral patterns" },
+                    "root_causes": { "type": "array", "items": { "type": "string" }, "description": "Potential underlying causes" },
+                    "recommendations": { "type": "string", "description": "Specific actions to address patterns" },
+                    "pattern_strength": { "type": "number", "description": "Pattern clarity/strength 0-10" },
+                    "session_id": { "type": "string" },
+                    "insights": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "required": ["identified_patterns", "recommendations"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/standing-tall/practice": {
+      "post": {
+        "summary": "Standing tall confidence practice",
+        "description": "Called when user mentions confidence issues, posture, self-presentation, or feeling small/inadequate. Triggers on: 'standing tall', 'feeling small', 'posture', 'presence', 'confidence in room', 'how I carry myself'.",
+        "operationId": "standingTallPractice",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confidence_area": { "type": "string" },
+                  "current_challenge": { "type": "string" }
+                },
+                "required": ["confidence_area"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Standing tall practice with confidence building",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "confidence_boost": { "type": "string", "description": "Confidence building guidance" },
+                    "posture_tips": { "type": "array", "items": { "type": "string" }, "description": "Physical posture recommendations" },
+                    "presence_practices": { "type": "array", "items": { "type": "string" }, "description": "Presence and grounding exercises" },
+                    "confidence_score": { "type": "number", "description": "Assessed confidence level 0-10" },
+                    "empowerment_affirmations": { "type": "array", "items": { "type": "string" }, "description": "Personal empowerment statements" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["confidence_boost", "posture_tips"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wisdom/synthesize": {
+      "post": {
+        "summary": "Synthesize wisdom from experiences",
+        "description": "Called to integrate insights from multiple experiences, conversations, or when user reflects on lessons learned. Triggers on: 'what I learned', 'connecting the dots', 'putting it together', insights integration.",
+        "operationId": "synthesizeWisdom",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "experiences": { "type": "array", "items": { "type": "string" }, "description": "List of experiences or insights to synthesize" },
+                  "focus_area": { "type": "string", "description": "Specific area to focus synthesis on" }
+                },
+                "required": ["experiences"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wisdom synthesis results with integrated insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "synthesized_wisdom": { "type": "string", "description": "Integrated wisdom from experiences" },
+                    "key_themes": { "type": "array", "items": { "type": "string" }, "description": "Main themes identified" },
+                    "actionable_insights": { "type": "array", "items": { "type": "string" }, "description": "Practical takeaways" },
+                    "wisdom_level": { "type": "number", "description": "Depth of synthesis 0-10" },
+                    "session_id": { "type": "string" },
+                    "voice_used": { "type": "string" }
+                  },
+                  "required": ["synthesized_wisdom", "key_themes", "actionable_insights"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wisdom/daily-synthesis": {
+      "get": {
+        "summary": "Get daily wisdom synthesis",
+        "description": "Called automatically at conversation start or when user wants daily insights recap. Retrieves accumulated insights and wisdom from recent sessions.",
+        "operationId": "getDailySynthesis",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "focus_area",
+            "in": "query",
+            "description": "Specific area to focus on (e.g., 'relationships', 'career', 'health'). Leave blank for general daily insights.",
+            "schema": { "type": "string" },
+            "example": "career_growth"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily wisdom synthesis with recent insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "daily_synthesis": { "type": "string", "description": "Synthesized daily wisdom" },
+                    "key_insights": { "type": "array", "items": { "type": "string" }, "description": "Main insights from today" },
+                    "growth_areas": { "type": "array", "items": { "type": "string" }, "description": "Areas showing growth" },
+                    "recommendations": { "type": "string", "description": "Daily recommendations" },
+                    "focus_area": { "type": "string" },
+                    "session_count": { "type": "integer", "description": "Number of sessions included" },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["daily_synthesis", "key_insights"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/insights": {
+      "get": {
+        "summary": "Get personal insights and patterns",
+        "description": "Called automatically when relevant patterns emerge or user asks about their growth journey. Retrieves accumulated personal insights and behavioral patterns.",
+        "operationId": "getPersonalInsights",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "focus_area",
+            "in": "query",
+            "description": "Specific insight area (e.g., 'relationships', 'confidence', 'decision_making'). Leave blank for all insights.",
+            "schema": { "type": "string" },
+            "example": "confidence_patterns"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personal insights and growth patterns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "insights": { "type": "array", "items": { "type": "string" }, "description": "Personal insights discovered" },
+                    "patterns": { "type": "array", "items": { "type": "string" }, "description": "Behavioral/emotional patterns" },
+                    "growth_trajectory": { "type": "string", "description": "Overall growth direction" },
+                    "strengths": { "type": "array", "items": { "type": "string" }, "description": "Identified strengths" },
+                    "focus_area": { "type": "string" },
+                    "confidence_level": { "type": "number", "description": "Current confidence assessment 0-10" },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["insights", "patterns"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feedback": {
+      "post": {
+        "summary": "Submit feedback on experiences",
+        "description": "Called when user wants to provide feedback on practices, insights, or experiences. Triggers on: 'how was that', 'feedback on', 'what worked', 'didn't work for me', reflection on effectiveness.",
+        "operationId": "submitFeedback",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string" },
+                  "content": { "type": "string" },
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 10 }
+                },
+                "required": ["type", "content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback submission with acknowledgment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feedback_received": { "type": "boolean", "description": "Whether feedback was successfully recorded" },
+                    "feedback_summary": { "type": "string", "description": "Summary of the feedback provided" },
+                    "insights_gained": { "type": "array", "items": { "type": "string" }, "description": "Insights from the feedback" },
+                    "adjustments": { "type": "array", "items": { "type": "string" }, "description": "Suggested adjustments based on feedback" },
+                    "appreciation": { "type": "string", "description": "Acknowledgment of the feedback" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["feedback_received", "feedback_summary"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/discovery/generate-inquiry": {
+      "post": {
+        "summary": "Generate discovery questions and inquiries",
+        "description": "Called when user wants deeper self-exploration or feels stuck and needs guidance. Triggers on: 'need to think deeper', 'explore this more', 'what questions should I ask', 'dig deeper', self-discovery requests.",
+        "operationId": "generateDiscoveryInquiry",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "focus_area": { "type": "string" },
+                  "depth_level": { "type": "string", "enum": ["surface", "medium", "deep"] },
+                  "context": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Discovery inquiry with deep questions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inquiry_questions": { "type": "array", "items": { "type": "string" }, "description": "Deep exploration questions" },
+                    "focus_area": { "type": "string", "description": "Area of exploration" },
+                    "depth_guidance": { "type": "string", "description": "How to go deeper" },
+                    "reflection_prompts": { "type": "array", "items": { "type": "string" }, "description": "Reflection exercises" },
+                    "exploration_path": { "type": "string", "description": "Suggested exploration journey" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["inquiry_questions", "focus_area"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dreams/interpret": {
+      "post": {
+        "summary": "Interpret dreams and subconscious symbols",
+        "description": "Called when user shares dreams, nightmares, or discusses subconscious content and symbolism. Triggers on: 'had a dream', 'nightmare', 'dreamed about', 'what does this mean', dream symbols.",
+        "operationId": "interpretDream",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dream_content": { "type": "string" },
+                  "emotional_tone": { "type": "string" },
+                  "symbols_noticed": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["dream_content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dream interpretation with symbolic insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "interpretation": { "type": "string", "description": "Dream interpretation and meaning" },
+                    "symbolic_elements": { "type": "array", "items": { "type": "object" }, "description": "Symbol meanings and significance" },
+                    "emotional_themes": { "type": "array", "items": { "type": "string" }, "description": "Underlying emotional themes" },
+                    "life_connections": { "type": "string", "description": "How dream connects to waking life" },
+                    "subconscious_messages": { "type": "array", "items": { "type": "string" }, "description": "Messages from subconscious" },
+                    "integration_suggestions": { "type": "array", "items": { "type": "string" }, "description": "How to integrate insights" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["interpretation", "symbolic_elements"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/energy/optimize": {
+      "post": {
+        "summary": "Optimize energy levels and vitality",
+        "description": "Called when user discusses tiredness, energy levels, vitality, or feeling drained/energized. Triggers on: 'feeling tired', 'low energy', 'drained', 'exhausted', 'need more energy', vitality concerns.",
+        "operationId": "optimizeEnergy",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_energy": { "type": "integer", "minimum": 1, "maximum": 10 },
+                  "energy_patterns": { "type": "string" },
+                  "challenges": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["current_energy"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Energy optimization with vitality enhancement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "energy_assessment": { "type": "number", "description": "Current energy level 0-10" },
+                    "optimization_strategies": { "type": "array", "items": { "type": "string" }, "description": "Energy boosting strategies" },
+                    "vitality_practices": { "type": "array", "items": { "type": "string" }, "description": "Vitality enhancement practices" },
+                    "energy_drains": { "type": "array", "items": { "type": "string" }, "description": "Identified energy drains" },
+                    "renewal_plan": { "type": "string", "description": "Personalized energy renewal plan" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["energy_assessment", "optimization_strategies"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/values/clarify": {
+      "post": {
+        "summary": "Clarify personal values and priorities",
+        "description": "Called when user discusses personal values, life priorities, what matters most, or feeling unclear about direction. Triggers on: 'what matters to me', 'my values', 'priorities', 'life direction', 'what's important'.",
+        "operationId": "clarifyValues",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "life_area": { "type": "string" },
+                  "current_values": { "type": "array", "items": { "type": "string" } },
+                  "conflicts_or_questions": { "type": "string" }
+                },
+                "required": ["life_area"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Values clarification with priority guidance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "core_values": { "type": "array", "items": { "type": "string" }, "description": "Identified core values" },
+                    "value_priorities": { "type": "array", "items": { "type": "object" }, "description": "Prioritized values with explanations" },
+                    "life_alignment": { "type": "string", "description": "How current life aligns with values" },
+                    "alignment_gaps": { "type": "array", "items": { "type": "string" }, "description": "Areas where values aren't being honored" },
+                    "action_steps": { "type": "array", "items": { "type": "string" }, "description": "Steps to better align with values" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["core_values", "value_priorities"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/creativity/unleash": {
+      "post": {
+        "summary": "Unleash creative potential",
+        "description": "Called when user discusses creative blocks, artistic inspiration, or unleashing creativity. Triggers on: 'creative block', 'stuck creatively', 'need inspiration', 'creative flow', artistic expression.",
+        "operationId": "unleashCreativity",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "creative_domain": { "type": "string" },
+                  "current_blocks": { "type": "array", "items": { "type": "string" } },
+                  "inspiration_sources": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["creative_domain"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Creativity unleashing with inspiration boost",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "creative_insights": { "type": "string", "description": "Creative breakthrough insights" },
+                    "inspiration_sources": { "type": "array", "items": { "type": "string" }, "description": "Sources of creative inspiration" },
+                    "creative_exercises": { "type": "array", "items": { "type": "string" }, "description": "Creativity boosting exercises" },
+                    "block_removal": { "type": "string", "description": "Strategies for removing creative blocks" },
+                    "flow_state_guidance": { "type": "array", "items": { "type": "string" }, "description": "How to enter creative flow" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["creative_insights", "inspiration_sources"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/abundance/cultivate": {
+      "post": {
+        "summary": "Cultivate abundance mindset",
+        "description": "Called when user discusses financial stress, scarcity mindset, or abundance blocks. Triggers on: 'not enough money', 'can't afford', 'scarcity', 'abundance', 'financial stress', money mindset.",
+        "operationId": "cultivateAbundance",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scarcity_areas": { "type": "array", "items": { "type": "string" } },
+                  "abundance_goals": { "type": "array", "items": { "type": "string" } },
+                  "current_mindset": { "type": "string" }
+                },
+                "required": ["scarcity_areas"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Abundance cultivation with mindset shift",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "abundance_insights": { "type": "string", "description": "Key abundance mindset insights" },
+                    "scarcity_patterns": { "type": "array", "items": { "type": "string" }, "description": "Identified scarcity patterns" },
+                    "abundance_practices": { "type": "array", "items": { "type": "string" }, "description": "Daily abundance practices" },
+                    "mindset_shifts": { "type": "array", "items": { "type": "string" }, "description": "Required mindset changes" },
+                    "gratitude_focus": { "type": "array", "items": { "type": "string" }, "description": "Areas for gratitude practice" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["abundance_insights", "scarcity_patterns"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transitions/navigate": {
+      "post": {
+        "summary": "Navigate life transitions",
+        "description": "Called when user discusses major life changes, transitions, or feeling 'stuck between phases'. Triggers on: job changes, relationship changes, moving, career shifts, 'big decision', 'life change', 'transition', 'next chapter'.",
+        "operationId": "navigateTransitions",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transition_type": { "type": "string", "description": "Type of transition (career, relationship, location, etc.)" },
+                  "current_stage": { "type": "string", "description": "Where they are in the transition process" },
+                  "challenges": { "type": "array", "items": { "type": "string" }, "description": "Current challenges faced" },
+                  "support_needed": { "type": "string", "description": "Type of support needed" }
+                },
+                "required": ["transition_type", "current_stage"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transition navigation guidance and support",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "navigation_guidance": { "type": "string", "description": "Specific guidance for this transition" },
+                    "transition_stages": { "type": "array", "items": { "type": "string" }, "description": "Stages of this transition type" },
+                    "coping_strategies": { "type": "array", "items": { "type": "string" }, "description": "Strategies for managing transition" },
+                    "support_resources": { "type": "array", "items": { "type": "string" }, "description": "Recommended support resources" },
+                    "timeline_expectations": { "type": "string", "description": "Realistic timeline for transition" },
+                    "session_id": { "type": "string" },
+                    "voice_used": { "type": "string" }
+                  },
+                  "required": ["navigation_guidance", "coping_strategies"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ancestry/heal": {
+      "post": {
+        "summary": "Ancestral healing and lineage work",
+        "description": "Called when user discusses family dynamics, generational patterns, or ancestral healing work. Triggers on: 'family patterns', 'like my parents', 'generational', 'family trauma', 'ancestral healing'.",
+        "operationId": "healAncestry",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "family_patterns": { "type": "array", "items": { "type": "string" } },
+                  "healing_intention": { "type": "string" },
+                  "ancestral_gifts": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["family_patterns", "healing_intention"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ancestral healing with generational insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "healing_insights": { "type": "string", "description": "Ancestral healing insights and guidance" },
+                    "family_patterns": { "type": "array", "items": { "type": "string" }, "description": "Identified family patterns" },
+                    "generational_gifts": { "type": "array", "items": { "type": "string" }, "description": "Positive ancestral gifts to claim" },
+                    "pattern_breaking": { "type": "array", "items": { "type": "string" }, "description": "Ways to break negative patterns" },
+                    "lineage_wisdom": { "type": "string", "description": "Wisdom to carry forward" },
+                    "healing_practices": { "type": "array", "items": { "type": "string" }, "description": "Ancestral healing practices" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["healing_insights", "family_patterns"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rag/memory": {
+      "post": {
+        "summary": "RAG memory consolidation and learning",
+        "description": "Called when insights need to be stored for future retrieval and learning. Triggers on: 'remember this insight', 'store this learning', 'consolidate wisdom', 'save for later reference', 'important to remember'.",
+        "operationId": "ragMemoryConsolidation",
+        "x-openai-isConsequential": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": { "type": "string" },
+                  "type": { "type": "string", "enum": ["insight", "pattern", "wisdom", "reflection"] },
+                  "metadata": { "type": "object" },
+                  "importance": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5 }
+                },
+                "required": ["content", "type"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memory consolidation results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stored": { "type": "boolean" },
+                    "memory_id": { "type": "string" },
+                    "embedding_created": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mood/track": {
+      "post": {
+        "summary": "Track mood and emotional states",
+        "description": "Called when user mentions feelings, emotions, mood changes, or emotional states. Triggers on: 'feeling sad', 'happy today', 'mood is', 'emotionally', 'my feelings'.",
+        "operationId": "trackMoodAndEmotions",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_mood": { "type": "string", "description": "Current emotional state" },
+                  "mood_scale": { "type": "integer", "minimum": 1, "maximum": 10, "description": "Mood rating 1-10" },
+                  "triggers": { "type": "array", "items": { "type": "string" }, "description": "What influenced this mood" },
+                  "context": { "type": "string", "description": "Situational context" }
+                },
+                "required": ["current_mood", "mood_scale"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mood tracking with emotional insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mood_insights": { "type": "string", "description": "Emotional insights and patterns" },
+                    "mood_trends": { "type": "array", "items": { "type": "string" }, "description": "Identified mood patterns" },
+                    "emotional_guidance": { "type": "string", "description": "Emotional regulation guidance" },
+                    "mood_boosters": { "type": "array", "items": { "type": "string" }, "description": "Mood improvement suggestions" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["mood_insights", "emotional_guidance"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/goals/set": {
+      "post": {
+        "summary": "Set and track personal goals",
+        "description": "Called when user discusses goals, aspirations, or future plans. Triggers on: 'my goal is', 'want to achieve', 'planning to', 'aspire to', goal-setting.",
+        "operationId": "setPersonalGoals",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "goal_description": { "type": "string", "description": "Goal description and details" },
+                  "goal_category": { "type": "string", "enum": ["personal", "professional", "health", "relationships", "financial", "creative"], "description": "Goal category" },
+                  "timeline": { "type": "string", "description": "Desired timeline for achievement" },
+                  "motivation": { "type": "string", "description": "Why this goal matters" }
+                },
+                "required": ["goal_description", "goal_category"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Goal setting with action plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "goal_id": { "type": "string", "description": "Unique goal identifier" },
+                    "action_plan": { "type": "array", "items": { "type": "string" }, "description": "Step-by-step action plan" },
+                    "milestones": { "type": "array", "items": { "type": "object" }, "description": "Key milestones and checkpoints" },
+                    "success_metrics": { "type": "array", "items": { "type": "string" }, "description": "How to measure success" },
+                    "potential_obstacles": { "type": "array", "items": { "type": "string" }, "description": "Anticipated challenges" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["goal_id", "action_plan", "milestones"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/habits/design": {
+      "post": {
+        "summary": "Design and optimize habits",
+        "description": "Called when user wants to build new habits or break old ones. Triggers on: 'want to start', 'habit', 'routine', 'stop doing', 'build consistency'.",
+        "operationId": "designHabits",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "habit_type": { "type": "string", "enum": ["build", "break", "modify"], "description": "Type of habit change" },
+                  "habit_description": { "type": "string", "description": "Detailed habit description" },
+                  "current_frequency": { "type": "string", "description": "Current frequency if existing habit" },
+                  "desired_outcome": { "type": "string", "description": "What success looks like" }
+                },
+                "required": ["habit_type", "habit_description"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Habit design with implementation strategy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "habit_plan": { "type": "string", "description": "Detailed habit implementation plan" },
+                    "trigger_design": { "type": "string", "description": "Habit trigger and cue design" },
+                    "reward_system": { "type": "array", "items": { "type": "string" }, "description": "Reward and motivation system" },
+                    "tracking_method": { "type": "string", "description": "How to track progress" },
+                    "difficulty_progression": { "type": "array", "items": { "type": "string" }, "description": "Gradual difficulty increase" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["habit_plan", "trigger_design"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/health-check": {
+      "get": {
+        "summary": "System health check and readiness status",
+        "description": "Automatically checks system health and readiness of all Cloudflare Worker bindings. Called for system monitoring and troubleshooting.",
+        "operationId": "systemHealthCheck",
+        "x-openai-autonomous": true,
+        "responses": {
+          "200": {
+            "description": "System health and readiness report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ready": { "type": "boolean" },
+                    "components": {
+                      "type": "object",
+                      "properties": {
+                        "d1_database": { "type": "boolean" },
+                        "kv_storage": { "type": "boolean" },
+                        "r2_storage": { "type": "boolean" },
+                        "vectorize": { "type": "boolean" },
+                        "ai_gateway": { "type": "boolean" }
+                      }
+                    },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["ready", "components", "timestamp"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/log": {
+      "post": {
+        "summary": "Log conversation events and insights",
+        "description": "Called AUTOMATICALLY to log chat messages, insights, breakthroughs, and meaningful moments. Triggers on: conversation events, emotional moments, insights, breakthroughs, important statements.",
+        "operationId": "logDataOrEvent",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "default": "chat_message", "description": "Event type (chat_message, insight, breakthrough, emotion, etc.)" },
+                  "who": { "type": "string", "default": "user", "description": "Who generated this event (user, assistant, system)" },
+                  "level": { "type": "string", "default": "info", "description": "Importance level (debug, info, significant, breakthrough)" },
+                  "payload": { "type": "object", "description": "Event data and context" }
+                },
+                "required": ["payload"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Log stored successfully with metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logged": { "type": "boolean" },
+                    "log_id": { "type": "string" },
+                    "timestamp": { "type": "string" },
+                    "storage_location": { "type": "string" }
+                  },
+                  "required": ["logged", "log_id"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "summary": "Retrieve conversation history and context",
+        "description": "Called AUTOMATICALLY to gather conversation history and context for continuity. Essential for understanding user's journey and maintaining conversation flow. Triggers on: conversation start, context needed, history review.",
+        "operationId": "retrieveLogsOrDataEntries",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of entries to retrieve (1-200). Higher numbers provide more context but may slow response.",
+            "schema": { "type": "integer", "default": 20, "maximum": 200 },
+            "example": 50
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation history with context metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logs": { "type": "array", "items": { "type": "object" }, "description": "Conversation log entries" },
+                    "context_summary": { "type": "string", "description": "Overall conversation context" },
+                    "key_themes": { "type": "array", "items": { "type": "string" }, "description": "Major conversation themes" },
+                    "total_entries": { "type": "integer" },
+                    "time_span": { "type": "string", "description": "Time period covered" }
+                  },
+                  "required": ["logs", "total_entries"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}
