@@ -27,7 +27,6 @@ export const OP_CANON = {
   // Wisdom synthesis
   synthesizeWisdom: 'synthesizeWisdom',
   getDailySynthesis: 'getDailySynthesis',
-  getPersonalInsights: 'getPersonalInsights',
   
   // Pattern recognition
   recognizePatterns: 'recognizePatterns',
