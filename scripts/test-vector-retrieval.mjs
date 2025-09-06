@@ -7,7 +7,7 @@
 
 import { execSync } from 'child_process';
 
-const ENDPOINT = 'http://localhost:8787';
+const ENDPOINT = process.env.DEV_SERVER_URL || 'http://localhost:8787';
 
 async function testVectorRetrieval() {
   console.log('🔍 VECTOR RETRIEVAL TESTING');
