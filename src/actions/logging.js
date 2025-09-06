@@ -172,15 +172,18 @@ function getNYTimestamp() {
 
 export async function writeLog(
   env,
-  { type, payload, session_id, who, level, tags, binary, textOrVector, stores = [] }
+  { type, payload, session_id, who, level, tags, binary, textOrVector, stores = [], trace_id = null, error_code = null }
 ) {
   const id = generateId();
-  const timestamp = getNYTimestamp();
+  const timestamp = new Date().toISOString(); // Use consistent ISO timestamp
   const status = {};
   
   // Convert to canonical operation ID for consistent logging
   const operationId = toCanonical(type || 'log');
   const originalOperationId = (type && type !== operationId) ? type : null;
+  
+  // Generate trace ID for observability if not provided
+  const traceId = trace_id || `trace_${id}_${Date.now()}`;
   
   // Track which stores will receive this log (start with passed stores)
   const storesUsed = [...stores];
@@ -188,10 +191,39 @@ export async function writeLog(
   // Get payload size limit from environment (default 16KB)
   const maxPayloadBytes = parseInt(env.MAX_PAYLOAD_BYTES || '16384', 10);
   
-  // Normalize payload to ensure it has required fields
+  // Normalize payload to ensure structured format with observability metadata
   const normalizedPayload = {
+    // Core structured fields
     content: payload?.content || payload?.message || JSON.stringify(payload),
     source: payload?.source || who || 'system',
+    operation_id: operationId,
+    original_operation_id: originalOperationId,
+    trace_id: traceId,
+    session_id: session_id || crypto.randomUUID(),
+    timestamp: timestamp,
+    level: level || 'info',
+    
+    // Observability metadata
+    observability: {
+      action_id: id,
+      trace_id: traceId,
+      environment: env.ENV || env.ENVIRONMENT || 'unknown',
+      service: 'aquil-symbolic-engine',
+      version: env.ARK_VERSION || '2.0',
+      request_id: payload?.request_id || null,
+      correlation_id: payload?.correlation_id || traceId
+    },
+    
+    // Error metadata if applicable
+    ...(error_code && {
+      error: {
+        code: error_code,
+        category: payload?.error_category || 'unknown',
+        severity: payload?.error_severity || 'medium'
+      }
+    }),
+    
+    // Original payload data
     ...payload
   };
   
@@ -319,18 +351,18 @@ export async function writeLog(
         )
           .bind(
             id,
-            new Date().toISOString(), // Use ISO format instead of Date.now()
+            timestamp, // Use consistent ISO timestamp
             operationId, // Use canonical operationId 
             originalOperationId, // originalOperationId (when different from canonical)
             operationId, // kind (use canonical operation as kind)
             level || 'info', // level (was signal_strength)
             session_id || null,
-            JSON.stringify(tags || []), // tags as JSON string
+            JSON.stringify([...tags || [], `trace:${traceId}`]), // Add trace ID to tags
             JSON.stringify(['d1']), // stores array - will be updated after all stores processed
             r2Pointer, // artifactKey (R2 key if payload overflowed)
-            null, // error_message (only for errors)
-            null, // error_code (only for errors)
-            JSON.stringify(finalPayload), // detail
+            error_code ? finalPayload.error?.message || null : null, // error_message (only for errors)
+            error_code || null, // error_code (structured error code)
+            JSON.stringify(finalPayload), // detail (structured JSON)
             env.ENV || env.ENVIRONMENT || 'unknown', // env
             who || 'gpt', // source (was who)
           )
@@ -406,8 +438,18 @@ export async function writeLog(
         session_id,
         who,
         level,
-        tags,
+        tags: [...tags || [], `trace:${traceId}`], // Include trace ID in KV tags
         r2Pointer,  // Include R2 pointer if overflow occurred
+        
+        // Observability metadata for KV storage
+        observability: {
+          action_id: id,
+          trace_id: traceId,
+          operation_id: operationId,
+          timestamp: timestamp,
+          source: who || 'system',
+          environment: env.ENV || env.ENVIRONMENT || 'unknown'
+        }
       });
       
       // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
@@ -544,7 +586,17 @@ export async function writeLog(
             session_id,
             who,
             level,
-            tags
+            tags: [...tags || [], `trace:${traceId}`], // Include trace ID
+            
+            // R2 observability metadata
+            observability: {
+              action_id: id,
+              trace_id: traceId,
+              operation_id: operationId,
+              artifact_type: 'structured_log',
+              storage_tier: 'r2',
+              retention_policy: '30d'
+            }
           });
           
           await env.AQUIL_STORAGE.put(artifactKey, logData, {
@@ -626,7 +678,10 @@ export async function writeLog(
                 session_id,
                 who,
                 level,
-                tags,
+                tags: [...tags || [], `trace:${traceId}`], // Include trace ID in vector metadata
+                trace_id: traceId, // Direct trace ID field for vector queries
+                operation_id: operationId,
+                timestamp: timestamp
               },
             },
           ]);
@@ -735,26 +790,38 @@ export async function writeAutonomousLog(env, data) {
       autonomous: true,
       processing_time_ms: data.processing_time_ms || null,
       success: data.success !== false, // Default to true unless explicitly false
-      error_details: data.error || null
+      error_details: data.error || null,
+      
+      // Enhanced observability for autonomous actions
+      observability_context: {
+        autonomous_trigger: true,
+        confidence_threshold: confidence >= 0.7 ? 'high' : confidence >= 0.4 ? 'medium' : 'low',
+        automation_level: 'autonomous',
+        decision_engine: 'aquil-symbolic'
+      }
     },
     session_id: session_id || crypto.randomUUID(),
     who: 'system',
     level: level || 'info',
     tags: ['autonomous', action, ...(trigger_keywords || [])],
-    textOrVector: `Autonomous action: ${action}. Triggered by: ${trigger_phrase || 'system'}. Keywords: ${(trigger_keywords || []).join(', ')}`
+    textOrVector: `Autonomous action: ${action}. Triggered by: ${trigger_phrase || 'system'}. Keywords: ${(trigger_keywords || []).join(', ')}`,
+    trace_id: traceId, // Pass trace ID to writeLog
+    error_code: data.error ? 'AUTONOMOUS_ACTION_ERROR' : null // Structured error code
 
   };
 
   // Also store in KV with enhanced structure for quick autonomous queries
   try {
-    await env.AQUIL_MEMORIES.put(
-      `autonomous_${traceId}`,
-      JSON.stringify({
-        ...autonomousLogData.payload,
-        full_log_id: autonomousLogData.session_id
-      }),
-      { expirationTtl: 86400 * 7 } // 7 days for autonomous actions
-    );
+    if (env.AQUIL_MEMORIES) {
+      await env.AQUIL_MEMORIES.put(
+        `autonomous_${traceId}`,
+        JSON.stringify({
+          ...autonomousLogData.payload,
+          full_log_id: autonomousLogData.session_id
+        }),
+        { expirationTtl: 86400 * 7 } // 7 days for autonomous actions
+      );
+    }
   } catch (kvError) {
     console.warn('Failed to store autonomous log in KV:', kvError);
   }

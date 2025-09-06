@@ -57,8 +57,9 @@ export async function handleError(error, context = {}, env = null) {
   const category = categorizeError(error);
   const timestamp = new Date().toISOString();
   const errorId = `error_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  const traceId = `trace_${errorId}`;
 
-  // Create comprehensive error log
+  // Create comprehensive error log with structured format
   const errorLog = {
     id: errorId,
     timestamp,
@@ -71,7 +72,23 @@ export async function handleError(error, context = {}, env = null) {
     userId,
     userInput: userInput ? userInput.substring(0, 200) : null, // Truncate for privacy
     requestBodySize: requestBody ? JSON.stringify(requestBody).length : 0,
-    severity: determineSeverity(error, category)
+    severity: determineSeverity(error, category),
+    
+    // Enhanced observability metadata
+    observability: {
+      error_id: errorId,
+      trace_id: traceId,
+      error_code: generateStructuredErrorCode(category, error),
+      correlation_id: context.correlationId || traceId,
+      environment: env?.ENV || env?.ENVIRONMENT || 'unknown',
+      service: 'aquil-symbolic-engine',
+      error_context: {
+        endpoint: endpoint,
+        method: method,
+        user_agent: context.userAgent || null,
+        ip_address: context.ipAddress || null
+      }
+    }
   };
 
   // Log to ARK system if environment available
@@ -86,22 +103,27 @@ export async function handleError(error, context = {}, env = null) {
           endpoint,
           message: error.message,
           severity: errorLog.severity,
-          user_impact: category === 'network' ? 'temporary' : 'functional'
+          user_impact: category === 'network' ? 'temporary' : 'functional',
+          trace_id: traceId,
+          error_code: errorLog.observability.error_code
         },
         signal_strength: errorLog.severity === 'critical' ? 'high' : 'medium',
         session_id: sessionId,
         voice: 'system',
-        tags: ['error', category, endpoint.replace('/api/', '')]
+        tags: ['error', category, endpoint.replace('/api/', ''), `trace:${traceId}`]
       });
     });
   }
 
-  // Console log for immediate debugging
+  // Console log for immediate debugging with structured format
   console.error(`[${errorId}] ${category.toUpperCase()} ERROR:`, {
     message: error.message,
     endpoint,
     sessionId,
-    timestamp
+    timestamp,
+    trace_id: traceId,
+    error_code: errorLog.observability.error_code,
+    severity: errorLog.severity
   });
 
   // Return structured error response
@@ -114,7 +136,10 @@ export async function handleError(error, context = {}, env = null) {
     endpoint,
     sessionId,
     severity: errorLog.severity,
-    fallbackGuidance: generateFallbackGuidance(category, endpoint)
+    fallbackGuidance: generateFallbackGuidance(category, endpoint),
+    
+    // Enhanced observability data
+    observability: errorLog.observability
   };
 }
 
@@ -269,6 +294,45 @@ export async function handleHealthCheckError(error, env) {
     error: errorData.category,
     message: errorData.technicalMessage,
     timestamp: errorData.timestamp,
-    severity: errorData.severity
+    severity: errorData.severity,
+    trace_id: errorData.observability.trace_id,
+    error_code: errorData.observability.error_code
   };
+}
+
+/**
+ * Generate structured error codes for observability and monitoring
+ */
+function generateStructuredErrorCode(category, error) {
+  const errorType = error.name || 'Error';
+  const prefix = category.toUpperCase();
+  
+  // Create specific error codes based on patterns
+  if (category === 'database') {
+    if (error.message?.includes('connection')) return `${prefix}_CONNECTION_FAILED`;
+    if (error.message?.includes('timeout')) return `${prefix}_TIMEOUT`;
+    if (error.message?.includes('constraint')) return `${prefix}_CONSTRAINT_VIOLATION`;
+    return `${prefix}_OPERATION_FAILED`;
+  }
+  
+  if (category === 'validation') {
+    if (error.message?.includes('required')) return `${prefix}_REQUIRED_FIELD`;
+    if (error.message?.includes('format')) return `${prefix}_INVALID_FORMAT`;
+    return `${prefix}_VALIDATION_FAILED`;
+  }
+  
+  if (category === 'auth') {
+    if (error.message?.includes('unauthorized')) return `${prefix}_UNAUTHORIZED`;
+    if (error.message?.includes('forbidden')) return `${prefix}_FORBIDDEN`;
+    return `${prefix}_AUTHENTICATION_FAILED`;
+  }
+  
+  if (category === 'network') {
+    if (error.message?.includes('timeout')) return `${prefix}_TIMEOUT`;
+    if (error.message?.includes('refused')) return `${prefix}_CONNECTION_REFUSED`;
+    return `${prefix}_REQUEST_FAILED`;
+  }
+  
+  // Default structured code
+  return `${prefix}_${errorType.toUpperCase()}_ERROR`;
 }

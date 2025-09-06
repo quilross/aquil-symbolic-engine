@@ -250,6 +250,9 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
     // Track successful store writes
     const stores = [];
     
+    // Generate trace ID for this action
+    const traceId = `gpt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
     // Collect metrics (fail-open)
     try {
       const { incrementActionSuccess, incrementActionError } = await import('./utils/metrics.js');
@@ -265,7 +268,23 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
     const payload = {
       action: operationId,
       input: data,
-      result: error ? { error: error.message } : { success: true, processed: !!result }
+      result: error ? { 
+        error: error.message,
+        error_category: categorizeGPTError(error),
+        error_severity: determineErrorSeverity(error)
+      } : { 
+        success: true, 
+        processed: !!result 
+      },
+      // Enhanced observability metadata
+      gpt_metadata: {
+        action_type: 'chatgpt_interaction',
+        canonical_operation: canonical,
+        original_operation: operationId !== canonical ? operationId : null,
+        trace_id: traceId,
+        processing_timestamp: new Date().toISOString(),
+        user_session: data?.session_id || 'unknown'
+      }
     };
     
     // Generate R2 artifact for significant actions
@@ -306,7 +325,9 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
       tags: standardTags,
       binary,
       textOrVector,
-      stores  // Add stores tracking
+      stores,  // Add stores tracking
+      trace_id: traceId, // Pass trace ID for observability
+      error_code: error ? generateErrorCode(canonical, error) : null // Structured error codes
     });
     
     // Track successful D1 write
@@ -315,6 +336,39 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
   } catch (logError) {
     console.warn('Failed to log ChatGPT action:', logError);
   }
+}
+
+/**
+ * Categorize GPT-specific errors for structured logging
+ */
+function categorizeGPTError(error) {
+  if (error.message?.includes('database') || error.message?.includes('D1')) return 'database';
+  if (error.message?.includes('KV') || error.message?.includes('storage')) return 'storage';
+  if (error.message?.includes('timeout')) return 'timeout';
+  if (error.message?.includes('validation') || error.message?.includes('schema')) return 'validation';
+  if (error.message?.includes('auth') || error.message?.includes('permission')) return 'auth';
+  if (error.message?.includes('network') || error.message?.includes('fetch')) return 'network';
+  return 'unknown';
+}
+
+/**
+ * Determine error severity for GPT actions
+ */
+function determineErrorSeverity(error) {
+  const category = categorizeGPTError(error);
+  if (category === 'database' || category === 'storage') return 'high';
+  if (category === 'auth') return 'medium';
+  if (category === 'validation' || category === 'timeout') return 'low';
+  return 'medium';
+}
+
+/**
+ * Generate structured error codes for observability
+ */
+function generateErrorCode(operation, error) {
+  const category = categorizeGPTError(error);
+  const severity = determineErrorSeverity(error);
+  return `${operation.toUpperCase()}_${category.toUpperCase()}_${severity.toUpperCase()}`;
 }
 
 // =============================================================================
