@@ -7,17 +7,10 @@
 export const OP_CANON = {
   // Core logging and retrieval
   logDataOrEvent: 'logDataOrEvent',
-  retrieveLogsOrDataEntries: 'retrieveLogsOrDataEntries', 
-  retrieveRecentSessionLogs: 'retrieveRecentSessionLogs',
+  retrieveLogsOrDataEntries: 'retrieveLogsOrDataEntries',
   
-  // R2 storage operations
-  retrieveR2StoredContent: 'retrieveR2StoredContent',
-  getR2StoredContent: 'getR2StoredContent',
-  
-  // Search operations
-  searchLogs: 'searchLogs',
-  ragSearch: 'ragSearch',
-  searchR2Storage: 'searchR2Storage',
+  // Search and insights operations
+  getPersonalInsights: 'getPersonalInsights',
   
   // RAG operations
   ragMemoryConsolidation: 'ragMemoryConsolidation',
@@ -83,8 +76,7 @@ export const OP_CANON = {
   designHabits: 'designHabits',
   queryD1Database: 'queryD1Database',
   storeInKV: 'storeInKV',
-  upsertVectors: 'upsertVectors',
-  advancedLoggingOperations: 'advancedLoggingOperations'
+  upsertVectors: 'upsertVectors'
 };
 
 // Aliases = implementation variants (snake_case, legacy) → canonical
@@ -92,16 +84,16 @@ export const OP_ALIASES = {
   // Logging operations
   'log_data_or_event': 'logDataOrEvent',
   'retrieve_logs_or_data_entries': 'retrieveLogsOrDataEntries',
-  'retrieve_recent_session_logs': 'retrieveRecentSessionLogs',
+  'retrieve_recent_session_logs': 'retrieveLogsOrDataEntries', // Map to main log retrieval
   
-  // R2 storage operations
-  'retrieve_r2_stored_content': 'retrieveR2StoredContent',
-  'get_r2_stored_content': 'getR2StoredContent',
+  // R2 storage operations (map to existing operations)
+  'retrieve_r2_stored_content': 'getPersonalInsights', // R2 content is often insight-related
+  'get_r2_stored_content': 'getPersonalInsights',
   
-  // Search operations
-  'search_logs': 'searchLogs',
-  'rag_search': 'ragSearch',
-  'search_r2_storage': 'searchR2Storage',
+  // Search operations (consolidate into insights)
+  'search_logs': 'getPersonalInsights',
+  'rag_search': 'getPersonalInsights',
+  'search_r2_storage': 'getPersonalInsights',
   
   // RAG operations
   'rag_memory_consolidation': 'ragMemoryConsolidation',
@@ -167,16 +159,16 @@ export const OP_ALIASES = {
   'searchR2': 'searchR2Storage',
   
   // Session initialization (legacy alias)
-  'sessionInit': 'retrieveRecentSessionLogs',
+  'sessionInit': 'retrieveLogsOrDataEntries',
   
   // ARK enhanced logging operations (map to existing canonical operations)
   'arkEnhancedLog': 'logDataOrEvent',
   'arkEnhancedRetrieve': 'retrieveLogsOrDataEntries',
-  'arkEnhancedMemories': 'retrieveR2StoredContent',
-  'arkEnhancedVector': 'ragSearch',
+  'arkEnhancedMemories': 'getPersonalInsights',
+  'arkEnhancedVector': 'getPersonalInsights',
   'arkEnhancedResonance': 'ragMemoryConsolidation',
   'arkSystemStatus': 'systemHealthCheck',
-  'arkAdvancedFilter': 'searchLogs',
+  'arkAdvancedFilter': 'getPersonalInsights',
   'arkAutonomousLog': 'logDataOrEvent',
   
   // Extracted logging endpoints (map to appropriate canonical operations)
@@ -198,7 +190,7 @@ export const OP_ALIASES = {
   'socraticQuestions': 'generateDiscoveryInquiry',
   'combBehavioralAnalysis': 'recognizePatterns',
   'getKVStoredData': 'retrieveLogsOrDataEntries',
-  'searchResonance': 'searchR2Storage',
+  'searchResonance': 'getPersonalInsights',
   
   // New operation aliases for complete schema coverage
   'track_mood_and_emotions': 'trackMoodAndEmotions',
@@ -207,7 +199,7 @@ export const OP_ALIASES = {
   'query_d1_database': 'queryD1Database',
   'store_in_kv': 'storeInKV',
   'upsert_vectors': 'upsertVectors',
-  'advanced_logging_operations': 'advancedLoggingOperations'
+  'advanced_logging_operations': 'logDataOrEvent'
 };
 
 /**

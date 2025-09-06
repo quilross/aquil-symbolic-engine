@@ -15,7 +15,7 @@
     "/api/log": {
       "post": {
         "summary": "Log any data or conversation event",
-        "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, emotional moments, or any meaningful conversation moment. Essential for continuity and pattern recognition.",
+        "description": "Called AUTOMATICALLY for logging chat messages, insights, breakthroughs, emotional moments, or any meaningful conversation moment. Essential for continuity and pattern recognition.",
         "operationId": "logDataOrEvent",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -60,7 +60,7 @@
     "/api/logs": {
       "get": {
         "summary": "Retrieve conversation history and context",
-        "description": "Use AUTOMATICALLY to gather conversation history and context for continuity. Essential for understanding user's journey and maintaining conversation flow.",
+        "description": "Called AUTOMATICALLY to gather conversation history and context for continuity. Essential for understanding user's journey and maintaining conversation flow.",
         "operationId": "retrieveLogsOrDataEntries",
         "x-openai-autonomous": true,
         "parameters": [
@@ -95,7 +95,7 @@
       },
       "post": {
         "summary": "Advanced logging operations (KV, D1, promotion)",
-        "description": "Consolidated endpoint for advanced logging with storage control and data promotion.",
+        "description": "Called for advanced logging operations including storage control and data promotion between KV and D1 systems. Handles complex logging workflows when standard logging needs enhancement.",
         "operationId": "advancedLoggingOperations",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -184,7 +184,7 @@
     "/api/search/logs": {
       "post": {
         "summary": "Search logs using vector similarity",
-        "description": "Use to find contextually similar logs and insights.",
+        "description": "Called when vector similarity search is needed to find contextually similar logs and insights. Essential for pattern recognition and knowledge retrieval.",
         "operationId": "searchLogs",
         "x-openai-autonomous": true,
         "requestBody": {
@@ -227,7 +227,7 @@
     "/api/search/r2": {
       "post": {
         "summary": "Search R2 storage objects",
-        "description": "Search stored content in R2 bucket by metadata and content.",
+        "description": "Called when searching stored content in R2 bucket by metadata and content patterns. Useful for finding specific stored artifacts and insights across the storage system.",
         "operationId": "searchR2Storage",
         "x-openai-autonomous": true,
         "requestBody": {
@@ -268,7 +268,7 @@
     "/api/rag/search": {
       "post": {
         "summary": "RAG semantic search with AI generation",
-        "description": "Retrieval-augmented generation search combining vector similarity with AI synthesis.",
+        "description": "Called for retrieval-augmented generation search combining vector similarity with AI synthesis. Provides intelligent insights when deep knowledge analysis is needed.",
         "operationId": "ragSearch",
         "x-openai-autonomous": true,
         "requestBody": {
@@ -310,7 +310,7 @@
     "/api/analytics/insights": {
       "get": {
         "summary": "Get conversation analytics and insights",
-        "description": "Automatically called to analyze conversation patterns and provide usage insights.",
+        "description": "Called automatically to analyze conversation patterns and provide usage insights. Essential for understanding user engagement and behavioral trends over time.",
         "operationId": "getConversationAnalytics",
         "x-openai-autonomous": true,
         "parameters": [
@@ -346,7 +346,7 @@
     "/api/export/conversation": {
       "post": {
         "summary": "Export conversation data",
-        "description": "Export conversation history in various formats for backup or analysis.",
+        "description": "Called when conversation history export is needed in various formats for backup or analysis. Supports JSON, CSV, and PDF formats for comprehensive data management.",
         "operationId": "exportConversationData",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -389,7 +389,7 @@
     "/api/r2/list": {
       "get": {
         "summary": "List stored content from R2",
-        "description": "Use to retrieve stored logs and artifacts.",
+        "description": "Called when browsing stored logs and artifacts from R2 storage is needed. Provides metadata and content listing for efficient content management and retrieval.",
         "operationId": "retrieveR2StoredContent",
         "x-openai-autonomous": true,
         "parameters": [
@@ -438,7 +438,7 @@
     "/api/r2/get": {
       "get": {
         "summary": "Retrieve specific content from R2",
-        "description": "Get stored content by key.",
+        "description": "Called when specific stored content retrieval from R2 is needed by key. Essential for accessing individual insights, artifacts, and stored data with metadata.",
         "operationId": "getR2StoredContent",
         "x-openai-autonomous": true,
         "parameters": [
@@ -473,7 +473,7 @@
     "/api/kv/get": {
       "get": {
         "summary": "Retrieve data from KV storage",
-        "description": "Direct KV retrieval for fast key-value data access.",
+        "description": "Called for direct KV retrieval when fast key-value data access is needed. Provides immediate access to cached information and configuration data.",
         "operationId": "retrieveFromKV",
         "x-openai-autonomous": true,
         "parameters": [
@@ -506,7 +506,7 @@
     "/api/vectorize/query": {
       "post": {
         "summary": "Query vector index for similarity search",
-        "description": "Search the vectorize index for semantically similar content.",
+        "description": "Called when vector index semantic search is needed for finding semantically similar content. Provides similarity scores and relevance matching for knowledge discovery.",
         "operationId": "queryVectorIndex", 
         "x-openai-autonomous": true,
         "requestBody": {
