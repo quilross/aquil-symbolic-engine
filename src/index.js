@@ -1169,7 +1169,7 @@ router.post("/api/logs", async (req, env) => {
         }), { status: 400, headers: { "Content-Type": "application/json" } }));
     }
 
-    await logChatGPTAction(env, 'advancedLoggingOperations', 
+    await logChatGPTAction(env, 'logDataOrEvent', 
       { operation, type, storedIn }, 
       { success: true, operation }
     ).catch(() => {});
@@ -1179,7 +1179,7 @@ router.post("/api/logs", async (req, env) => {
     }));
   } catch (error) {
     console.error('Advanced logging operation error:', error);
-    await logChatGPTAction(env, 'advancedLoggingOperations', {}, null, error).catch(() => {});
+    await logChatGPTAction(env, 'logDataOrEvent', {}, null, error).catch(() => {});
     return addCORS(new Response(JSON.stringify({ 
       error: "Internal server error",
       message: error.message 
@@ -1350,7 +1350,7 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
 
 // Daily synthesis
 // Consolidated wisdom and insights endpoint
-router.get("/api/wisdom/insights", async (req, env) => {
+router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
     const { type = 'both', focus_area } = req.query;
     const wisdom = new MediaWisdomExtractor(env);
@@ -2001,14 +2001,14 @@ router.get("/api/r2/list", async (req, env) => {
       });
     }
     
-    await logChatGPTAction(env, 'retrieveR2StoredContent', { prefix, limit }, { count: results.length });
+    await logChatGPTAction(env, 'getKVStoredData', { prefix, limit }, { count: results.length });
     
     return addCORS(new Response(JSON.stringify(results), {
       headers: { "Content-Type": "application/json" }
     }));
   } catch (error) {
     console.error('R2 list error:', error);
-    await logChatGPTAction(env, 'retrieveR2StoredContent', {}, null, error);
+    await logChatGPTAction(env, 'getKVStoredData', {}, null, error);
     return addCORS(new Response(JSON.stringify([]), {
       headers: { 
         "Content-Type": "application/json",
@@ -2032,11 +2032,11 @@ router.post("/api/r2/put", async (req, env) => {
 router.get("/api/r2/get", async (req, env) => {
   try {
     const result = await r2Get(req, env);
-    await logChatGPTAction(env, 'getR2StoredContent', { url: req.url }, result);
+    await logChatGPTAction(env, 'getKVStoredData', { url: req.url }, result);
     return result;
   } catch (error) {
     console.error('R2 get error:', error);
-    await logChatGPTAction(env, 'getR2StoredContent', {}, null, error);
+    await logChatGPTAction(env, 'getKVStoredData', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -2154,7 +2154,7 @@ router.post("/api/rag/search", async (req, env) => {
       result = await semanticRecall(env, { text, topK, threshold });
     }
     
-    await logChatGPTAction(env, 'ragSearch', body, result);
+    await logChatGPTAction(env, 'getPersonalInsights', body, result);
     
     return addCORS({
       success: true,
@@ -2165,7 +2165,7 @@ router.post("/api/rag/search", async (req, env) => {
     });
     
   } catch (error) {
-    await logChatGPTAction(env, 'ragSearch', {}, null, error);
+    await logChatGPTAction(env, 'getPersonalInsights', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -2297,7 +2297,7 @@ router.post("/api/search/logs", async (req, env) => {
       }
     }
     
-    await logChatGPTAction(env, 'searchLogs', body, { query, matches: matches.length });
+    await logChatGPTAction(env, 'getPersonalInsights', body, { query, matches: matches.length });
     
     return addCORS({
       success: true,
@@ -2311,7 +2311,7 @@ router.post("/api/search/logs", async (req, env) => {
     });
     
   } catch (error) {
-    await logChatGPTAction(env, 'searchLogs', {}, null, error);
+    await logChatGPTAction(env, 'getPersonalInsights', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -2349,7 +2349,7 @@ router.post("/api/search/r2", async (req, env) => {
       if (results.length >= limit) break;
     }
     
-    await logChatGPTAction(env, 'searchR2Storage', body, { query, results: results.length });
+    await logChatGPTAction(env, 'getPersonalInsights', body, { query, results: results.length });
     
     return addCORS({
       success: true,
@@ -2365,7 +2365,7 @@ router.post("/api/search/r2", async (req, env) => {
     });
     
   } catch (error) {
-    await logChatGPTAction(env, 'searchR2Storage', {}, null, error);
+    await logChatGPTAction(env, 'getPersonalInsights', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -2631,7 +2631,7 @@ router.all("*", () => {
       "/api/patterns/autonomous-detect",
       "/api/standing-tall/practice",
       "/api/wisdom/synthesize",
-      "/api/wisdom/insights",
+      "/api/wisdom/daily-synthesis",
       "/api/feedback",
       "/api/dreams/interpret",
       "/api/energy/optimize",
