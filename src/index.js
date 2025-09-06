@@ -1196,7 +1196,8 @@ router.post("/api/trust/check-in", async (req, env) => {
   try {
     const body = await req.json();
     
-    if (!body.current_state) {
+    if (!body.current_state) {    await logChatGPTAction(env, "trustCheckIn", req.body || {}, result);
+
       return addCORS(createErrorResponse({ error: "current_state required" }, 400));
     }
     
