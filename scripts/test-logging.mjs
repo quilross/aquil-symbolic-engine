@@ -1,7 +1,7 @@
 // Minimal integration test for unified logging endpoints (Miniflare/Codespaces)
 import fetch from "node-fetch";
 
-const BASE = "http://127.0.0.1:8787";
+const BASE = process.env.DEV_SERVER_URL || "http://127.0.0.1:8787";
 
 async function postLog() {
   const res = await fetch(`${BASE}/api/log`, {
