@@ -75,7 +75,15 @@ export const OP_CANON = {
   // Commitments
   manageCommitment: 'manageCommitment',
   listActiveCommitments: 'listActiveCommitments',
-  updateCommitmentProgress: 'updateCommitmentProgress'
+  updateCommitmentProgress: 'updateCommitmentProgress',
+  
+  // New operations for complete schema coverage
+  trackMoodAndEmotions: 'trackMoodAndEmotions',
+  setPersonalGoals: 'setPersonalGoals', 
+  designHabits: 'designHabits',
+  queryD1Database: 'queryD1Database',
+  storeInKV: 'storeInKV',
+  upsertVectors: 'upsertVectors'
 };
 
 // Aliases = implementation variants (snake_case, legacy) → canonical
@@ -189,7 +197,15 @@ export const OP_ALIASES = {
   'socraticQuestions': 'generateDiscoveryInquiry',
   'combBehavioralAnalysis': 'recognizePatterns',
   'getKVStoredData': 'retrieveLogsOrDataEntries',
-  'searchResonance': 'searchR2Storage'
+  'searchResonance': 'searchR2Storage',
+  
+  // New operation aliases for complete schema coverage
+  'track_mood_and_emotions': 'trackMoodAndEmotions',
+  'set_personal_goals': 'setPersonalGoals',
+  'design_habits': 'designHabits',
+  'query_d1_database': 'queryD1Database',
+  'store_in_kv': 'storeInKV',
+  'upsert_vectors': 'upsertVectors'
 };
 
 /**
