@@ -123,7 +123,24 @@
           }
         },
         "responses": {
-          "200": { "description": "Advanced logging operation results" }
+          "200": {
+            "description": "Advanced logging operation results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "description": "Operation success status" },
+                    "operation": { "type": "string", "description": "Operation type executed" },
+                    "result": { "type": "object", "description": "Operation-specific results" },
+                    "timestamp": { "type": "string", "description": "Operation timestamp" },
+                    "message": { "type": "string", "description": "Operation status message" }
+                  },
+                  "required": ["success", "operation"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -389,20 +406,28 @@
         ],
         "responses": {
           "200": {
-            "description": "List of stored items",
+            "description": "List of stored items with metadata",
             "content": {
               "application/json": {
-                "schema": { 
-                  "type": "array", 
-                  "items": { 
-                    "type": "object",
-                    "properties": {
-                      "key": { "type": "string" },
-                      "size": { "type": "integer" },
-                      "uploaded": { "type": "string" }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": { 
+                      "type": "array", 
+                      "items": { 
+                        "type": "object",
+                        "properties": {
+                          "key": { "type": "string" },
+                          "size": { "type": "integer" },
+                          "uploaded": { "type": "string" }
+                        },
+                        "required": ["key"]
+                      }
                     },
-                    "required": ["key"]
-                  }
+                    "total": { "type": "integer", "description": "Total number of items" },
+                    "prefix": { "type": "string", "description": "Prefix filter used" }
+                  },
+                  "required": ["items", "total"]
                 }
               }
             }

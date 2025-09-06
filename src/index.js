@@ -1709,6 +1709,90 @@ router.post("/api/ancestry/heal", async (req, env) => {
   }
 });
 
+// Mood tracking endpoint
+router.post("/api/mood/track", async (req, env) => {
+  try {
+    const body = await req.json();
+    const sessionId = extractSessionId(req) || crypto.randomUUID();
+    
+    // Create mood tracking response based on schema requirements
+    const result = {
+      mood_insights: `Tracking mood: ${body.current_mood} (${body.mood_scale}/10). ${body.triggers ? `Triggered by: ${body.triggers.join(', ')}` : ''}`,
+      mood_trends: [`Current mood pattern: ${body.current_mood}`, "Mood tracking active"],
+      emotional_guidance: "Practice mindful awareness of your emotional state. Notice patterns and triggers to better understand your emotional landscape.",
+      mood_boosters: ["Take deep breaths", "Go for a walk", "Listen to uplifting music", "Connect with supportive people"],
+      session_id: sessionId
+    };
+    
+    await logChatGPTAction(env, 'trackMoodAndEmotions', body, result);
+    
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'trackMoodAndEmotions', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Personal goals endpoint  
+router.post("/api/goals/set", async (req, env) => {
+  try {
+    const body = await req.json();
+    const sessionId = extractSessionId(req) || crypto.randomUUID();
+    
+    // Create goal setting response based on schema requirements
+    const goalId = crypto.randomUUID();
+    const result = {
+      goal_id: goalId,
+      action_plan: [
+        "Break down goal into smaller steps",
+        "Set specific deadlines", 
+        "Identify required resources",
+        "Create accountability measures"
+      ],
+      milestones: [
+        { milestone: "30% progress check", date: "Week 2" },
+        { milestone: "60% progress check", date: "Week 4" },
+        { milestone: "Goal completion", date: body.timeline || "Week 6" }
+      ],
+      success_metrics: ["Measurable progress indicators", "Regular check-ins", "Achievement celebration"],
+      potential_obstacles: ["Time constraints", "Resource limitations", "Motivation challenges"],
+      session_id: sessionId
+    };
+    
+    await logChatGPTAction(env, 'setPersonalGoals', body, result);
+    
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'setPersonalGoals', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Habit design endpoint
+router.post("/api/habits/design", async (req, env) => {
+  try {
+    const body = await req.json();
+    const sessionId = extractSessionId(req) || crypto.randomUUID();
+    
+    // Create habit design response based on schema requirements  
+    const result = {
+      habit_plan: `${body.habit_type === 'build' ? 'Building' : body.habit_type === 'break' ? 'Breaking' : 'Modifying'} habit: ${body.habit_description}. Start small and build consistency.`,
+      trigger_design: "Link to existing routine - identify specific time, location, and preceding action as your habit trigger.",
+      reward_system: ["Immediate small reward after completion", "Weekly progress celebration", "Monthly habit streak reward"],
+      tracking_method: "Simple daily checkmarks or habit tracking app with visual progress indicators.",
+      difficulty_progression: ["Week 1: Minimal viable habit", "Week 2: Slight increase", "Week 3: Build consistency", "Week 4+: Gradual expansion"],
+      session_id: sessionId
+    };
+    
+    await logChatGPTAction(env, 'designHabits', body, result);
+    
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'designHabits', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
 // Commitment management
 router.post("/api/commitments/create", async (req, env) => {
   try {
@@ -1964,9 +2048,15 @@ router.get("/api/r2/get", async (req, env) => {
 // D1 Query endpoint
 router.post("/api/d1/query", async (req, env) => {
   try {
-    return await d1Exec(req, env);
+    const result = await d1Exec(req, env);
+    const body = await req.clone().json().catch(() => ({}));
+    
+    await logChatGPTAction(env, 'queryD1Database', body, result);
+    
+    return addCORS(result);
   } catch (error) {
     console.error('D1 query error:', error);
+    await logChatGPTAction(env, 'queryD1Database', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -1988,9 +2078,15 @@ router.post("/api/vectorize/query", async (req, env) => {
 // Vector upsert endpoint
 router.post("/api/vectorize/upsert", async (req, env) => {
   try {
-    return await vectorUpsert(req, env);
+    const result = await vectorUpsert(req, env);
+    const body = await req.clone().json().catch(() => ({}));
+    
+    await logChatGPTAction(env, 'upsertVectors', body, result);
+    
+    return addCORS(result);
   } catch (error) {
     console.error('Vector upsert error:', error);
+    await logChatGPTAction(env, 'upsertVectors', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -2002,9 +2098,15 @@ router.post("/api/vectorize/upsert", async (req, env) => {
 // KV Put endpoint
 router.post("/api/kv/log", async (req, env) => {
   try {
-    return await kvLog(req, env);
+    const result = await kvLog(req, env);
+    const body = await req.clone().json().catch(() => ({}));
+    
+    await logChatGPTAction(env, 'storeInKV', body, result);
+    
+    return addCORS(result);
   } catch (error) {
     console.error('KV log error:', error);
+    await logChatGPTAction(env, 'storeInKV', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -2538,6 +2640,9 @@ router.all("*", () => {
       "/api/abundance/cultivate",
       "/api/transitions/navigate",
       "/api/ancestry/heal",
+      "/api/mood/track",
+      "/api/goals/set", 
+      "/api/habits/design",
       "/api/commitments/create",
       "/api/commitments/active",
       "/api/commitments/:id/progress",

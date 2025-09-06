@@ -135,7 +135,7 @@
     "/api/d1/query": {
       "post": {
         "summary": "Direct D1 database queries",
-        "description": "Execute SQL queries against the D1 database. Use for complex data operations.",
+        "description": "Called when complex database operations or custom SQL queries are needed. Triggers on: 'query the database', 'run SQL', 'database lookup', 'custom data query', 'search database records'.",
         "operationId": "queryD1Database",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -175,7 +175,7 @@
     "/api/kv/log": {
       "post": {
         "summary": "Store data in KV storage",
-        "description": "Direct KV storage for fast key-value data access.",
+        "description": "Called when fast key-value storage is needed for quick data access. Triggers on: 'save this data', 'store quickly', 'cache this information', 'remember this setting', 'store configuration'.",
         "operationId": "storeInKV",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -215,7 +215,7 @@
     "/api/vectorize/upsert": {
       "post": {
         "summary": "Store vectors in the index",
-        "description": "Add or update vectors in the vectorize index.",
+        "description": "Called when vector embeddings need to be stored for semantic search. Triggers on: 'index this content', 'create embeddings', 'store for similarity search', 'add to vector database', 'semantic indexing'.",
         "operationId": "upsertVectors",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -1032,7 +1032,7 @@
     "/api/rag/memory": {
       "post": {
         "summary": "RAG memory consolidation and learning",
-        "description": "Store and consolidate insights for future retrieval using RAG.",
+        "description": "Called when insights need to be stored for future retrieval and learning. Triggers on: 'remember this insight', 'store this learning', 'consolidate wisdom', 'save for later reference', 'important to remember'.",
         "operationId": "ragMemoryConsolidation",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -1239,6 +1239,88 @@
                     "timestamp": { "type": "string" }
                   },
                   "required": ["ready", "components", "timestamp"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/log": {
+      "post": {
+        "summary": "Log conversation events and insights",
+        "description": "Called AUTOMATICALLY to log chat messages, insights, breakthroughs, and meaningful moments. Triggers on: conversation events, emotional moments, insights, breakthroughs, important statements.",
+        "operationId": "logDataOrEvent",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "default": "chat_message", "description": "Event type (chat_message, insight, breakthrough, emotion, etc.)" },
+                  "who": { "type": "string", "default": "user", "description": "Who generated this event (user, assistant, system)" },
+                  "level": { "type": "string", "default": "info", "description": "Importance level (debug, info, significant, breakthrough)" },
+                  "payload": { "type": "object", "description": "Event data and context" }
+                },
+                "required": ["payload"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Log stored successfully with metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logged": { "type": "boolean" },
+                    "log_id": { "type": "string" },
+                    "timestamp": { "type": "string" },
+                    "storage_location": { "type": "string" }
+                  },
+                  "required": ["logged", "log_id"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "summary": "Retrieve conversation history and context",
+        "description": "Called AUTOMATICALLY to gather conversation history and context for continuity. Essential for understanding user's journey and maintaining conversation flow. Triggers on: conversation start, context needed, history review.",
+        "operationId": "retrieveLogsOrDataEntries",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of entries to retrieve (1-200). Higher numbers provide more context but may slow response.",
+            "schema": { "type": "integer", "default": 20, "maximum": 200 },
+            "example": 50
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation history with context metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logs": { "type": "array", "items": { "type": "object" }, "description": "Conversation log entries" },
+                    "context_summary": { "type": "string", "description": "Overall conversation context" },
+                    "key_themes": { "type": "array", "items": { "type": "string" }, "description": "Major conversation themes" },
+                    "total_entries": { "type": "integer" },
+                    "time_span": { "type": "string", "description": "Time period covered" }
+                  },
+                  "required": ["logs", "total_entries"]
                 }
               }
             }
