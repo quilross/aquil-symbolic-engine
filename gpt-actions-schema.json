@@ -37,7 +37,25 @@
           }
         },
         "responses": {
-          "200": { "description": "Commitment management results" }
+          "200": {
+            "description": "Commitment management results with tracking info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "commitment_id": { "type": "string", "description": "Unique commitment identifier" },
+                    "status": { "type": "string", "enum": ["created", "updated"], "description": "Operation result" },
+                    "commitment_details": { "type": "object", "description": "Full commitment information" },
+                    "tracking_plan": { "type": "array", "items": { "type": "string" }, "description": "Suggested tracking methods" },
+                    "next_steps": { "type": "array", "items": { "type": "string" }, "description": "Recommended next actions" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["commitment_id", "status"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -48,7 +66,24 @@
         "operationId": "listActiveCommitments",
         "x-openai-autonomous": true,
         "responses": {
-          "200": { "description": "Active commitments list" }
+          "200": {
+            "description": "Active commitments with progress tracking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active_commitments": { "type": "array", "items": { "type": "object" }, "description": "List of current commitments" },
+                    "completion_summary": { "type": "object", "description": "Overall progress summary" },
+                    "upcoming_milestones": { "type": "array", "items": { "type": "string" }, "description": "Next important milestones" },
+                    "recommendations": { "type": "string", "description": "Guidance based on current progress" },
+                    "total_count": { "type": "integer", "description": "Total number of active commitments" }
+                  },
+                  "required": ["active_commitments", "total_count"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -75,7 +110,25 @@
           }
         },
         "responses": {
-          "200": { "description": "Progress update results" }
+          "200": {
+            "description": "Progress update results with insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "updated": { "type": "boolean", "description": "Whether update was successful" },
+                    "progress_percentage": { "type": "number", "description": "Calculated progress percentage" },
+                    "milestone_reached": { "type": "boolean", "description": "Whether a milestone was reached" },
+                    "insights": { "type": "array", "items": { "type": "string" }, "description": "Progress insights and observations" },
+                    "next_actions": { "type": "array", "items": { "type": "string" }, "description": "Recommended next steps" },
+                    "celebration": { "type": "string", "description": "Celebration or encouragement message" }
+                  },
+                  "required": ["updated", "progress_percentage"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -302,7 +355,7 @@
     "/api/media/extract-wisdom": {
       "post": {
         "summary": "Extract wisdom from media consumption",
-        "description": "Called when discussing movies, books, music, or media.",
+        "description": "Called when user discusses consuming, watching, or reading media content (movies, books, music, podcasts, videos). Triggers on: 'watched a movie', 'reading this book', 'listened to', 'saw this documentary', media reactions and reviews.",
         "operationId": "extractMediaWisdom",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -323,7 +376,26 @@
           }
         },
         "responses": {
-          "200": { "description": "Wisdom extraction results" }
+          "200": {
+            "description": "Media wisdom extraction with insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "extracted_wisdom": { "type": "string", "description": "Key wisdom and insights from the media" },
+                    "personal_connections": { "type": "array", "items": { "type": "string" }, "description": "How insights connect to user's life" },
+                    "actionable_takeaways": { "type": "array", "items": { "type": "string" }, "description": "Practical applications" },
+                    "emotional_resonance": { "type": "string", "description": "Emotional impact and significance" },
+                    "related_themes": { "type": "array", "items": { "type": "string" }, "description": "Connected themes and patterns" },
+                    "session_id": { "type": "string" },
+                    "media_type": { "type": "string" }
+                  },
+                  "required": ["extracted_wisdom", "personal_connections"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -376,7 +448,7 @@
     "/api/standing-tall/practice": {
       "post": {
         "summary": "Standing tall confidence practice",
-        "description": "Called for confidence building and posture work.",
+        "description": "Called when user mentions confidence issues, posture, self-presentation, or feeling small/inadequate. Triggers on: 'standing tall', 'feeling small', 'posture', 'presence', 'confidence in room', 'how I carry myself'.",
         "operationId": "standingTallPractice",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -396,7 +468,25 @@
           }
         },
         "responses": {
-          "200": { "description": "Standing tall practice results" }
+          "200": {
+            "description": "Standing tall practice with confidence building",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "confidence_boost": { "type": "string", "description": "Confidence building guidance" },
+                    "posture_tips": { "type": "array", "items": { "type": "string" }, "description": "Physical posture recommendations" },
+                    "presence_practices": { "type": "array", "items": { "type": "string" }, "description": "Presence and grounding exercises" },
+                    "confidence_score": { "type": "number", "description": "Assessed confidence level 0-10" },
+                    "empowerment_affirmations": { "type": "array", "items": { "type": "string" }, "description": "Personal empowerment statements" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["confidence_boost", "posture_tips"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -526,7 +616,7 @@
     "/api/feedback": {
       "post": {
         "summary": "Submit feedback on experiences",
-        "description": "Called to provide feedback on practices or insights.",
+        "description": "Called when user wants to provide feedback on practices, insights, or experiences. Triggers on: 'how was that', 'feedback on', 'what worked', 'didn't work for me', reflection on effectiveness.",
         "operationId": "submitFeedback",
         "x-openai-isConsequential": true,
         "requestBody": {
@@ -546,14 +636,32 @@
           }
         },
         "responses": {
-          "200": { "description": "Feedback submitted successfully" }
+          "200": {
+            "description": "Feedback submission with acknowledgment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feedback_received": { "type": "boolean", "description": "Whether feedback was successfully recorded" },
+                    "feedback_summary": { "type": "string", "description": "Summary of the feedback provided" },
+                    "insights_gained": { "type": "array", "items": { "type": "string" }, "description": "Insights from the feedback" },
+                    "adjustments": { "type": "array", "items": { "type": "string" }, "description": "Suggested adjustments based on feedback" },
+                    "appreciation": { "type": "string", "description": "Acknowledgment of the feedback" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["feedback_received", "feedback_summary"]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/discovery/generate-inquiry": {
       "post": {
         "summary": "Generate discovery questions and inquiries",
-        "description": "Called to generate deep questions for self-discovery and exploration.",
+        "description": "Called when user wants deeper self-exploration or feels stuck and needs guidance. Triggers on: 'need to think deeper', 'explore this more', 'what questions should I ask', 'dig deeper', self-discovery requests.",
         "operationId": "generateDiscoveryInquiry",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -573,14 +681,32 @@
           }
         },
         "responses": {
-          "200": { "description": "Discovery inquiry results" }
+          "200": {
+            "description": "Discovery inquiry with deep questions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inquiry_questions": { "type": "array", "items": { "type": "string" }, "description": "Deep exploration questions" },
+                    "focus_area": { "type": "string", "description": "Area of exploration" },
+                    "depth_guidance": { "type": "string", "description": "How to go deeper" },
+                    "reflection_prompts": { "type": "array", "items": { "type": "string" }, "description": "Reflection exercises" },
+                    "exploration_path": { "type": "string", "description": "Suggested exploration journey" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["inquiry_questions", "focus_area"]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/dreams/interpret": {
       "post": {
         "summary": "Interpret dreams and subconscious symbols",
-        "description": "Called when discussing dreams or subconscious content.",
+        "description": "Called when user shares dreams, nightmares, or discusses subconscious content and symbolism. Triggers on: 'had a dream', 'nightmare', 'dreamed about', 'what does this mean', dream symbols.",
         "operationId": "interpretDream",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -601,14 +727,33 @@
           }
         },
         "responses": {
-          "200": { "description": "Dream interpretation results" }
+          "200": {
+            "description": "Dream interpretation with symbolic insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "interpretation": { "type": "string", "description": "Dream interpretation and meaning" },
+                    "symbolic_elements": { "type": "array", "items": { "type": "object" }, "description": "Symbol meanings and significance" },
+                    "emotional_themes": { "type": "array", "items": { "type": "string" }, "description": "Underlying emotional themes" },
+                    "life_connections": { "type": "string", "description": "How dream connects to waking life" },
+                    "subconscious_messages": { "type": "array", "items": { "type": "string" }, "description": "Messages from subconscious" },
+                    "integration_suggestions": { "type": "array", "items": { "type": "string" }, "description": "How to integrate insights" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["interpretation", "symbolic_elements"]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/energy/optimize": {
       "post": {
         "summary": "Optimize energy levels and vitality",
-        "description": "Called when discussing energy, fatigue, or vitality.",
+        "description": "Called when user discusses tiredness, energy levels, vitality, or feeling drained/energized. Triggers on: 'feeling tired', 'low energy', 'drained', 'exhausted', 'need more energy', vitality concerns.",
         "operationId": "optimizeEnergy",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -629,14 +774,32 @@
           }
         },
         "responses": {
-          "200": { "description": "Energy optimization results" }
+          "200": {
+            "description": "Energy optimization with vitality enhancement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "energy_assessment": { "type": "number", "description": "Current energy level 0-10" },
+                    "optimization_strategies": { "type": "array", "items": { "type": "string" }, "description": "Energy boosting strategies" },
+                    "vitality_practices": { "type": "array", "items": { "type": "string" }, "description": "Vitality enhancement practices" },
+                    "energy_drains": { "type": "array", "items": { "type": "string" }, "description": "Identified energy drains" },
+                    "renewal_plan": { "type": "string", "description": "Personalized energy renewal plan" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["energy_assessment", "optimization_strategies"]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/values/clarify": {
       "post": {
         "summary": "Clarify personal values and priorities",
-        "description": "Called when discussing values, priorities, or life direction.",
+        "description": "Called when user discusses personal values, life priorities, what matters most, or feeling unclear about direction. Triggers on: 'what matters to me', 'my values', 'priorities', 'life direction', 'what's important'.",
         "operationId": "clarifyValues",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -657,14 +820,32 @@
           }
         },
         "responses": {
-          "200": { "description": "Values clarification results" }
+          "200": {
+            "description": "Values clarification with priority guidance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "core_values": { "type": "array", "items": { "type": "string" }, "description": "Identified core values" },
+                    "value_priorities": { "type": "array", "items": { "type": "object" }, "description": "Prioritized values with explanations" },
+                    "life_alignment": { "type": "string", "description": "How current life aligns with values" },
+                    "alignment_gaps": { "type": "array", "items": { "type": "string" }, "description": "Areas where values aren't being honored" },
+                    "action_steps": { "type": "array", "items": { "type": "string" }, "description": "Steps to better align with values" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["core_values", "value_priorities"]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/creativity/unleash": {
       "post": {
         "summary": "Unleash creative potential",
-        "description": "Called when discussing creative blocks or inspiration.",
+        "description": "Called when user discusses creative blocks, artistic inspiration, or unleashing creativity. Triggers on: 'creative block', 'stuck creatively', 'need inspiration', 'creative flow', artistic expression.",
         "operationId": "unleashCreativity",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -685,14 +866,32 @@
           }
         },
         "responses": {
-          "200": { "description": "Creativity unleashing results" }
+          "200": {
+            "description": "Creativity unleashing with inspiration boost",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "creative_insights": { "type": "string", "description": "Creative breakthrough insights" },
+                    "inspiration_sources": { "type": "array", "items": { "type": "string" }, "description": "Sources of creative inspiration" },
+                    "creative_exercises": { "type": "array", "items": { "type": "string" }, "description": "Creativity boosting exercises" },
+                    "block_removal": { "type": "string", "description": "Strategies for removing creative blocks" },
+                    "flow_state_guidance": { "type": "array", "items": { "type": "string" }, "description": "How to enter creative flow" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["creative_insights", "inspiration_sources"]
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/abundance/cultivate": {
       "post": {
         "summary": "Cultivate abundance mindset",
-        "description": "Called when discussing scarcity, lack, or abundance mindset.",
+        "description": "Called when user discusses financial stress, scarcity mindset, or abundance blocks. Triggers on: 'not enough money', 'can't afford', 'scarcity', 'abundance', 'financial stress', money mindset.",
         "operationId": "cultivateAbundance",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -713,7 +912,25 @@
           }
         },
         "responses": {
-          "200": { "description": "Abundance cultivation results" }
+          "200": {
+            "description": "Abundance cultivation with mindset shift",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "abundance_insights": { "type": "string", "description": "Key abundance mindset insights" },
+                    "scarcity_patterns": { "type": "array", "items": { "type": "string" }, "description": "Identified scarcity patterns" },
+                    "abundance_practices": { "type": "array", "items": { "type": "string" }, "description": "Daily abundance practices" },
+                    "mindset_shifts": { "type": "array", "items": { "type": "string" }, "description": "Required mindset changes" },
+                    "gratitude_focus": { "type": "array", "items": { "type": "string" }, "description": "Areas for gratitude practice" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["abundance_insights", "scarcity_patterns"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -768,7 +985,7 @@
     "/api/ancestry/heal": {
       "post": {
         "summary": "Ancestral healing and lineage work",
-        "description": "Called when discussing family patterns or ancestral healing.",
+        "description": "Called when user discusses family dynamics, generational patterns, or ancestral healing work. Triggers on: 'family patterns', 'like my parents', 'generational', 'family trauma', 'ancestral healing'.",
         "operationId": "healAncestry",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -789,7 +1006,26 @@
           }
         },
         "responses": {
-          "200": { "description": "Ancestral healing results" }
+          "200": {
+            "description": "Ancestral healing with generational insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "healing_insights": { "type": "string", "description": "Ancestral healing insights and guidance" },
+                    "family_patterns": { "type": "array", "items": { "type": "string" }, "description": "Identified family patterns" },
+                    "generational_gifts": { "type": "array", "items": { "type": "string" }, "description": "Positive ancestral gifts to claim" },
+                    "pattern_breaking": { "type": "array", "items": { "type": "string" }, "description": "Ways to break negative patterns" },
+                    "lineage_wisdom": { "type": "string", "description": "Wisdom to carry forward" },
+                    "healing_practices": { "type": "array", "items": { "type": "string" }, "description": "Ancestral healing practices" },
+                    "session_id": { "type": "string" }
+                  },
+                  "required": ["healing_insights", "family_patterns"]
+                }
+              }
+            }
+          }
         }
       }
     },
