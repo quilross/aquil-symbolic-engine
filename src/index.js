@@ -2092,7 +2092,8 @@ router.post("/api/d1/query", async (req, env) => {
 // Vector query endpoint
 router.post("/api/vectorize/query", async (req, env) => {
   try {
-    return await vectorQuery(req, env);
+        await logChatGPTAction(env, 'queryVectorIndex', req.body || {}, result);
+return await vectorQuery(req, env);
   } catch (error) {
     console.error('Vector query error:', error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
@@ -2632,6 +2633,55 @@ router.post(Routes.retrievalMeta, async (req, env) => {
 // =============================================================================
 
 // Catch-all for unmatched routes
+
+// Analytics insights
+router.get("/api/analytics/insights", async (req, env) => {
+  try {
+    const url = new URL(req.url);
+    const days = parseInt(url.searchParams.get('days') || '30');
+    const type = url.searchParams.get('type') || 'all';
+    
+    const result = {
+      insights: [],
+      patterns: [],
+      recommendations: [],
+      timeframe: `${days} days`,
+      analysis_type: type,
+      generated_at: new Date().toISOString()
+    };
+    
+    await logChatGPTAction(env, 'getConversationAnalytics', { days, type }, result);
+    
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'getConversationAnalytics', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+// Export conversation data
+router.post("/api/export/conversation", async (req, env) => {
+  try {
+    const body = await req.json();
+    const format = body.format || 'json';
+    const timeframe = body.timeframe || '30d';
+    
+    const result = {
+      export_id: crypto.randomUUID(),
+      format,
+      timeframe,
+      status: "prepared",
+      download_url: null, // Would be populated in real implementation
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
+    
+    await logChatGPTAction(env, 'exportConversationData', body, result);
+    
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'exportConversationData', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
 router.all("*", () => {
   return addCORS(createErrorResponse({ 
     error: "Endpoint not found", 

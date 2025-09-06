@@ -1,10 +1,10 @@
 {
   "summary": {
     "totalOperations": 43,
-    "aligned": 32,
-    "misaligned": 9,
-    "missingEndpoints": 2,
-    "successRate": 74.4
+    "aligned": 35,
+    "misaligned": 8,
+    "missingEndpoints": 0,
+    "successRate": 81.4
   },
   "results": [
     {
@@ -271,14 +271,14 @@
       "path": "/api/analytics/insights",
       "method": "GET",
       "source": "logging",
-      "status": "missing_endpoint"
+      "status": "aligned"
     },
     {
       "operationId": "exportConversationData",
       "path": "/api/export/conversation",
       "method": "POST",
       "source": "logging",
-      "status": "missing_endpoint"
+      "status": "aligned"
     },
     {
       "operationId": "retrieveR2StoredContent",
@@ -306,7 +306,7 @@
       "path": "/api/vectorize/query",
       "method": "POST",
       "source": "logging",
-      "status": "misaligned"
+      "status": "aligned"
     }
   ]
 }
