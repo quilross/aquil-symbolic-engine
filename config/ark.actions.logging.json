@@ -15,7 +15,7 @@
     "/api/log": {
       "post": {
         "summary": "Log any data or conversation event",
-        "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, or any meaningful moment.",
+        "description": "Use AUTOMATICALLY for logging chat messages, insights, breakthroughs, emotional moments, or any meaningful conversation moment. Essential for continuity and pattern recognition.",
         "operationId": "logDataOrEvent",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
@@ -26,10 +26,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string", "default": "chat_message" },
-                  "who": { "type": "string", "default": "user" },
-                  "level": { "type": "string", "default": "info" },
-                  "payload": { "type": "object" }
+                  "type": { "type": "string", "default": "chat_message", "description": "Event type (chat_message, insight, breakthrough, emotion, etc.)" },
+                  "who": { "type": "string", "default": "user", "description": "Who generated this event (user, assistant, system)" },
+                  "level": { "type": "string", "default": "info", "description": "Importance level (debug, info, significant, breakthrough)" },
+                  "payload": { "type": "object", "description": "Event data and context" }
                 },
                 "required": ["payload"]
               }
@@ -37,7 +37,23 @@
           }
         },
         "responses": {
-          "200": { "description": "Log stored successfully" }
+          "200": {
+            "description": "Log stored successfully with metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logged": { "type": "boolean" },
+                    "log_id": { "type": "string" },
+                    "timestamp": { "type": "string" },
+                    "storage_location": { "type": "string" }
+                  },
+                  "required": ["logged", "log_id"]
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -102,22 +118,34 @@
     "/api/session-init": {
       "get": {
         "summary": "Initialize conversation with recent context",
-        "description": "Called AUTOMATICALLY at conversation start.",
+        "description": "Called AUTOMATICALLY at conversation start to gather recent context and maintain conversation continuity. Provides session history for context.",
         "operationId": "retrieveRecentSessionLogs",
         "x-openai-autonomous": true,
         "parameters": [
           {
             "name": "limit",
             "in": "query",
-            "schema": { "type": "integer", "default": 7, "maximum": 200 }
+            "description": "Number of recent entries to retrieve (1-200). Default 7 provides good context without overwhelming.",
+            "schema": { "type": "integer", "default": 7, "maximum": 200 },
+            "example": 10
           }
         ],
         "responses": {
           "200": {
-            "description": "Recent session context",
+            "description": "Recent session context and conversation history",
             "content": {
               "application/json": {
-                "schema": { "type": "array", "items": { "type": "object" } }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recent_logs": { "type": "array", "items": { "type": "object" }, "description": "Recent conversation events" },
+                    "session_summary": { "type": "string", "description": "Summary of recent activity" },
+                    "context_flags": { "type": "array", "items": { "type": "string" }, "description": "Important context indicators" },
+                    "total_entries": { "type": "integer" },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["recent_logs", "total_entries"]
+                }
               }
             }
           }
