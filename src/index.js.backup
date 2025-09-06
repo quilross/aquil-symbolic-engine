@@ -497,7 +497,7 @@ function getDomainForAction(operationId) {
     'synthesizeWisdom': 'wisdom',
     'getWisdomAndInsights': 'wisdom',
     'systemHealthCheck': 'system',
-    'logDataOrEvent': 'logging',
+    'logConversationEvent': 'logging',
     'generateDiscoveryInquiry': 'discovery',
     'autoSuggestRitual': 'ritual'
   };
@@ -1059,13 +1059,13 @@ router.post("/api/log", async (req, env) => {
       textOrVector: body.message || body.content || JSON.stringify(body.payload || body)
     });
     
-    await logChatGPTAction(env, 'logDataOrEvent', body, result);
+    await logChatGPTAction(env, 'logConversationEvent', body, result);
     
     return addCORS(new Response(JSON.stringify(result), {
       headers: { "Content-Type": "application/json" }
     }));
   } catch (error) {
-    await logChatGPTAction(env, 'logDataOrEvent', {}, null, error);
+    await logChatGPTAction(env, 'logConversationEvent', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
@@ -1103,7 +1103,7 @@ router.get("/api/logs", async (req, env) => {
     }
 
     // Log the retrieval (non-blocking)
-    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', 
+    await logChatGPTAction(env, 'retrieveConversationHistory', 
       { limit, sessionId, since }, 
       { count: items.length, cursor: !!nextCursor }
     ).catch(() => {});
@@ -1118,7 +1118,7 @@ router.get("/api/logs", async (req, env) => {
     }));
   } catch (error) {
     // Fail-open with array format
-    await logChatGPTAction(env, 'retrieveLogsOrDataEntries', {}, null, error).catch(() => {});
+    await logChatGPTAction(env, 'retrieveConversationHistory', {}, null, error).catch(() => {});
     return addCORS(new Response(JSON.stringify([]), {
       headers: { 
         "Content-Type": "application/json",
@@ -1169,7 +1169,7 @@ router.post("/api/logs", async (req, env) => {
         }), { status: 400, headers: { "Content-Type": "application/json" } }));
     }
 
-    await logChatGPTAction(env, 'logDataOrEvent', 
+    await logChatGPTAction(env, 'logConversationEvent', 
       { operation, type, storedIn }, 
       { success: true, operation }
     ).catch(() => {});
@@ -1179,7 +1179,7 @@ router.post("/api/logs", async (req, env) => {
     }));
   } catch (error) {
     console.error('Advanced logging operation error:', error);
-    await logChatGPTAction(env, 'logDataOrEvent', {}, null, error).catch(() => {});
+    await logChatGPTAction(env, 'logConversationEvent', {}, null, error).catch(() => {});
     return addCORS(new Response(JSON.stringify({ 
       error: "Internal server error",
       message: error.message 
@@ -1844,6 +1844,29 @@ router.post("/api/commitments/:id/progress", async (req, env) => {
     
     await logChatGPTAction(env, 'updateCommitmentProgress', body, result);
     return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'updateCommitmentProgress', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Update commitment progress (schema-defined route)
+router.post("/api/commitments/progress", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      updated: true,
+      progress_update: body.progress_update || "Progress recorded",
+      commitment_id: body.commitment_id,
+      new_status: body.status || "in_progress",
+      completion_percentage: body.completion_percentage || 0,
+      next_milestone: body.next_milestone || "Continue with current plan",
+      insights: ["Progress tracking active", "Consistency builds momentum"],
+      timestamp: new Date().toISOString()
+    };
+    
+    await logChatGPTAction(env, 'updateCommitmentProgress', body, result);
+    return addCORS(createSuccessResponse(result));
   } catch (error) {
     await logChatGPTAction(env, 'updateCommitmentProgress', {}, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
