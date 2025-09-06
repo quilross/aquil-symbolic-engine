@@ -406,20 +406,28 @@
         ],
         "responses": {
           "200": {
-            "description": "List of stored items",
+            "description": "List of stored items with metadata",
             "content": {
               "application/json": {
-                "schema": { 
-                  "type": "array", 
-                  "items": { 
-                    "type": "object",
-                    "properties": {
-                      "key": { "type": "string" },
-                      "size": { "type": "integer" },
-                      "uploaded": { "type": "string" }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": { 
+                      "type": "array", 
+                      "items": { 
+                        "type": "object",
+                        "properties": {
+                          "key": { "type": "string" },
+                          "size": { "type": "integer" },
+                          "uploaded": { "type": "string" }
+                        },
+                        "required": ["key"]
+                      }
                     },
-                    "required": ["key"]
-                  }
+                    "total": { "type": "integer", "description": "Total number of items" },
+                    "prefix": { "type": "string", "description": "Prefix filter used" }
+                  },
+                  "required": ["items", "total"]
                 }
               }
             }

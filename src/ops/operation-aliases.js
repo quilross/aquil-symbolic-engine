@@ -83,7 +83,8 @@ export const OP_CANON = {
   designHabits: 'designHabits',
   queryD1Database: 'queryD1Database',
   storeInKV: 'storeInKV',
-  upsertVectors: 'upsertVectors'
+  upsertVectors: 'upsertVectors',
+  advancedLoggingOperations: 'advancedLoggingOperations'
 };
 
 // Aliases = implementation variants (snake_case, legacy) → canonical
@@ -205,7 +206,8 @@ export const OP_ALIASES = {
   'design_habits': 'designHabits',
   'query_d1_database': 'queryD1Database',
   'store_in_kv': 'storeInKV',
-  'upsert_vectors': 'upsertVectors'
+  'upsert_vectors': 'upsertVectors',
+  'advanced_logging_operations': 'advancedLoggingOperations'
 };
 
 /**
