@@ -3897,7 +3897,7 @@
       "post": {
         "summary": "Log conversation events and insights",
         "description": "Called AUTOMATICALLY to log chat messages, insights, breakthroughs, and meaningful moments. Triggers on: conversation events, emotional moments, insights, breakthroughs, important statements.",
-        "operationId": "logConversationEvent",
+        "operationId": "logDataOrEvent",
         "x-openai-isConsequential": true,
         "x-openai-autonomous": true,
         "requestBody": {
@@ -4026,7 +4026,7 @@
       "get": {
         "summary": "Retrieve conversation history and context",
         "description": "Called AUTOMATICALLY to gather conversation history and context for continuity. Essential for understanding user's journey and maintaining conversation flow. Triggers on: conversation start, context needed, history review.",
-        "operationId": "retrieveConversationHistory",
+        "operationId": "retrieveLogsOrDataEntries",
         "x-openai-autonomous": true,
         "parameters": [
           {

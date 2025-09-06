@@ -1850,6 +1850,29 @@ router.post("/api/commitments/:id/progress", async (req, env) => {
   }
 });
 
+// Update commitment progress (schema-defined route)
+router.post("/api/commitments/progress", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      updated: true,
+      progress_update: body.progress_update || "Progress recorded",
+      commitment_id: body.commitment_id,
+      new_status: body.status || "in_progress",
+      completion_percentage: body.completion_percentage || 0,
+      next_milestone: body.next_milestone || "Continue with current plan",
+      insights: ["Progress tracking active", "Consistency builds momentum"],
+      timestamp: new Date().toISOString()
+    };
+    
+    await logChatGPTAction(env, 'updateCommitmentProgress', body, result);
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'updateCommitmentProgress', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
 // Auto-suggest ritual
 router.post("/api/ritual/auto-suggest", async (req, env) => {
   try {
