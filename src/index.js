@@ -1241,6 +1241,61 @@ router.post("/api/logs", async (req, env) => {
   }
 });
 
+// Individual log operation endpoints for convenience
+router.post("/api/logs/kv-write", async (req, env) => {
+  try {
+    const result = await handleKvWrite(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/d1-insert", async (req, env) => {
+  try {
+    const result = await handleD1Insert(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/promote", async (req, env) => {
+  try {
+    const result = await handlePromote(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/retrieve", async (req, env) => {
+  try {
+    const result = await handleRetrieve(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.get("/api/logs/latest", async (req, env) => {
+  try {
+    const result = await handleRetrieveLatest(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/retrieval-meta", async (req, env) => {
+  try {
+    const result = await handleRetrievalMeta(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
 // =============================================================================
 // PERSONAL GROWTH ENDPOINTS
 // =============================================================================
@@ -1326,8 +1381,8 @@ router.post("/api/media/extract-wisdom", async (req, env) => {
 router.post("/api/patterns/recognize", async (req, env) => {
   try {
     const body = await req.json();
-    const recognizer = new PatternRecognizer();
-    const patterns = await recognizer.recognizePatterns(body);
+    const recognizer = new PatternRecognizer(env);
+    const patterns = await recognizer.analyzePatterns(body);
     
     // Wire conversational engine if enabled
     if (env.ENABLE_CONVERSATIONAL_ENGINE === '1') {
