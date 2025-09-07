@@ -173,15 +173,6 @@ export async function searchLogs(env, text) {
       };
       return { status: 'error', message: 'Vector and D1 endpoints down' };
     }
-
-    const kvRes = env.MEMORY_KV.search ? await env.MEMORY_KV.search(text) : [];
-    if (kvRes.length) return {
-      status: 'fallback',
-      used: 'KV',
-      message: 'Vector endpoint down',
-      results: kvRes
-    };
-    return { status: 'error', message: 'Vector endpoint down' };
   }
 }
 
