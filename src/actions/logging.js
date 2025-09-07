@@ -129,14 +129,6 @@ export async function retrieveLogsOrDataEntries(env, query) {
       return { status: 'error', message: 'Vector and D1 endpoints down' };
     }
 
-    const kvRes = await kvGet(env, id);
-    if (kvRes) return {
-      status: 'fallback',
-      used: 'KV',
-      message: 'Vector endpoint down',
-      results: [kvRes]
-    };
-    return { status: 'error', message: 'Vector endpoint down' };
   }
 }
 
