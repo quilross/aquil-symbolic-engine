@@ -6,6 +6,7 @@
 
 import { AquilDatabase } from './utils/database.js';
 import { AquilAI } from './utils/ai-helpers.js';
+import { logger } from './utils/logger.js';
 
 
 export class AquilCore {

@@ -1,4 +1,4 @@
-wr# Aquil Symbolic Engine
+# Aquil Symbolic Engine
 ## Your Personal AI Wisdom Builder & Trust Reinforcement System
 
 *"Standing tall in the world, rooted in internal trust"*

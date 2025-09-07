@@ -84,81 +84,28 @@
     },
     "/api/logs": {
       "get": {
-        "summary": "Retrieve conversation history and context",
-        "description": "Use AUTOMATICALLY to gather context at conversation start or when referencing past insights. TRIGGER: Start of new conversation, when user mentions 'remember', 'before', 'previously', or needs context.",
+        "summary": "Retrieve or search logs",
+        "description": "Fetch logs by id or search text with vector→D1→KV fallback.",
         "operationId": "retrieveLogsOrDataEntries",
         "x-openai-isConsequential": false,
         "parameters": [
           {
-            "name": "limit",
+            "name": "id",
             "in": "query",
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "minimum": 1,
-              "maximum": 200
-            },
-            "description": "Number of entries to retrieve"
+            "schema": { "type": "string" },
+            "description": "Exact log id to retrieve"
           },
           {
-            "name": "type",
+            "name": "text",
             "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by: chat_message, insight, breakthrough, etc."
-          },
-          {
-            "name": "who",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by: user, assistant, system"
-          },
-          {
-            "name": "level",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by: info, warning, error, highlight"
-          },
-          {
-            "name": "session_id",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Specific conversation ID"
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by tag: trust, wisdom, body, media, etc."
+            "schema": { "type": "string" },
+            "description": "Full-text search query"
           }
         ],
         "responses": {
-          "200": {
-            "description": "Array of matching log entries",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "type": "object" }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
+          "200": { "description": "Log search results" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalError" }
         }
       }
     },
