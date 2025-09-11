@@ -22,6 +22,7 @@ import { CreativityUnleasher } from './src-core-creativity-unleasher.js';
 import { AbundanceCultivator } from './src-core-abundance-cultivator.js';
 import { TransitionNavigator } from './src-core-transition-navigator.js';
 import { AncestryHealer } from './src-core-ancestry-healer.js';
+import { AquilCore } from './src-core-aquil-core.js';
 
 const router = Router();
 const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
@@ -368,15 +369,24 @@ router.post('/api/wisdom/synthesize', async (req) => {
 });
 
 // Daily wisdom synthesis endpoint
-router.get('/api/wisdom/daily-synthesis', async () => {
-  // Placeholder daily synthesis response
-  return addCORS(new Response(JSON.stringify({
-    message: 'Daily synthesis placeholder',
-    insights: []
-  }), {
-    status: 200,
-    headers: cors
-  }));
+router.get('/api/wisdom/daily-synthesis', async (req, env) => {
+  try {
+    const core = new AquilCore(env);
+    await core.initialize();
+    const synthesis = await core.runDailySynthesis();
+    return addCORS(new Response(JSON.stringify(synthesis), {
+      status: 200,
+      headers: cors
+    }));
+  } catch (error) {
+    console.error('Daily synthesis error:', error);
+    return addCORS(new Response(JSON.stringify({
+      error: 'Synthesis unavailable'
+    }), {
+      status: 500,
+      headers: cors
+    }));
+  }
 });
 
 // Health endpoint

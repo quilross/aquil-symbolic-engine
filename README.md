@@ -1,4 +1,4 @@
-wr# Aquil Symbolic Engine
+# Aquil Symbolic Engine
 ## Your Personal AI Wisdom Builder & Trust Reinforcement System
 
 *"Standing tall in the world, rooted in internal trust"*
@@ -19,9 +19,10 @@ Aquil is your personal AI companion designed specifically for your journey of bu
 
 **Backend:** Cloudflare Workers at signal-q.me  
 **Frontend:** Custom ChatGPT with GPT Actions  
-**Database:** D1 (SQLite) + KV storage  
-**Development:** GitHub Codespaces  
-**Data Sovereignty:** Everything runs in YOUR accounts  
+**Database:** D1 (SQLite) + KV storage
+**Vector Index:** aquil-context-index (1024-dim cosine) via `AQUIL_CONTEXT`
+**Development:** GitHub Codespaces
+**Data Sovereignty:** Everything runs in YOUR accounts
 
 ### Core AI Engines
 
@@ -64,3 +65,7 @@ Built for your journey of internal authority and authentic empowerment.
 ---
 
 *Welcome home to yourself, Aquil.* 🌱
+
+### Unused files
+
+None. Every file in this repository is currently active.

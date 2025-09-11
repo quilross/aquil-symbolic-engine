@@ -5,6 +5,11 @@ import {
   selectOptimalVoice,
   performHealthChecks,
 } from './core.js';
+import {
+  logDataOrEvent,
+  retrieveLogsOrDataEntries,
+  searchLogs
+} from '../actions/logging.js';
 
 // Manifest for GPT: describes all available actions and storage usage
 export const ARK_MANIFEST = [
@@ -207,83 +212,27 @@ export async function handleHealthCheck(request, env) {
 
 // Retrieve logs with optional filtering
 export async function handleRetrieveLogs(request, env) {
-  if (!env.AQUIL_DB) {
-    return new Response(JSON.stringify([]), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
   const url = new URL(request.url);
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 200);
-  const filters = {
-    type: url.searchParams.get('type'),
-    who: url.searchParams.get('who'),
-    level: url.searchParams.get('level'),
-    session_id: url.searchParams.get('session_id'),
-    tag: url.searchParams.get('tag')
-  };
-
-  const parse = (val) => {
-    try { return JSON.parse(val); } catch { return val; }
-  };
-
-  const buildWhere = (map) => {
-    const clauses = [];
-    const values = [];
-    for (const key of ['type', 'who', 'level', 'session_id']) {
-      const val = filters[key];
-      if (val) {
-        clauses.push(`${map[key]} = ?`);
-        values.push(val);
-      }
-    }
-    if (filters.tag) {
-      clauses.push(`${map.tag} LIKE ?`);
-      values.push(`%${filters.tag}%`);
-    }
-    return {
-      where: clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '',
-      values
-    };
-  };
-
+  const id = url.searchParams.get('id');
+  const text = url.searchParams.get('text');
   try {
-    const { where, values } = buildWhere({
-      type: 'kind',
-      who: 'voice',
-      level: 'signal_strength',
-      session_id: 'session_id',
-      tag: 'tags'
-    });
-    const stmt = env.AQUIL_DB
-      .prepare(`SELECT id, timestamp, kind, detail FROM metamorphic_logs${where} ORDER BY timestamp DESC LIMIT ?`)
-      .bind(...values, limit);
-    const { results } = await stmt.all();
-    return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (primaryErr) {
-    try {
-      const { where, values } = buildWhere({
-        type: 'type',
-        who: 'who',
-        level: 'level',
-        session_id: 'session_id',
-        tag: 'tags'
-      });
-      const stmt = env.AQUIL_DB
-        .prepare(`SELECT id, ts AS timestamp, type AS kind, payload AS detail FROM event_log${where} ORDER BY ts DESC LIMIT ?`)
-        .bind(...values, limit);
-      const { results } = await stmt.all();
-      return new Response(JSON.stringify(results.map(r => ({ ...r, detail: parse(r.detail) }))), {
+    const result = id
+      ? await retrieveLogsOrDataEntries(env, id)
+      : await searchLogs(env, text || '');
+    if (result.status === 'error') {
+      return new Response(JSON.stringify(result), {
+        status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
-    } catch (secondaryErr) {
-      return new Response(
-        JSON.stringify({ error: 'Unable to fetch logs', message: String(secondaryErr) }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
     }
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: 'Unable to fetch logs', message: String(err) }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
 
@@ -298,14 +247,16 @@ export async function handleLog(request, env) {
       headers: { 'Content-Type': 'application/json' }
     });
   }
-  const id = await logMetamorphicEvent(env, {
-    kind: body.type,
-    detail: body.payload,
-    session_id: body.session_id,
-    voice: body.who
-  });
-  return new Response(JSON.stringify({ status: 'ok', id }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
+  try {
+    const res = await logDataOrEvent(env, body);
+    return new Response(JSON.stringify(res), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'Log error', message: String(err) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }
 
