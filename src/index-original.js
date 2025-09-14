@@ -1,24 +1,28 @@
 /**
- * Aquil Production - Main Entry Point (Restructured)
+ * Aquil Production - Main Entry Point
  * Personal AI Wisdom Builder optimized for ChatGPT integration
  * 
- * This is the primary worker that handles all API requests using modular routing
+ * This is the primary worker that handles all API requests for:
+ * - Behavioral Intelligence Engine (conversational analysis)
+ * - Personal growth tracking and insights
+ * - Autonomous wisdom synthesis
+ * - Multi-store logging (D1, KV, R2, Vector)
  */
 
 import { Router } from 'itty-router';
-import { handleCORSPreflight } from './utils/response-helpers.js';
-import { handleScheduledTriggers } from './utils/autonomy.js';
-import { createErrorResponse } from './utils/error-handler.js';
-import { corsHeaders } from './utils/cors.js';
+import crypto from 'crypto';
 
-// Import modular route handlers
-import { systemRouter } from './routes/system.js';
-import { loggingRouter } from './routes/logging.js';
-import { dataOpsRouter } from './routes/data-ops.js';
-import { personalDevRouter } from './routes/personal-dev.js';
-import { utilityRouter } from './routes/utility.js';
+// === BEGIN EXTRACTION PATCH ===
+import actions from '../config/ark.actions.logging.json' with { type: 'json' };
 
-// Import ARK endpoints (already well-organized)
+// Core endpoint handlers
+import {
+  handleSessionInit,
+  handleDiscoveryInquiry,
+  handleHealthCheck,
+} from "./ark/endpoints.js";
+
+// ARK enhanced endpoints
 import {
   arkLog,
   arkRetrieve,
@@ -29,6 +33,7 @@ import {
   arkFilter,
   arkAutonomous
 } from "./ark/ark-endpoints.js";
+
 // Behavioral engine
 import { runEngine } from "./agent/engine.js";
 
@@ -584,10 +589,161 @@ function generateArtifactForAction(operationId, result) {
 }
 
 // =============================================================================
-// PERSONAL DEVELOPMENT SESSION PROCESSORS
+// PERSONAL DEVELOPMENT CONSOLIDATION HANDLERS
 // =============================================================================
 
-// Individual session processors (used by dedicated router endpoints)
+// Handle GET requests for personal development types
+async function handlePersonalDevelopmentGet(type, req, env) {
+  const timestamp = new Date().toISOString();
+  
+  switch (type) {
+    case 'gratitude':
+      return {
+        type: 'gratitude',
+        result: { message: "Gratitude practice guidance available via POST" },
+        insights: ["Daily gratitude enhances well-being", "Focus on specific details", "Include body sensations"],
+        next_steps: ["Use POST with gratitude_items array", "Include appreciation_depth"],
+        timestamp
+      };
+      
+    case 'healing':
+      return {
+        type: 'healing',
+        result: { message: "Emotional healing session available via POST" },
+        insights: ["Emotions need space to be felt", "Healing is a process", "Support systems matter"],
+        next_steps: ["Use POST with emotions_present array", "Include healing_intention"],
+        timestamp
+      };
+      
+    case 'intuition':
+      return {
+        type: 'intuition',
+        result: { message: "Intuition development available via POST" },
+        insights: ["Trust your inner knowing", "Body wisdom speaks first", "Practice deep listening"],
+        next_steps: ["Use POST with decision_context", "Include intuitive_experiences"],
+        timestamp
+      };
+      
+    case 'purpose':
+      return {
+        type: 'purpose',
+        result: { message: "Purpose alignment session available via POST" },
+        insights: ["Purpose evolves over time", "Values guide direction", "Meaning emerges through action"],
+        next_steps: ["Use POST with current_purpose_sense", "Include life_areas"],
+        timestamp
+      };
+      
+    case 'relationships':
+      return {
+        type: 'relationships',
+        result: { message: "Relationship deepening available via POST" },
+        insights: ["Connection requires vulnerability", "Listen deeply", "Growth happens together"],
+        next_steps: ["Use POST with relationship_type", "Include current_dynamics"],
+        timestamp
+      };
+      
+    case 'shadow':
+      return {
+        type: 'shadow',
+        result: { message: "Shadow integration work available via POST" },
+        insights: ["Shadow holds gifts", "Integration creates wholeness", "Triggers show the way"],
+        next_steps: ["Use POST with shadow_aspects", "Include integration_intention"],
+        timestamp
+      };
+      
+    case 'discovery':
+      // Redirect to actual discovery endpoint
+      return {
+        type: 'discovery',
+        result: { message: "Use /api/discovery/generate-inquiry for full discovery features" },
+        insights: ["Deep inquiry reveals truth", "Questions open possibilities", "Curiosity heals"],
+        next_steps: ["Use discovery endpoint with prompt", "Include behavioral context"],
+        timestamp
+      };
+      
+    case 'socratic':
+      return {
+        type: 'socratic',
+        result: { message: "Socratic questioning available via POST" },
+        insights: ["Questions reveal assumptions", "Wisdom emerges through inquiry", "Truth unfolds gradually"],
+        next_steps: ["Use POST with inquiry topic", "Include exploration goals"],
+        timestamp
+      };
+      
+    case 'ritual':
+      return {
+        type: 'ritual',
+        result: { message: "Ritual suggestions available via POST" },
+        insights: ["Rituals create sacred space", "Intention shapes practice", "Consistency builds power"],
+        next_steps: ["Use POST with ritual focus", "Include timing preferences"],
+        timestamp
+      };
+      
+    default:
+      return {
+        type: 'unknown',
+        result: { error: `Unknown type: ${type}` },
+        insights: ["Available types: gratitude, healing, intuition, purpose, relationships, shadow, discovery, socratic, ritual"],
+        next_steps: ["Use valid type parameter"],
+        timestamp
+      };
+  }
+}
+
+// Handle POST requests for personal development sessions
+async function handlePersonalDevelopmentSession(type, data, req, env) {
+  const { content, focus, context, goals } = data;
+  const sessionId = crypto.randomUUID();
+  const timestamp = new Date().toISOString();
+  
+  try {
+    switch (type) {
+      case 'gratitude':
+        return await processGratitudeSession(content, sessionId, env);
+        
+      case 'healing':
+        return await processHealingSession(content, sessionId, env);
+        
+      case 'intuition':
+        return await processIntuitionSession(content, sessionId, env);
+        
+      case 'purpose':
+        return await processPurposeSession(content, sessionId, env);
+        
+      case 'relationships':
+        return await processRelationshipSession(content, sessionId, env);
+        
+      case 'shadow':
+        return await processShadowSession(content, sessionId, env);
+        
+      case 'discovery':
+        // Delegate to discovery endpoint logic
+        const discoveryResult = await handleDiscoveryInquiry(req, env);
+        return await discoveryResult.json();
+        
+      case 'socratic':
+        return await processSocraticSession(content, sessionId, env);
+        
+      case 'ritual':
+        return await processRitualSession(content, sessionId, env);
+        
+      default:
+        throw new Error(`Unsupported session type: ${type}`);
+    }
+  } catch (error) {
+    console.error(`Personal development session error (${type}):`, error);
+    return {
+      session_type: type,
+      insights: [`Error in ${type} session: ${error.message}`],
+      practices: ["Try again with different parameters"],
+      next_steps: ["Check request format", "Verify content structure"],
+      session_id: sessionId,
+      timestamp
+    };
+  }
+}
+
+// Individual session processors (simplified versions)
 async function processGratitudeSession(content, sessionId, env) {
   const gratitudeItems = content.gratitude_items || [];
   return {
@@ -775,11 +931,20 @@ async function processRitualSession(content, sessionId, env) {
 }
 
 // =============================================================================
-// ROUTER SETUP WITH ERROR HANDLING MIDDLEWARE
+// ROUTER SETUP
 // =============================================================================
+
 const router = Router();
 
-// Add CORS headers helper
+// CORS headers for ChatGPT compatibility
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin",
+  "Access-Control-Max-Age": "86400",
+  "Content-Type": "application/json",
+};
+
 const addCORS = (res) => {
   if (res instanceof Response) {
     Object.entries(corsHeaders).forEach(([key, value]) => {
@@ -791,251 +956,6 @@ const addCORS = (res) => {
 
 // Handle CORS preflight requests
 router.options("*", () => handleCORSPreflight());
-// =============================================================================
-// PERSONAL DEVELOPMENT ENDPOINTS (ROUTER-BASED)
-// =============================================================================
-
-// Individual personal development type endpoints (replacing switch statements)
-router.get("/api/personal-development/gratitude", async (req, env) => {
-  try {
-    const result = {
-      type: 'gratitude',
-      result: { message: "Gratitude practice guidance available via POST" },
-      insights: ["Daily gratitude enhances well-being", "Focus on specific details", "Include body sensations"],
-      next_steps: ["Use POST with gratitude_items array", "Include appreciation_depth"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'gratitude' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'gratitude' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.get("/api/personal-development/healing", async (req, env) => {
-  try {
-    const result = {
-      type: 'healing',
-      result: { message: "Emotional healing session available via POST" },
-      insights: ["Emotions need space to be felt", "Healing is a process", "Support systems matter"],
-      next_steps: ["Use POST with emotions_present array", "Include healing_intention"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'healing' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'healing' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.get("/api/personal-development/intuition", async (req, env) => {
-  try {
-    const result = {
-      type: 'intuition',
-      result: { message: "Intuition development available via POST" },
-      insights: ["Trust your inner knowing", "Body wisdom speaks first", "Practice deep listening"],
-      next_steps: ["Use POST with decision_context", "Include intuitive_experiences"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'intuition' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'intuition' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.get("/api/personal-development/purpose", async (req, env) => {
-  try {
-    const result = {
-      type: 'purpose',
-      result: { message: "Purpose alignment session available via POST" },
-      insights: ["Purpose evolves over time", "Values guide direction", "Meaning emerges through action"],
-      next_steps: ["Use POST with current_purpose_sense", "Include life_areas"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'purpose' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'purpose' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.get("/api/personal-development/relationships", async (req, env) => {
-  try {
-    const result = {
-      type: 'relationships',
-      result: { message: "Relationship deepening available via POST" },
-      insights: ["Connection requires vulnerability", "Listen deeply", "Growth happens together"],
-      next_steps: ["Use POST with relationship_type", "Include current_dynamics"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'relationships' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'relationships' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.get("/api/personal-development/shadow", async (req, env) => {
-  try {
-    const result = {
-      type: 'shadow',
-      result: { message: "Shadow integration work available via POST" },
-      insights: ["Shadow holds gifts", "Integration creates wholeness", "Triggers show the way"],
-      next_steps: ["Use POST with shadow_aspects", "Include integration_intention"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'shadow' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'shadow' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.get("/api/personal-development/socratic", async (req, env) => {
-  try {
-    const result = {
-      type: 'socratic',
-      result: { message: "Socratic questioning available via POST" },
-      insights: ["Questions reveal assumptions", "Wisdom emerges through inquiry", "Truth unfolds gradually"],
-      next_steps: ["Use POST with inquiry topic", "Include exploration goals"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'socratic' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'socratic' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.get("/api/personal-development/ritual", async (req, env) => {
-  try {
-    const result = {
-      type: 'ritual',
-      result: { message: "Ritual suggestions available via POST" },
-      insights: ["Rituals create sacred space", "Intention shapes practice", "Consistency builds power"],
-      next_steps: ["Use POST with ritual focus", "Include timing preferences"],
-      timestamp: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'ritual' }, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type: 'ritual' }, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-// Personal development session endpoints (POST handlers)
-router.post("/api/personal-development/gratitude", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processGratitudeSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.post("/api/personal-development/healing", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processHealingSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.post("/api/personal-development/intuition", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processIntuitionSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.post("/api/personal-development/purpose", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processPurposeSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.post("/api/personal-development/relationships", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processRelationshipSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.post("/api/personal-development/shadow", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processShadowSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.post("/api/personal-development/socratic", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processSocraticSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-
-router.post("/api/personal-development/ritual", async (req, env) => {
-  try {
-    const body = await req.json();
-    const result = await processRitualSession(body.content, crypto.randomUUID(), env);
-    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
 
 // =============================================================================
 // MAIN API ENDPOINTS
@@ -1100,6 +1020,19 @@ router.post("/api/discovery/generate-inquiry", async (req, env) => {
 // System health check
 router.get("/api/system/health-check", async (req, env) => {
   try {
+    const url = new URL(req.url);
+    const type = url.searchParams.get('type');
+    
+    // If type parameter provided, handle personal development requests
+    if (type && type !== 'health') {
+      const personalDevResult = await handlePersonalDevelopmentGet(type, req, env);
+      await logChatGPTAction(env, 'comprehensivePersonalDevelopment', { type }, personalDevResult);
+      return addCORS(new Response(JSON.stringify(personalDevResult), {
+        headers: { "Content-Type": "application/json" }
+      }));
+    }
+    
+    // Default health check behavior
     const result = await handleHealthCheck(req, env);
     const resultData = await result.clone().json();
     
@@ -1118,6 +1051,29 @@ router.get("/api/system/health-check", async (req, env) => {
       status: 200,
       headers: { "Content-Type": "application/json" }
     }));
+  }
+});
+
+// Personal Development POST handler for consolidated functionality
+router.post("/api/system/health-check", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { type, content, focus, context, goals } = body;
+    
+    if (!type) {
+      return addCORS(createErrorResponse({ error: "Type parameter required for personal development sessions" }, 400));
+    }
+    
+    const result = await handlePersonalDevelopmentSession(type, { content, focus, context, goals }, req, env);
+    
+    await logChatGPTAction(env, 'personalDevelopmentSession', body, result);
+    
+    return addCORS(new Response(JSON.stringify(result), {
+      headers: { "Content-Type": "application/json" }
+    }));
+  } catch (error) {
+    await logChatGPTAction(env, 'personalDevelopmentSession', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
 
@@ -1871,110 +1827,900 @@ router.post("/api/mood/track", async (req, env) => {
   }
 });
 
-// Goals and habits
+// Personal goals endpoint  
 router.post("/api/goals/set", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Goals setting endpoint needs implementation" 
-  }, 501));
+  try {
+    const body = await req.json();
+    const sessionId = extractSessionId(req) || crypto.randomUUID();
+    
+    // Create goal setting response based on schema requirements
+    const goalId = crypto.randomUUID();
+    const result = {
+      goal_id: goalId,
+      action_plan: [
+        "Break down goal into smaller steps",
+        "Set specific deadlines", 
+        "Identify required resources",
+        "Create accountability measures"
+      ],
+      milestones: [
+        { milestone: "30% progress check", date: "Week 2" },
+        { milestone: "60% progress check", date: "Week 4" },
+        { milestone: "Goal completion", date: body.timeline || "Week 6" }
+      ],
+      success_metrics: ["Measurable progress indicators", "Regular check-ins", "Achievement celebration"],
+      potential_obstacles: ["Time constraints", "Resource limitations", "Motivation challenges"],
+      session_id: sessionId
+    };
+    
+    await logChatGPTAction(env, 'setPersonalGoals', body, result);
+    
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'setPersonalGoals', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
 });
 
+// Habit design endpoint
 router.post("/api/habits/design", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Habits design endpoint needs implementation" 
-  }, 501));
+  try {
+    const body = await req.json();
+    const sessionId = extractSessionId(req) || crypto.randomUUID();
+    
+    // Create habit design response based on schema requirements  
+    const result = {
+      habit_plan: `${body.habit_type === 'build' ? 'Building' : body.habit_type === 'break' ? 'Breaking' : 'Modifying'} habit: ${body.habit_description}. Start small and build consistency.`,
+      trigger_design: "Link to existing routine - identify specific time, location, and preceding action as your habit trigger.",
+      reward_system: ["Immediate small reward after completion", "Weekly progress celebration", "Monthly habit streak reward"],
+      tracking_method: "Simple daily checkmarks or habit tracking app with visual progress indicators.",
+      difficulty_progression: ["Week 1: Minimal viable habit", "Week 2: Slight increase", "Week 3: Build consistency", "Week 4+: Gradual expansion"],
+      session_id: sessionId
+    };
+    
+    await logChatGPTAction(env, 'designHabits', body, result);
+    
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'designHabits', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
 });
 
-// Commitments
+// Commitment management
 router.post("/api/commitments/create", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Commitments create endpoint needs implementation" 
-  }, 501));
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "manageCommitment feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "manageCommitment"
+    };
+    
+    await logChatGPTAction(env, 'manageCommitment', body, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'manageCommitment', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
 });
 
+// List active commitments
 router.get("/api/commitments/active", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Active commitments endpoint needs implementation" 
-  }, 501));
+  try {
+    const result = { 
+      status: "coming_soon", 
+      message: "listActiveCommitments feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "listActiveCommitments",
+      commitments: []
+    };
+    
+    await logChatGPTAction(env, 'listActiveCommitments', {}, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'listActiveCommitments', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
 });
 
+// Update commitment progress  
 router.post("/api/commitments/:id/progress", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Commitment progress endpoint needs implementation" 
-  }, 501));
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "updateCommitmentProgress feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "updateCommitmentProgress"
+    };
+    
+    await logChatGPTAction(env, 'updateCommitmentProgress', body, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'updateCommitmentProgress', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
 });
 
-// Rituals and contracts
+// Update commitment progress (schema-defined route)
+router.post("/api/commitments/progress", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      updated: true,
+      progress_update: body.progress_update || "Progress recorded",
+      commitment_id: body.commitment_id,
+      new_status: body.status || "in_progress",
+      completion_percentage: body.completion_percentage || 0,
+      next_milestone: body.next_milestone || "Continue with current plan",
+      insights: ["Progress tracking active", "Consistency builds momentum"],
+      timestamp: new Date().toISOString()
+    };
+    
+    await logChatGPTAction(env, 'updateCommitmentProgress', body, result);
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'updateCommitmentProgress', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Auto-suggest ritual
 router.post("/api/ritual/auto-suggest", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Ritual auto-suggest endpoint needs implementation" 
-  }, 501));
-});
-
-router.post("/api/contracts/create", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Contracts create endpoint needs implementation" 
-  }, 501));
-});
-
-// Socratic questioning
-router.post("/api/socratic/question", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Socratic questioning endpoint needs implementation" 
-  }, 501));
-});
-
-// Search endpoints
-router.get("/api/search/logs", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Log search endpoint needs implementation" 
-  }, 501));
-});
-
-router.get("/api/search/r2", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "R2 search endpoint needs implementation" 
-  }, 501));
-});
-
-router.get("/api/search/resonance", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Resonance search endpoint needs implementation" 
-  }, 501));
-});
-
-// RAG endpoints
-router.post("/api/rag/memory", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "RAG memory endpoint needs implementation" 
-  }, 501));
-});
-
-router.post("/api/rag/search", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "RAG search endpoint needs implementation" 
-  }, 501));
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "autoSuggestRitual feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "autoSuggestRitual"
+    };
+    
+    await logChatGPTAction(env, 'autoSuggestRitual', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'autoSuggestRitual', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
 });
 
 // Autonomous pattern detection
 router.post("/api/patterns/autonomous-detect", async (req, env) => {
-  return addCORS(createErrorResponse({ 
-    error: "endpoint_not_implemented", 
-    message: "Autonomous pattern detection endpoint needs implementation" 
-  }, 501));
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "autonomousPatternDetect feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "autonomousPatternDetect"
+    };
+    
+    await logChatGPTAction(env, 'autonomousPatternDetect', body, result);
+    return addCORS(createPatternResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'autonomousPatternDetect', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
 });
+
+// Transformation contract
+router.post("/api/contracts/create", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "transformation_contract feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "transformation_contract"
+    };
+    
+    await logChatGPTAction(env, 'transformation_contract', body, result);
+    return addCORS(createCommitmentResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'transformation_contract', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Monitoring metrics
+router.get("/api/monitoring/metrics", async (req, env) => {
+  try {
+    const result = { 
+      status: "coming_soon", 
+      message: "getMonitoringMetrics feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "getMonitoringMetrics",
+      metrics: {}
+    };
+    
+    await logChatGPTAction(env, 'getMonitoringMetrics', {}, result);
+    return addCORS(createSuccessResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'getMonitoringMetrics', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Socratic questions
+router.post("/api/socratic/question", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "socraticQuestions feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "socraticQuestions"
+    };
+    
+    await logChatGPTAction(env, 'socraticQuestions', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'socraticQuestions', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// COM-B behavioral analysis
+router.post("/api/coaching/comb-analysis", async (req, env) => {
+  try {
+    const body = await req.json();
+    const result = { 
+      status: "coming_soon", 
+      message: "combBehavioralAnalysis feature is being implemented",
+      timestamp: new Date().toISOString(),
+      operation: "combBehavioralAnalysis"
+    };
+    
+    await logChatGPTAction(env, 'combBehavioralAnalysis', body, result);
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'combBehavioralAnalysis', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// R2 STORAGE ENDPOINTS
+// =============================================================================
+
+// R2 List endpoint for ChatGPT retrieval
+router.get("/api/r2/list", async (req, env) => {
+  try {
+    const url = new URL(req.url);
+    const prefix = url.searchParams.get('prefix');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10', 10), 50);
+    
+    const listOptions = { limit };
+    if (prefix) {
+      listOptions.prefix = prefix;
+    }
+    
+    const r2Objects = await env.AQUIL_STORAGE.list(listOptions);
+    const results = [];
+    
+    for (const obj of r2Objects.objects || []) {
+      let objectType;
+      if (obj.key.startsWith('resonance/')) {
+        objectType = 'resonance_thread';
+      } else if (obj.key.startsWith('logbin_')) {
+        objectType = 'logbin_data';
+      } else {
+        objectType = 'stored_content';
+      }
+      
+      results.push({
+        key: obj.key,
+        size: obj.size,
+        uploaded: obj.uploaded,
+        type: objectType
+      });
+    }
+    
+    await logChatGPTAction(env, 'getKVStoredData', { prefix, limit }, { count: results.length });
+    
+    return addCORS(new Response(JSON.stringify(results), {
+      headers: { "Content-Type": "application/json" }
+    }));
+  } catch (error) {
+    console.error('R2 list error:', error);
+    await logChatGPTAction(env, 'getKVStoredData', {}, null, error);
+    return addCORS(new Response(JSON.stringify([]), {
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Warning": "fail-open: R2 list unavailable"
+      }
+    }));
+  }
+});
+
+// R2 Put endpoint
+router.post("/api/r2/put", async (req, env) => {
+  try {
+    return await r2Put(req, env);
+  } catch (error) {
+    console.error('R2 put error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// R2 Get endpoint
+router.get("/api/r2/get", async (req, env) => {
+  try {
+    const result = await r2Get(req, env);
+    await logChatGPTAction(env, 'getKVStoredData', { url: req.url }, result);
+    return result;
+  } catch (error) {
+    console.error('R2 get error:', error);
+    await logChatGPTAction(env, 'getKVStoredData', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// D1 DATABASE ENDPOINTS
+// =============================================================================
+
+// D1 Query endpoint
+router.post("/api/d1/query", async (req, env) => {
+  try {
+    const result = await d1Exec(req, env);
+    const body = await req.clone().json().catch(() => ({}));
+    
+    await logChatGPTAction(env, 'queryD1Database', body, result);
+    
+    return addCORS(result);
+  } catch (error) {
+    console.error('D1 query error:', error);
+    await logChatGPTAction(env, 'queryD1Database', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// VECTORIZE ENDPOINTS  
+// =============================================================================
+
+// Vector query endpoint
+router.post("/api/vectorize/query", async (req, env) => {
+  try {
+        await logChatGPTAction(env, 'queryVectorIndex', req.body || {}, result);
+return await vectorQuery(req, env);
+  } catch (error) {
+    console.error('Vector query error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Vector upsert endpoint
+router.post("/api/vectorize/upsert", async (req, env) => {
+  try {
+    const result = await vectorUpsert(req, env);
+    const body = await req.clone().json().catch(() => ({}));
+    
+    await logChatGPTAction(env, 'upsertVectors', body, result);
+    
+    return addCORS(result);
+  } catch (error) {
+    console.error('Vector upsert error:', error);
+    await logChatGPTAction(env, 'upsertVectors', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// KV STORAGE ENDPOINTS
+// =============================================================================
+
+// KV Put endpoint
+router.post("/api/kv/log", async (req, env) => {
+  try {
+    const result = await kvLog(req, env);
+    const body = await req.clone().json().catch(() => ({}));
+    
+    await logChatGPTAction(env, 'storeInKV', body, result);
+    
+    return addCORS(result);
+  } catch (error) {
+    console.error('KV log error:', error);
+    await logChatGPTAction(env, 'storeInKV', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// KV Get endpoint
+router.get("/api/kv/get", async (req, env) => {
+  try {
+    const result = await kvGet(req, env);
+    await logChatGPTAction(env, 'getKVStoredData', { url: req.url }, result);
+    return result;
+  } catch (error) {
+    console.error('KV get error:', error);
+    await logChatGPTAction(env, 'getKVStoredData', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// RAG (RETRIEVAL-AUGMENTED GENERATION) ENDPOINTS
+// =============================================================================
+
+// Semantic search and retrieval endpoint
+router.post("/api/rag/search", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { 
+      query, 
+      text = query, 
+      mode = "semantic_recall", 
+      topK = 5, 
+      threshold = 0.7 
+    } = body;
+    
+    if (!text) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Import the semantic recall functions
+    const { semanticRecall, transformativeInquiry } = await import("./actions/vectorize.js");
+    
+    let result;
+    if (mode === "transformative_inquiry") {
+      result = await transformativeInquiry(env, { text, topK });
+    } else {
+      result = await semanticRecall(env, { text, topK, threshold });
+    }
+    
+    await logChatGPTAction(env, 'getPersonalInsights', body, result);
+    
+    return addCORS({
+      success: true,
+      query: text,
+      mode,
+      timestamp: new Date().toISOString(),
+      ...result
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'getPersonalInsights', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Memory retrieval endpoint - get logs with context
+router.post("/api/rag/memory", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { 
+      query, 
+      text = query, 
+      include_insights = true, 
+      topK = 10,
+      threshold = 0.6 
+    } = body;
+    
+    if (!text) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Use semantic recall to find relevant memories
+    const { semanticRecall } = await import("./actions/vectorize.js");
+    const memories = await semanticRecall(env, { text, topK, threshold });
+    
+    // Also get recent logs from D1 for additional context
+    const recentLogs = await queryMetamorphicLogs(env, { limit: 5 });
+    
+    const result = {
+      query: text,
+      semantic_memories: memories,
+      recent_context: recentLogs,
+      total_memories: memories.matches?.length || 0,
+      search_mode: "memory_retrieval",
+      insights: include_insights ? {
+        message: "These memories and logs represent your journey of growth and self-discovery",
+        guidance: "Look for patterns, themes, and evolution in your thoughts and experiences"
+      } : null
+    };
+    
+    await logChatGPTAction(env, 'ragMemoryConsolidation', body, result);
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: result
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'ragMemoryConsolidation', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Debug endpoint to check vector dimensions  
+router.post("/api/debug/vector-dimensions", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { text = "test" } = body;
+    
+    // Test with the large model that should produce 1024 dimensions
+    const embedding = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text });
+    
+    return addCORS({
+      success: true,
+      text,
+      model: "@cf/baai/bge-large-en-v1.5",
+      dimensions: embedding?.data?.length || "unknown",
+      has_data: !!embedding?.data,
+      sample: embedding?.data?.slice(0, 3) || [],
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// RAG (RETRIEVAL-AUGMENTED GENERATION) ENDPOINTS
+// =============================================================================
+
+// Simple vector search that works like logging
+router.post("/api/search/logs", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { query, limit = 5 } = body;
+    
+    if (!query) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Create embedding using exact same pattern as logging.js
+    const embedding = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", {
+      text: query,
+    });
+    const values = embedding.data?.[0] || embedding;
+    
+    if (!Array.isArray(values)) {
+      return addCORS(createErrorResponse({ error: "Failed to create embedding" }, 500));
+    }
+    
+    // Query vector database
+    const results = await env.AQUIL_CONTEXT.query({
+      vector: values,
+      topK: limit,
+      includeMetadata: true,
+    });
+    
+    // Get full log content for matches
+    const matches = [];
+    for (const match of results.matches || []) {
+      try {
+        const logKey = match.id.replace('logvec_', 'log_');
+        const logContent = await env.AQUIL_MEMORIES.get(logKey);
+        if (logContent) {
+          const parsedLog = JSON.parse(logContent);
+          matches.push({
+            id: match.id,
+            score: match.score,
+            log_text: parsedLog.detail?.content || parsedLog.detail?.message || "No content",
+            timestamp: parsedLog.timestamp,
+            operation: parsedLog.operationId,
+            metadata: match.metadata,
+            full_log: parsedLog
+          });
+        }
+      } catch (e) {
+        // Skip failed log retrievals
+      }
+    }
+    
+    await logChatGPTAction(env, 'getPersonalInsights', body, { query, matches: matches.length });
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        query,
+        matches,
+        total: matches.length,
+        message: `Found ${matches.length} relevant logs for "${query}"`
+      }
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'getPersonalInsights', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// R2 Content Search endpoint - Search through resonance threads and stored artifacts
+router.post("/api/search/r2", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { query, type = "all", limit = 5 } = body;
+    
+    if (!query) {
+      return addCORS(createErrorResponse({ error: "Query text is required" }, 400));
+    }
+    
+    // Start with a simple listing approach to avoid timeouts
+    let listOptions = { limit: Math.min(limit * 2, 20) }; // Get more than needed, filter later
+    if (type === "resonance") {
+      listOptions.prefix = "resonance/";
+    } else if (type === "logbin") {
+      listOptions.prefix = "logbin_";
+    }
+    
+    const r2Objects = await env.AQUIL_STORAGE.list(listOptions);
+    const results = [];
+    
+    // Return metadata first, content search can be a separate endpoint
+    for (const obj of r2Objects.objects || []) {
+      results.push({
+        key: obj.key,
+        size: obj.size,
+        uploaded: obj.uploaded,
+        type: obj.key.startsWith('resonance/') ? 'resonance_thread' : 'logbin_data'
+      });
+      
+      if (results.length >= limit) break;
+    }
+    
+    await logChatGPTAction(env, 'getPersonalInsights', body, { query, results: results.length });
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        query,
+        type,
+        objects: results,
+        total: results.length,
+        message: `Found ${results.length} R2 objects (use /api/r2/get to retrieve content)`,
+        note: "This endpoint lists R2 objects. Use /api/r2/get?key=<key> to retrieve specific content."
+      }
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'getPersonalInsights', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Helper function for simple relevance scoring
+function calculateSimpleRelevance(content, query) {
+  const matches = (content.match(new RegExp(query, 'gi')) || []).length;
+  const density = matches / content.length * 1000; // matches per 1000 chars
+  return matches + density;
+}
+
+// R2 Resonance Weaving Search - Find patterns and threads
+router.post("/api/search/resonance", async (req, env) => {
+  try {
+    const body = await req.json();
+    const { theme, timeframe = "7d", session_id } = body;
+    
+    if (!theme) {
+      return addCORS(createErrorResponse({ error: "Theme or pattern to search for is required" }, 400));
+    }
+    
+    // Use the progressive weaving function to find resonance patterns
+    const { progressiveWeaving } = await import("./actions/r2.js");
+    const resonanceData = await progressiveWeaving(env, { session_id, timeframe });
+    
+    // Filter resonance data based on theme
+    const matches = [];
+    if (resonanceData?.threads) {
+      for (const thread of resonanceData.threads) {
+        const threadContent = JSON.stringify(thread).toLowerCase();
+        const themeLower = theme.toLowerCase();
+        
+        if (threadContent.includes(themeLower)) {
+          matches.push({
+            ...thread,
+            relevance: calculateSimpleRelevance(threadContent, themeLower)
+          });
+        }
+      }
+    }
+    
+    // Sort by relevance
+    matches.sort((a, b) => b.relevance - a.relevance);
+    
+    await logChatGPTAction(env, 'searchResonance', body, { theme, matches: matches.length });
+    
+    return addCORS({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        theme,
+        timeframe,
+        session_id,
+        resonance_threads: matches,
+        total: matches.length,
+        full_weaving: resonanceData,
+        message: `Found ${matches.length} resonance patterns related to "${theme}"`
+      }
+    });
+    
+  } catch (error) {
+    await logChatGPTAction(env, 'searchResonance', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// ARK ENHANCED ENDPOINTS
+// =============================================================================
+
+// Enhanced unified logging with multi-store status tracking
+router.post("/api/ark/log", async (req, env) => {
+  try {
+    const result = await arkLog(req, env);
+    await logChatGPTAction(env, 'arkEnhancedLog', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedLog', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced unified retrieval with resonance weaving support
+router.get("/api/ark/retrieve", async (req, env) => {
+  try {
+    const result = await arkRetrieve(req, env);
+    await logChatGPTAction(env, 'arkEnhancedRetrieve', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedRetrieve', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced KV operations with full content support
+router.get("/api/ark/memories", async (req, env) => {
+  try {
+    const result = await arkMemories(req, env);
+    await logChatGPTAction(env, 'arkEnhancedMemories', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedMemories', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced vector operations with dual-mode support
+router.post("/api/ark/vector", async (req, env) => {
+  try {
+    const result = await arkVector(req, env);
+    await logChatGPTAction(env, 'arkEnhancedVector', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedVector', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Enhanced R2 resonance weaving operations
+router.post("/api/ark/resonance", async (req, env) => {
+  try {
+    const result = await arkResonance(req, env);
+    await logChatGPTAction(env, 'arkEnhancedResonance', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkEnhancedResonance', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// ARK system status and health check
+router.get("/api/ark/status", async (req, env) => {
+  try {
+    const result = await arkStatus(req, env);
+    await logChatGPTAction(env, 'arkSystemStatus', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkSystemStatus', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Advanced log filtering
+router.post("/api/ark/filter", async (req, env) => {
+  try {
+    const result = await arkFilter(req, env);
+    await logChatGPTAction(env, 'arkAdvancedFilter', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkAdvancedFilter', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// Autonomous action logging
+router.post("/api/ark/autonomous", async (req, env) => {
+  try {
+    const result = await arkAutonomous(req, env);
+    await logChatGPTAction(env, 'arkAutonomousLog', await req.clone().json(), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'arkAutonomousLog', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+// =============================================================================
+// EXTRACTED LOGGING ENDPOINTS (config-driven)
+// =============================================================================
+
+// Logging endpoints using extracted config
+router.post(Routes.kvWrite, async (req, env) => {
+  try {
+    const result = await handleKvWrite(env, req);
+    await logChatGPTAction(env, 'kvWrite', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'kvWrite', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.d1Insert, async (req, env) => {
+  try {
+    const result = await handleD1Insert(env, req);
+    await logChatGPTAction(env, 'd1Insert', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'd1Insert', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.promote, async (req, env) => {
+  try {
+    const result = await handlePromote(env, req);
+    await logChatGPTAction(env, 'promote', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'promote', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.retrieve, async (req, env) => {
+  try {
+    const result = await handleRetrieve(env, req);
+    await logChatGPTAction(env, 'retrieve', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'retrieve', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.get(Routes.retrieveLatest, async (req, env) => {
+  try {
+    const result = await handleRetrieveLatest(env, req);
+    await logChatGPTAction(env, 'retrieveLatest', { url: req.url }, result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'retrieveLatest', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post(Routes.retrievalMeta, async (req, env) => {
+  try {
+    const result = await handleRetrievalMeta(env, req);
+    await logChatGPTAction(env, 'retrievalMeta', await req.clone().json().catch(() => ({})), result);
+    return addCORS(result);
+  } catch (error) {
+    await logChatGPTAction(env, 'retrievalMeta', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
 // =============================================================================
 // FALLBACK AND ERROR HANDLING
 // =============================================================================
@@ -2030,132 +2776,66 @@ router.post("/api/export/conversation", async (req, env) => {
   }
 });
 router.all("*", () => {
-  const errorData = {
-    errorId: 'ENDPOINT_NOT_FOUND',
-    userMessage: 'Endpoint not found',
-    technicalMessage: 'The requested API endpoint does not exist',
-    category: 'routing',
-    severity: 'low',
-    additional_info: {
-      available_endpoints: [
-        "/api/session-init",
-        "/api/discovery/generate-inquiry", 
-        "/api/system/health-check",
-        "/api/system/readiness",
-        "/api/log",
-        "/api/logs",
-        "/api/logs/kv-write",
-        "/api/logs/d1-insert", 
-        "/api/logs/promote",
-        "/api/logs/retrieve",
-        "/api/logs/latest",
-        "/api/logs/retrieval-meta",
-        "/api/personal-development/gratitude",
-        "/api/personal-development/healing",
-        "/api/personal-development/intuition",
-        "/api/personal-development/purpose",
-        "/api/personal-development/relationships",
-        "/api/personal-development/shadow",
-        "/api/personal-development/socratic",
-        "/api/personal-development/ritual",
-        "/api/trust/check-in",
-        "/api/somatic/session",
-        "/api/media/extract-wisdom",
-        "/api/patterns/recognize",
-        "/api/patterns/autonomous-detect",
-        "/api/standing-tall/practice",
-        "/api/wisdom/synthesize",
-        "/api/wisdom/daily-synthesis",
-        "/api/feedback",
-        "/api/dreams/interpret",
-        "/api/energy/optimize",
-        "/api/values/clarify",
-        "/api/creativity/unleash",
-        "/api/abundance/cultivate",
-        "/api/transitions/navigate",
-        "/api/ancestry/heal",
-        "/api/mood/track",
-        "/api/goals/set", 
-        "/api/habits/design",
-        "/api/commitments/create",
-        "/api/commitments/active",
-        "/api/commitments/:id/progress",
-        "/api/ritual/auto-suggest",
-        "/api/contracts/create",
-        "/api/monitoring/metrics",
-        "/api/socratic/question",
-        "/api/coaching/comb-analysis",
-        "/api/r2/put",
-        "/api/r2/get",
-        "/api/kv/log",
-        "/api/kv/get",
-        "/api/d1/query",
-        "/api/vectorize/query",
-        "/api/vectorize/upsert",
-        "/api/ark/log",
-        "/api/ark/retrieve",
-        "/api/ark/memories",
-        "/api/ark/vector",
-        "/api/ark/resonance",
-        "/api/ark/status",
-        "/api/ark/filter",
-        "/api/ark/autonomous"
-      ]
-    }
-  };
-  
-  return addCORS(createErrorResponse(errorData, 404));
+  return addCORS(createErrorResponse({ 
+    error: "Endpoint not found", 
+    available_endpoints: [
+      "/api/session-init",
+      "/api/discovery/generate-inquiry", 
+      "/api/system/health-check",
+      "/api/system/readiness",
+      "/api/log",
+      "/api/logs",
+      "/api/logs/kv-write",
+      "/api/logs/d1-insert", 
+      "/api/logs/promote",
+      "/api/logs/retrieve",
+      "/api/logs/latest",
+      "/api/logs/retrieval-meta",
+      "/api/trust/check-in",
+      "/api/somatic/session",
+      "/api/media/extract-wisdom",
+      "/api/patterns/recognize",
+      "/api/patterns/autonomous-detect",
+      "/api/standing-tall/practice",
+      "/api/wisdom/synthesize",
+      "/api/wisdom/daily-synthesis",
+      "/api/feedback",
+      "/api/dreams/interpret",
+      "/api/energy/optimize",
+      "/api/values/clarify",
+      "/api/creativity/unleash",
+      "/api/abundance/cultivate",
+      "/api/transitions/navigate",
+      "/api/ancestry/heal",
+      "/api/mood/track",
+      "/api/goals/set", 
+      "/api/habits/design",
+      "/api/commitments/create",
+      "/api/commitments/active",
+      "/api/commitments/:id/progress",
+      "/api/ritual/auto-suggest",
+      "/api/contracts/create",
+      "/api/monitoring/metrics",
+      "/api/socratic/question",
+      "/api/coaching/comb-analysis",
+      "/api/r2/put",
+      "/api/r2/get",
+      "/api/kv/log",
+      "/api/kv/get",
+      "/api/d1/query",
+      "/api/vectorize/query",
+      "/api/vectorize/upsert",
+      "/api/ark/log",
+      "/api/ark/retrieve",
+      "/api/ark/memories",
+      "/api/ark/vector",
+      "/api/ark/resonance",
+      "/api/ark/status",
+      "/api/ark/filter",
+      "/api/ark/autonomous"
+    ]
+  }, 404));
 });
-
-// =============================================================================
-// GLOBAL ERROR HANDLER
-// =============================================================================
-
-/**
- * Enhanced global error handler that catches any uncaught exceptions
- * and returns structured JSON error responses
- */
-function createGlobalErrorHandler() {
-  return async (request, env, ctx) => {
-    try {
-      return await router.fetch(request, env, ctx);
-    } catch (error) {
-      // Log the error for debugging
-      console.error('Global error handler caught:', {
-        error: error.message,
-        stack: error.stack,
-        url: request.url,
-        method: request.method,
-        timestamp: new Date().toISOString()
-      });
-
-      // Try to log the error using our logging system
-      try {
-        await logChatGPTAction(env, 'globalErrorHandler', {
-          url: request.url,
-          method: request.method,
-          userAgent: request.headers.get('user-agent')
-        }, null, error);
-      } catch (logError) {
-        console.warn('Failed to log global error:', logError.message);
-      }
-
-      // Return structured JSON error response
-      const errorResponse = {
-        error: "Internal server error",
-        message: error.message,
-        status: 500,
-        timestamp: new Date().toISOString(),
-        request_id: crypto.randomUUID()
-      };
-
-      return addCORS(new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      }));
-    }
-  };
-}
 
 // =============================================================================
 // WORKER ENTRY POINT
@@ -2163,8 +2843,15 @@ function createGlobalErrorHandler() {
 
 export default {
   async fetch(request, env, ctx) {
-    const globalHandler = createGlobalErrorHandler();
-    return await globalHandler(request, env, ctx);
+    try {
+      return await router.fetch(request, env, ctx);
+    } catch (error) {
+      console.error('Worker error:', error);
+      return addCORS(createErrorResponse({ 
+        error: "Internal server error",
+        message: error.message 
+      }, 500));
+    }
   },
   
   async scheduled(event, env, ctx) {
@@ -2173,16 +2860,6 @@ export default {
       await handleScheduledTriggers(env);
     } catch (error) {
       console.error('Scheduled trigger error:', error);
-      
-      // Try to log scheduled errors too
-      try {
-        await logChatGPTAction(env, 'scheduledTriggerError', {
-          event: event.scheduledTime,
-          cron: event.cron
-        }, null, error);
-      } catch (logError) {
-        console.warn('Failed to log scheduled error:', logError.message);
-      }
     }
   }
 };
