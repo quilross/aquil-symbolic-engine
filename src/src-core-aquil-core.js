@@ -5,13 +5,7 @@
 
 import { AquilDatabase } from "./utils/database.js";
 import { AquilAI } from "./utils/ai-helpers.js";
-
-// Simple logger for ARK system
-const logger = {
-  info: (msg, data) => console.log(`[ARK INFO] ${msg}`, data || ''),
-  error: (msg, data) => console.error(`[ARK ERROR] ${msg}`, data || ''),
-  warn: (msg, data) => console.warn(`[ARK WARN] ${msg}`, data || '')
-};
+import { logger } from "./utils/logger.js";
 
 export class AquilCore {
   constructor(env) {
