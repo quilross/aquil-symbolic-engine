@@ -6,7 +6,6 @@
  */
 
 import { Router } from 'itty-router';
-import { handleCORSPreflight } from './utils/response-helpers.js';
 import { handleScheduledTriggers } from './utils/autonomy.js';
 import { createErrorResponse } from './utils/error-handler.js';
 import { corsHeaders } from './utils/cors.js';
@@ -40,6 +39,10 @@ import {
 // Dream interpretation utilities
 import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from "./utils/dream-interpreter.js";
 
+// Insight generation
+import { generateInsight } from "./insightEngine.js";
+import * as journalService from "./journalService.js";
+
 // D1 and Vector database actions
 import { exec as d1Exec } from "./actions/d1.js";
 import { query as vectorQuery, upsert as vectorUpsert } from "./actions/vectorize.js";
@@ -64,7 +67,6 @@ import { StandingTall } from "./src-core-standing-tall.js";
 import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
-import { handleScheduledTriggers } from "./utils/autonomy.js";
 
 // Pull routes + validation constants from JSON
 const Routes = actions['x-ark-metadata'].routes
@@ -231,9 +233,6 @@ async function handleRetrievalMeta(env, req) {
 import { toCanonical } from "./ops/operation-aliases.js";
 
 // Response utilities
-import { 
-  createErrorResponse
-} from "./utils/error-handler.js";
 import { 
   createSuccessResponse,
   handleCORSPreflight,
@@ -837,6 +836,52 @@ router.all("/api/monitoring/*", utilityRouter.fetch);
 router.all("/api/dreams/*", utilityRouter.fetch);
 router.all("/api/conversation/*", utilityRouter.fetch);
 router.all("/api/mood/*", utilityRouter.fetch);
+
+// =============================================================================
+// INSIGHT GENERATION ENDPOINT
+// =============================================================================
+
+// Generate insights from journal entries
+router.post("/api/insight", async (req, env) => {
+  try {
+    const body = await req.json();
+    
+    // Extract current entry from request body
+    const currentEntry = body.currentEntry || body.entry || body;
+    
+    // Retrieve user's history using journal service
+    const historyResult = await journalService.listRecentEntries(env, { 
+      limit: 50, // Get recent 50 entries for pattern analysis
+      prefix: body.prefix || "log_" 
+    });
+    
+    const userHistory = historyResult.success ? historyResult.entries : [];
+    
+    // Generate insight using the insight engine
+    const insight = await generateInsight(currentEntry, userHistory);
+    
+    // Log the action for tracking
+    await logChatGPTAction(env, 'generateInsight', {
+      entryId: currentEntry.id || 'unknown',
+      historyCount: userHistory.length
+    }, { insight });
+    
+    // Return the insight as JSON
+    return addCORS(createSuccessResponse({
+      insight: insight
+    }));
+    
+  } catch (error) {
+    console.error('Error in /api/insight:', error);
+    
+    await logChatGPTAction(env, 'generateInsight', {}, null, error);
+    
+    return addCORS(createErrorResponse({
+      error: 'insight_generation_failed',
+      message: 'Failed to generate insight'
+    }, 500));
+  }
+});
 
 // =============================================================================
 // ARK ENDPOINTS (CONSOLIDATED)
