@@ -1866,6 +1866,112 @@
         }
       }
     },
+    "/api/insight": {
+      "post": {
+        "summary": "Generate insights from journal entries",
+        "description": "Called to analyze current journal entry against user history and generate insights about recurring themes or contradictions. Triggers on: analyze my entry, what patterns do you see, insight from my writing, journal analysis.",
+        "operationId": "generateJournalInsight",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentEntry": {
+                    "type": "object",
+                    "description": "The current journal entry to analyze",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Entry identifier"
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "Entry content/text"
+                      },
+                      "timestamp": {
+                        "type": "string",
+                        "description": "Entry timestamp"
+                      }
+                    },
+                    "required": ["content"]
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "description": "Optional prefix for retrieving user history (default: 'log_')"
+                  }
+                },
+                "required": ["currentEntry"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated insight from journal analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "insight": {
+                      "type": "string",
+                      "description": "Generated insight about patterns, themes, or contradictions"
+                    }
+                  },
+                  "required": ["insight"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid input parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    }
+                  },
+                  "required": ["error", "message"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Insight generation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    }
+                  },
+                  "required": ["error", "message"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/feedback": {
       "post": {
         "summary": "Submit feedback on experiences",
