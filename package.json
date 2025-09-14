@@ -50,7 +50,8 @@
   "license": "Personal",
   "dependencies": {
     "@cloudflare/itty-router-openapi": "^1.1.1",
-    "itty-router": "^5.0.22"
+    "itty-router": "^5.0.22",
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.70",

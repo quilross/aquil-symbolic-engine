@@ -19,7 +19,7 @@ import { personalDevRouter } from './routes/personal-dev.js';
 import { utilityRouter } from './routes/utility.js';
 
 // Import OpenAPI router
-import openApiRouter from './openapi-router.js';
+import openApiRouter from './simple-openapi-router.js';
 
 // Import ARK endpoints (already well-organized)
 import {
@@ -67,10 +67,9 @@ import { StandingTall } from "./src-core-standing-tall.js";
 import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
-import { handleScheduledTriggers } from "./utils/autonomy.js";
 
 // Import the actions schema
-import actions from "../config/ark.actions.logging.json" assert { type: "json" };
+import actions from "../config/ark.actions.logging.json" with { type: "json" };
 
 // Pull routes + validation constants from JSON
 const Routes = actions['x-ark-metadata'].routes
@@ -238,11 +237,7 @@ import { toCanonical } from "./ops/operation-aliases.js";
 
 // Response utilities
 import { 
-  createErrorResponse
-} from "./utils/error-handler.js";
-import { 
   createSuccessResponse,
-  handleCORSPreflight,
   extractSessionId,
   createWisdomResponse,
   createPatternResponse,

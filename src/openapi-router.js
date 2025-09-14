@@ -7,10 +7,31 @@ import { OpenAPIRouter } from '@cloudflare/itty-router-openapi';
 import { z } from 'zod';
 
 // Import existing utilities
-import { logChatGPTAction } from './actions/logging.js';
+import { writeLog } from './actions/logging.js';
 import { arkLog, arkRetrieve, arkStatus } from './ark/ark-endpoints.js';
 import { handleSessionInit, handleHealthCheck } from './ark/endpoints.js';
 import { corsHeaders } from './utils/cors.js';
+
+// Simple logging function for ChatGPT actions (simplified version)
+async function logChatGPTAction(env, operationId, data, result, error = null) {
+  try {
+    const payload = {
+      action: operationId,
+      input: data,
+      result: error ? { error: error.message } : { success: true, processed: !!result },
+    };
+    
+    await writeLog(env, {
+      type: error ? `${operationId}_error` : operationId,
+      payload,
+      session_id: data?.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: error ? 'error' : 'info',
+    });
+  } catch (logError) {
+    console.warn('Failed to log ChatGPT action:', logError);
+  }
+}
 
 // Create OpenAPI router with configuration
 export const openApiRouter = OpenAPIRouter({
