@@ -12,42 +12,24 @@ export async function listRecent(env, { prefix = "log_", limit = 20 } = {}) {
 
 // Enhanced: List recent logs with FULL CONTENT + IDs (NO REGRESSION)
 export async function listRecentWithContent(env, { prefix = "log_", limit = 20 } = {}) {
-  const result = await env.AQUIL_MEMORIES.list({ prefix });
+  const { listRecentEntries } = await import('../journalService.js');
   
-  // Sort keys newest to oldest by extracting timestamp from key
-  const sortedKeys = result.keys
-    .map((k) => ({ key: k.name, ts: parseInt(k.name.split("_")[1], 10) || 0 }))
-    .sort((a, b) => b.ts - a.ts)
-    .slice(0, limit);
-
-  // Fetch full content for each key
-  const logsWithContent = [];
-  for (const { key } of sortedKeys) {
-    try {
-      const content = await env.AQUIL_MEMORIES.get(key);
-      if (content) {
-        const parsedContent = JSON.parse(content);
-        logsWithContent.push({
-          id: key,
-          key: key, // Preserve legacy key field
-          content: parsedContent,
-          timestamp: parsedContent.timestamp,
-          type: parsedContent.type,
-          payload: parsedContent.payload
-        });
-      }
-    } catch (e) {
-      // Include failed entries for debugging
-      logsWithContent.push({
-        id: key,
-        key: key,
-        content: null,
-        error: e.message
-      });
-    }
+  const result = await listRecentEntries(env, { prefix, limit });
+  
+  if (result.success) {
+    // Convert to legacy format
+    return result.entries.map(entry => ({
+      id: entry.key,
+      key: entry.key, // Preserve legacy key field
+      content: entry.content,
+      timestamp: entry.content.timestamp,
+      type: entry.content.type,
+      payload: entry.content.payload
+    }));
+  } else {
+    console.error('Failed to list recent entries:', result.error);
+    return [];
   }
-  
-  return logsWithContent;
 }
 
 // Dual-mode retrieval: IDs only OR full content
@@ -63,10 +45,18 @@ export async function getRecentLogs(env, options = {}) {
 
 // Batch get values for keys
 export async function batchGet(env, keys) {
+  const { getEntryById } = await import('../journalService.js');
+  
   const results = {};
   for (const key of keys) {
     try {
-      results[key] = await env.AQUIL_MEMORIES.get(key);
+      const result = await getEntryById(env, key, { keyPrefix: '' });
+      if (result.success) {
+        // Return the content in the original format expected
+        results[key] = result.data.content || JSON.stringify(result.data);
+      } else {
+        results[key] = null;
+      }
     } catch (e) {
       results[key] = null;
     }
@@ -76,18 +66,54 @@ export async function batchGet(env, keys) {
 import { send, readJSON } from "../utils/http.js";
 
 export async function log(req, env) {
+  const { addEntry } = await import('../journalService.js');
+  
   const { key, value, metadata, expiration } = await readJSON(req);
   if (!key || value === undefined)
     return send(400, { error: "key and value required" });
-  const body = typeof value === "string" ? value : JSON.stringify(value);
-  await env.AQUIL_MEMORIES.put(key, body, { metadata, expiration });
-  return send(200, { ok: true, key });
+  
+  // Create entry data compatible with journal service
+  const entryData = {
+    id: key.replace(/^log[_:]/, ''), // Remove log prefix if present
+    content: typeof value === "string" ? value : JSON.stringify(value),
+    timestamp: new Date().toISOString()
+  };
+  
+  // If value is an object, spread its properties
+  if (typeof value === 'object' && value !== null) {
+    Object.assign(entryData, value);
+  }
+  
+  const options = {
+    keyPrefix: '', // Use the key as-is
+    metadata,
+    ttl: expiration
+  };
+  
+  // Override key formatting to use exact key
+  const result = await addEntry(env, { ...entryData, id: key }, options);
+  
+  if (result.success) {
+    return send(200, { ok: true, key });
+  } else {
+    return send(500, { error: result.error });
+  }
 }
 
 export async function get(req, env) {
+  const { getEntryById } = await import('../journalService.js');
+  
   const url = new URL(req.url);
   const key = url.searchParams.get("key");
   if (!key) return send(400, { error: "key required" });
-  const val = await env.AQUIL_MEMORIES.get(key);
-  return send(200, { key, value: val });
+  
+  const result = await getEntryById(env, key, { keyPrefix: '' });
+  
+  if (result.success) {
+    // Return the original content format
+    const value = result.data.content || JSON.stringify(result.data);
+    return send(200, { key, value });
+  } else {
+    return send(200, { key, value: null });
+  }
 }

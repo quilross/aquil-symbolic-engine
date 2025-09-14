@@ -123,13 +123,19 @@ function validateLog(payload) {
 }
 
 async function handleKvWrite(env, req) {
+  const { addEntry } = await import('./journalService.js');
+  
   const body = await readJson(req)
   const err = validateLog(body)
   if (err) return json({ ok: false, error: err }, { status: 400 })
   if (body.storedIn !== 'KV') return json({ ok: false, error: 'storedIn must be KV' }, { status: 400 })
-  const key = `log:${body.id}`
-  await env.AQUIL_MEMORIES.put(key, JSON.stringify(body))
-  return json({ ok: true, key, id: body.id })
+  
+  const result = await addEntry(env, body);
+  if (result.success) {
+    return json({ ok: true, key: result.key, id: result.id })
+  } else {
+    return json({ ok: false, error: result.error }, { status: 500 })
+  }
 }
 
 async function handleD1Insert(env, req) {
@@ -146,15 +152,21 @@ async function handleD1Insert(env, req) {
 
 async function handlePromote(env, req) {
   await ensureSchema(env)
+  const { getEntryById } = await import('./journalService.js');
+  
   const body = await readJson(req)
   const id = body?.id
   if (!id || !UUID_V4.test(id)) return json({ ok: false, error: 'invalid id' }, { status: 400 })
-  const key = `log:${id}`
-  const v = await env.AQUIL_MEMORIES.get(key)
-  if (!v) return json({ ok: false, error: 'not found in KV' }, { status: 404 })
-  const log = JSON.parse(v)
+  
+  const result = await getEntryById(env, id);
+  if (!result.success) {
+    return json({ ok: false, error: 'not found in KV' }, { status: 404 })
+  }
+  
+  const log = result.data;
   const err = validateLog(log)
   if (err) return json({ ok: false, error: `invalid KV log: ${err}` }, { status: 400 })
+  
   await env.AQUIL_DB.prepare(
     'INSERT OR IGNORE INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
   ).bind(log.id, log.type, log.detail ?? null, log.timestamp, 'D1').run()
