@@ -6,7 +6,6 @@
  */
 
 import { Router } from 'itty-router';
-import { handleCORSPreflight } from './utils/response-helpers.js';
 import { handleScheduledTriggers } from './utils/autonomy.js';
 import { createErrorResponse } from './utils/error-handler.js';
 import { corsHeaders } from './utils/cors.js';
@@ -68,7 +67,6 @@ import { StandingTall } from "./src-core-standing-tall.js";
 import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
-import { handleScheduledTriggers } from "./utils/autonomy.js";
 
 // Pull routes + validation constants from JSON
 const Routes = actions['x-ark-metadata'].routes
@@ -235,9 +233,6 @@ async function handleRetrievalMeta(env, req) {
 import { toCanonical } from "./ops/operation-aliases.js";
 
 // Response utilities
-import { 
-  createErrorResponse
-} from "./utils/error-handler.js";
 import { 
   createSuccessResponse,
   handleCORSPreflight,
