@@ -211,7 +211,7 @@ export async function advancedLoggingOperations(env, { operation } = {}) {
       errs.push('D1');
     }
     try {
-      await env.AQUIL_CONTEXT.upsert([{ id, values: log.vector || [0], metadata: log.metadata }]);
+      await env.AQUIL_CONTEXT.upsert([{ id, values: log.vector || new Array(1024).fill(0), metadata: log.metadata }]);
     } catch {
       errs.push('Vector');
     }
