@@ -66,6 +66,7 @@ import { TrustBuilder } from "./src-core-trust-builder.js";
 import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
 import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
 import { StandingTall } from "./src-core-standing-tall.js";
+import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
 import { handleScheduledTriggers } from "./utils/autonomy.js";
@@ -1463,17 +1464,15 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
 router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
     const { type = 'both', focus_area } = req.query;
-    const wisdom = new MediaWisdomExtractor(env);
+    
+    // Use AquilCore for comprehensive daily synthesis
+    const core = new AquilCore(env);
+    await core.initialize();
     
     let result;
     
     if (type === 'daily' || type === 'both') {
-      const dailyResult = await wisdom.extractWisdom({
-        media_type: "daily_synthesis",
-        title: "Daily Wisdom Synthesis",
-        your_reaction: "Reflecting on today's insights and learnings",
-        content_summary: `Daily synthesis of wisdom and insights${focus_area ? ` focused on ${focus_area}` : ''}`
-      });
+      const dailyResult = await core.runDailySynthesis();
       
       if (type === 'daily') {
         result = dailyResult;
@@ -1483,6 +1482,8 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
     }
     
     if (type === 'accumulated' || type === 'both') {
+      // Fallback to MediaWisdomExtractor for accumulated insights
+      const wisdom = new MediaWisdomExtractor(env);
       const insightsResult = await wisdom.extractWisdom({
         media_type: "personal_insights", 
         title: "Personal Growth Insights",
@@ -1497,32 +1498,15 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
       }
     }
     
-    await logChatGPTAction(env, 'getWisdomAndInsights', { type, focus_area }, result);
+    await logChatGPTAction(env, 'getDailySynthesis', { type, focus_area }, result);
     return addCORS(createWisdomResponse(result));
   } catch (error) {
-    await logChatGPTAction(env, 'getWisdomAndInsights', { type, focus_area }, null, error);
+    await logChatGPTAction(env, 'getDailySynthesis', { type, focus_area }, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
 
-router.get("/api/wisdom/daily-synthesis", async (req, env) => {
-  try {
-    // Create a daily synthesis by extracting wisdom from recent activities
-    const wisdom = new MediaWisdomExtractor(env);
-    const result = await wisdom.extractWisdom({
-      media_type: "daily_synthesis",
-      title: "Daily Wisdom Synthesis",
-      your_reaction: "Reflecting on today's insights and learnings",
-      content_summary: "Daily synthesis of wisdom and insights for personal growth"
-    });
-    
-    await logChatGPTAction(env, 'getDailySynthesis', {}, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'getDailySynthesis', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
+
 
 // Personal insights
 router.get("/api/insights", async (req, env) => {
