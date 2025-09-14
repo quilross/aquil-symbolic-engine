@@ -18,6 +18,9 @@ import { dataOpsRouter } from './routes/data-ops.js';
 import { personalDevRouter } from './routes/personal-dev.js';
 import { utilityRouter } from './routes/utility.js';
 
+// Import OpenAPI router
+import openApiRouter from './openapi-router.js';
+
 // Import ARK endpoints (already well-organized)
 import {
   arkLog,
@@ -65,6 +68,9 @@ import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
 import { handleScheduledTriggers } from "./utils/autonomy.js";
+
+// Import the actions schema
+import actions from "../config/ark.actions.logging.json" assert { type: "json" };
 
 // Pull routes + validation constants from JSON
 const Routes = actions['x-ark-metadata'].routes
@@ -837,6 +843,43 @@ router.all("/api/monitoring/*", utilityRouter.fetch);
 router.all("/api/dreams/*", utilityRouter.fetch);
 router.all("/api/conversation/*", utilityRouter.fetch);
 router.all("/api/mood/*", utilityRouter.fetch);
+
+// =============================================================================
+// OPENAPI ROUTES
+// =============================================================================
+
+// OpenAPI schema endpoint
+router.get("/openapi.yaml", async (req, env) => {
+  try {
+    const response = await openApiRouter.fetch(req, env);
+    return addCORS(response);
+  } catch (error) {
+    console.error('OpenAPI schema error:', error);
+    return addCORS(createErrorResponse({ error: 'Failed to generate OpenAPI schema' }, 500));
+  }
+});
+
+// OpenAPI documentation endpoint
+router.get("/openapi", async (req, env) => {
+  try {
+    const response = await openApiRouter.fetch(req, env);
+    return addCORS(response);
+  } catch (error) {
+    console.error('OpenAPI docs error:', error);
+    return addCORS(createErrorResponse({ error: 'Failed to generate OpenAPI documentation' }, 500));
+  }
+});
+
+// Journal endpoints from OpenAPI router
+router.all("/api/journal/*", async (req, env) => {
+  try {
+    const response = await openApiRouter.fetch(req, env);
+    return addCORS(response);
+  } catch (error) {
+    console.error('Journal API error:', error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
 
 // =============================================================================
 // ARK ENDPOINTS (CONSOLIDATED)

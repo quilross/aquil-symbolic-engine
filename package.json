@@ -49,6 +49,7 @@
   "author": "Aquil Signal-Q",
   "license": "Personal",
   "dependencies": {
+    "@cloudflare/itty-router-openapi": "^1.1.1",
     "itty-router": "^5.0.22"
   },
   "devDependencies": {
