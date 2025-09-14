@@ -66,6 +66,7 @@ import { TrustBuilder } from "./src-core-trust-builder.js";
 import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
 import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
 import { StandingTall } from "./src-core-standing-tall.js";
+import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
 import { handleScheduledTriggers } from "./utils/autonomy.js";
@@ -250,6 +251,9 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
     // Track successful store writes
     const stores = [];
     
+    // Generate trace ID for this action
+    const traceId = `gpt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
     // Collect metrics (fail-open)
     try {
       const { incrementActionSuccess, incrementActionError } = await import('./utils/metrics.js');
@@ -265,7 +269,23 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
     const payload = {
       action: operationId,
       input: data,
-      result: error ? { error: error.message } : { success: true, processed: !!result }
+      result: error ? { 
+        error: error.message,
+        error_category: categorizeGPTError(error),
+        error_severity: determineErrorSeverity(error)
+      } : { 
+        success: true, 
+        processed: !!result 
+      },
+      // Enhanced observability metadata
+      gpt_metadata: {
+        action_type: 'chatgpt_interaction',
+        canonical_operation: canonical,
+        original_operation: operationId !== canonical ? operationId : null,
+        trace_id: traceId,
+        processing_timestamp: new Date().toISOString(),
+        user_session: data?.session_id || 'unknown'
+      }
     };
     
     // Generate R2 artifact for significant actions
@@ -306,7 +326,9 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
       tags: standardTags,
       binary,
       textOrVector,
-      stores  // Add stores tracking
+      stores,  // Add stores tracking
+      trace_id: traceId, // Pass trace ID for observability
+      error_code: error ? generateErrorCode(canonical, error) : null // Structured error codes
     });
     
     // Track successful D1 write
@@ -315,6 +337,39 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
   } catch (logError) {
     console.warn('Failed to log ChatGPT action:', logError);
   }
+}
+
+/**
+ * Categorize GPT-specific errors for structured logging
+ */
+function categorizeGPTError(error) {
+  if (error.message?.includes('database') || error.message?.includes('D1')) return 'database';
+  if (error.message?.includes('KV') || error.message?.includes('storage')) return 'storage';
+  if (error.message?.includes('timeout')) return 'timeout';
+  if (error.message?.includes('validation') || error.message?.includes('schema')) return 'validation';
+  if (error.message?.includes('auth') || error.message?.includes('permission')) return 'auth';
+  if (error.message?.includes('network') || error.message?.includes('fetch')) return 'network';
+  return 'unknown';
+}
+
+/**
+ * Determine error severity for GPT actions
+ */
+function determineErrorSeverity(error) {
+  const category = categorizeGPTError(error);
+  if (category === 'database' || category === 'storage') return 'high';
+  if (category === 'auth') return 'medium';
+  if (category === 'validation' || category === 'timeout') return 'low';
+  return 'medium';
+}
+
+/**
+ * Generate structured error codes for observability
+ */
+function generateErrorCode(operation, error) {
+  const category = categorizeGPTError(error);
+  const severity = determineErrorSeverity(error);
+  return `${operation.toUpperCase()}_${category.toUpperCase()}_${severity.toUpperCase()}`;
 }
 
 // =============================================================================
@@ -1187,6 +1242,61 @@ router.post("/api/logs", async (req, env) => {
   }
 });
 
+// Individual log operation endpoints for convenience
+router.post("/api/logs/kv-write", async (req, env) => {
+  try {
+    const result = await handleKvWrite(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/d1-insert", async (req, env) => {
+  try {
+    const result = await handleD1Insert(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/promote", async (req, env) => {
+  try {
+    const result = await handlePromote(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/retrieve", async (req, env) => {
+  try {
+    const result = await handleRetrieve(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.get("/api/logs/latest", async (req, env) => {
+  try {
+    const result = await handleRetrieveLatest(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
+router.post("/api/logs/retrieval-meta", async (req, env) => {
+  try {
+    const result = await handleRetrievalMeta(env, req);
+    return addCORS(result);
+  } catch (error) {
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+
 // =============================================================================
 // PERSONAL GROWTH ENDPOINTS
 // =============================================================================
@@ -1196,7 +1306,8 @@ router.post("/api/trust/check-in", async (req, env) => {
   try {
     const body = await req.json();
     
-    if (!body.current_state) {
+    if (!body.current_state) {    await logChatGPTAction(env, "trustCheckIn", req.body || {}, result);
+
       return addCORS(createErrorResponse({ error: "current_state required" }, 400));
     }
     
@@ -1271,8 +1382,8 @@ router.post("/api/media/extract-wisdom", async (req, env) => {
 router.post("/api/patterns/recognize", async (req, env) => {
   try {
     const body = await req.json();
-    const recognizer = new PatternRecognizer();
-    const patterns = await recognizer.recognizePatterns(body);
+    const recognizer = new PatternRecognizer(env);
+    const patterns = await recognizer.analyzePatterns(body);
     
     // Wire conversational engine if enabled
     if (env.ENABLE_CONVERSATIONAL_ENGINE === '1') {
@@ -1353,17 +1464,15 @@ router.post("/api/wisdom/synthesize", async (req, env) => {
 router.get("/api/wisdom/daily-synthesis", async (req, env) => {
   try {
     const { type = 'both', focus_area } = req.query;
-    const wisdom = new MediaWisdomExtractor(env);
+    
+    // Use AquilCore for comprehensive daily synthesis
+    const core = new AquilCore(env);
+    await core.initialize();
     
     let result;
     
     if (type === 'daily' || type === 'both') {
-      const dailyResult = await wisdom.extractWisdom({
-        media_type: "daily_synthesis",
-        title: "Daily Wisdom Synthesis",
-        your_reaction: "Reflecting on today's insights and learnings",
-        content_summary: `Daily synthesis of wisdom and insights${focus_area ? ` focused on ${focus_area}` : ''}`
-      });
+      const dailyResult = await core.runDailySynthesis();
       
       if (type === 'daily') {
         result = dailyResult;
@@ -1373,6 +1482,8 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
     }
     
     if (type === 'accumulated' || type === 'both') {
+      // Fallback to MediaWisdomExtractor for accumulated insights
+      const wisdom = new MediaWisdomExtractor(env);
       const insightsResult = await wisdom.extractWisdom({
         media_type: "personal_insights", 
         title: "Personal Growth Insights",
@@ -1387,32 +1498,15 @@ router.get("/api/wisdom/daily-synthesis", async (req, env) => {
       }
     }
     
-    await logChatGPTAction(env, 'getWisdomAndInsights', { type, focus_area }, result);
+    await logChatGPTAction(env, 'getDailySynthesis', { type, focus_area }, result);
     return addCORS(createWisdomResponse(result));
   } catch (error) {
-    await logChatGPTAction(env, 'getWisdomAndInsights', { type, focus_area }, null, error);
+    await logChatGPTAction(env, 'getDailySynthesis', { type, focus_area }, null, error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
 
-router.get("/api/wisdom/daily-synthesis", async (req, env) => {
-  try {
-    // Create a daily synthesis by extracting wisdom from recent activities
-    const wisdom = new MediaWisdomExtractor(env);
-    const result = await wisdom.extractWisdom({
-      media_type: "daily_synthesis",
-      title: "Daily Wisdom Synthesis",
-      your_reaction: "Reflecting on today's insights and learnings",
-      content_summary: "Daily synthesis of wisdom and insights for personal growth"
-    });
-    
-    await logChatGPTAction(env, 'getDailySynthesis', {}, result);
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'getDailySynthesis', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
+
 
 // Personal insights
 router.get("/api/insights", async (req, env) => {
@@ -2091,7 +2185,8 @@ router.post("/api/d1/query", async (req, env) => {
 // Vector query endpoint
 router.post("/api/vectorize/query", async (req, env) => {
   try {
-    return await vectorQuery(req, env);
+        await logChatGPTAction(env, 'queryVectorIndex', req.body || {}, result);
+return await vectorQuery(req, env);
   } catch (error) {
     console.error('Vector query error:', error);
     return addCORS(createErrorResponse({ error: error.message }, 500));
@@ -2631,6 +2726,55 @@ router.post(Routes.retrievalMeta, async (req, env) => {
 // =============================================================================
 
 // Catch-all for unmatched routes
+
+// Analytics insights
+router.get("/api/analytics/insights", async (req, env) => {
+  try {
+    const url = new URL(req.url);
+    const days = parseInt(url.searchParams.get('days') || '30');
+    const type = url.searchParams.get('type') || 'all';
+    
+    const result = {
+      insights: [],
+      patterns: [],
+      recommendations: [],
+      timeframe: `${days} days`,
+      analysis_type: type,
+      generated_at: new Date().toISOString()
+    };
+    
+    await logChatGPTAction(env, 'getConversationAnalytics', { days, type }, result);
+    
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'getConversationAnalytics', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
+// Export conversation data
+router.post("/api/export/conversation", async (req, env) => {
+  try {
+    const body = await req.json();
+    const format = body.format || 'json';
+    const timeframe = body.timeframe || '30d';
+    
+    const result = {
+      export_id: crypto.randomUUID(),
+      format,
+      timeframe,
+      status: "prepared",
+      download_url: null, // Would be populated in real implementation
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
+    
+    await logChatGPTAction(env, 'exportConversationData', body, result);
+    
+    return addCORS(createWisdomResponse(result));
+  } catch (error) {
+    await logChatGPTAction(env, 'exportConversationData', {}, null, error);
+    return addCORS(createErrorResponse({ error: error.message }, 500));
+  }
+});
 router.all("*", () => {
   return addCORS(createErrorResponse({ 
     error: "Endpoint not found", 
