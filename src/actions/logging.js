@@ -53,7 +53,7 @@ export async function logDataOrEvent(env, entry = {}) {
     try {
       const values = Array.isArray(entry.vector)
         ? entry.vector
-        : [0];
+        : new Array(1024).fill(0);
       await writeWithRetry(() =>
         vector.upsert([{ id, values, metadata: log }])
       );
