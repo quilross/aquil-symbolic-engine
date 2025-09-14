@@ -452,23 +452,45 @@ export async function writeLog(
         }
       });
       
+      // Import journal service for KV operations
+      const { addEntry } = await import('../journalService.js');
+      
       // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
       const ttlSeconds = parseInt(env.KV_TTL_SECONDS || '0', 10);
       
-      if (ttlSeconds > 0) {
-        await env.AQUIL_MEMORIES.put(`log_${id}`, kvData, { expirationTtl: ttlSeconds });
-      } else {
-        await env.AQUIL_MEMORIES.put(`log_${id}`, kvData);
-      }
-      status.kv = "ok";
-      storesUsed.push('kv');
+      const kvEntry = {
+        id: id,
+        ...finalPayload,
+        kv_stored_at: timestamp,
+        observability: {
+          action_id: id,
+          trace_id: traceId,
+          operation_id: operationId,
+          timestamp: timestamp,
+          source: who || 'system',
+          environment: env.ENV || env.ENVIRONMENT || 'unknown'
+        }
+      };
       
-      // Track successful log write (fail-open)
-      try {
-        const { incrementLogWritten } = await import('../utils/metrics.js');
-        incrementLogWritten(env, 'kv');
-      } catch (metricsError) {
-        // Silent fail for metrics
+      const kvOptions = {
+        keyPrefix: 'log_',
+        ttl: ttlSeconds > 0 ? ttlSeconds : undefined
+      };
+      
+      const result = await addEntry(env, kvEntry, kvOptions);
+      if (result.success) {
+        status.kv = "ok";
+        storesUsed.push('kv');
+        
+        // Track successful log write (fail-open)
+        try {
+          const { incrementLogWritten } = await import('../utils/metrics.js');
+          incrementLogWritten(env, 'kv');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
+      } else {
+        throw new Error(result.error);
       }
     }
   } catch (e) {
@@ -813,14 +835,22 @@ export async function writeAutonomousLog(env, data) {
   // Also store in KV with enhanced structure for quick autonomous queries
   try {
     if (env.AQUIL_MEMORIES) {
-      await env.AQUIL_MEMORIES.put(
-        `autonomous_${traceId}`,
-        JSON.stringify({
-          ...autonomousLogData.payload,
-          full_log_id: autonomousLogData.session_id
-        }),
-        { expirationTtl: 86400 * 7 } // 7 days for autonomous actions
-      );
+      const { addEntry } = await import('../journalService.js');
+      
+      const autonomousEntry = {
+        id: traceId,
+        ...autonomousLogData.payload,
+        full_log_id: autonomousLogData.session_id
+      };
+      
+      const result = await addEntry(env, autonomousEntry, {
+        keyPrefix: 'autonomous_',
+        ttl: 86400 * 7 // 7 days for autonomous actions
+      });
+      
+      if (!result.success) {
+        console.warn('Failed to store autonomous log in KV:', result.error);
+      }
     }
   } catch (kvError) {
     console.warn('Failed to store autonomous log in KV:', kvError);
@@ -867,14 +897,19 @@ export async function readAutonomousLogs(env, opts = {}) {
 
   // KV - Look for autonomous logs with filtering
   try {
-    const kvList = await env.AQUIL_MEMORIES.list({ prefix: 'autonomous_action:' });
+    const { listRecentEntries } = await import('../journalService.js');
+    
+    const result = await listRecentEntries(env, { 
+      prefix: 'autonomous_action:', 
+      limit: limit 
+    });
+    
     const autonomousLogs = [];
     
-    for (const key of kvList.keys.slice(0, limit)) {
-      try {
-        const logData = await env.AQUIL_MEMORIES.get(key.name);
-        if (logData) {
-          const parsedLog = JSON.parse(logData);
+    if (result.success) {
+      for (const entry of result.entries) {
+        try {
+          const parsedLog = entry.content;
           
           // Apply filters if provided
           let includeLog = true;
@@ -885,9 +920,9 @@ export async function readAutonomousLogs(env, opts = {}) {
           if (includeLog) {
             autonomousLogs.push(parsedLog);
           }
+        } catch (e) {
+          console.error('Error processing autonomous log from KV:', e);
         }
-      } catch (e) {
-        console.error('Error reading autonomous log from KV:', e);
       }
     }
     
@@ -988,29 +1023,35 @@ export async function getAutonomousStats(env, timeframe = '24h') {
       
       // Fallback to KV storage
       try {
-        const kvList = await env.AQUIL_MEMORIES.list({ prefix: 'autonomous_' });
-        stats.total_autonomous_actions = kvList.keys.length;
+        const { listRecentEntries } = await import('../journalService.js');
         
-        // Sample some KV entries for basic stats
-        const sampleSize = Math.min(50, kvList.keys.length);
-        let successCount = 0;
+        const result = await listRecentEntries(env, { 
+          prefix: 'autonomous_', 
+          limit: 50 
+        });
         
-        for (let i = 0; i < sampleSize; i++) {
-          try {
-            const logData = await env.AQUIL_MEMORIES.get(kvList.keys[i].name);
-            if (logData) {
-              const parsed = JSON.parse(logData);
+        if (result.success) {
+          stats.total_autonomous_actions = result.total;
+          
+          // Sample entries for basic stats
+          let successCount = 0;
+          
+          for (const entry of result.entries) {
+            try {
+              const parsed = entry.content;
               if (parsed.success !== false) successCount++;
               if (parsed.action) {
                 stats.actions_by_type[parsed.action] = (stats.actions_by_type[parsed.action] || 0) + 1;
               }
+            } catch (kvParseError) {
+              console.warn('Error parsing KV autonomous log:', kvParseError);
             }
-          } catch (kvParseError) {
-            console.warn('Error parsing KV autonomous log:', kvParseError);
           }
+          
+          stats.success_rate = result.entries.length > 0 ? (successCount / result.entries.length) * 100 : 0;
+        } else {
+          throw new Error(result.error);
         }
-        
-        stats.success_rate = sampleSize > 0 ? (successCount / sampleSize) * 100 : 0;
         
       } catch (kvError) {
         console.error('Both D1 and KV autonomous stats failed:', kvError);
