@@ -68,6 +68,9 @@ import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
 
+// Import actions metadata for validation constants
+import actions from '../config/ark.actions.logging.json' with { type: 'json' };
+
 // Pull routes + validation constants from JSON
 const Routes = actions['x-ark-metadata'].routes
 const MAX_DETAIL = actions['x-ark-metadata'].validation?.maxDetailLength ?? 4000
