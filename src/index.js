@@ -864,7 +864,7 @@ router.post("/api/insight", async (req, env) => {
     const insight = await generateInsight(currentEntry, userHistory);
     
     // Log the action for tracking
-    await logChatGPTAction(env, 'generateInsight', {
+    await logChatGPTAction(env, 'generateJournalInsight', {
       entryId: currentEntry.id || 'unknown',
       historyCount: userHistory.length
     }, { insight });
@@ -877,7 +877,7 @@ router.post("/api/insight", async (req, env) => {
   } catch (error) {
     console.error('Error in /api/insight:', error);
     
-    await logChatGPTAction(env, 'generateInsight', {}, null, error);
+    await logChatGPTAction(env, 'generateJournalInsight', {}, null, error);
     
     return addCORS(createErrorResponse({
       error: 'insight_generation_failed',
