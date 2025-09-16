@@ -78,9 +78,13 @@ const loggingRouter = Router();
 
 // Main logging endpoint
 loggingRouter.post("/api/log", withErrorHandling(async (req, env) => {
-  const result = await handleLog(req, env);
-  const body = await req.clone().json();
-  const data = await result.clone().json();
+  // Clone request to avoid ReadableStream lock
+  const reqClone = req.clone();
+  const result = await handleLog(reqClone, env);
+  
+  // Log the action with body from original request
+  const body = await req.json().catch(() => ({}));
+  const data = await result.clone().json().catch(() => ({}));
   
   await logChatGPTAction(env, 'logEntry', body, data);
   
@@ -89,9 +93,11 @@ loggingRouter.post("/api/log", withErrorHandling(async (req, env) => {
 
 // Get logs with filtering
 loggingRouter.get("/api/logs", withErrorHandling(async (req, env) => {
-  const result = await handleRetrieveLogs(req, env);
-  const data = await result.clone().json();
+  const reqClone = req.clone();
+  const result = await handleRetrieveLogs(reqClone, env);
   
+  // Log the action
+  const data = await result.clone().json().catch(() => ({}));
   await logChatGPTAction(env, 'retrieveLogs', { url: req.url }, data);
   
   return addCORSToResponse(result);
