@@ -121,20 +121,36 @@ loggingRouter.post("/api/logs", withErrorHandling(async (req, env) => {
   return addCORSToResponse(createSuccessResponse(result));
 }));
 
-// KV logging operations
+// KV logging operations - Connected to main writeLog pipeline
 loggingRouter.post("/api/logs/kv-write", withErrorHandling(async (req, env) => {
   const body = await readJson(req);
   const err = validateLog(body);
   if (err) return addCORSToResponse(json({ ok: false, error: err }, { status: 400 }));
   if (body.storedIn !== 'KV') return addCORSToResponse(json({ ok: false, error: 'storedIn must be KV' }, { status: 400 }));
   
-  const result = await addEntry(env, body);
+  // Use main writeLog pipeline instead of direct addEntry
+  const result = await writeLog(env, {
+    type: body.type,
+    payload: {
+      id: body.id,
+      type: body.type,
+      detail: body.detail,
+      timestamp: body.timestamp,
+      storedIn: body.storedIn
+    },
+    session_id: body.session_id || crypto.randomUUID(),
+    who: 'kv_write_api',
+    level: 'info',
+    tags: ['kv_write', 'api'],
+    stores: ['kv'] // Explicitly target KV store
+  });
+  
   await logChatGPTAction(env, 'kvWrite', body, result);
   
-  if (result.success) {
-    return addCORSToResponse(json({ ok: true, key: result.key, id: result.id }));
+  if (result.kv === "ok") {
+    return addCORSToResponse(json({ ok: true, status: result }));
   } else {
-    return addCORSToResponse(json({ ok: false, error: result.error }, { status: 500 }));
+    return addCORSToResponse(json({ ok: false, error: result.kv || 'KV write failed' }, { status: 500 }));
   }
 }));
 
@@ -145,14 +161,31 @@ loggingRouter.post("/api/logs/d1-insert", withErrorHandling(async (req, env) => 
   if (err) return addCORSToResponse(json({ ok: false, error: err }, { status: 400 }));
   if (body.storedIn !== 'D1') return addCORSToResponse(json({ ok: false, error: 'storedIn must be D1' }, { status: 400 }));
   
-  await env.AQUIL_DB.prepare(
-    'INSERT INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(body.id, body.type, body.detail ?? null, body.timestamp, 'D1').run();
+  // Use main writeLog pipeline instead of direct D1 insert
+  const result = await writeLog(env, {
+    type: body.type,
+    payload: {
+      id: body.id,
+      type: body.type,
+      detail: body.detail,
+      timestamp: body.timestamp,
+      storedIn: body.storedIn
+    },
+    session_id: body.session_id || crypto.randomUUID(),
+    who: 'd1_insert_api',
+    level: 'info',
+    tags: ['d1_insert', 'api'],
+    stores: ['d1'] // Explicitly target D1 store
+  });
   
-  const result = { ok: true, rowId: 1, id: body.id };
-  await logChatGPTAction(env, 'd1Insert', body, result);
+  const finalResult = { 
+    ok: result.d1 === "ok", 
+    id: body.id,
+    status: result 
+  };
+  await logChatGPTAction(env, 'd1Insert', body, finalResult);
   
-  return addCORSToResponse(json(result));
+  return addCORSToResponse(json(finalResult));
 }));
 
 loggingRouter.post("/api/logs/promote", withErrorHandling(async (req, env) => {
@@ -170,14 +203,33 @@ loggingRouter.post("/api/logs/promote", withErrorHandling(async (req, env) => {
   const err = validateLog(log);
   if (err) return addCORSToResponse(json({ ok: false, error: `invalid KV log: ${err}` }, { status: 400 }));
   
-  await env.AQUIL_DB.prepare(
-    'INSERT OR IGNORE INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(log.id, log.type, log.detail ?? null, log.timestamp, 'D1').run();
+  // Use main writeLog pipeline to promote from KV to D1
+  const promoteResult = await writeLog(env, {
+    type: log.type,
+    payload: {
+      id: log.id,
+      type: log.type,
+      detail: log.detail,
+      timestamp: log.timestamp,
+      storedIn: 'D1',
+      promoted_from: 'KV',
+      original_kv_key: id
+    },
+    session_id: log.session_id || crypto.randomUUID(),
+    who: 'promote_api',
+    level: 'info',
+    tags: ['promote', 'kv_to_d1', 'api'],
+    stores: ['d1'] // Explicitly target D1 store for promotion
+  });
   
-  const promoteResult = { ok: true, promotedId: id };
-  await logChatGPTAction(env, 'promote', body, promoteResult);
+  const finalResult = { 
+    ok: promoteResult.d1 === "ok", 
+    promotedId: id,
+    status: promoteResult
+  };
+  await logChatGPTAction(env, 'promote', body, finalResult);
   
-  return addCORSToResponse(json(promoteResult));
+  return addCORSToResponse(json(finalResult));
 }));
 
 loggingRouter.post("/api/logs/retrieve", withErrorHandling(async (req, env) => {
