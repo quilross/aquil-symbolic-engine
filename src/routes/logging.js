@@ -148,9 +148,9 @@ loggingRouter.post("/api/logs/kv-write", withErrorHandling(async (req, env) => {
   await logChatGPTAction(env, 'kvWrite', body, result);
   
   if (result.kv === "ok") {
-    return addCORSToResponse(json({ ok: true, status: result }));
+    return addCORSToResponse(createSuccessResponse({ id: body.id, ...result }));
   } else {
-    return addCORSToResponse(json({ ok: false, error: result.kv || 'KV write failed' }, { status: 500 }));
+    return addCORSToResponse(createErrorResponse(result.kv || 'Failed to write to KV', 500));
   }
 }));
 

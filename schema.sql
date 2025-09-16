@@ -99,6 +99,19 @@ CREATE TABLE IF NOT EXISTS wisdom_compilation (
     next_period_intentions TEXT -- JSON: intentions for coming period
 );
 
+-- System error logging
+CREATE TABLE IF NOT EXISTS system_errors (
+    error_id TEXT PRIMARY KEY,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    endpoint TEXT,
+    status_code INTEGER,
+    error_message TEXT,
+    stack_trace TEXT,
+    request_body TEXT,
+    severity TEXT,
+    session_id TEXT
+);
+
 -- Trust building exercises and their effectiveness
 CREATE TABLE IF NOT EXISTS trust_exercises (
     id TEXT PRIMARY KEY,
@@ -212,5 +225,5 @@ CREATE INDEX IF NOT EXISTS idx_trust_exercises_type ON trust_exercises(exercise_
 CREATE INDEX IF NOT EXISTS idx_standing_tall_timestamp ON standing_tall_sessions(timestamp DESC);
 
 -- Performance optimization: Partial indexes for frequently accessed data
-CREATE INDEX IF NOT EXISTS idx_recent_metamorphic ON metamorphic_logs(timestamp DESC) 
-  WHERE timestamp > datetime('now', '-7 days');
+-- Note: Removed non-deterministic datetime() function from WHERE clause
+CREATE INDEX IF NOT EXISTS idx_recent_metamorphic ON metamorphic_logs(timestamp DESC);

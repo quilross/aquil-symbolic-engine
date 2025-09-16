@@ -1,0 +1,11 @@
+{
+  "rules": [
+    {
+      "AllowedOrigins": ["https://signal-q.me", "https://chat.openai.com"],
+      "AllowedMethods": ["GET", "POST", "HEAD", "OPTIONS"],
+      "AllowedHeaders": ["Authorization", "Content-Type", "Cache-Control", "X-Requested-With"],
+      "ExposeHeaders": ["ETag", "Content-Type", "Content-Length", "Content-Range"],
+      "MaxAgeSeconds": 3600
+    }
+  ]
+}

@@ -566,24 +566,51 @@ export async function handleRetrieveLogs(request, env) {
 
 // Logging
 export async function handleLog(request, env) {
-  let body;
+  const body = await request.json();
+  const result = await logMetamorphicEvent(env, {
+    kind: body.type || "general",
+    detail: body.detail || body,
+    session_id: body.session_id || generateId(),
+    voice: body.voice || "user",
+    tags: body.tags || [],
+  });
+  return new Response(JSON.stringify({ success: true, data: { id: result } }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// Trust Check-in with AI-powered analysis
+export async function handleTrustCheckIn(request, env) {
+  let data;
   try {
-    body = await request.json();
+    data = await request.json();
   } catch {
     return new Response(JSON.stringify({ error: "Malformed JSON" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
-  const id = await logMetamorphicEvent(env, {
-    kind: body.type,
-    detail: body.payload,
-    session_id: body.session_id,
-    voice: body.who,
+  const { context = {}, session_id } = data;
+  let analysis;
+  try {
+    const prompt = `Analyze the trust patterns in this context and suggest practices: ${JSON.stringify(context)}`;
+    const aiResp = await aiCall(env, "@cf/meta/llama-2-7b-chat-int8", [
+      { role: "user", content: prompt },
+    ]);
+    analysis = aiResp.response;
+  } catch {
+    analysis = "Trust is built through consistency and transparency. Consider sharing more about your thoughts and feelings.";
+  }
+  await logMetamorphicEvent(env, {
+    kind: "trust_check_in",
+    detail: { analysis },
+    session_id,
+    voice: "mirror",
   });
-  return new Response(JSON.stringify({ status: "ok", id }), {
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({ analysis, voice_used: "mirror" }),
+    { headers: { "Content-Type": "application/json" } },
+  );
 }
 
 /**

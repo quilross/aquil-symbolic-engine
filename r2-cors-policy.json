@@ -1,0 +1,16 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://*.signal-q.me",
+      "http://localhost:*"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "content-type"
+    ],
+    "MaxAgeSeconds": 3600
+  }
+]

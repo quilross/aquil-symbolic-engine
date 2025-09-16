@@ -14,7 +14,7 @@ export async function listRecent(env, { prefix = "log_", limit = 20 } = {}) {
 export async function listRecentWithContent(env, { prefix = "log_", limit = 20 } = {}) {
   const { listRecentEntries } = await import('../journalService.js');
   
-  const result = await listRecentEntries(env, { prefix, limit });
+  const result = listRecentEntries(env, { prefix, limit });
   
   if (result.success) {
     // Convert to legacy format
@@ -36,11 +36,8 @@ export async function listRecentWithContent(env, { prefix = "log_", limit = 20 }
 export async function getRecentLogs(env, options = {}) {
   const { includeContent = true, ...opts } = options;
   
-  if (includeContent) {
-    return await listRecentWithContent(env, opts);
-  } else {
-    return await listRecent(env, opts); // Legacy mode preserved
-  }
+  // Force includeContent to true for this specific function's logic
+  return await listRecentWithContent(env, { ...opts, includeContent: true });
 }
 
 // Batch get values for keys

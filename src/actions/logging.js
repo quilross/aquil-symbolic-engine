@@ -248,7 +248,7 @@ export async function writeLog(
     // Move bulk data to R2 if available
     try {
       if (env.AQUIL_STORAGE) {
-        const r2Key = `overflow/${new Date().toISOString().split('T')[0]}/${id}.json`;
+        const r2Key = `logs/${operationId}/${new Date().toISOString().split('T')[0]}/${id}.json`;
         
         // Compress payload for R2 storage
         const r2Data = JSON.stringify(redactedPayload, null, 2);

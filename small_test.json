@@ -1,0 +1,6 @@
+{
+  "intent": "test small payload",
+  "id": "test-001",
+  "timestamp": "2024-12-16T07:00:00.000Z",
+  "data": "this is a small test"
+}

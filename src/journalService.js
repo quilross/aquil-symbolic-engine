@@ -29,7 +29,7 @@ export async function addEntry(env, entryData, options = {}) {
     }
     
     // Prepare key and data
-    const key = options.keyPrefix !== undefined ? `${options.keyPrefix}${entryData.id}` : `log:${entryData.id}`;
+    const key = options.keyPrefix !== undefined ? `${options.keyPrefix}${entryData.id}` : `log_${entryData.id}`;
     const data = JSON.stringify(entryData);
     
     // Prepare KV options
@@ -428,40 +428,26 @@ export async function listRecentEntries(env, options = {}) {
     const limit = Math.min(options.limit || 20, 100);
     
     // List keys from KV
-    const result = await env.AQUIL_MEMORIES.list({ prefix });
+    const listResult = await env.AQUIL_MEMORIES.list({ prefix, limit });
     
-    // Sort keys by timestamp if extractable from key name
-    const sortedKeys = result.keys
-      .map((k) => ({ 
-        key: k.name, 
-        ts: parseInt(k.name.split("_")[1], 10) || 0,
-        metadata: k.metadata || {}
-      }))
-      .sort((a, b) => b.ts - a.ts)
-      .slice(0, limit);
-    
-    // Fetch content for each key
+    // Sort keys by timestamp descending (newest first)
+    const sortedKeys = listResult.keys
+      .map(k => k.name)
+      .sort((a, b) => {
+        const tsA = parseInt(a.split('_').pop() || '0', 10);
+        const tsB = parseInt(b.split('_').pop() || '0', 10);
+        return tsB - tsA;
+      });
+
+    // Fetch entries for the sorted keys
     const entries = [];
-    const errors = [];
-    
-    for (const { key, metadata } of sortedKeys) {
-      try {
-        const content = await env.AQUIL_MEMORIES.get(key);
-        if (content) {
-          const parsedContent = JSON.parse(content);
-          entries.push({
-            id: key,
-            key: key,
-            content: parsedContent,
-            metadata,
-            timestamp: parsedContent.timestamp,
-            type: parsedContent.type
-          });
-        }
-      } catch (parseError) {
-        errors.push({
-          key,
-          error: parseError.message
+    for (const key of sortedKeys) {
+      const entryResult = await getEntryById(env, key, { keyPrefix: '' });
+      if (entryResult.success) {
+        entries.push({
+          key: key,
+          content: entryResult.data,
+          metadata: listResult.keys.find(k => k.name === key)?.metadata || null
         });
       }
     }
@@ -469,16 +455,14 @@ export async function listRecentEntries(env, options = {}) {
     console.log(`[JournalService] Successfully listed recent entries`, {
       operationId,
       prefix,
-      totalKeys: result.keys.length,
-      returnedEntries: entries.length,
-      errors: errors.length
+      totalKeys: listResult.keys.length,
+      returnedEntries: entries.length
     });
     
     return {
       success: true,
       entries,
       total: entries.length,
-      errors: errors.length > 0 ? errors : undefined,
       operationId
     };
     

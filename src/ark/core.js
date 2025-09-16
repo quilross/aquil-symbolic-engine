@@ -155,42 +155,32 @@ export async function logMetamorphicEvent(env, event) {
 
     // Log to database with fallback handling
     if (env.AQUIL_DB) {
-      try {
-        // Try to use metamorphic_logs table first
-        await env.AQUIL_DB.prepare(
-          `
-                    INSERT INTO metamorphic_logs (
-                        id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `,
-        )
-          .bind(
+        const stmt = env.AQUIL_DB.prepare(
+          `INSERT INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        );
+        await stmt.bind(
             enhancedEvent.id,
             enhancedEvent.timestamp,
-            null, // operationId (not used in ark events)
-            null, // originalOperationId (not used in ark events)
+            null, // operationId
+            null, // originalOperationId
             enhancedEvent.kind,
-            enhancedEvent.signal_strength || 'info', // level (was signal_strength)
+            enhancedEvent.signal_strength || 'info',
             enhancedEvent.session_id,
             enhancedEvent.tags,
-            JSON.stringify(['d1']), // stores array
-            null, // artifactKey (not used in ark events)
-            null, // error_message (only for errors)
-            null, // error_code (only for errors)
+            JSON.stringify(['d1']),
+            null, // artifactKey
+            null, // error_message
+            null, // error_code
             enhancedEvent.detail,
-            null, // env (not used in ark events)
-            enhancedEvent.voice || 'gpt', // source (was voice)
-          )
-          .run();
-      } catch (dbError) {
-        console.warn('Failed to log to metamorphic_logs:', dbError.message);
-      }
+            null, // env
+            enhancedEvent.voice || 'gpt'
+          ).run();
     }
 
     return eventId;
   } catch (error) {
     console.error("ARK logging error:", error);
-    return null;
+    throw error; // Re-throw the error to be caught by the caller
   }
 }
 

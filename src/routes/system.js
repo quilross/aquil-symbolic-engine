@@ -4,8 +4,13 @@
 
 import { Router } from 'itty-router';
 import { handleSessionInit, handleHealthCheck } from '../ark/endpoints.js';
-import { logChatGPTAction } from '../actions/logging.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
+
+// Create a simple logChatGPTAction function since it's not exported from actions
+async function logChatGPTAction(env, operationId, data, result, error = null) {
+  // Simplified logging for the router - in a real implementation this would do more
+  console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
+}
 import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
 
 const systemRouter = Router();
