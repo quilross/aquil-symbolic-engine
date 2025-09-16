@@ -151,11 +151,32 @@ export const OP_ALIASES = {
   // Commitments
   'manage_commitment': 'manageCommitment',
   'list_active_commitments': 'listActiveCommitments',
-  'update_commitment_progress': 'updateCommitmentProgress',
   
   // Legacy aliases for cleanup
   'memoryRetrieval': 'ragMemoryConsolidation',
-  'searchR2': 'searchR2Storage',
+  'searchR2': 'retrieveLogsOrDataEntries',
+  
+  // Additional implementation aliases found in code
+  'generateJournalInsight': 'generateJournalInsight',
+  'getConversationAnalytics': 'getPersonalInsights',
+  'exportConversationData': 'retrieveLogsOrDataEntries',
+  'globalErrorHandler': 'systemHealthCheck',
+  'scheduledTriggerError': 'systemHealthCheck',
+  'logEntry': 'logDataOrEvent',
+  'retrieveLogs': 'retrieveLogsOrDataEntries',
+  'writeLog': 'logDataOrEvent',
+  'getLatestLogs': 'retrieveLogsOrDataEntries',
+  'getInsights': 'getPersonalInsights',
+  'getMetrics': 'systemHealthCheck',
+  'getAnalytics': 'getPersonalInsights',
+  'trackMood': 'trackMoodAndEmotions',
+  'exportConversation': 'retrieveLogsOrDataEntries',
+  'generateInquiry': 'generateDiscoveryInquiry',
+  'extractWisdom': 'extractMediaWisdom',
+  'navigateTransition': 'navigateTransitions',
+  'healthCheck': 'systemHealthCheck',
+  'readinessCheck': 'systemHealthCheck',
+  'listR2Objects': 'retrieveLogsOrDataEntries',
   
   // Session initialization (legacy alias)
   'sessionInit': 'retrieveLogsOrDataEntries',

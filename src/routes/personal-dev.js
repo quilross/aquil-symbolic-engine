@@ -74,7 +74,7 @@ personalDevRouter.post("/api/somatic/session", withErrorHandling(async (req, env
   const somaticHealer = new SomaticHealer(env);
   const result = await somaticHealer.processSession(body);
   
-  await logChatGPTAction(env, 'somaticSession', body, result);
+  await logChatGPTAction(env, 'somaticHealingSession', body, result);
   return addCORSToResponse(createSuccessResponse(result));
 }));
 
@@ -123,7 +123,7 @@ personalDevRouter.get("/api/wisdom/daily-synthesis", withErrorHandling(async (re
   const aquilCore = new AquilCore(env);
   const result = await aquilCore.dailySynthesis();
   
-  await logChatGPTAction(env, 'dailyWisdomSynthesis', {}, result);
+  await logChatGPTAction(env, 'getDailySynthesis', {}, result);
   return addCORSToResponse(createSuccessResponse(result));
 }));
 
