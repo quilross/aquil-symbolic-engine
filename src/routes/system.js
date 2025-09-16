@@ -35,7 +35,7 @@ systemRouter.post("/api/system/health-check", withErrorHandling(async (req, env)
   const result = await handleHealthCheck(req, env);
   const data = await result.clone().json();
   
-  await logChatGPTAction(env, 'healthCheckPost', body, data);
+  await logChatGPTAction(env, 'systemHealthCheck', body, data);
   
   return addCORSToResponse(result);
 }));

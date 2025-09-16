@@ -28,7 +28,7 @@ dataOpsRouter.post("/api/kv/log", withErrorHandling(async (req, env) => {
   const body = await req.json();
   const result = await kvPut(req, env);
   
-  await logChatGPTAction(env, 'kvLog', body, result);
+  await logChatGPTAction(env, 'storeInKV', body, result);
   
   return addCORSToResponse(result);
 }));
@@ -36,7 +36,7 @@ dataOpsRouter.post("/api/kv/log", withErrorHandling(async (req, env) => {
 dataOpsRouter.get("/api/kv/get", withErrorHandling(async (req, env) => {
   const result = await kvGet(req, env);
   
-  await logChatGPTAction(env, 'kvGet', { url: req.url }, result);
+  await logChatGPTAction(env, 'retrieveLogsOrDataEntries', { url: req.url }, result);
   
   return addCORSToResponse(result);
 }));
@@ -46,7 +46,7 @@ dataOpsRouter.post("/api/r2/put", withErrorHandling(async (req, env) => {
   const result = await r2Put(req, env);
   const body = await req.clone().json().catch(() => ({}));
   
-  await logChatGPTAction(env, 'storeInR2', body, result);
+  await logChatGPTAction(env, 'logDataOrEvent', body, result);
   
   return addCORSToResponse(result);
 }));
@@ -72,7 +72,7 @@ dataOpsRouter.post("/api/vectorize/query", withErrorHandling(async (req, env) =>
   const result = await vectorQuery(req, env);
   const body = await req.clone().json().catch(() => ({}));
   
-  await logChatGPTAction(env, 'queryVectorDatabase', body, result);
+  await logChatGPTAction(env, 'ragMemoryConsolidation', body, result);
   
   return addCORSToResponse(result);
 }));
@@ -81,7 +81,7 @@ dataOpsRouter.post("/api/vectorize/upsert", withErrorHandling(async (req, env) =
   const result = await vectorUpsert(req, env);
   const body = await req.clone().json().catch(() => ({}));
   
-  await logChatGPTAction(env, 'upsertVectorData', body, result);
+  await logChatGPTAction(env, 'upsertVectors', body, result);
   
   return addCORSToResponse(result);
 }));
