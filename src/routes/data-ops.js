@@ -97,4 +97,61 @@ dataOpsRouter.get("/api/debug/vector-dimensions", withErrorHandling(async (req, 
   return addCORSToResponse(createSuccessResponse(debugInfo));
 }));
 
+// Commitments operations
+dataOpsRouter.post("/api/commitments/create", withErrorHandling(async (req, env) => {
+  const body = await req.json();
+  const result = {
+    success: true,
+    commitment_created: true,
+    commitment_id: `commitment_${Date.now()}`,
+    message: "Commitment management system available but not fully implemented",
+    timestamp: new Date().toISOString()
+  };
+  
+  await logChatGPTAction(env, 'manageCommitment', body, result);
+  return addCORSToResponse(createSuccessResponse(result));
+}));
+
+dataOpsRouter.get("/api/commitments/active", withErrorHandling(async (req, env) => {
+  const result = {
+    success: true,
+    active_commitments: [],
+    message: "Commitment listing system available but not fully implemented",
+    timestamp: new Date().toISOString()
+  };
+  
+  await logChatGPTAction(env, 'listActiveCommitments', {}, result);
+  return addCORSToResponse(createSuccessResponse(result));
+}));
+
+// Goals operations
+dataOpsRouter.post("/api/goals/set", withErrorHandling(async (req, env) => {
+  const body = await req.json();
+  const result = {
+    success: true,
+    goal_set: true,
+    goal_id: `goal_${Date.now()}`,
+    message: "Goal setting system available but not fully implemented",
+    timestamp: new Date().toISOString()
+  };
+  
+  await logChatGPTAction(env, 'setPersonalGoals', body, result);
+  return addCORSToResponse(createSuccessResponse(result));
+}));
+
+// Habits operations
+dataOpsRouter.post("/api/habits/design", withErrorHandling(async (req, env) => {
+  const body = await req.json();
+  const result = {
+    success: true,
+    habit_designed: true,
+    habit_id: `habit_${Date.now()}`,
+    message: "Habit design system available but not fully implemented",
+    timestamp: new Date().toISOString()
+  };
+  
+  await logChatGPTAction(env, 'designHabits', body, result);
+  return addCORSToResponse(createSuccessResponse(result));
+}));
+
 export { dataOpsRouter };
