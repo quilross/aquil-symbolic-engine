@@ -896,12 +896,12 @@ router.post("/api/ark/log", async (req, env) => {
   return addCORS(result);
 });
 
-router.post("/api/ark/retrieve", async (req, env) => {
+router.get("/api/ark/retrieve", async (req, env) => {
   const result = await arkRetrieve(req, env);
   return addCORS(result);
 });
 
-router.post("/api/ark/memories", async (req, env) => {
+router.get("/api/ark/memories", async (req, env) => {
   const result = await arkMemories(req, env);
   return addCORS(result);
 });
