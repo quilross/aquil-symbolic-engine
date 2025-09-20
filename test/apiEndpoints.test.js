@@ -31,7 +31,8 @@ const env = {
     prepare: () => ({
       bind: () => ({
         all: async () => ({ results: [] }),
-        run: async () => ({})
+        run: async () => ({}),
+        first: async () => null
       })
     })
   },

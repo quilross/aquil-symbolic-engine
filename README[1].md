@@ -21,7 +21,26 @@ Aquil is your personal AI companion designed specifically for your journey of bu
 **Frontend:** Custom ChatGPT with GPT Actions  
 **Database:** D1 (SQLite) + KV storage  
 **Development:** GitHub Codespaces  
-**Data Sovereignty:** Everything runs in YOUR accounts  
+**Data Sovereignty:** Everything runs in YOUR accounts
+
+### Logging Format
+
+See `LOGGING_SPEC.md` for the structure of metamorphic and event logs and examples of writing and retrieving entries.
+
+### Vector Context Index
+
+Configure Cloudflare Vectorize with a `[[vectorize]]` block in `wrangler.toml`. The worker automatically uses bindings named
+`VECTORIZE` or `AQUIL_CONTEXT` (with fallbacks for similarly named bindings) when calling `env.<binding>.upsert` and
+`env.<binding>.query`. Example configuration:
+
+```
+[[vectorize]]
+binding   = "AQUIL_CONTEXT"
+index_name = "aquil-context-index"
+```
+
+You can manage the index with `wrangler vectorize` commands (see Cloudflare's documentation) and the GPT action will pick up
+the binding without code changes.
 
 ### Core AI Engines
 
