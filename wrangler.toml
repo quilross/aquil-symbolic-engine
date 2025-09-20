@@ -14,6 +14,7 @@ account_id = "b07412f2f2389e8b537051bc092f3376"
 binding       = "AQUIL_DB"
 database_name = "aquil-wisdom-db"
 database_id   = "62d83066-2966-4510-9145-d65d520312f4"
+preview_database_id = "62d83066-2966-4510-9145-d65d520312f4"
 
 [[kv_namespaces]]
 binding = "AQUIL_MEMORIES"
@@ -23,6 +24,7 @@ preview_id = "8d49b2d47e2a46a38ca63257f47f1e84"
 [[r2_buckets]]
 binding     = "AQUIL_STORAGE"
 bucket_name = "aquil-wisdom-storage"
+preview_bucket_name = "aquil-wisdom-storage"
 
 [[vectorize]]
 binding   = "AQUIL_CONTEXT"

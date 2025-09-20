@@ -1,36 +1,70 @@
 // Ensure a vector: embed text or pass through provided vector
 // ...existing code...
-// Ensure a vector embedding from text or vector
+// Ensure we have a proper vector for queries
 export async function ensureVector(
   env,
-  { text, vector, model = "@cf/baai/bge-large-en-v1.5" } = {},
+  { text, vector, model = "@cf/baai/bge-large-en-v1.5", expectedDim = 1024 } = {},
 ) {
+  let values;
+  
   if (vector) {
-    return vector;
-  }
-  if (text) {
-    // Use Cloudflare AI binding to embed text
-    const embedding = await env.AQUIL_AI.run(model, { text });
+    if (Array.isArray(vector)) values = vector;
+    else if (ArrayBuffer.isView(vector)) values = Array.from(vector);
+    else throw new Error("Provided vector is not an array or typed array");
+  } else if (text) {
+    // TEMPORARY TEST: Return a hardcoded 1024-dimension vector to test if the issue is in Vectorize
+    values = new Array(1024).fill(0.1);
     
-    // Use the same format as the working logging code
-    const values = embedding.data?.[0] || embedding;
-    
-    if (Array.isArray(values)) {
-      return new Float32Array(values);
+    /* 
+    try {
+      // Call AI model - confirmed working format from test endpoint
+      const aiResponse = await env.AQUIL_AI.run(model, { text });
+      
+      // Extract vector from known working response format: { data: [[...numbers...]], shape: [1, 1024], pooling: "mean" }
+      if (aiResponse && 
+          typeof aiResponse === 'object' && 
+          Array.isArray(aiResponse.data) && 
+          aiResponse.data.length > 0 &&
+          Array.isArray(aiResponse.data[0]) && 
+          aiResponse.data[0].length > 0 &&
+          typeof aiResponse.data[0][0] === 'number') {
+        values = aiResponse.data[0];
+      } else {
+        throw new Error(`Unexpected AI response format. Expected {data: [[numbers...]]}, got: ${JSON.stringify(aiResponse, null, 2)}`);
+      }
+      
+    } catch (aiError) {
+      throw new Error(`AI embedding generation failed: ${aiError.message}`);
     }
-    
-    console.error('Unexpected embedding format:', { embedding, values });
-    throw new Error(`Invalid embedding format: values is not an array`);
+    */
+  } else {
+    throw new Error("No text or vector provided for embedding");
   }
-  throw new Error("No text or vector provided for embedding");
+  
+  // Convert typed array to regular array if needed
+  if (values && ArrayBuffer.isView(values)) {
+    values = Array.from(values);
+  }
+  
+  // Validate result
+  if (!Array.isArray(values) || values.length === 0 || typeof values[0] !== 'number') {
+    throw new Error('Invalid embedding format: not a valid number array');
+  }
+  
+  // Validate dimensions
+  if (values.length !== expectedDim) {
+    throw new Error(`Embedding dimension mismatch: got ${values.length}, expected ${expectedDim}`);
+  }
+  
+  return values;
 }
 
 // Query vector database by text (LEGACY - preserved for existing functionality)
 export async function queryByText(
   env,
-  { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5" } = {},
+  { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5", expectedDim = 1024 } = {},
 ) {
-  const vector = await ensureVector(env, { text, model });
+  const vector = await ensureVector(env, { text, model, expectedDim });
   const results = await env.AQUIL_CONTEXT.query({
     topK,
     vector,
@@ -48,10 +82,13 @@ export async function queryByText(
 // Mode 1: Semantic Recall - Direct nearest-neighbor log retrieval
 export async function semanticRecall(
   env,
-  { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5", threshold = 0.7 } = {},
+  { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5", threshold = 0.7, expectedDim = 1024 } = {},
 ) {
   try {
-    const vector = await ensureVector(env, { text, model });
+    // Generate vector using fixed ensureVector function
+    let vector = await ensureVector(env, { text, model, expectedDim });
+
+    // Query Vectorize with the generated vector
     const results = await env.AQUIL_CONTEXT.query({
       topK,
       vector,
@@ -93,40 +130,47 @@ export async function semanticRecall(
       mode: 'semantic_recall',
       query: text,
       matches: semanticMatches,
-      total_found: semanticMatches.length
+      total_found: semanticMatches.length,
+      vector_length: vector.length,
+      expected_dim: expectedDim,
+      debug: { 
+        vector_sample: vector.slice(0, 5),
+        total_matches: results.matches?.length || 0,
+        filtered_matches: semanticMatches.length
+      }
     };
   } catch (error) {
     return {
       mode: 'semantic_recall',
       query: text,
       matches: [],
-      error: error.message
+      error: error.message,
+      debug: {
+        attempted: true,
+        error_type: error.constructor.name
+      }
     };
   }
 }
 
-// Mode 2: Transformative Inquiry - Reframe into growth questions (PRESERVED)
+// Mode 2: Transformative Inquiry - Generate insights and questions from semantic matches
 export async function transformativeInquiry(
   env,
-  { text, topK = 3, model = "@cf/baai/bge-large-en-v1.5" } = {},
+  { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5", expectedDim = 1024 } = {},
 ) {
   try {
-    // Get semantic matches first
-    const semanticResults = await semanticRecall(env, { text, topK, model });
-    
-    // Transform matches into inquiry-based insights
+    const semanticResults = await semanticRecall(env, { text, topK, model, expectedDim });
+
     const inquiries = [];
-    for (const match of semanticResults.matches) {
-      const logText = match.log_text;
-      const metadata = match.metadata;
-      
-      // Generate transformative questions based on log content and context
+    for (const match of semanticResults.matches || []) {
+      const logText = match.log_text || '';
+      const metadata = match.metadata || {};
       const inquiry = generateTransformativeQuestions(logText, metadata, text);
       inquiries.push({
         ...match,
         inquiry,
         transformative_questions: inquiry.questions,
-        growth_opportunity: inquiry.growth_opportunity
+        growth_opportunity: inquiry.growth_opportunity,
       });
     }
 
@@ -135,14 +179,14 @@ export async function transformativeInquiry(
       query: text,
       inquiries,
       total_found: inquiries.length,
-      guidance: generateOverallGuidance(inquiries, text)
+      guidance: generateOverallGuidance(inquiries, text),
     };
   } catch (error) {
     return {
       mode: 'transformative_inquiry',
       query: text,
       inquiries: [],
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -217,42 +261,46 @@ function generateOverallGuidance(inquiries, currentQuery) {
 // Unified Vector Query - Supports both modes
 export async function queryVector(
   env,
-  { text, mode = 'semantic_recall', topK = 5, model = "@cf/baai/bge-large-en-v1.5", threshold = 0.7 } = {},
+  { text, mode = 'semantic_recall', topK = 5, model = "@cf/baai/bge-large-en-v1.5", threshold = 0.7, expectedDim = 1024 } = {},
 ) {
   switch (mode) {
     case 'semantic_recall':
-      return await semanticRecall(env, { text, topK, model, threshold });
+      return await semanticRecall(env, { text, topK, model, threshold, expectedDim });
     
     case 'transformative_inquiry':
-      return await transformativeInquiry(env, { text, topK, model });
+      return await transformativeInquiry(env, { text, topK, model, expectedDim });
     
     case 'legacy':
-      return await queryByText(env, { text, topK, model }); // Preserve original functionality
+      return await queryByText(env, { text, topK, model, expectedDim }); // Preserve original functionality
     
     default:
-      return await semanticRecall(env, { text, topK, model, threshold });
+      return await semanticRecall(env, { text, topK, model, threshold, expectedDim });
   }
 }
 import { send, readJSON } from "../utils/http.js";
 
 export async function upsert(req, env) {
+  const body = await readJSON(req);
   const {
     id,
     text,
     vector,
     metadata,
     model = "@cf/baai/bge-large-en-v1.5",
-  } = await readJSON(req);
+    expectedDim = 1024,
+  } = body;
   let v = vector;
   try {
     if (!v && text) {
-      const embedding = await env.AQUIL_AI.run(model, { text });
-      v = embedding.data[0];
+      v = await ensureVector(env, { text, model, expectedDim });
     }
     if (!id || !Array.isArray(v))
       return send(400, { error: "id and embedding vector required" });
+    if (v.length !== expectedDim) {
+      return send(400, { error: `Embedding dimension mismatch: got ${v.length}, expected ${expectedDim}` });
+    }
     await env.AQUIL_CONTEXT.upsert([{ id, values: v, metadata }]);
-    return send(200, { ok: true, id });
+    return send(200, { ok: true, id, dimension: v.length });
   } catch (e) {
     return send(500, { error: "vector_upsert_error", message: String(e) });
   }
@@ -260,40 +308,69 @@ export async function upsert(req, env) {
 
 export async function query(req, env) {
   try {
+    const body = await readJSON(req);
     const {
       text,
       vector,
       topK = 5,
       model = "@cf/baai/bge-large-en-v1.5",
       mode = "semantic_recall",
-      threshold = 0.7
-    } = await readJSON(req);
+      threshold = 0.7,
+      expectedDim = 1024
+    } = body;
 
     // If text is provided, use RAG with semantic recall or transformative inquiry
     if (text) {
-      const result = await queryVector(env, { text, mode, topK, model, threshold });
-      return send(200, { 
-        success: true,
-        query: text,
-        mode,
-        ...result
-      });
+      let v;
+      try {
+        v = await ensureVector(env, { text, model, expectedDim });
+      } catch (e) {
+        return send(400, { error: "embedding_error", message: String(e) });
+      }
+      if (v.length !== expectedDim) {
+        return send(400, { error: `Embedding dimension mismatch: got ${v.length}, expected ${expectedDim}` });
+      }
+      const results = await env.AQUIL_CONTEXT.query({ vector: v, topK, includeMetadata: true });
+      return send(200, { success: true, query: text, mode, dimension: v.length, results });
     }
 
     // Fallback to basic vector query for vector-only queries
-    let v = vector;
-    if (!v) {
+    let v2 = vector;
+    if (!v2) {
       return send(400, { error: "text or vector required for query" });
     }
-    
-    if (!Array.isArray(v)) {
+    if (!Array.isArray(v2)) {
       return send(400, { error: "vector must be an array" });
     }
-    
-    const results = await env.AQUIL_CONTEXT.query(v, { topK });
-    return send(200, { results });
-    
+    if (v2.length !== expectedDim) {
+      return send(400, { error: `Embedding dimension mismatch: got ${v2.length}, expected ${expectedDim}` });
+    }
+    const results = await env.AQUIL_CONTEXT.query({ vector: v2, topK, includeMetadata: true });
+    return send(200, { success: true, mode: 'vector_only', dimension: v2.length, results });
   } catch (e) {
     return send(500, { error: "vector_query_error", message: String(e) });
+  }
+}
+
+// Test AI binding directly
+export async function testAI(env, { text = "test" } = {}) {
+  try {
+    console.log(`[testAI] Testing AI binding with text: "${text}"`);
+    const out = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text });
+    console.log(`[testAI] AI response:`, JSON.stringify(out, null, 2));
+    return {
+      success: true,
+      text,
+      response: out,
+      responseType: typeof out,
+      responseKeys: out && typeof out === 'object' ? Object.keys(out) : null
+    };
+  } catch (error) {
+    console.error(`[testAI] AI binding test failed:`, error);
+    return {
+      success: false,
+      error: error.message,
+      errorType: typeof error
+    };
   }
 }

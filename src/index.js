@@ -26,7 +26,8 @@ import {
   arkResonance,
   arkStatus,
   arkFilter,
-  arkAutonomous
+  arkAutonomous,
+  arkTestAI
 } from "./ark/ark-endpoints.js";
 // Behavioral engine
 import { runEngine } from "./agent/engine.js";
@@ -826,7 +827,6 @@ router.all("/api/vectorize/*", dataOpsRouter.fetch);
 
 // Personal development routes (discovery, wisdom, trust, energy)
 router.all("/api/discovery/*", personalDevRouter.fetch);
-router.all("/api/wisdom/*", personalDevRouter.fetch);
 router.all("/api/trust/*", personalDevRouter.fetch);
 router.all("/api/energy/*", personalDevRouter.fetch);
 router.all("/api/somatic/*", personalDevRouter.fetch);
@@ -928,6 +928,11 @@ router.post("/api/ark/filter", async (req, env) => {
 
 router.post("/api/ark/autonomous", async (req, env) => {
   const result = await arkAutonomous(req, env);
+  return addCORS(result);
+});
+
+router.post("/api/ark/test-ai", async (req, env) => {
+  const result = await arkTestAI(env, req);
   return addCORS(result);
 });
 

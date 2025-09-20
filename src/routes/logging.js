@@ -87,7 +87,7 @@ loggingRouter.post("/api/log", withErrorHandling(async (req, env) => {
   const data = await result.clone().json().catch(() => ({}));
   
   await logChatGPTAction(env, 'logEntry', body, data);
-  
+
   return addCORSToResponse(result);
 }));
 

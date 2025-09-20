@@ -1,4 +1,7 @@
+
 # Aquil Symbolic Engine - AI Agent Instructions
+
+**This document is the canonical source of guidance for AI coding agents working in this codebase. Follow these instructions for architecture, workflows, conventions, and integration points.**
 
 This document provides essential guidance for AI agents working on the Aquil Symbolic Engine codebase.
 
@@ -106,4 +109,8 @@ Set these in your `.dev.vars` file or via Wrangler/Miniflare CLI as needed.
 
 ## src-core-* Modules
 
+
 Each `src-core-*` module is tied to a specific endpoint and implements a personal-growth engine. The modules `SomaticHealer` and `ValuesClarifier` are canonical examples of the implementation pattern: they expose a class or function, are imported in `src/index.js`, and are invoked by the agent engine or ARK endpoints. Use these as references when adding new modules.
+
+---
+**Feedback requested:** If any section is unclear or missing, or if you need more examples, please comment so this guide can be improved for future AI agents.

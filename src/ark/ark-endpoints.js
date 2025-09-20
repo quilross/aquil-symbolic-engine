@@ -15,18 +15,37 @@ export async function arkLog(req, env) {
     const body = await readJSON(req);
     const result = await writeLog(env, body);
     
-    return send(200, {
-      success: true,
-      ark_status: {
-        capture: result.kv === 'ok' ? 'success' : 'failed',
-        promote: result.d1 === 'ok' || result.d1 === 'ok_fallback' ? 'success' : 'failed',
-        vector: result.vector === 'ok' ? 'success' : 'not_provided',
-        binary: result.r2 === 'ok' ? 'success' : 'not_provided'
-      },
-      details: result
-    });
+    return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
-    return send(500, { error: 'ark_log_error', message: error.message });
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
+  }
+}
+
+// Test AI binding endpoint for debugging
+export async function arkTestAI(env, req) {
+  try {
+    const { text = "hello world" } = await req.json().catch(() => ({}));
+    console.log('[arkTestAI] Testing AI binding with text:', text);
+    
+    const result = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text });
+    console.log('[arkTestAI] AI result:', JSON.stringify(result, null, 2));
+    
+    return new Response(JSON.stringify({
+      success: true,
+      input: text,
+      output: result,
+      output_keys: result && typeof result === 'object' ? Object.keys(result) : 'not an object'
+    }), { headers: { 'Content-Type': 'application/json' } });
+  } catch (error) {
+    console.error('[arkTestAI] Error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    }), { headers: { 'Content-Type': 'application/json' } });
   }
 }
 
@@ -96,11 +115,15 @@ export async function arkVector(req, env) {
     const body = await readJSON(req);
     const { text, mode = 'semantic_recall', topK = 5, threshold = 0.7 } = body;
     
+    console.log(`[arkVector] Starting with text: "${text}", mode: ${mode}`);
+    
     if (!text) {
       return send(400, { error: 'text_required', message: 'Query text is required' });
     }
     
+    console.log(`[arkVector] Calling queryVector...`);
     const result = await queryVector(env, { text, mode, topK, threshold });
+    console.log(`[arkVector] queryVector returned:`, JSON.stringify(result, null, 2));
     
     return send(200, {
       success: true,
@@ -109,6 +132,7 @@ export async function arkVector(req, env) {
       result
     });
   } catch (error) {
+    console.error(`[arkVector] Error caught:`, error);
     return send(500, { error: 'ark_vector_error', message: error.message });
   }
 }
