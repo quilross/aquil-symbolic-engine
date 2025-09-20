@@ -74,18 +74,24 @@ dataOpsRouter.get("/api/r2/list", withErrorHandling(async (req, env) => {
 
 // Vectorize operations
 dataOpsRouter.post("/api/vectorize/query", withErrorHandling(async (req, env) => {
-  const result = await vectorQuery(req, env);
-  const body = await req.clone().json().catch(() => ({}));
+  // Clone the request before passing to action to avoid ReadableStream lock
+  const reqClone = req.clone();
+  const result = await vectorQuery(reqClone, env);
   
+  // Read body from original request for logging
+  const body = await req.json().catch(() => ({}));
   await logChatGPTAction(env, 'ragMemoryConsolidation', body, result);
   
   return addCORSToResponse(result);
 }));
 
 dataOpsRouter.post("/api/vectorize/upsert", withErrorHandling(async (req, env) => {
-  const result = await vectorUpsert(req, env);
-  const body = await req.clone().json().catch(() => ({}));
+  // Clone the request before passing to action to avoid ReadableStream lock
+  const reqClone = req.clone();
+  const result = await vectorUpsert(reqClone, env);
   
+  // Read body from original request for logging
+  const body = await req.json().catch(() => ({}));
   await logChatGPTAction(env, 'upsertVectors', body, result);
   
   return addCORSToResponse(result);
