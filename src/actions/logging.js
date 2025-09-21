@@ -177,6 +177,13 @@ export async function writeLog(
   const id = generateId();
   const timestamp = new Date().toISOString(); // Use consistent ISO timestamp
   const status = {};
+
+  // Resolve store bindings with GPT compatibility support
+  const d1Binding = safeBinding(env, 'AQUIL_DB');
+  const kvBinding = safeBinding(env, 'AQUIL_MEMORIES');
+  const r2Binding = safeBinding(env, 'AQUIL_STORAGE');
+  const vectorBinding = safeBinding(env, 'AQUIL_CONTEXT');
+  const aiBinding = env?.AQUIL_AI;
   
   // Convert to canonical operation ID for consistent logging
   const operationId = toCanonical(type || 'log');
@@ -226,6 +233,25 @@ export async function writeLog(
     // Original payload data
     ...payload
   };
+
+  let vectorInput = textOrVector;
+  if (vectorInput == null) {
+    vectorInput =
+      payload?.vector ??
+      payload?.text ??
+      payload?.content ??
+      payload?.message ??
+      normalizedPayload?.content ??
+      (typeof payload === 'string' ? payload : null);
+  }
+
+  if (vectorInput != null && !Array.isArray(vectorInput) && typeof vectorInput !== 'string') {
+    try {
+      vectorInput = JSON.stringify(vectorInput);
+    } catch (stringifyError) {
+      vectorInput = String(vectorInput);
+    }
+  }
   
   // Apply privacy redaction before storing in D1/KV (fail-open)
   let redactedPayload;
@@ -247,9 +273,9 @@ export async function writeLog(
   if (payloadSize > maxPayloadBytes) {
     // Move bulk data to R2 if available
     try {
-      if (env.AQUIL_STORAGE) {
+      if (r2Binding) {
         const r2Key = `logs/${operationId}/${new Date().toISOString().split('T')[0]}/${id}.json`;
-        
+
         // Compress payload for R2 storage
         const r2Data = JSON.stringify(redactedPayload, null, 2);
         const encoder = new TextEncoder();
@@ -260,7 +286,7 @@ export async function writeLog(
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const sha256 = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         
-        await env.AQUIL_STORAGE.put(r2Key, data, {
+        await r2Binding.put(r2Key, data, {
           customMetadata: {
             'content-encoding': 'gzip',
             'x-sha256': sha256,
@@ -327,267 +353,176 @@ export async function writeLog(
   }
   
   // D1 - Enhanced with variable payload support and schema enforcement
-  try {
-    // Check circuit breaker for D1 store
-    const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
-    const { shouldSkip } = await checkStoreCircuitBreaker(env, 'd1');
-    
-    if (shouldSkip) {
-      status.d1 = "circuit_breaker_open";
-      
-      // Track missing store write (fail-open)
-      try {
-        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-        incrementMissingStoreWrite(env, 'd1');
-      } catch (metricsError) {
-        // Silent fail for metrics
-      }
-    } else {
-      // Try primary table (metamorphic_logs) with canonical schema
-      try {
-        // Use INSERT OR IGNORE for idempotency safety
-        await env.AQUIL_DB.prepare(
-          "INSERT OR IGNORE INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        )
-          .bind(
-            id,
-            timestamp, // Use consistent ISO timestamp
-            operationId, // Use canonical operationId 
-            originalOperationId, // originalOperationId (when different from canonical)
-            operationId, // kind (use canonical operation as kind)
-            level || 'info', // level (was signal_strength)
-            session_id || null,
-            JSON.stringify([...tags || [], `trace:${traceId}`]), // Add trace ID to tags
-            JSON.stringify(['d1']), // stores array - will be updated after all stores processed
-            r2Pointer, // artifactKey (R2 key if payload overflowed)
-            error_code ? finalPayload.error?.message || null : null, // error_message (only for errors)
-            error_code || null, // error_code (structured error code)
-            JSON.stringify(finalPayload), // detail (structured JSON)
-            env.ENV || env.ENVIRONMENT || 'unknown', // env
-            who || 'gpt', // source (was who)
-          )
-          .run();
-        status.d1 = "ok";
-        storesUsed.push('d1');
-        
-        // Track successful log write (fail-open)
-        try {
-          const { incrementLogWritten } = await import('../utils/metrics.js');
-          incrementLogWritten(env, 'd1');
-        } catch (metricsError) {
-          // Silent fail for metrics
-        }
-        
-      } catch (primaryError) {
-        status.d1 = `primary_error: ${primaryError.message}`;
-        
-        // Record store failure for circuit breaker
-        await recordStoreFailure(env, 'd1');
-        
-        // Track missing store write (fail-open)
+  if (!d1Binding) {
+    status.d1 = 'skipped_missing_d1_binding';
+  } else {
+    try {
+      // Check circuit breaker for D1 store
+      const { checkStoreCircuitBreaker, recordStoreFailure } = await import('../utils/ops-middleware.js');
+      const { shouldSkip } = await checkStoreCircuitBreaker(env, 'd1');
+
+      if (shouldSkip) {
+        status.d1 = 'circuit_breaker_open';
+
         try {
           const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
           incrementMissingStoreWrite(env, 'd1');
         } catch (metricsError) {
           // Silent fail for metrics
         }
+      } else {
+        try {
+          await d1Binding.prepare(
+            "INSERT OR IGNORE INTO metamorphic_logs (id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          )
+            .bind(
+              id,
+              timestamp,
+              operationId,
+              originalOperationId,
+              operationId,
+              level || 'info',
+              session_id || null,
+              JSON.stringify([...tags || [], `trace:${traceId}`]),
+              JSON.stringify(['d1']),
+              r2Pointer,
+              error_code ? finalPayload.error?.message || null : null,
+              error_code || null,
+              JSON.stringify(finalPayload),
+              env.ENV || env.ENVIRONMENT || 'unknown',
+              who || 'gpt',
+            )
+            .run();
+          status.d1 = 'ok';
+          storesUsed.push('d1');
+
+          try {
+            const { incrementLogWritten } = await import('../utils/metrics.js');
+            incrementLogWritten(env, 'd1');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
+        } catch (primaryError) {
+          status.d1 = `primary_error: ${primaryError.message}`;
+          await recordStoreFailure(env, 'd1');
+
+          try {
+            const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+            incrementMissingStoreWrite(env, 'd1');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
+        }
       }
-    }
-  } catch (e) {
-    status.d1 = String(e);
-    
-    // Record store failure for circuit breaker
-    try {
-      const { recordStoreFailure } = await import('../utils/ops-middleware.js');
-      await recordStoreFailure(env, 'd1');
-    } catch (circuitError) {
-      // Silent fail for circuit breaker
-    }
-    
-    // Track missing store write (fail-open)
-    try {
-      const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-      incrementMissingStoreWrite(env, 'd1');
-    } catch (metricsError) {
-      // Silent fail for metrics
+    } catch (e) {
+      status.d1 = String(e);
+
+      try {
+        const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+        await recordStoreFailure(env, 'd1');
+      } catch (circuitError) {
+        // Silent fail for circuit breaker
+      }
+
+      try {
+        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+        incrementMissingStoreWrite(env, 'd1');
+      } catch (metricsError) {
+        // Silent fail for metrics
+      }
     }
   }
 
+
   // KV - Respect KV_TTL_SECONDS environment variable and use finalPayload
-  try {
-    // Check circuit breaker for KV store
-    const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
-    const { shouldSkip } = await checkStoreCircuitBreaker(env, 'kv');
-    
-    if (shouldSkip) {
-      status.kv = "circuit_breaker_open";
-      
-      // Track missing store write (fail-open)
+  if (!kvBinding) {
+    status.kv = 'skipped_missing_kv_binding';
+  } else {
+    try {
+      // Check circuit breaker for KV store
+      const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
+      const { shouldSkip } = await checkStoreCircuitBreaker(env, 'kv');
+
+      if (shouldSkip) {
+        status.kv = 'circuit_breaker_open';
+
+        try {
+          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+          incrementMissingStoreWrite(env, 'kv');
+        } catch (metricsError) {
+          // Silent fail for metrics
+        }
+      } else {
+        const { addEntry } = await import('../journalService.js');
+        const ttlSeconds = parseInt(env.KV_TTL_SECONDS || '0', 10);
+
+        const kvEntry = {
+          id: id,
+          ...finalPayload,
+          kv_stored_at: timestamp,
+          observability: {
+            action_id: id,
+            trace_id: traceId,
+            operation_id: operationId,
+            timestamp: timestamp,
+            source: who || 'system',
+            environment: env.ENV || env.ENVIRONMENT || 'unknown'
+          }
+        };
+
+        const kvOptions = {
+          keyPrefix: 'log_',
+          ttl: ttlSeconds > 0 ? ttlSeconds : undefined
+        };
+
+        const result = await addEntry(env, kvEntry, kvOptions);
+        if (result.success) {
+          status.kv = 'ok';
+          storesUsed.push('kv');
+
+          try {
+            const { incrementLogWritten } = await import('../utils/metrics.js');
+            incrementLogWritten(env, 'kv');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
+        } else {
+          throw new Error(result.error);
+        }
+      }
+    } catch (e) {
+      status.kv = String(e);
+
+      try {
+        const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+        await recordStoreFailure(env, 'kv');
+      } catch (circuitError) {
+        // Silent fail for circuit breaker
+      }
+
       try {
         const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
         incrementMissingStoreWrite(env, 'kv');
       } catch (metricsError) {
         // Silent fail for metrics
       }
-    } else {
-      const kvData = JSON.stringify({
-        id,
-        timestamp,
-        type,
-        payload: finalPayload,  // Use finalPayload (may be truncated or have R2 pointer)
-        session_id,
-        who,
-        level,
-        tags: [...tags || [], `trace:${traceId}`], // Include trace ID in KV tags
-        r2Pointer,  // Include R2 pointer if overflow occurred
-        
-        // Observability metadata for KV storage
-        observability: {
-          action_id: id,
-          trace_id: traceId,
-          operation_id: operationId,
-          timestamp: timestamp,
-          source: who || 'system',
-          environment: env.ENV || env.ENVIRONMENT || 'unknown'
-        }
-      });
-      
-      // Import journal service for KV operations
-      const { addEntry } = await import('../journalService.js');
-      
-      // Use KV_TTL_SECONDS env var, default to 0 (no expiry)
-      const ttlSeconds = parseInt(env.KV_TTL_SECONDS || '0', 10);
-      
-      const kvEntry = {
-        id: id,
-        ...finalPayload,
-        kv_stored_at: timestamp,
-        observability: {
-          action_id: id,
-          trace_id: traceId,
-          operation_id: operationId,
-          timestamp: timestamp,
-          source: who || 'system',
-          environment: env.ENV || env.ENVIRONMENT || 'unknown'
-        }
-      };
-      
-      const kvOptions = {
-        keyPrefix: 'log_',
-        ttl: ttlSeconds > 0 ? ttlSeconds : undefined
-      };
-      
-      const result = await addEntry(env, kvEntry, kvOptions);
-      if (result.success) {
-        status.kv = "ok";
-        storesUsed.push('kv');
-        
-        // Track successful log write (fail-open)
-        try {
-          const { incrementLogWritten } = await import('../utils/metrics.js');
-          incrementLogWritten(env, 'kv');
-        } catch (metricsError) {
-          // Silent fail for metrics
-        }
-      } else {
-        throw new Error(result.error);
-      }
-    }
-  } catch (e) {
-    status.kv = String(e);
-    
-    // Record store failure for circuit breaker
-    try {
-      const { recordStoreFailure } = await import('../utils/ops-middleware.js');
-      await recordStoreFailure(env, 'kv');
-    } catch (circuitError) {
-      // Silent fail for circuit breaker
-    }
-    
-    // Track missing store write (fail-open)
-    try {
-      const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-      incrementMissingStoreWrite(env, 'kv');
-    } catch (metricsError) {
-      // Silent fail for metrics
     }
   }
 
+
   // R2 - Store with proper artifact key format: logs/<opId>/<YYYY-MM-DD>/<logId>.json|bin
   if (binary) {
-    try {
-      // Check circuit breaker for R2 store
-      const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
-      const { shouldSkip } = await checkStoreCircuitBreaker(env, 'r2');
-      
-      if (shouldSkip) {
-        status.r2 = "circuit_breaker_open";
-        
-        // Track missing store write (fail-open)
-        try {
-          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-          incrementMissingStoreWrite(env, 'r2');
-        } catch (metricsError) {
-          // Silent fail for metrics
-        }
-      } else {
-        const operationId = type?.replace(/_error$/, '') || 'unknown';
-        const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
-        const extension = binary.startsWith('data:') ? 'bin' : 'json';
-        const artifactKey = `logs/${operationId}/${date}/${id}.${extension}`;
-        
-        const bytes = Uint8Array.from(atob(binary), (c) => c.charCodeAt(0));
-        await env.AQUIL_STORAGE.put(artifactKey, bytes, {
-          httpMetadata: {
-            contentType: extension === 'json' ? 'application/json' : 'application/octet-stream',
-            cacheControl: 'max-age=2592000' // 30 days
-          }
-        });
-        
-        status.r2 = "ok";
-        status.artifactKey = artifactKey;
-        storesUsed.push('r2');
-        
-        // Track successful log write (fail-open)
-        try {
-          const { incrementLogWritten } = await import('../utils/metrics.js');
-          incrementLogWritten(env, 'r2');
-        } catch (metricsError) {
-          // Silent fail for metrics
-        }
-      }
-    } catch (e) {
-      status.r2 = String(e);
-      
-      // Record store failure for circuit breaker
-      try {
-        const { recordStoreFailure } = await import('../utils/ops-middleware.js');
-        await recordStoreFailure(env, 'r2');
-      } catch (circuitError) {
-        // Silent fail for circuit breaker
-      }
-      
-      // Track missing store write (fail-open)
-      try {
-        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-        incrementMissingStoreWrite(env, 'r2');
-      } catch (metricsError) {
-        // Silent fail for metrics
-      }
-    }
-  } else {
-    // Check if R2 storage is required for this operation type
-    const r2Policy = getR2PolicyForOperation(type?.replace(/_error$/, '') || 'unknown');
-    if (r2Policy === 'required') {
-      // Store JSON log data for required operations
+    if (!r2Binding) {
+      status.r2 = 'skipped_missing_r2_binding';
+    } else {
       try {
         // Check circuit breaker for R2 store
         const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
         const { shouldSkip } = await checkStoreCircuitBreaker(env, 'r2');
-        
+
         if (shouldSkip) {
           status.r2 = "circuit_breaker_open";
-          
+
           // Track missing store write (fail-open)
           try {
             const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
@@ -598,40 +533,21 @@ export async function writeLog(
         } else {
           const operationId = type?.replace(/_error$/, '') || 'unknown';
           const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
-          const artifactKey = `logs/${operationId}/${date}/${id}.json`;
-          
-          const logData = JSON.stringify({
-            id,
-            timestamp,
-            type,
-            payload: finalPayload,  // Use finalPayload (with privacy redaction)
-            session_id,
-            who,
-            level,
-            tags: [...tags || [], `trace:${traceId}`], // Include trace ID
-            
-            // R2 observability metadata
-            observability: {
-              action_id: id,
-              trace_id: traceId,
-              operation_id: operationId,
-              artifact_type: 'structured_log',
-              storage_tier: 'r2',
-              retention_policy: '30d'
-            }
-          });
-          
-          await env.AQUIL_STORAGE.put(artifactKey, logData, {
+          const extension = binary.startsWith('data:') ? 'bin' : 'json';
+          const artifactKey = `logs/${operationId}/${date}/${id}.${extension}`;
+
+          const bytes = Uint8Array.from(atob(binary), (c) => c.charCodeAt(0));
+          await r2Binding.put(artifactKey, bytes, {
             httpMetadata: {
-              contentType: 'application/json',
+              contentType: extension === 'json' ? 'application/json' : 'application/octet-stream',
               cacheControl: 'max-age=2592000' // 30 days
             }
           });
-          
+
           status.r2 = "ok";
           status.artifactKey = artifactKey;
           storesUsed.push('r2');
-          
+
           // Track successful log write (fail-open)
           try {
             const { incrementLogWritten } = await import('../utils/metrics.js');
@@ -642,7 +558,7 @@ export async function writeLog(
         }
       } catch (e) {
         status.r2 = String(e);
-        
+
         // Record store failure for circuit breaker
         try {
           const { recordStoreFailure } = await import('../utils/ops-middleware.js');
@@ -650,7 +566,7 @@ export async function writeLog(
         } catch (circuitError) {
           // Silent fail for circuit breaker
         }
-        
+
         // Track missing store write (fail-open)
         try {
           const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
@@ -660,85 +576,186 @@ export async function writeLog(
         }
       }
     }
-  }
-
-  // Vector
-  if (textOrVector) {
-    try {
-      // Check circuit breaker for Vector store
-      const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
-      const { shouldSkip } = await checkStoreCircuitBreaker(env, 'vector');
-      
-      if (shouldSkip) {
-        status.vector = "circuit_breaker_open";
-        
-        // Track missing store write (fail-open)
-        try {
-          const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-          incrementMissingStoreWrite(env, 'vector');
-        } catch (metricsError) {
-          // Silent fail for metrics
-        }
+  } else {
+    // Check if R2 storage is required for this operation type
+    const r2Policy = getR2PolicyForOperation(type?.replace(/_error$/, '') || 'unknown');
+    if (r2Policy === 'required') {
+      if (!r2Binding) {
+        status.r2 = 'skipped_missing_r2_binding';
       } else {
-        // Use the ensureVector function for proper dimension validation
-        const { ensureVector } = await import('./vectorize.js');
-        const values = await ensureVector(env, textOrVector);
-        
-        if (values) {
-          await env.AQUIL_CONTEXT.upsert([
-            {
-              id: `logvec_${id}`,
-              values,
-              metadata: {
-                type,
-                session_id,
-                who,
-                level,
-                tags: [...tags || [], `trace:${traceId}`], // Include trace ID in vector metadata
-                trace_id: traceId, // Direct trace ID field for vector queries
+        // Store JSON log data for required operations
+        try {
+          // Check circuit breaker for R2 store
+          const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
+          const { shouldSkip } = await checkStoreCircuitBreaker(env, 'r2');
+
+          if (shouldSkip) {
+            status.r2 = "circuit_breaker_open";
+
+            // Track missing store write (fail-open)
+            try {
+              const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+              incrementMissingStoreWrite(env, 'r2');
+            } catch (metricsError) {
+              // Silent fail for metrics
+            }
+          } else {
+            const operationId = type?.replace(/_error$/, '') || 'unknown';
+            const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+            const artifactKey = `logs/${operationId}/${date}/${id}.json`;
+
+            const logData = JSON.stringify({
+              id,
+              timestamp,
+              type,
+              payload: finalPayload,  // Use finalPayload (with privacy redaction)
+              session_id,
+              who,
+              level,
+              tags: [...tags || [], `trace:${traceId}`], // Include trace ID
+
+              // R2 observability metadata
+              observability: {
+                action_id: id,
+                trace_id: traceId,
                 operation_id: operationId,
-                timestamp: timestamp
-              },
-            },
-          ]);
-          status.vector = "ok";
-          storesUsed.push('vector');
-          
-          // Track successful log write (fail-open)
+                artifact_type: 'structured_log',
+                storage_tier: 'r2',
+                retention_policy: '30d'
+              }
+            });
+
+            await r2Binding.put(artifactKey, logData, {
+              httpMetadata: {
+                contentType: 'application/json',
+                cacheControl: 'max-age=2592000' // 30 days
+              }
+            });
+
+            status.r2 = "ok";
+            status.artifactKey = artifactKey;
+            storesUsed.push('r2');
+
+            // Track successful log write (fail-open)
+            try {
+              const { incrementLogWritten } = await import('../utils/metrics.js');
+              incrementLogWritten(env, 'r2');
+            } catch (metricsError) {
+              // Silent fail for metrics
+            }
+          }
+        } catch (e) {
+          status.r2 = String(e);
+
+          // Record store failure for circuit breaker
           try {
-            const { incrementLogWritten } = await import('../utils/metrics.js');
-            incrementLogWritten(env, 'vector');
+            const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+            await recordStoreFailure(env, 'r2');
+          } catch (circuitError) {
+            // Silent fail for circuit breaker
+          }
+
+          // Track missing store write (fail-open)
+          try {
+            const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+            incrementMissingStoreWrite(env, 'r2');
           } catch (metricsError) {
             // Silent fail for metrics
           }
         }
       }
-    } catch (e) {
-      status.vector = String(e);
-      
-      // Record store failure for circuit breaker
-      try {
-        const { recordStoreFailure } = await import('../utils/ops-middleware.js');
-        await recordStoreFailure(env, 'vector');
-      } catch (circuitError) {
-        // Silent fail for circuit breaker
-      }
-      
-      // Track missing store write (fail-open)
-      try {
-        const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
-        incrementMissingStoreWrite(env, 'vector');
-      } catch (metricsError) {
-        // Silent fail for metrics
-      }
     }
   }
-  
+
+  // Vector
+  if (vectorInput) {
+    if (!vectorBinding) {
+      status.vector = 'skipped_missing_vector_store';
+    } else if (!Array.isArray(vectorInput) && (!aiBinding || typeof aiBinding.run !== 'function')) {
+      status.vector = 'skipped_missing_ai_binding';
+    } else {
+      try {
+        // Check circuit breaker for Vector store
+        const { checkStoreCircuitBreaker } = await import('../utils/ops-middleware.js');
+        const { shouldSkip } = await checkStoreCircuitBreaker(env, 'vector');
+
+        if (shouldSkip) {
+          status.vector = "circuit_breaker_open";
+
+          // Track missing store write (fail-open)
+          try {
+            const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+            incrementMissingStoreWrite(env, 'vector');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
+        } else {
+          const { ensureVector } = await import('./vectorize.js');
+          const values = await ensureVector(env, vectorInput);
+
+          if (values) {
+            await vectorBinding.upsert([
+              {
+                id: `logvec_${id}`,
+                values,
+                metadata: {
+                  type,
+                  session_id,
+                  who,
+                  level,
+                  tags: [...tags || [], `trace:${traceId}`], // Include trace ID in vector metadata
+                  trace_id: traceId, // Direct trace ID field for vector queries
+                  operation_id: operationId,
+                  timestamp: timestamp
+                },
+              },
+            ]);
+            status.vector = "ok";
+            storesUsed.push('vector');
+
+            // Track successful log write (fail-open)
+            try {
+              const { incrementLogWritten } = await import('../utils/metrics.js');
+              incrementLogWritten(env, 'vector');
+            } catch (metricsError) {
+              // Silent fail for metrics
+            }
+          }
+        }
+      } catch (e) {
+        if (e?.code === 'MISSING_AI_EMBEDDING') {
+          status.vector = 'skipped_missing_ai_binding';
+        } else {
+          status.vector = String(e);
+
+          // Record store failure for circuit breaker
+          try {
+            const { recordStoreFailure } = await import('../utils/ops-middleware.js');
+            await recordStoreFailure(env, 'vector');
+          } catch (circuitError) {
+            // Silent fail for circuit breaker
+          }
+
+          // Track missing store write (fail-open)
+          try {
+            const { incrementMissingStoreWrite } = await import('../utils/metrics.js');
+            incrementMissingStoreWrite(env, 'vector');
+          } catch (metricsError) {
+            // Silent fail for metrics
+          }
+        }
+      }
+    }
+  } else {
+    status.vector = 'skipped_no_vector_input';
+  }
+
+
   // Update D1 stores array with final list of successful stores
-  if (status.d1 === "ok" && storesUsed.length > 0) {
+  if (status.d1 === "ok" && storesUsed.length > 0 && d1Binding) {
     try {
       // Update the stores column in D1 with the actual stores that succeeded
-      await env.AQUIL_DB.prepare(
+      await d1Binding.prepare(
         "UPDATE metamorphic_logs SET stores = ? WHERE id = ?"
       ).bind(JSON.stringify(storesUsed), id).run();
     } catch (updateError) {
@@ -754,16 +771,16 @@ export async function writeLog(
     
     // Check which stores were attempted and their status
     if (status.d1 === "ok" || status.d1 === "ok_fallback") stores.push('d1');
-    else if (status.d1 && !safeBinding(env, 'AQUIL_DB')) missingStores.push('d1');
-    
+    else if (status.d1 && !d1Binding) missingStores.push('d1');
+
     if (status.kv === "ok") stores.push('kv');
-    else if (status.kv && !safeBinding(env, 'AQUIL_MEMORIES')) missingStores.push('kv');
-    
+    else if (status.kv && !kvBinding) missingStores.push('kv');
+
     if (status.r2 === "ok") stores.push('r2');
-    else if (status.r2 && !safeBinding(env, 'AQUIL_STORAGE')) missingStores.push('r2');
-    
+    else if (status.r2 && (!r2Binding || String(status.r2).startsWith('skipped_missing_'))) missingStores.push('r2');
+
     if (status.vector === "ok") stores.push('vector');
-    else if (status.vector && !safeBinding(env, 'AQUIL_CONTEXT')) missingStores.push('vector');
+    else if (status.vector && (!vectorBinding || String(status.vector).startsWith('skipped_missing_'))) missingStores.push('vector');
     
     // Add circuit breaker status
     const circuitBreakerOpen = [];
