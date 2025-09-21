@@ -680,16 +680,10 @@ export async function writeLog(
           // Silent fail for metrics
         }
       } else {
-        let values;
-        if (typeof textOrVector === "string") {
-          // Embed text
-          const embedding = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", {
-            text: textOrVector,
-          });
-          values = embedding.data?.[0] || embedding;
-        } else if (Array.isArray(textOrVector)) {
-          values = textOrVector;
-        }
+        // Use the ensureVector function for proper dimension validation
+        const { ensureVector } = await import('./vectorize.js');
+        const values = await ensureVector(env, textOrVector);
+        
         if (values) {
           await env.AQUIL_CONTEXT.upsert([
             {
@@ -779,6 +773,10 @@ export async function writeLog(
     if (status.vector === "circuit_breaker_open") circuitBreakerOpen.push('vector');
     
     return {
+      id,
+      timestamp,
+      operationId,
+      trace_id: traceId,
       ...status,
       stores,
       missingStores,
@@ -787,7 +785,14 @@ export async function writeLog(
     };
   }
   
-  return status;
+  return {
+    id,
+    timestamp,
+    operationId,
+    trace_id: traceId,
+    ...status,
+    stores: storesUsed
+  };
 }
 
 // Enhanced logging for autonomous actions with improved traceability

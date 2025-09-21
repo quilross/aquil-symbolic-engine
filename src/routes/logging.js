@@ -266,4 +266,39 @@ loggingRouter.post("/api/logs/retrieval-meta", withErrorHandling(async (req, env
   return addCORSToResponse(json(result));
 }));
 
+// Session initialization endpoint for conversation context
+loggingRouter.get("/api/session-init", withErrorHandling(async (req, env) => {
+  const url = new URL(req.url);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '7', 10), 200);
+  
+  const { readLogs } = await import('../actions/logging.js');
+  const logs = await readLogs(env, { limit });
+  
+  // Generate session summary from recent logs
+  const recentLogs = logs.kv || [];
+  const sessionSummary = recentLogs.length > 0 
+    ? `Found ${recentLogs.length} recent entries from various activities`
+    : 'No recent activity found';
+  
+  const contextFlags = [];
+  if (recentLogs.some(log => log.level === 'breakthrough')) {
+    contextFlags.push('recent_breakthrough');
+  }
+  if (recentLogs.some(log => log.type === 'autonomous')) {
+    contextFlags.push('autonomous_activity');
+  }
+  
+  const result = {
+    recent_logs: recentLogs,
+    session_summary: sessionSummary,
+    context_flags: contextFlags,
+    total_entries: recentLogs.length,
+    timestamp: new Date().toISOString()
+  };
+  
+  await logChatGPTAction(env, 'retrieveRecentSessionLogs', { limit }, result);
+  
+  return addCORSToResponse(createSuccessResponse(result));
+}));
+
 export { loggingRouter };
