@@ -513,34 +513,28 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "vectors": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the vector"
+                  },
+                  "vector": {
                     "type": "array",
                     "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "values": {
-                          "type": "array",
-                          "items": {
-                            "type": "number"
-                          }
-                        },
-                        "metadata": {
-                          "type": "object"
-                        }
-                      }
+                      "type": "number"
                     },
-                    "description": "Array of vector objects to upsert"
+                    "description": "Vector values (1024-dimensional array)"
                   },
-                  "namespace": {
+                  "text": {
                     "type": "string",
-                    "description": "Namespace for vector organization"
+                    "description": "Text to convert to vector (alternative to providing vector directly)"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Additional metadata to store with the vector"
                   }
                 },
                 "required": [
-                  "vectors"
+                  "id"
                 ]
               }
             }
