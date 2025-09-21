@@ -6,7 +6,7 @@
 /**
  * Extract themes from dream text using keyword analysis
  */
-function extractThemes(text) {
+export function extractThemes(text) {
   const themeKeywords = {
     'transformation': ['change', 'transform', 'become', 'evolve', 'metamorphosis', 'shift'],
     'relationships': ['people', 'friend', 'family', 'stranger', 'together', 'alone', 'conversation'],
@@ -43,7 +43,7 @@ function extractThemes(text) {
 /**
  * Extract symbols (key nouns and adjectives) from dream text
  */
-function extractSymbols(text) {
+export function extractSymbols(text) {
   // Simple noun extraction - look for common dream symbols
   const symbolPatterns = [
     /\b(house|door|room|window|mirror|key|car|water|fire|animal|tree|mountain|sky|sun|moon|star|book|phone|computer|bridge|stairs|elevator|kitchen|bathroom|bedroom|garden|forest|ocean|river|lake|bird|cat|dog|snake|spider|flower|baby|child|mother|father|friend|stranger|teacher|doctor|police|ghost|angel|demon|monster)\b/gi
@@ -68,9 +68,19 @@ function extractSymbols(text) {
 }
 
 /**
+ * Extract emotions from dream text using keyword analysis
+ */
+export function extractEmotions(text) {
+  const emotions = ['fear', 'joy', 'anger', 'sadness', 'love', 'peace', 'anxiety', 'excitement'];
+  return emotions.filter(emotion => 
+    text.toLowerCase().includes(emotion)
+  );
+}
+
+/**
  * Identify tensions and contradictions in dream narrative
  */
-function extractTensions(text) {
+export function extractTensions(text) {
   const tensionIndicators = [
     { pattern: /but|however|although|despite|even though/gi, tension: 'contradiction' },
     { pattern: /can't|couldn't|unable|impossible/gi, tension: 'limitation' },

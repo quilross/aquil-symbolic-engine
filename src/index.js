@@ -30,43 +30,6 @@ import {
   arkAutonomous,
   arkTestAI
 } from "./ark/ark-endpoints.js";
-// Behavioral engine
-import { runEngine } from "./agent/engine.js";
-
-// Logging and data persistence
-import { 
-  writeLog 
-} from "./actions/logging.js";
-
-// Dream interpretation utilities
-import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from "./utils/dream-interpreter.js";
-
-// Insight generation
-import { generateInsight } from "./insightEngine.js";
-import * as journalService from "./journalService.js";
-
-// D1 and Vector database actions
-import { exec as d1Exec } from "./actions/d1.js";
-import { query as vectorQuery, upsert as vectorUpsert } from "./actions/vectorize.js";
-
-// R2 storage actions
-import { put as r2Put, get as r2Get } from "./actions/r2.js";
-
-// KV storage actions
-import { log as kvLog, get as kvGet } from "./actions/kv.js";
-
-// Core AI modules for personal growth
-import { SomaticHealer } from "./src-core-somatic-healer.js";
-import { ValuesClarifier } from "./src-core-values-clarifier.js";
-import { CreativityUnleasher } from "./src-core-creativity-unleasher.js";
-import { AbundanceCultivator } from "./src-core-abundance-cultivator.js";
-import { TransitionNavigator } from "./src-core-transition-navigator.js";
-import { AncestryHealer } from "./src-core-ancestry-healer.js";
-import { TrustBuilder } from "./src-core-trust-builder.js";
-import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
-import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
-import { StandingTall } from "./src-core-standing-tall.js";
-import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
 
@@ -74,141 +37,15 @@ import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.
 import actions from '../config/ark.actions.logging.json' with { type: 'json' };
 import { LOG_TYPES, STORED_IN, UUID_V4, MAX_DETAIL, ensureSchema } from './utils/logging-validation.js';
 
+// Insight generation and journal service
+import { generateInsight } from "./insightEngine.js";
+import * as journalService from "./journalService.js";
+
+// Logging action for the logChatGPTAction function
+import { writeLog } from "./actions/logging.js";
+
 // Pull routes from JSON (validation constants sourced from shared util)
 const Routes = actions['x-ark-metadata'].routes
-
-// ISO 8601 checker (lightweight; keeps your current semantics)
-function isIso(ts) {
-  try {
-    const d = new Date(ts)
-    return !isNaN(d.getTime())
-  } catch { return false }
-}
-
-// Minimal shared helpers
-async function readJson(req) {
-  try { return await req.json() } catch { return null }
-}
-function json(data, init = {}) {
-  return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' }, ...init })
-}
-
-function validateLog(payload) {
-  if (!payload || typeof payload !== 'object') return 'Invalid body'
-  const { id, type, detail, timestamp, storedIn } = payload
-  if (!UUID_V4.test(id)) return 'id must be uuid v4'
-  if (!LOG_TYPES.has(type)) return `type must be one of ${[...LOG_TYPES].join(',')}`
-  if (detail != null && typeof detail !== 'string') return 'detail must be string'
-  if (detail && detail.length > MAX_DETAIL) return `detail exceeds ${MAX_DETAIL} chars`
-  if (!isIso(timestamp)) return 'timestamp must be ISO 8601'
-  if (!STORED_IN.has(storedIn)) return `storedIn must be one of ${[...STORED_IN].join(',')}`
-  return null
-}
-
-async function handleKvWrite(env, req) {
-  const { addEntry } = await import('./journalService.js');
-  
-  const body = await readJson(req)
-  const err = validateLog(body)
-  if (err) return json({ ok: false, error: err }, { status: 400 })
-  if (body.storedIn !== 'KV') return json({ ok: false, error: 'storedIn must be KV' }, { status: 400 })
-  
-  const result = await addEntry(env, body);
-  if (result.success) {
-    return json({ ok: true, key: result.key, id: result.id })
-  } else {
-    return json({ ok: false, error: result.error }, { status: 500 })
-  }
-}
-
-async function handleD1Insert(env, req) {
-  await ensureSchema(env)
-  const body = await readJson(req)
-  const err = validateLog(body)
-  if (err) return json({ ok: false, error: err }, { status: 400 })
-  if (body.storedIn !== 'D1') return json({ ok: false, error: 'storedIn must be D1' }, { status: 400 })
-  await env.AQUIL_DB.prepare(
-    'INSERT INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(body.id, body.type, body.detail ?? null, body.timestamp, 'D1').run()
-  return json({ ok: true, rowId: 1, id: body.id })
-}
-
-async function handlePromote(env, req) {
-  await ensureSchema(env)
-  const { getEntryById } = await import('./journalService.js');
-  
-  const body = await readJson(req)
-  const id = body?.id
-  if (!id || !UUID_V4.test(id)) return json({ ok: false, error: 'invalid id' }, { status: 400 })
-  
-  const result = await getEntryById(env, id);
-  if (!result.success) {
-    return json({ ok: false, error: 'not found in KV' }, { status: 404 })
-  }
-  
-  const log = result.data;
-  const err = validateLog(log)
-  if (err) return json({ ok: false, error: `invalid KV log: ${err}` }, { status: 400 })
-  
-  await env.AQUIL_DB.prepare(
-    'INSERT OR IGNORE INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(log.id, log.type, log.detail ?? null, log.timestamp, 'D1').run()
-  return json({ ok: true, promotedId: id })
-}
-
-async function handleRetrieve(env, req) {
-  await ensureSchema(env)
-  const q = await readJson(req) || {}
-  const { source = 'any', types, from, to, limit = 100, afterId, order = 'desc' } = q
-
-  if (types && (!Array.isArray(types) || types.some(t => !LOG_TYPES.has(t)))) {
-    return json({ ok: false, error: 'invalid types' }, { status: 400 })
-  }
-  if (from && !isIso(from)) return json({ ok: false, error: 'invalid from' }, { status: 400 })
-  if (to && !isIso(to)) return json({ ok: false, error: 'invalid to' }, { status: 400 })
-  const lim = Math.max(1, Math.min(Number(limit) || 100, 500))
-  const ord = order === 'asc' ? 'ASC' : 'DESC'
-
-  const clauses = []
-  const params = []
-  if (types?.length) { clauses.push(`type IN (${types.map(() => '?').join(',')})`); params.push(...types) }
-  if (from) { clauses.push('timestamp >= ?'); params.push(from) }
-  if (to)   { clauses.push('timestamp <= ?'); params.push(to) }
-  if (afterId) { clauses.push('id > ?'); params.push(afterId) }
-  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
-  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ${where} ORDER BY timestamp ${ord} LIMIT ?`
-  params.push(lim)
-  const res = await env.AQUIL_DB.prepare(sql).bind(...params).all()
-  let items = res.results || []
-
-  return json({ ok: true, items })
-}
-
-async function handleRetrieveLatest(env, req) {
-  await ensureSchema(env)
-  const url = new URL(req.url)
-  const n = Number(url.searchParams.get('limit') || '25')
-  const limit = Math.max(1, Math.min(isFinite(n) ? n : 25, 200))
-  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ORDER BY timestamp DESC LIMIT ?`
-  const res = await env.AQUIL_DB.prepare(sql).bind(limit).all()
-  return json({ ok: true, items: res.results || [] })
-}
-
-async function handleRetrievalMeta(env, req) {
-  await ensureSchema(env)
-  let ts
-  try { ts = (await req.json())?.timestamp } catch {}
-  const timestamp = (ts && isIso(ts)) ? ts : new Date().toISOString()
-  await env.AQUIL_DB.prepare(
-    'UPDATE retrieval_meta SET lastRetrieved=?1, retrievalCount=retrievalCount+1 WHERE id=1'
-  ).bind(timestamp).run()
-  const res = await env.AQUIL_DB.prepare(
-    'SELECT lastRetrieved, retrievalCount FROM retrieval_meta WHERE id=1'
-  ).all()
-  const row = (res.results && res.results[0]) || { lastRetrieved: null, retrievalCount: 0 }
-  return json(row)
-}
-// === END EXTRACTION PATCH ===
 
 // Utilities
 import { toCanonical } from "./ops/operation-aliases.js";
@@ -949,54 +786,6 @@ router.all("/api/commitments/*", dataOpsRouter.fetch);
 
 // Catch-all for unmatched routes
 
-// Analytics insights
-router.get("/api/analytics/insights", async (req, env) => {
-  try {
-    const url = new URL(req.url);
-    const days = parseInt(url.searchParams.get('days') || '30');
-    const type = url.searchParams.get('type') || 'all';
-    
-    const result = {
-      insights: [],
-      patterns: [],
-      recommendations: [],
-      timeframe: `${days} days`,
-      analysis_type: type,
-      generated_at: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'getConversationAnalytics', { days, type }, result);
-    
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'getConversationAnalytics', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-// Export conversation data
-router.post("/api/export/conversation", async (req, env) => {
-  try {
-    const body = await req.json();
-    const format = body.format || 'json';
-    const timeframe = body.timeframe || '30d';
-    
-    const result = {
-      export_id: crypto.randomUUID(),
-      format,
-      timeframe,
-      status: "prepared",
-      download_url: null, // Would be populated in real implementation
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    };
-    
-    await logChatGPTAction(env, 'exportConversationData', body, result);
-    
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'exportConversationData', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
 router.all("*", () => {
   const errorData = {
     errorId: 'ENDPOINT_NOT_FOUND',

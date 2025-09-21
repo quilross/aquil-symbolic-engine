@@ -10,12 +10,7 @@ import { progressiveWeaving } from '../actions/r2.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
 import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
 import { readJSON } from '../utils/http.js';
-
-// Create a simple logChatGPTAction function since it's not exported from actions
-async function logChatGPTAction(env, operationId, data, result, error = null) {
-  // Simplified logging for the router - in a real implementation this would do more
-  console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
-}
+import { logChatGPTAction } from '../utils/action-logger.js';
 
 const searchRouter = Router();
 

@@ -9,17 +9,10 @@ import { getRecentLogs } from '../actions/kv.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
 import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
 import { LOG_TYPES, STORED_IN, UUID_V4, MAX_DETAIL, ensureSchema, validateLog } from '../utils/logging-validation.js';
+import { logChatGPTAction } from '../utils/action-logger.js';
 
 // Import helper functions from index.js
 import { getEntryById } from '../journalService.js';
-
-// Validation constants imported from shared utility
-
-// Create a simple logChatGPTAction function since it's not exported from actions
-async function logChatGPTAction(env, operationId, data, result, error = null) {
-  // Simplified logging for the router - in a real implementation this would do more
-  console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
-}
 
 // Local JSON helpers for this router
 async function readJson(req) { try { return await req.json() } catch { return null } }

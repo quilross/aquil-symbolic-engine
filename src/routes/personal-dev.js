@@ -6,13 +6,8 @@ import { Router } from 'itty-router';
 import { handleDiscoveryInquiry } from '../ark/endpoints.js';
 import { runEngine } from '../agent/engine.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
-
-// Create a simple logChatGPTAction function since it's not exported from actions
-async function logChatGPTAction(env, operationId, data, result, error = null) {
-  // Simplified logging for the router - in a real implementation this would do more
-  console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
-}
 import { withErrorHandling } from '../utils/error-handler.js';
+import { logChatGPTAction } from '../utils/action-logger.js';
 
 // Import the personal development classes
 import { SomaticHealer } from '../src-core-somatic-healer.js';

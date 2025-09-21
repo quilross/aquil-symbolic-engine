@@ -8,13 +8,8 @@ import { query as vectorQuery, upsert as vectorUpsert } from '../actions/vectori
 import { put as r2Put, get as r2Get, listRecent as r2List } from '../actions/r2.js';
 import { log as kvPut, get as kvGet } from '../actions/kv.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
-
-// Create a simple logChatGPTAction function since it's not exported from actions
-async function logChatGPTAction(env, operationId, data, result, error = null) {
-  // Simplified logging for the router - in a real implementation this would do more
-  console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
-}
 import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+import { logChatGPTAction } from '../utils/action-logger.js';
 
 const dataOpsRouter = Router();
 

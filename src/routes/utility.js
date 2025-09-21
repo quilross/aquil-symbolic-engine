@@ -4,14 +4,9 @@
 
 import { Router } from 'itty-router';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
-
-// Create a simple logChatGPTAction function since it's not exported from actions
-async function logChatGPTAction(env, operationId, data, result, error = null) {
-  // Simplified logging for the router - in a real implementation this would do more
-  console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
-}
 import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
-import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from '../utils/dream-interpreter.js';
+import { buildInterpretation, maybeRecognizePatterns, safeTruncated, extractSymbols, extractEmotions, extractThemes } from '../utils/dream-interpreter.js';
+import { logChatGPTAction } from '../utils/action-logger.js';
 
 const utilityRouter = Router();
 
@@ -86,7 +81,7 @@ utilityRouter.post("/api/dreams/interpret", withErrorHandling(async (req, env) =
       symbols: extractSymbols(dreamContent),
       emotions: extractEmotions(dreamContent),
       themes: extractThemes(dreamContent),
-      guidance: generateGuidance(interpretation),
+      guidance: interpretation.invitations || [],
       session_id: body.session_id || crypto.randomUUID(),
       timestamp: new Date().toISOString()
     }
@@ -189,47 +184,5 @@ utilityRouter.get("/api/export/conversation", withErrorHandling(async (req, env)
   
   return addCORSToResponse(createSuccessResponse(conversation));
 }));
-
-// Helper functions for dream interpretation
-function extractSymbols(dreamContent) {
-  // Simple symbol extraction - could be enhanced with NLP
-  const commonSymbols = ['water', 'fire', 'animals', 'flying', 'falling', 'house', 'car', 'people'];
-  return commonSymbols.filter(symbol => 
-    dreamContent.toLowerCase().includes(symbol)
-  );
-}
-
-function extractEmotions(dreamContent) {
-  // Simple emotion extraction
-  const emotions = ['fear', 'joy', 'anger', 'sadness', 'love', 'peace', 'anxiety', 'excitement'];
-  return emotions.filter(emotion => 
-    dreamContent.toLowerCase().includes(emotion)
-  );
-}
-
-function extractThemes(dreamContent) {
-  // Simple theme extraction
-  const themes = ['transformation', 'journey', 'conflict', 'healing', 'growth', 'relationship'];
-  return themes.filter(theme => 
-    dreamContent.toLowerCase().includes(theme.toLowerCase())
-  );
-}
-
-function generateGuidance(interpretation) {
-  return [
-    "Reflect on the emotions present in your dream",
-    "Consider how dream themes relate to your current life",
-    "Pay attention to recurring symbols or patterns",
-    "Trust your intuitive understanding of the dream's meaning"
-  ];
-}
-
-function generateMoodInsights(moodEntry) {
-  return [
-    "Regular mood tracking builds emotional intelligence",
-    "Notice patterns in your emotional states",
-    "Your awareness of emotions is the first step to emotional mastery"
-  ];
-}
 
 export { utilityRouter };
