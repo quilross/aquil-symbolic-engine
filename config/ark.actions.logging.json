@@ -1622,7 +1622,14 @@
               }
             }
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "TypeScript",
+            "label": "Programmatically generate 1024-d vector",
+            "source": "const values = Array.from({ length: 1024 }, (_, i) => parseFloat((i * 0.001).toFixed(6)));\n\nawait signal_q_me__jit_plugin.upsertVectors({\n  vectors: [\n    {\n      id: \"ark_vector_patch_final\",\n      values,\n      namespace: \"ark.vector.tests\"\n    }\n  ]\n});"
+          }
+        ]
       }
     },
     "/api/vectorize/query": {
