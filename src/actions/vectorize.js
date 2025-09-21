@@ -10,12 +10,12 @@ export async function ensureVector(env, input) {
     return input;
   }
   
-  // Generate embedding from text
+  // Generate embedding from text using BGE Large model which produces 1024 dimensions
   const resp = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text: String(input ?? "") });
   const arr = resp?.data?.[0];
   
   if (!Array.isArray(arr) || arr.length !== VECTOR_DIM) {
-    throw new Error(`Embedding failed or wrong dimension: got ${Array.isArray(arr) ? arr.length : typeof arr}`);
+    throw new Error(`Embedding failed or wrong dimension: got ${Array.isArray(arr) ? arr.length : typeof arr}, expected ${VECTOR_DIM}`);
   }
   
   return arr;
