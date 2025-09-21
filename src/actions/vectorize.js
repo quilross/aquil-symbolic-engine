@@ -12,13 +12,26 @@ export async function ensureVector(env, input) {
   
   // Generate embedding from text using BGE Large model which produces 1024 dimensions
   // Workers AI returns an object with `data` being an array of one embedding vector for single-text input
-  const resp = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text: String(input ?? "") });
+  const aiBinding = env?.AQUIL_AI;
+
+  if (!aiBinding || typeof aiBinding.run !== "function") {
+    const error = new Error("Workers AI embedding service is not configured");
+    error.code = "MISSING_AI_EMBEDDING";
+    throw error;
+  }
+
+  const rawText = input == null
+    ? ""
+    : (typeof input === "string" ? input : JSON.stringify(input));
+  const textInput = String(rawText).slice(0, 8000);
+
+  const resp = await aiBinding.run("@cf/baai/bge-large-en-v1.5", { text: textInput });
   const arr = resp?.data?.[0];
-  
+
   if (!Array.isArray(arr) || arr.length !== VECTOR_DIM) {
     throw new Error(`Embedding failed or wrong dimension: got ${Array.isArray(arr) ? arr.length : typeof arr}, expected ${VECTOR_DIM}`);
   }
-  
+
   return arr;
 }
 
