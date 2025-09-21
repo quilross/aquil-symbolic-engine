@@ -12,7 +12,7 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
   // Simplified logging for the router - in a real implementation this would do more
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
-import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+import { withErrorHandling } from '../utils/error-handler.js';
 
 // Import the personal development classes
 import { SomaticHealer } from '../src-core-somatic-healer.js';

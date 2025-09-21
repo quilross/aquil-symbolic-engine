@@ -157,7 +157,12 @@ loggingRouter.post("/api/logs/promote", withErrorHandling(async (req, env) => {
   const id = body?.id;
   if (!id || !UUID_V4.test(id)) return addCORSToResponse(json({ ok: false, error: 'invalid id' }, { status: 400 }));
   
-  const result = getEntryById(env, id);
+  // Retrieve the log from KV; try default prefix and fall back to legacy prefix
+  let result = await getEntryById(env, id);
+  if (!result.success) {
+    // Fallback to legacy key format "log_" in case the entry was written with underscore prefix
+    result = await getEntryById(env, `log_${id}`, { keyPrefix: '' });
+  }
   if (!result.success) {
     return addCORSToResponse(json({ ok: false, error: 'not found in KV' }, { status: 404 }));
   }

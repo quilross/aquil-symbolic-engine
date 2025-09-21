@@ -194,20 +194,24 @@ export async function getEntriesByUser(env, userId, options = {}) {
       throw new Error('KV namespace AQUIL_MEMORIES not available');
     }
     
-    // Prepare list options
-    const listOptions = {
-      prefix: options.prefix || 'log_',
-      limit: Math.min(options.limit || 100, 1000) // Cap at 1000 for performance
-    };
+    // Determine prefixes to scan: support both legacy 'log_' and current 'log:'
+    const prefixes = options.prefix
+      ? [options.prefix]
+      : ['log:', 'log_'];
+    const limit = Math.min(options.limit || 100, 1000); // Cap at 1000 for performance
     
-    // List keys from KV
-    const result = await env.AQUIL_MEMORIES.list(listOptions);
+    // List keys from KV across prefixes
+    const allKeys = [];
+    for (const prefix of prefixes) {
+      const listResult = await env.AQUIL_MEMORIES.list({ prefix, limit });
+      allKeys.push(...listResult.keys);
+    }
     
     const userEntries = [];
     const errors = [];
     
     // Filter and fetch entries for the specific user
-    for (const keyInfo of result.keys) {
+  for (const keyInfo of allKeys) {
       try {
         const value = await env.AQUIL_MEMORIES.get(keyInfo.name);
         if (value) {
@@ -244,7 +248,7 @@ export async function getEntriesByUser(env, userId, options = {}) {
     console.log(`[JournalService] Successfully retrieved entries for user: ${userId}`, {
       operationId,
       userId,
-      totalKeys: result.keys.length,
+      totalKeys: allKeys.length,
       userEntriesFound: userEntries.length,
       returnedEntries: limitedEntries.length,
       errors: errors.length
@@ -421,38 +425,48 @@ export async function listRecentEntries(env, options = {}) {
       throw new Error('KV namespace AQUIL_MEMORIES not available');
     }
     
-    const prefix = options.prefix || 'log_';
     const limit = Math.min(options.limit || 20, 100);
+    const prefixes = options.prefix ? [options.prefix] : ['log:', 'log_'];
     
-    // List keys from KV
-    const listResult = await env.AQUIL_MEMORIES.list({ prefix, limit });
+    // List keys from KV across prefixes
+    const allKeys = [];
+    for (const prefix of prefixes) {
+      const listResult = await env.AQUIL_MEMORIES.list({ prefix, limit });
+      allKeys.push(...listResult.keys.map(k => k.name));
+    }
     
-    // Sort keys by timestamp descending (newest first)
-    const sortedKeys = listResult.keys
-      .map(k => k.name)
-      .sort((a, b) => {
-        const tsA = parseInt(a.split('_').pop() || '0', 10);
-        const tsB = parseInt(b.split('_').pop() || '0', 10);
-        return tsB - tsA;
-      });
+    // Sort keys by timestamp descending (newest first) when timestamp suffix exists
+    const sortedKeys = allKeys.sort((a, b) => {
+      const tsA = (() => {
+        if (a.includes('_')) return parseInt(a.split('_').pop() || '0', 10);
+        // If no underscore suffix, try to parse timestamp from value later; default 0 here
+        return 0;
+      })();
+      const tsB = (() => {
+        if (b.includes('_')) return parseInt(b.split('_').pop() || '0', 10);
+        return 0;
+      })();
+      return tsB - tsA;
+    });
 
     // Fetch entries for the sorted keys
     const entries = [];
     for (const key of sortedKeys) {
+      // When passing full key name, use empty keyPrefix to use the key as-is
       const entryResult = await exports.getEntryById(env, key, { keyPrefix: '' });
       if (entryResult.success) {
         entries.push({
           key: key,
           content: entryResult.data,
-          metadata: listResult.keys.find(k => k.name === key)?.metadata || null
+          metadata: null
         });
       }
     }
     
     console.log(`[JournalService] Successfully listed recent entries`, {
       operationId,
-      prefix,
-      totalKeys: listResult.keys.length,
+      prefixes,
+      totalKeys: allKeys.length,
       returnedEntries: entries.length
     });
     
