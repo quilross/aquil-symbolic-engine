@@ -53,3 +53,7 @@ crons = [
   "0 20 * * *",  # Evening ritual suggestions
   "0 8 * * 1"    # Weekly insights (Monday morning)
 ]
+
+# Observability and logging configuration
+[observability.logs]
+enabled = true
