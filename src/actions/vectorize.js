@@ -32,7 +32,12 @@ export async function upsertVectors(env, { id, text, vector, metadata = {} }) {
 
 export async function queryVectorIndex(env, { text, vector, topK = 5, returnMetadata = "all", returnValues = true }) {
   const values = await ensureVector(env, vector ?? text);
-  return env.AQUIL_CONTEXT.query(values, { topK, returnMetadata, returnValues });
+  // Use V2 API with proper parameters
+  return env.AQUIL_CONTEXT.query(values, { 
+    topK, 
+    returnMetadata, // "all", "indexed", or "none" 
+    returnValues 
+  });
 }
 
 export async function testVectorFlow(env) {
@@ -49,10 +54,10 @@ export async function queryByText(
   { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5" } = {},
 ) {
   const vector = await ensureVector(env, text);
-  const results = await env.AQUIL_CONTEXT.query({
+  const results = await env.AQUIL_CONTEXT.query(vector, {
     topK,
-    vector,
-    includeMetadata: true,
+    returnMetadata: "all", // V2 API uses string values
+    returnValues: false
   });
   return (results.matches || []).map((match) => ({
     id: match.id,
@@ -70,10 +75,10 @@ export async function semanticRecall(
 ) {
   try {
     const vector = await ensureVector(env, text);
-    const results = await env.AQUIL_CONTEXT.query({
+    const results = await env.AQUIL_CONTEXT.query(vector, {
       topK,
-      vector,
-      includeMetadata: true,
+      returnMetadata: "all", // V2 API uses string values
+      returnValues: false
     });
 
     // Filter by similarity threshold and return full log content
