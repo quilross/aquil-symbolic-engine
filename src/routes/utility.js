@@ -3,7 +3,6 @@
  */
 
 import { Router } from 'itty-router';
-import crypto from 'crypto';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
@@ -98,7 +97,7 @@ utilityRouter.post("/api/dreams/interpret", withErrorHandling(async (req, env) =
   return addCORSToResponse(createSuccessResponse(result));
 }));
 
-// Monitoring metrics
+// Monitoring metrics (mock implementation)
 utilityRouter.get("/api/monitoring/metrics", withErrorHandling(async (req, env) => {
   const metrics = {
     system_health: "operational",
@@ -114,7 +113,7 @@ utilityRouter.get("/api/monitoring/metrics", withErrorHandling(async (req, env) 
   return addCORSToResponse(createSuccessResponse(metrics));
 }));
 
-// Analytics insights
+// Analytics insights (mock implementation)
 utilityRouter.get("/api/analytics/insights", withErrorHandling(async (req, env) => {
   const url = new URL(req.url);
   const period = url.searchParams.get('period') || '30d';
@@ -162,7 +161,7 @@ utilityRouter.post("/api/mood/track", withErrorHandling(async (req, env) => {
   }));
 }));
 
-// Export conversation
+// Export conversation (mock implementation)
 utilityRouter.get("/api/export/conversation", withErrorHandling(async (req, env) => {
   const url = new URL(req.url);
   const sessionId = url.searchParams.get('session_id');

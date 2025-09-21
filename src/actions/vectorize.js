@@ -11,6 +11,7 @@ export async function ensureVector(env, input) {
   }
   
   // Generate embedding from text using BGE Large model which produces 1024 dimensions
+  // Workers AI returns an object with `data` being an array of one embedding vector for single-text input
   const resp = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text: String(input ?? "") });
   const arr = resp?.data?.[0];
   

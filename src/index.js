@@ -72,15 +72,10 @@ import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.
 
 // Import actions metadata for validation constants
 import actions from '../config/ark.actions.logging.json' with { type: 'json' };
+import { LOG_TYPES, STORED_IN, UUID_V4, MAX_DETAIL, ensureSchema } from './utils/logging-validation.js';
 
-// Pull routes + validation constants from JSON
+// Pull routes from JSON (validation constants sourced from shared util)
 const Routes = actions['x-ark-metadata'].routes
-const MAX_DETAIL = actions['x-ark-metadata'].validation?.maxDetailLength ?? 4000
-
-// Build sets/regex from JSON so the config owns the contract
-const LOG_TYPES = new Set(actions['x-ark-metadata'].enums?.logTypes ?? [])
-const STORED_IN = new Set(actions['x-ark-metadata'].enums?.storedIn ?? [])
-const UUID_V4 = new RegExp(actions['x-ark-metadata'].validation?.uuidV4 ?? '^[0-9a-fA-F-]{36}$')
 
 // ISO 8601 checker (lightweight; keeps your current semantics)
 function isIso(ts) {
@@ -96,25 +91,6 @@ async function readJson(req) {
 }
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' }, ...init })
-}
-
-async function ensureSchema(env) {
-  // idempotent
-  await env.AQUIL_DB.exec?.(`
-    CREATE TABLE IF NOT EXISTS logs (
-      id TEXT PRIMARY KEY,
-      type TEXT NOT NULL,
-      detail TEXT,
-      timestamp TEXT NOT NULL,
-      storedIn TEXT NOT NULL CHECK (storedIn IN ('KV','D1'))
-    );
-    CREATE TABLE IF NOT EXISTS retrieval_meta (
-      id INTEGER PRIMARY KEY CHECK (id=1),
-      lastRetrieved TEXT,
-      retrievalCount INTEGER NOT NULL DEFAULT 0
-    );
-    INSERT OR IGNORE INTO retrieval_meta (id,lastRetrieved,retrievalCount) VALUES (1,NULL,0);
-  `)
 }
 
 function validateLog(payload) {

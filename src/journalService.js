@@ -29,7 +29,7 @@ export async function addEntry(env, entryData, options = {}) {
     }
     
     // Prepare key and data
-    const key = options.keyPrefix !== undefined ? `${options.keyPrefix}${entryData.id}` : `log_${entryData.id}`;
+  const key = options.keyPrefix !== undefined ? `${options.keyPrefix}${entryData.id}` : `log:${entryData.id}`;
     const data = JSON.stringify(entryData);
     
     // Prepare KV options
@@ -304,15 +304,12 @@ export async function updateEntry(env, id, data, options = {}) {
       throw new Error('KV namespace AQUIL_MEMORIES not available');
     }
     
-    // Prepare key
-    const key = options.keyPrefix !== undefined ? `${options.keyPrefix}${id}` : `log:${id}`;
-    
     // Get existing entry if merge is requested
-    let updatedData = data;
     let existingResult = null;
     
+    let updatedData;
     if (options.merge !== false) { // Default to merge
-      existingResult = await getEntryById(env, id, { keyPrefix: options.keyPrefix });
+      existingResult = await exports.getEntryById(env, id, { keyPrefix: options.keyPrefix });
       
       if (existingResult.success) {
         // Merge with existing data
@@ -442,7 +439,7 @@ export async function listRecentEntries(env, options = {}) {
     // Fetch entries for the sorted keys
     const entries = [];
     for (const key of sortedKeys) {
-      const entryResult = await getEntryById(env, key, { keyPrefix: '' });
+      const entryResult = await exports.getEntryById(env, key, { keyPrefix: '' });
       if (entryResult.success) {
         entries.push({
           key: key,
@@ -504,11 +501,12 @@ export async function deleteEntry(env, id, options = {}) {
     }
     
     // Prepare key
-    const key = options.keyPrefix !== undefined ? `${options.keyPrefix}${id}` : `log:${id}`;
+    // Use keyToUse for delete operation
+    const keyToUse = options.keyPrefix !== undefined ? `${options.keyPrefix}${id}` : `log:${id}`;
     
     // Check if entry exists (if requested)
     if (options.checkExists) {
-      const existing = await getEntryById(env, id, { keyPrefix: options.keyPrefix });
+      const existing = await exports.getEntryById(env, id, { keyPrefix: options.keyPrefix });
       if (!existing.success) {
         return {
           success: false,
@@ -520,17 +518,17 @@ export async function deleteEntry(env, id, options = {}) {
     }
     
     // Perform delete operation
-    await env.AQUIL_MEMORIES.delete(key);
+    await env.AQUIL_MEMORIES.delete(keyToUse);
     
-    console.log(`[JournalService] Successfully deleted entry: ${key}`, {
+    console.log(`[JournalService] Successfully deleted entry: ${keyToUse}`, {
       operationId,
       entryId: id,
-      keyUsed: key
+      keyUsed: keyToUse
     });
     
     return {
       success: true,
-      key,
+      key: keyToUse,
       id,
       operationId,
       deleted: true

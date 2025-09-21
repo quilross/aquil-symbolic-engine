@@ -3,7 +3,6 @@
  */
 
 import { Router } from 'itty-router';
-import crypto from 'crypto';
 import { handleDiscoveryInquiry } from '../ark/endpoints.js';
 import { runEngine } from '../agent/engine.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';

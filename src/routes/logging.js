@@ -8,18 +8,12 @@ import { handleLog, handleRetrieveLogs } from '../ark/endpoints.js';
 import { getRecentLogs } from '../actions/kv.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
 import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+import { LOG_TYPES, STORED_IN, UUID_V4, MAX_DETAIL, ensureSchema, validateLog } from '../utils/logging-validation.js';
 
 // Import helper functions from index.js
-import { addEntry, getEntryById } from '../journalService.js';
+import { getEntryById } from '../journalService.js';
 
-// Import validation and helpers
-import actions from '../../config/ark.actions.logging.json' with { type: 'json' };
-
-// Validation constants from config
-const LOG_TYPES = new Set(actions['x-ark-metadata'].enums?.logTypes ?? []);
-const STORED_IN = new Set(actions['x-ark-metadata'].enums?.storedIn ?? []);
-const UUID_V4 = new RegExp(actions['x-ark-metadata'].validation?.uuidV4 ?? '^[0-9a-fA-F-]{36}$');
-const MAX_DETAIL = actions['x-ark-metadata'].validation?.maxDetailLength ?? 4000;
+// Validation constants imported from shared utility
 
 // Create a simple logChatGPTAction function since it's not exported from actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
@@ -27,52 +21,15 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
 
-// Helper functions (from index.js)
-async function readJson(req) {
-  try { return await req.json() } catch { return null }
-}
+// Local JSON helpers for this router
+async function readJson(req) { try { return await req.json() } catch { return null } }
+function json(data, init = {}) { return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' }, ...init }) }
 
-function json(data, init = {}) {
-  return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' }, ...init })
-}
+// ensureSchema imported from shared utility
 
-async function ensureSchema(env) {
-  // idempotent
-  await env.AQUIL_DB.exec?.(`
-    CREATE TABLE IF NOT EXISTS logs (
-      id TEXT PRIMARY KEY,
-      type TEXT NOT NULL,
-      detail TEXT,
-      timestamp TEXT NOT NULL,
-      storedIn TEXT NOT NULL CHECK (storedIn IN ('KV','D1'))
-    );
-    CREATE TABLE IF NOT EXISTS retrieval_meta (
-      id INTEGER PRIMARY KEY CHECK (id=1),
-      lastRetrieved TEXT,
-      retrievalCount INTEGER NOT NULL DEFAULT 0
-    );
-    INSERT OR IGNORE INTO retrieval_meta (id,lastRetrieved,retrievalCount) VALUES (1,NULL,0);
-  `)
-}
+// ISO validation is handled inside validateLog
 
-function isIso(ts) {
-  try {
-    const d = new Date(ts)
-    return !isNaN(d.getTime())
-  } catch { return false }
-}
-
-function validateLog(payload) {
-  if (!payload || typeof payload !== 'object') return 'Invalid body'
-  const { id, type, detail, timestamp, storedIn } = payload
-  if (!UUID_V4.test(id)) return 'id must be uuid v4'
-  if (!LOG_TYPES.has(type)) return `type must be one of ${[...LOG_TYPES].join(',')}`
-  if (detail != null && typeof detail !== 'string') return 'detail must be string'
-  if (detail && detail.length > MAX_DETAIL) return `detail exceeds ${MAX_DETAIL} chars`
-  if (!isIso(timestamp)) return 'timestamp must be ISO 8601'
-  if (!STORED_IN.has(storedIn)) return `storedIn must be one of ${[...STORED_IN].join(',')}`
-  return null
-}
+// validateLog imported from shared utility
 
 const loggingRouter = Router();
 
@@ -200,7 +157,7 @@ loggingRouter.post("/api/logs/promote", withErrorHandling(async (req, env) => {
   const id = body?.id;
   if (!id || !UUID_V4.test(id)) return addCORSToResponse(json({ ok: false, error: 'invalid id' }, { status: 400 }));
   
-  const result = await getEntryById(env, id);
+  const result = getEntryById(env, id);
   if (!result.success) {
     return addCORSToResponse(json({ ok: false, error: 'not found in KV' }, { status: 404 }));
   }
@@ -239,7 +196,6 @@ loggingRouter.post("/api/logs/promote", withErrorHandling(async (req, env) => {
 }));
 
 loggingRouter.post("/api/logs/retrieve", withErrorHandling(async (req, env) => {
-  const body = await req.json();
   const result = await handleRetrieveLogs(req, env);
   return addCORSToResponse(result);
 }));

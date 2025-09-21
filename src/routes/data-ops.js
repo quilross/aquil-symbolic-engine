@@ -20,8 +20,9 @@ const dataOpsRouter = Router();
 
 // D1 Database operations
 dataOpsRouter.post("/api/d1/query", withErrorHandling(async (req, env) => {
-  const result = await d1Exec(req, env);
-  const body = await req.clone().json().catch(() => ({}));
+  const reqClone = req.clone();
+  const result = await d1Exec(reqClone, env);
+  const body = await req.json().catch(() => ({}));
   
   await logChatGPTAction(env, 'queryD1Database', body, result);
   
@@ -30,8 +31,11 @@ dataOpsRouter.post("/api/d1/query", withErrorHandling(async (req, env) => {
 
 // KV Store operations
 dataOpsRouter.post("/api/kv/log", withErrorHandling(async (req, env) => {
-  const body = await req.json();
-  const result = await kvPut(req, env);
+  // Clone request before passing to action to avoid consuming the body twice
+  const reqClone = req.clone();
+  const result = await kvPut(reqClone, env);
+  // Read body from original for logging
+  const body = await req.json().catch(() => ({}));
   
   await logChatGPTAction(env, 'storeInKV', body, result);
   
@@ -48,8 +52,9 @@ dataOpsRouter.get("/api/kv/get", withErrorHandling(async (req, env) => {
 
 // R2 Storage operations
 dataOpsRouter.post("/api/r2/put", withErrorHandling(async (req, env) => {
-  const result = await r2Put(req, env);
-  const body = await req.clone().json().catch(() => ({}));
+  const reqClone = req.clone();
+  const result = await r2Put(reqClone, env);
+  const body = await req.json().catch(() => ({}));
   
   await logChatGPTAction(env, 'logDataOrEvent', body, result);
   
@@ -132,6 +137,8 @@ dataOpsRouter.post("/api/commitments/create", withErrorHandling(async (req, env)
     commitment_created: true,
     commitment_id: `commitment_${Date.now()}`,
     message: "Commitment management system available but not fully implemented",
+    implementation_status: 'mock',
+    mock: true,
     timestamp: new Date().toISOString()
   };
   
@@ -144,6 +151,8 @@ dataOpsRouter.get("/api/commitments/active", withErrorHandling(async (req, env) 
     success: true,
     active_commitments: [],
     message: "Commitment listing system available but not fully implemented",
+    implementation_status: 'mock',
+    mock: true,
     timestamp: new Date().toISOString()
   };
   
@@ -159,6 +168,8 @@ dataOpsRouter.post("/api/goals/set", withErrorHandling(async (req, env) => {
     goal_set: true,
     goal_id: `goal_${Date.now()}`,
     message: "Goal setting system available but not fully implemented",
+    implementation_status: 'mock',
+    mock: true,
     timestamp: new Date().toISOString()
   };
   
@@ -174,6 +185,8 @@ dataOpsRouter.post("/api/habits/design", withErrorHandling(async (req, env) => {
     habit_designed: true,
     habit_id: `habit_${Date.now()}`,
     message: "Habit design system available but not fully implemented",
+    implementation_status: 'mock',
+    mock: true,
     timestamp: new Date().toISOString()
   };
   
