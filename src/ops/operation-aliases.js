@@ -11,6 +11,7 @@ export const OP_CANON = {
   
   // Search and insights operations
   getPersonalInsights: 'getPersonalInsights',
+  generateJournalInsight: 'generateJournalInsight',
   
   // RAG operations
   ragMemoryConsolidation: 'ragMemoryConsolidation',
@@ -67,7 +68,6 @@ export const OP_CANON = {
   // Commitments
   manageCommitment: 'manageCommitment',
   listActiveCommitments: 'listActiveCommitments',
-  updateCommitmentProgress: 'updateCommitmentProgress',
   
   // New operations for complete schema coverage
   trackMoodAndEmotions: 'trackMoodAndEmotions',
@@ -93,6 +93,9 @@ export const OP_ALIASES = {
   'search_logs': 'getPersonalInsights',
   'rag_search': 'getPersonalInsights',
   'search_r2_storage': 'getPersonalInsights',
+  'searchLogs': 'getPersonalInsights',
+  'ragSearch': 'getPersonalInsights',
+  'searchR2Storage': 'getPersonalInsights',
   
   // RAG operations
   'rag_memory_consolidation': 'ragMemoryConsolidation',
@@ -198,6 +201,7 @@ export const OP_ALIASES = {
   'retrieve': 'retrieveLogsOrDataEntries',
   'retrieveLatest': 'retrieveLogsOrDataEntries',
   'retrievalMeta': 'retrieveLogsOrDataEntries',
+  'retrieveRecentSessionLogs': 'retrieveLogsOrDataEntries',
   
   // Other implementation variants detected by guard
   'comprehensivePersonalDevelopment': 'somaticHealingSession',
