@@ -16,6 +16,7 @@ import { loggingRouter } from './routes/logging.js';
 import { dataOpsRouter } from './routes/data-ops.js';
 import { personalDevRouter } from './routes/personal-dev.js';
 import { utilityRouter } from './routes/utility.js';
+import { searchRouter } from './routes/search.js';
 
 // Import ARK endpoints (already well-organized)
 import {
@@ -818,12 +819,19 @@ router.all("/api/system/*", systemRouter.fetch);
 // Logging routes (main logging, latest logs, retrieval meta)
 router.all("/api/log", loggingRouter.fetch);
 router.all("/api/logs/*", loggingRouter.fetch);
+router.all("/api/session-init", loggingRouter.fetch);
 
 // Data operations routes (D1, KV, R2, Vectorize)
 router.all("/api/d1/*", dataOpsRouter.fetch);
 router.all("/api/kv/*", dataOpsRouter.fetch);
 router.all("/api/r2/*", dataOpsRouter.fetch);
 router.all("/api/vectorize/*", dataOpsRouter.fetch);
+
+// Search routes (vector similarity, RAG, content search)
+router.all("/api/search/*", searchRouter.fetch);
+router.all("/api/rag/*", searchRouter.fetch);
+router.all("/api/analytics/*", searchRouter.fetch);
+router.all("/api/export/*", searchRouter.fetch);
 
 // Personal development routes (discovery, wisdom, trust, energy)
 router.all("/api/discovery/*", personalDevRouter.fetch);
@@ -951,7 +959,6 @@ router.all("/api/values/*", personalDevRouter.fetch);
 router.all("/api/goals/*", dataOpsRouter.fetch);
 router.all("/api/habits/*", dataOpsRouter.fetch);
 router.all("/api/commitments/*", dataOpsRouter.fetch);
-router.all("/api/rag/*", dataOpsRouter.fetch);
 
 // Legacy endpoints - now handled by modular routers above (being removed)
 
