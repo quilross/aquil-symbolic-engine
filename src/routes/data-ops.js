@@ -20,23 +20,21 @@ const dataOpsRouter = Router();
 
 // D1 Database operations
 dataOpsRouter.post("/api/d1/query", withErrorHandling(async (req, env) => {
-  const reqForLogging = req.clone();
   const result = await d1Exec(req, env);
-  const body = await reqForLogging.json().catch(() => ({}));
-
+  const body = await req.clone().json().catch(() => ({}));
+  
   await logChatGPTAction(env, 'queryD1Database', body, result);
-
+  
   return addCORSToResponse(result);
 }));
 
 // KV Store operations
 dataOpsRouter.post("/api/kv/log", withErrorHandling(async (req, env) => {
-  const reqForLogging = req.clone();
+  const body = await req.json();
   const result = await kvPut(req, env);
-  const body = await reqForLogging.json().catch(() => ({}));
-
+  
   await logChatGPTAction(env, 'storeInKV', body, result);
-
+  
   return addCORSToResponse(result);
 }));
 
@@ -50,12 +48,11 @@ dataOpsRouter.get("/api/kv/get", withErrorHandling(async (req, env) => {
 
 // R2 Storage operations
 dataOpsRouter.post("/api/r2/put", withErrorHandling(async (req, env) => {
-  const reqForLogging = req.clone();
   const result = await r2Put(req, env);
-  const body = await reqForLogging.json().catch(() => ({}));
-
+  const body = await req.clone().json().catch(() => ({}));
+  
   await logChatGPTAction(env, 'logDataOrEvent', body, result);
-
+  
   return addCORSToResponse(result);
 }));
 
@@ -84,7 +81,7 @@ dataOpsRouter.post("/api/vectorize/query", withErrorHandling(async (req, env) =>
   // Read body from original request for logging
   const body = await req.json().catch(() => ({}));
   await logChatGPTAction(env, 'ragMemoryConsolidation', body, result);
-
+  
   return addCORSToResponse(result);
 }));
 
@@ -96,7 +93,7 @@ dataOpsRouter.post("/api/vectorize/upsert", withErrorHandling(async (req, env) =
   // Read body from original request for logging
   const body = await req.json().catch(() => ({}));
   await logChatGPTAction(env, 'upsertVectors', body, result);
-
+  
   return addCORSToResponse(result);
 }));
 
@@ -111,36 +108,20 @@ dataOpsRouter.get("/api/debug/vector-dimensions", withErrorHandling(async (req, 
   return addCORSToResponse(createSuccessResponse(debugInfo));
 }));
 
-// Vectorize binding debug
-dataOpsRouter.get("/api/vectorize/debug", withErrorHandling(async (req, env) => {
-  const hasVector = !!env.AQUIL_CONTEXT;
-  const hasAI = !!env.AQUIL_AI;
-  console.log("Vectorize binding:", hasVector ? 'present' : 'missing');
-  console.log("AI binding:", hasAI ? 'present' : 'missing');
-
-  let embedSample = null;
-  let usedModel = "@cf/baai/bge-large-en-v1.5";
+// Test endpoint for vector flow validation
+dataOpsRouter.post("/api/test/vector-flow", withErrorHandling(async (req, env) => {
   try {
-    if (hasAI) {
-      const out = await env.AQUIL_AI.run(usedModel, { text: "hello" });
-      const candidate = out?.data?.[0]?.embedding ?? out?.data?.[0] ?? out?.embedding ?? out?.vector ?? out?.data ?? null;
-      embedSample = Array.isArray(candidate) ? { len: candidate.length, sample: candidate.slice(0, 4) } : null;
-    }
+    const { testVectorFlow } = await import('../actions/vectorize.js');
+    const result = await testVectorFlow(env);
+    return addCORSToResponse(createSuccessResponse({
+      status: "vector_flow_test_complete",
+      timestamp: new Date().toISOString(),
+      test_results: result,
+      dimensions_validated: true
+    }));
   } catch (e) {
-    embedSample = { error: String(e) };
+    return addCORSToResponse(createErrorResponse(500, "vector_flow_test_failed", e.message));
   }
-
-  const info = {
-    success: true,
-    bindings: {
-      vectorize: hasVector,
-      ai: hasAI
-    },
-    embed_sample: embedSample,
-    model: usedModel,
-    timestamp: new Date().toISOString()
-  };
-  return addCORSToResponse(createSuccessResponse(info));
 }));
 
 // Commitments operations
