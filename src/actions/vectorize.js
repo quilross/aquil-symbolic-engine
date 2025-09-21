@@ -1,28 +1,46 @@
-// Ensure a vector: embed text or pass through provided vector
-// ...existing code...
-// Ensure a vector embedding from text or vector
-export async function ensureVector(
-  env,
-  { text, vector, model = "@cf/baai/bge-large-en-v1.5" } = {},
-) {
-  if (vector) {
-    return vector;
-  }
-  if (text) {
-    // Use Cloudflare AI binding to embed text
-    const embedding = await env.AQUIL_AI.run(model, { text });
-    
-    // Use the same format as the working logging code
-    const values = embedding.data?.[0] || embedding;
-    
-    if (Array.isArray(values)) {
-      return new Float32Array(values);
+// Vector dimension constant - must match Cloudflare Vectorize requirements
+const VECTOR_DIM = 1024;
+
+// Ensure a vector embedding from text or vector with 1024-dimension validation
+export async function ensureVector(env, input) {
+  if (Array.isArray(input)) {
+    if (input.length !== VECTOR_DIM) {
+      throw new Error(`Embedding dimension mismatch: got ${input.length}, expected ${VECTOR_DIM}`);
     }
-    
-    console.error('Unexpected embedding format:', { embedding, values });
-    throw new Error(`Invalid embedding format: values is not an array`);
+    return input;
   }
-  throw new Error("No text or vector provided for embedding");
+  
+  // Generate embedding from text
+  const resp = await env.AQUIL_AI.run("@cf/baai/bge-large-en-v1.5", { text: String(input ?? "") });
+  const arr = resp?.data?.[0];
+  
+  if (!Array.isArray(arr) || arr.length !== VECTOR_DIM) {
+    throw new Error(`Embedding failed or wrong dimension: got ${Array.isArray(arr) ? arr.length : typeof arr}`);
+  }
+  
+  return arr;
+}
+
+// New centralized vector functions for ARK logging system
+
+export async function upsertVectors(env, { id, text, vector, metadata = {} }) {
+  if (!id) throw new Error("upsertVectors: 'id' is required");
+  const values = await ensureVector(env, vector ?? text);
+  const payload = [{ id: `logvec_${id}`, values, metadata }];
+  return env.AQUIL_CONTEXT.upsert(payload);
+}
+
+export async function queryVectorIndex(env, { text, vector, topK = 5, returnMetadata = "all", returnValues = true }) {
+  const values = await ensureVector(env, vector ?? text);
+  return env.AQUIL_CONTEXT.query(values, { topK, returnMetadata, returnValues });
+}
+
+export async function testVectorFlow(env) {
+  const testText = "Ark system full memory test";
+  await upsertVectors(env, { id: "test1", text: testText, metadata: { type: "test" } });
+  const results = await queryVectorIndex(env, { text: testText, topK: 1 });
+  console.log("Vector test results:", results);
+  return results;
 }
 
 // Query vector database by text (LEGACY - preserved for existing functionality)
@@ -30,7 +48,7 @@ export async function queryByText(
   env,
   { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5" } = {},
 ) {
-  const vector = await ensureVector(env, { text, model });
+  const vector = await ensureVector(env, text);
   const results = await env.AQUIL_CONTEXT.query({
     topK,
     vector,
@@ -51,7 +69,7 @@ export async function semanticRecall(
   { text, topK = 5, model = "@cf/baai/bge-large-en-v1.5", threshold = 0.7 } = {},
 ) {
   try {
-    const vector = await ensureVector(env, { text, model });
+    const vector = await ensureVector(env, text);
     const results = await env.AQUIL_CONTEXT.query({
       topK,
       vector,
@@ -236,23 +254,18 @@ export async function queryVector(
 import { send, readJSON } from "../utils/http.js";
 
 export async function upsert(req, env) {
-  const {
-    id,
-    text,
-    vector,
-    metadata,
-    model = "@cf/baai/bge-large-en-v1.5",
-  } = await readJSON(req);
-  let v = vector;
   try {
-    if (!v && text) {
-      const embedding = await env.AQUIL_AI.run(model, { text });
-      v = embedding.data[0];
-    }
-    if (!id || !Array.isArray(v))
-      return send(400, { error: "id and embedding vector required" });
-    await env.AQUIL_CONTEXT.upsert([{ id, values: v, metadata }]);
-    return send(200, { ok: true, id });
+    const {
+      id,
+      text,
+      vector,
+      metadata,
+      model = "@cf/baai/bge-large-en-v1.5",
+    } = await readJSON(req);
+    
+    // Use new upsertVectors function
+    const result = await upsertVectors(env, { id, text, vector, metadata });
+    return send(200, { ok: true, id, inserted: result.inserted || 1 });
   } catch (e) {
     return send(500, { error: "vector_upsert_error", message: String(e) });
   }
@@ -266,8 +279,16 @@ export async function query(req, env) {
       topK = 5,
       model = "@cf/baai/bge-large-en-v1.5",
       mode = "semantic_recall",
-      threshold = 0.7
+      threshold = 0.7,
+      returnMetadata = "all",
+      returnValues = true
     } = await readJSON(req);
+
+    // Use new queryVectorIndex function for direct vector queries
+    if (vector || (!text && vector)) {
+      const result = await queryVectorIndex(env, { vector, topK, returnMetadata, returnValues });
+      return send(200, { results: result });
+    }
 
     // If text is provided, use RAG with semantic recall or transformative inquiry
     if (text) {
@@ -280,18 +301,7 @@ export async function query(req, env) {
       });
     }
 
-    // Fallback to basic vector query for vector-only queries
-    let v = vector;
-    if (!v) {
-      return send(400, { error: "text or vector required for query" });
-    }
-    
-    if (!Array.isArray(v)) {
-      return send(400, { error: "vector must be an array" });
-    }
-    
-    const results = await env.AQUIL_CONTEXT.query(v, { topK });
-    return send(200, { results });
+    return send(400, { error: "text or vector required for query" });
     
   } catch (e) {
     return send(500, { error: "vector_query_error", message: String(e) });

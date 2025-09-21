@@ -108,6 +108,22 @@ dataOpsRouter.get("/api/debug/vector-dimensions", withErrorHandling(async (req, 
   return addCORSToResponse(createSuccessResponse(debugInfo));
 }));
 
+// Test endpoint for vector flow validation
+dataOpsRouter.post("/api/test/vector-flow", withErrorHandling(async (req, env) => {
+  try {
+    const { testVectorFlow } = await import('../actions/vectorize.js');
+    const result = await testVectorFlow(env);
+    return addCORSToResponse(createSuccessResponse({
+      status: "vector_flow_test_complete",
+      timestamp: new Date().toISOString(),
+      test_results: result,
+      dimensions_validated: true
+    }));
+  } catch (e) {
+    return addCORSToResponse(createErrorResponse(500, "vector_flow_test_failed", e.message));
+  }
+}));
+
 // Commitments operations
 dataOpsRouter.post("/api/commitments/create", withErrorHandling(async (req, env) => {
   const body = await req.json();

@@ -1490,6 +1490,141 @@
         }
       }
     },
+    "/api/vectorize/upsert": {
+      "post": {
+        "summary": "Upsert vectors into the vector index",
+        "description": "Called to store vector embeddings in the vector index. Accepts either text (for auto-embedding) or pre-generated 1024-dimensional vectors.",
+        "operationId": "upsertVectors",
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique identifier for the vector entry"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Text to embed as vector (alternative to providing vector directly)"
+                  },
+                  "vector": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 1024,
+                    "maxItems": 1024,
+                    "description": "Pre-generated 1024-dimensional vector (alternative to providing text)"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Optional metadata to store with the vector"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "oneOf": [
+                  {
+                    "required": ["text"]
+                  },
+                  {
+                    "required": ["vector"]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vector upsert successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "inserted": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or vector dimensions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Error timestamp"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vectorize/query": {
       "post": {
         "summary": "Query vector index for similarity search",
@@ -1503,12 +1638,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Text to embed and search for (alternative to providing vector directly)"
+                  },
                   "vector": {
                     "type": "array",
                     "items": {
                       "type": "number"
                     },
-                    "description": "Query vector for similarity search (array of numerical embeddings)"
+                    "minItems": 1024,
+                    "maxItems": 1024,
+                    "description": "Query vector for similarity search (1024-dimensional array, alternative to providing text)"
                   },
                   "topK": {
                     "type": "integer",
@@ -1516,13 +1657,25 @@
                     "maximum": 20,
                     "description": "Number of most similar vectors to return"
                   },
-                  "namespace": {
+                  "returnMetadata": {
                     "type": "string",
-                    "description": "Optional namespace to scope the vector search"
+                    "enum": ["all", "none"],
+                    "default": "all",
+                    "description": "Whether to return metadata with results"
+                  },
+                  "returnValues": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to return vector values with results"
                   }
                 },
-                "required": [
-                  "vector"
+                "oneOf": [
+                  {
+                    "required": ["text"]
+                  },
+                  {
+                    "required": ["vector"]
+                  }
                 ]
               }
             }
