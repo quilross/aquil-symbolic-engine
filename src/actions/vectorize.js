@@ -258,13 +258,12 @@ export async function upsert(req, env) {
     const body = await readJSON(req);
     
     // Support both flat format and OpenAI plugin vectors array format
-    const { id, text, vector, metadata, model = "@cf/baai/bge-large-en-v1.5" } =
+    const { id, text, vector, metadata } =
       Array.isArray(body.vectors) ? {
         id: body.vectors[0]?.id,
         text: body.vectors[0]?.text,
         vector: body.vectors[0]?.values || body.vectors[0]?.vector,
-        metadata: body.vectors[0]?.metadata || body.metadata || {},
-        model: body.model || "@cf/baai/bge-large-en-v1.5"
+        metadata: body.vectors[0]?.metadata || body.metadata || {}
       } : body;
     
     // Use new upsertVectors function
