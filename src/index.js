@@ -1,24 +1,59 @@
-/**
- * Aquil Production - Main Entry Point (Restructured)
- * Personal AI Wisdom Builder optimized for ChatGPT integration
- * 
- * This is the primary worker that handles all API requests using modular routing
- */
-
 import { Router } from 'itty-router';
+
 import { handleScheduledTriggers } from './utils/autonomy.js';
-import { createErrorResponse } from './utils/error-handler.js';
 import { corsHeaders } from './utils/cors.js';
+import { handleError, createErrorResponse } from './utils/error-handler.js';
+import { createSuccessResponse, createWisdomResponse } from './utils/response-helpers.js';
+import { toCanonical } from './ops/operation-aliases.js';
 
-// Import modular route handlers
-import { systemRouter } from './routes/system.js';
-import { loggingRouter } from './routes/logging.js';
-import { dataOpsRouter } from './routes/data-ops.js';
-import { personalDevRouter } from './routes/personal-dev.js';
-import { utilityRouter } from './routes/utility.js';
-import { searchRouter } from './routes/search.js';
+import { writeLog, readLogs } from './actions/logging.js';
+import { exec as d1Exec } from './actions/d1.js';
+import { log as kvLog, get as kvGet } from './actions/kv.js';
+import { put as r2Put, get as r2Get, listRecent as r2List, progressiveWeaving } from './actions/r2.js';
+import {
+  query as vectorQueryRequest,
+  upsert as vectorUpsertRequest,
+  testVectorFlow,
+  queryVector,
+} from './actions/vectorize.js';
 
-// Import ARK endpoints (already well-organized)
+import { generateInsight } from './insightEngine.js';
+import * as journalService from './journalService.js';
+
+import { SomaticHealer } from './src-core-somatic-healer.js';
+import { TrustBuilder } from './src-core-trust-builder.js';
+import { MediaWisdomExtractor } from './src-core-media-wisdom.js';
+import { PatternRecognizer } from './src-core-pattern-recognizer.js';
+import { StandingTall } from './src-core-standing-tall.js';
+import { AquilCore } from './src-core-aquil-core.js';
+import { ValuesClarifier } from './src-core-values-clarifier.js';
+import { CreativityUnleasher } from './src-core-creativity-unleasher.js';
+import { AbundanceCultivator } from './src-core-abundance-cultivator.js';
+import { TransitionNavigator } from './src-core-transition-navigator.js';
+import { AncestryHealer } from './src-core-ancestry-healer.js';
+
+import {
+  LOG_TYPES,
+  UUID_V4,
+  ensureSchema,
+} from './utils/logging-validation.js';
+import {
+  buildInterpretation,
+  maybeRecognizePatterns,
+  safeTruncated,
+} from './utils/dream-interpreter.js';
+
+import {
+  handleSessionInit,
+  handleDiscoveryInquiry,
+  handleRitualSuggestion,
+  handleHealthCheck,
+  handleReadinessCheck,
+  handleRetrieveLogs,
+  handleLog as arkHandleLog,
+  handleTrustCheckIn,
+} from './ark/endpoints.js';
+
 import {
   arkLog,
   arkRetrieve,
@@ -28,1121 +63,1144 @@ import {
   arkStatus,
   arkFilter,
   arkAutonomous,
-  arkTestAI
-} from "./ark/ark-endpoints.js";
-// Behavioral engine
-import { runEngine } from "./agent/engine.js";
+  arkTestAI,
+} from './ark/ark-endpoints.js';
 
-// Logging and data persistence
-import { 
-  writeLog 
-} from "./actions/logging.js";
-
-// Dream interpretation utilities
-import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from "./utils/dream-interpreter.js";
-
-// Insight generation
-import { generateInsight } from "./insightEngine.js";
-import * as journalService from "./journalService.js";
-
-// D1 and Vector database actions
-import { exec as d1Exec } from "./actions/d1.js";
-import { query as vectorQuery, upsert as vectorUpsert } from "./actions/vectorize.js";
-
-// R2 storage actions
-import { put as r2Put, get as r2Get } from "./actions/r2.js";
-
-// KV storage actions
-import { log as kvLog, get as kvGet } from "./actions/kv.js";
-
-// Core AI modules for personal growth
-import { SomaticHealer } from "./src-core-somatic-healer.js";
-import { ValuesClarifier } from "./src-core-values-clarifier.js";
-import { CreativityUnleasher } from "./src-core-creativity-unleasher.js";
-import { AbundanceCultivator } from "./src-core-abundance-cultivator.js";
-import { TransitionNavigator } from "./src-core-transition-navigator.js";
-import { AncestryHealer } from "./src-core-ancestry-healer.js";
-import { TrustBuilder } from "./src-core-trust-builder.js";
-import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
-import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
-import { StandingTall } from "./src-core-standing-tall.js";
-import { AquilCore } from "./src-core-aquil-core.js";
-
-import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
-
-// Import actions metadata for validation constants
 import actions from '../config/ark.actions.logging.json' with { type: 'json' };
-import { LOG_TYPES, STORED_IN, UUID_V4, MAX_DETAIL, ensureSchema } from './utils/logging-validation.js';
+import gptSchema from '../gpt-actions-schema.json' with { type: 'json' };
 
-// Pull routes from JSON (validation constants sourced from shared util)
-const Routes = actions['x-ark-metadata'].routes
-
-// ISO 8601 checker (lightweight; keeps your current semantics)
-function isIso(ts) {
-  try {
-    const d = new Date(ts)
-    return !isNaN(d.getTime())
-  } catch { return false }
-}
-
-// Minimal shared helpers
-async function readJson(req) {
-  try { return await req.json() } catch { return null }
-}
-function json(data, init = {}) {
-  return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' }, ...init })
-}
-
-function validateLog(payload) {
-  if (!payload || typeof payload !== 'object') return 'Invalid body'
-  const { id, type, detail, timestamp, storedIn } = payload
-  if (!UUID_V4.test(id)) return 'id must be uuid v4'
-  if (!LOG_TYPES.has(type)) return `type must be one of ${[...LOG_TYPES].join(',')}`
-  if (detail != null && typeof detail !== 'string') return 'detail must be string'
-  if (detail && detail.length > MAX_DETAIL) return `detail exceeds ${MAX_DETAIL} chars`
-  if (!isIso(timestamp)) return 'timestamp must be ISO 8601'
-  if (!STORED_IN.has(storedIn)) return `storedIn must be one of ${[...STORED_IN].join(',')}`
-  return null
-}
-
-async function handleKvWrite(env, req) {
-  const { addEntry } = await import('./journalService.js');
-  
-  const body = await readJson(req)
-  const err = validateLog(body)
-  if (err) return json({ ok: false, error: err }, { status: 400 })
-  if (body.storedIn !== 'KV') return json({ ok: false, error: 'storedIn must be KV' }, { status: 400 })
-  
-  const result = await addEntry(env, body);
-  if (result.success) {
-    return json({ ok: true, key: result.key, id: result.id })
-  } else {
-    return json({ ok: false, error: result.error }, { status: 500 })
-  }
-}
-
-async function handleD1Insert(env, req) {
-  await ensureSchema(env)
-  const body = await readJson(req)
-  const err = validateLog(body)
-  if (err) return json({ ok: false, error: err }, { status: 400 })
-  if (body.storedIn !== 'D1') return json({ ok: false, error: 'storedIn must be D1' }, { status: 400 })
-  await env.AQUIL_DB.prepare(
-    'INSERT INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(body.id, body.type, body.detail ?? null, body.timestamp, 'D1').run()
-  return json({ ok: true, rowId: 1, id: body.id })
-}
-
-async function handlePromote(env, req) {
-  await ensureSchema(env)
-  const { getEntryById } = await import('./journalService.js');
-  
-  const body = await readJson(req)
-  const id = body?.id
-  if (!id || !UUID_V4.test(id)) return json({ ok: false, error: 'invalid id' }, { status: 400 })
-  
-  const result = await getEntryById(env, id);
-  if (!result.success) {
-    return json({ ok: false, error: 'not found in KV' }, { status: 404 })
-  }
-  
-  const log = result.data;
-  const err = validateLog(log)
-  if (err) return json({ ok: false, error: `invalid KV log: ${err}` }, { status: 400 })
-  
-  await env.AQUIL_DB.prepare(
-    'INSERT OR IGNORE INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(log.id, log.type, log.detail ?? null, log.timestamp, 'D1').run()
-  return json({ ok: true, promotedId: id })
-}
-
-async function handleRetrieve(env, req) {
-  await ensureSchema(env)
-  const q = await readJson(req) || {}
-  const { source = 'any', types, from, to, limit = 100, afterId, order = 'desc' } = q
-
-  if (types && (!Array.isArray(types) || types.some(t => !LOG_TYPES.has(t)))) {
-    return json({ ok: false, error: 'invalid types' }, { status: 400 })
-  }
-  if (from && !isIso(from)) return json({ ok: false, error: 'invalid from' }, { status: 400 })
-  if (to && !isIso(to)) return json({ ok: false, error: 'invalid to' }, { status: 400 })
-  const lim = Math.max(1, Math.min(Number(limit) || 100, 500))
-  const ord = order === 'asc' ? 'ASC' : 'DESC'
-
-  const clauses = []
-  const params = []
-  if (types?.length) { clauses.push(`type IN (${types.map(() => '?').join(',')})`); params.push(...types) }
-  if (from) { clauses.push('timestamp >= ?'); params.push(from) }
-  if (to)   { clauses.push('timestamp <= ?'); params.push(to) }
-  if (afterId) { clauses.push('id > ?'); params.push(afterId) }
-  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
-  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ${where} ORDER BY timestamp ${ord} LIMIT ?`
-  params.push(lim)
-  const res = await env.AQUIL_DB.prepare(sql).bind(...params).all()
-  let items = res.results || []
-
-  return json({ ok: true, items })
-}
-
-async function handleRetrieveLatest(env, req) {
-  await ensureSchema(env)
-  const url = new URL(req.url)
-  const n = Number(url.searchParams.get('limit') || '25')
-  const limit = Math.max(1, Math.min(isFinite(n) ? n : 25, 200))
-  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ORDER BY timestamp DESC LIMIT ?`
-  const res = await env.AQUIL_DB.prepare(sql).bind(limit).all()
-  return json({ ok: true, items: res.results || [] })
-}
-
-async function handleRetrievalMeta(env, req) {
-  await ensureSchema(env)
-  let ts
-  try { ts = (await req.json())?.timestamp } catch {}
-  const timestamp = (ts && isIso(ts)) ? ts : new Date().toISOString()
-  await env.AQUIL_DB.prepare(
-    'UPDATE retrieval_meta SET lastRetrieved=?1, retrievalCount=retrievalCount+1 WHERE id=1'
-  ).bind(timestamp).run()
-  const res = await env.AQUIL_DB.prepare(
-    'SELECT lastRetrieved, retrievalCount FROM retrieval_meta WHERE id=1'
-  ).all()
-  const row = (res.results && res.results[0]) || { lastRetrieved: null, retrievalCount: 0 }
-  return json(row)
-}
-// === END EXTRACTION PATCH ===
-
-// Utilities
-import { toCanonical } from "./ops/operation-aliases.js";
-
-// Response utilities
-import { 
-  createSuccessResponse,
-  handleCORSPreflight,
-  extractSessionId,
-  createWisdomResponse,
-  createPatternResponse,
-  createCommitmentResponse
-} from "./utils/response-helpers.js";
-
-// =============================================================================
-// CHATGPT ACTION LOGGING
-// =============================================================================
-
-/**
- * Logs ChatGPT actions with proper tracking, metrics, and artifacts
- * This function ensures all ChatGPT interactions are properly logged for continuity
- */
-async function logChatGPTAction(env, operationId, data, result, error = null) {
-  try {
-    const canonical = toCanonical(operationId);
-    
-    // Track successful store writes
-    const stores = [];
-    
-    // Generate trace ID for this action
-    const traceId = `gpt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
-    // Collect metrics (fail-open)
-    try {
-      const { incrementActionSuccess, incrementActionError } = await import('./utils/metrics.js');
-      if (error) {
-        incrementActionError(env, canonical);
-      } else {
-        incrementActionSuccess(env, canonical);
-      }
-    } catch (metricsError) {
-      console.warn('Metrics collection failed:', metricsError.message);
-    }
-    
-    const payload = {
-      action: operationId,
-      input: data,
-      result: error ? { 
-        error: error.message,
-        error_category: categorizeGPTError(error),
-        error_severity: determineErrorSeverity(error)
-      } : { 
-        success: true, 
-        processed: !!result 
-      },
-      // Enhanced observability metadata
-      gpt_metadata: {
-        action_type: 'chatgpt_interaction',
-        canonical_operation: canonical,
-        original_operation: operationId !== canonical ? operationId : null,
-        trace_id: traceId,
-        processing_timestamp: new Date().toISOString(),
-        user_session: data?.session_id || 'unknown'
-      }
-    };
-    
-    // Generate R2 artifact for significant actions
-    const r2Policy = getR2PolicyForAction(canonical);
-    let binary = null;
-    if (r2Policy !== 'n/a' && result && !error) {
-      binary = generateArtifactForAction(canonical, result);
-      if (binary) {
-        stores.push('r2');
-      }
-    }
-    
-    // Standardized tags for ChatGPT actions
-    const domain = getDomainForAction(canonical);
-    const standardTags = [
-      `action:${canonical}`,
-      ...(canonical !== operationId ? [`alias:${operationId}`] : []),
-      `domain:${domain}`,
-      'source:gpt',
-      `env:${env.ENVIRONMENT || 'production'}`,
-      error ? 'error' : 'success',
-      'chatgpt_action'
-    ];
-    
-    // Create embedding text
-    let textOrVector = error 
-      ? `${canonical.replace(/_/g, ' ')} error: ${error.message}`
-      : `${canonical.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`;
-    
-    textOrVector = scrubAndTruncateForEmbedding(textOrVector);
-
-    await writeLog(env, {
-      type: error ? `${canonical}_error` : canonical,
-      payload,
-      session_id: data?.session_id || crypto.randomUUID(),
-      who: 'system',
-      level: error ? 'error' : 'info',
-      tags: standardTags,
-      binary,
-      textOrVector,
-      stores,  // Add stores tracking
-      trace_id: traceId, // Pass trace ID for observability
-      error_code: error ? generateErrorCode(canonical, error) : null // Structured error codes
-    });
-    
-    // Track successful D1 write
-    stores.push('d1');
-    
-  } catch (logError) {
-    console.warn('Failed to log ChatGPT action:', logError);
-  }
-}
-
-/**
- * Categorize GPT-specific errors for structured logging
- */
-function categorizeGPTError(error) {
-  if (error.message?.includes('database') || error.message?.includes('D1')) return 'database';
-  if (error.message?.includes('KV') || error.message?.includes('storage')) return 'storage';
-  if (error.message?.includes('timeout')) return 'timeout';
-  if (error.message?.includes('validation') || error.message?.includes('schema')) return 'validation';
-  if (error.message?.includes('auth') || error.message?.includes('permission')) return 'auth';
-  if (error.message?.includes('network') || error.message?.includes('fetch')) return 'network';
-  return 'unknown';
-}
-
-/**
- * Determine error severity for GPT actions
- */
-function determineErrorSeverity(error) {
-  const category = categorizeGPTError(error);
-  if (category === 'database' || category === 'storage') return 'high';
-  if (category === 'auth') return 'medium';
-  if (category === 'validation' || category === 'timeout') return 'low';
-  return 'medium';
-}
-
-/**
- * Generate structured error codes for observability
- */
-function generateErrorCode(operation, error) {
-  const category = categorizeGPTError(error);
-  const severity = determineErrorSeverity(error);
-  return `${operation.toUpperCase()}_${category.toUpperCase()}_${severity.toUpperCase()}`;
-}
-
-// =============================================================================
-// UTILITY FUNCTIONS
-// =============================================================================
-
-/**
- * Query metamorphic_logs with cursor pagination and stable sort
- */
-async function queryMetamorphicLogs(env, { limit = 20, after = null, sessionId = null, since = null }) {
-  try {
-    const db = safeBinding(env, 'AQUIL_DB');
-    if (!db) {
-      return []; // Fail-open
-    }
-
-    let query = `
-      SELECT id, timestamp, operationId, originalOperationId, kind, level, session_id, tags, stores, artifactKey, error_message, error_code, detail, env, source 
-      FROM metamorphic_logs 
-      WHERE 1=1
-    `;
-    const params = [];
-
-    // Filter by session if provided
-    if (sessionId) {
-      query += ` AND session_id = ?`;
-      params.push(sessionId);
-    }
-
-    // Filter by since timestamp if provided
-    if (since) {
-      query += ` AND timestamp >= ?`;
-      params.push(since);
-    }
-
-    // Cursor pagination with stable sort
-    if (after?.ts && after?.id) {
-      query += ` AND (timestamp < ? OR (timestamp = ? AND id < ?))`;
-      params.push(after.ts, after.ts, after.id);
-    }
-
-    query += ` ORDER BY timestamp DESC, id DESC LIMIT ?`;
-    params.push(limit);
-
-    const { results } = await db.prepare(query).bind(...params).all();
-    
-    // Transform to canonical format
-    return results.map(toCanonicalLogItem);
-  } catch (error) {
-    console.warn('queryMetamorphicLogs error:', error);
-    return []; // Fail-open
-  }
-}
-
-/**
- * Gather readiness status for all systems
- */
-async function gatherReadinessStatus(env) {
-  const status = {
-    ready: true,
-    summary: "All systems operational",
-    errors: [],
-    flags: {
-      conversationalEngine: env.ENABLE_CONVERSATIONAL_ENGINE === '1',
-      gptCompatMode: !!(env.GPT_COMPAT_MODE || !env.AQUIL_DB)
-    }
-  };
-
-  try {
-    // Check D1 connection
-    const db = safeBinding(env, 'AQUIL_DB');
-    if (db) {
-      await db.prepare('SELECT 1').first();
-    } else {
-      status.errors.push('D1 database not available');
-      status.ready = false;
-    }
-  } catch (error) {
-    status.errors.push(`D1 error: ${error.message}`);
-    status.ready = false;
-  }
-
-  try {
-    // Check KV connection
-    const kv = safeBinding(env, 'AQUIL_CONTEXT');
-    if (kv) {
-      await kv.get('health-check', { type: 'text' });
-    } else {
-      status.errors.push('KV store not available');
-      status.ready = false;
-    }
-  } catch (error) {
-    status.errors.push(`KV error: ${error.message}`);
-    status.ready = false;
-  }
-
-  // In fail-open mode, don't fail on store issues
-  if (env.GPT_COMPAT_MODE === '1' && !status.ready) {
-    status.ready = true;
-    status.summary = "Running in fail-open mode with partial functionality";
-  }
-
-  return status;
-}
-
-/**
- * Transform database row to canonical log item format
- */
-function toCanonicalLogItem(row) {
-  return {
-    id: row.id,
-    timestamp: row.timestamp,
-    operationId: row.operationId,
-    originalOperationId: row.originalOperationId,
-    kind: row.kind,
-    level: row.level || 'info',
-    session_id: row.session_id,
-    tags: row.tags ? JSON.parse(row.tags) : [],
-    stores: row.stores ? JSON.parse(row.stores) : [],
-    artifactKey: row.artifactKey,
-    error: row.error_message ? {
-      message: row.error_message,
-      code: row.error_code
-    } : null,
-    detail: row.detail ? JSON.parse(row.detail) : null,
-    env: row.env,
-    source: row.source || 'gpt'
-  };
-}
-
-/**
- * Scrub PII and truncate text for safe vector embedding
- */
-function scrubAndTruncateForEmbedding(text, maxLength = 1000) {
-  if (!text || typeof text !== 'string') return '';
-  
-  let scrubbed = text
-    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
-    .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[PHONE]')
-    .replace(/\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, '[CARD]')
-    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]')
-    .replace(/\s+/g, ' ')
-    .trim();
-  
-  return scrubbed.length > maxLength 
-    ? scrubbed.substring(0, maxLength - 50) + '... [TRUNCATED FOR EMBEDDING]'
-    : scrubbed;
-}
-
-/**
- * Determine R2 storage policy for an operation
- */
-function getR2PolicyForAction(operationId) {
-  const canonical = toCanonical(operationId);
-  const r2Policies = {
-    'somaticHealingSession': 'required',
-    'extractMediaWisdom': 'required', 
-    'interpretDream': 'required',
-    'transformation_contract': 'required',
-    'trustCheckIn': 'optional',
-    'recognizePatterns': 'optional',
-    'synthesizeWisdom': 'optional',
-    'getWisdomAndInsights': 'optional',
-    'optimizeEnergy': 'optional',
-  };
-  
-  return r2Policies[canonical] || 'n/a';
-}
-
-/**
- * Determine domain category for tagging
- */
-function getDomainForAction(operationId) {
-  const canonical = toCanonical(operationId);
-  const domains = {
-    'trustCheckIn': 'trust',
-    'somaticHealingSession': 'somatic',
-    'extractMediaWisdom': 'wisdom',
-    'recognizePatterns': 'patterns',
-    'synthesizeWisdom': 'wisdom',
-    'getWisdomAndInsights': 'wisdom',
-    'systemHealthCheck': 'system',
-    'logDataOrEvent': 'logging',
-    'generateDiscoveryInquiry': 'discovery',
-    'autoSuggestRitual': 'ritual'
-  };
-  
-  return domains[canonical] || 'general';
-}
-
-/**
- * Generate R2 binary artifact for actions that need it
- */
-function generateArtifactForAction(operationId, result) {
-  try {
-    const canonical = toCanonical(operationId);
-    
-    // Only generate artifacts for specific high-value operations
-    const artifactOperations = ['somaticHealingSession', 'extractMediaWisdom', 'interpretDream'];
-    if (!artifactOperations.includes(canonical)) {
-      return null;
-    }
-    
-    const artifact = {
-      operation: canonical,
-      timestamp: new Date().toISOString(),
-      result: result,
-      version: '2.0'
-    };
-    
-    const jsonStr = JSON.stringify(artifact, null, 2);
-    return btoa(jsonStr);
-  } catch (error) {
-    console.warn('Failed to generate artifact for', operationId, error.message);
-    return null;
-  }
-}
-
-// =============================================================================
-// PERSONAL DEVELOPMENT SESSION PROCESSORS
-// =============================================================================
-
-// Individual session processors (used by dedicated router endpoints)
-async function processGratitudeSession(content, sessionId, env) {
-  const gratitudeItems = content.gratitude_items || [];
-  return {
-    session_type: 'gratitude',
-    insights: [
-      `Grateful for ${gratitudeItems.length} aspects of life`,
-      "Gratitude shifts perspective toward abundance",
-      "Regular practice strengthens appreciation"
-    ],
-    practices: [
-      "Three daily gratitudes",
-      "Gratitude journaling",
-      "Appreciation meditation"
-    ],
-    next_steps: [
-      "Notice small daily gifts",
-      "Express gratitude to others",
-      "Feel gratitude in your body"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processHealingSession(content, sessionId, env) {
-  const emotions = content.emotions_present || [];
-  return {
-    session_type: 'healing',
-    insights: [
-      `Processing ${emotions.length} emotional states`,
-      "Healing happens in layers",
-      "Emotions carry important messages"
-    ],
-    practices: [
-      "Emotional check-ins",
-      "Feeling body awareness",
-      "Compassionate self-talk"
-    ],
-    next_steps: [
-      "Honor your emotional truth",
-      "Seek support when needed",
-      "Trust the healing process"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processIntuitionSession(content, sessionId, env) {
-  return {
-    session_type: 'intuition',
-    insights: [
-      "Your intuition is always available",
-      "Body wisdom precedes mental analysis",
-      "Trust develops through practice"
-    ],
-    practices: [
-      "Daily intuition check-ins",
-      "Body scanning",
-      "Decision meditation"
-    ],
-    next_steps: [
-      "Notice first impressions",
-      "Track intuitive hits",
-      "Honor subtle guidance"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processPurposeSession(content, sessionId, env) {
-  return {
-    session_type: 'purpose',
-    insights: [
-      "Purpose emerges through living",
-      "Values provide direction",
-      "Meaning is created, not found"
-    ],
-    practices: [
-      "Values clarification",
-      "Purpose journaling",
-      "Meaningful action steps"
-    ],
-    next_steps: [
-      "Align actions with values",
-      "Notice what energizes you",
-      "Contribute to something larger"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processRelationshipSession(content, sessionId, env) {
-  return {
-    session_type: 'relationships',
-    insights: [
-      "Connection requires vulnerability",
-      "Growth happens in relationship",
-      "Boundaries create safety"
-    ],
-    practices: [
-      "Active listening",
-      "Honest communication",
-      "Empathy building"
-    ],
-    next_steps: [
-      "Practice presence",
-      "Share authentically",
-      "Honor differences"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processShadowSession(content, sessionId, env) {
-  return {
-    session_type: 'shadow',
-    insights: [
-      "Shadow contains rejected parts",
-      "Integration creates wholeness",
-      "Triggers reveal shadow aspects"
-    ],
-    practices: [
-      "Shadow dialogue",
-      "Trigger exploration",
-      "Self-compassion work"
-    ],
-    next_steps: [
-      "Notice strong reactions",
-      "Explore projections",
-      "Embrace all parts of self"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processSocraticSession(content, sessionId, env) {
-  return {
-    session_type: 'socratic',
-    insights: [
-      "Questions reveal deeper truth",
-      "Assumptions shape perception",
-      "Inquiry opens possibilities"
-    ],
-    practices: [
-      "Question assumptions",
-      "Explore contradictions",
-      "Seek multiple perspectives"
-    ],
-    next_steps: [
-      "Ask 'What if?' questions",
-      "Challenge beliefs",
-      "Stay curious"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processRitualSession(content, sessionId, env) {
-  return {
-    session_type: 'ritual',
-    insights: [
-      "Rituals create sacred time",
-      "Intention shapes practice",
-      "Consistency builds power"
-    ],
-    practices: [
-      "Morning ritual design",
-      "Transition ceremonies",
-      "Evening reflection"
-    ],
-    next_steps: [
-      "Create simple daily ritual",
-      "Honor life transitions",
-      "Practice with intention"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-// =============================================================================
-// ROUTER SETUP WITH ERROR HANDLING MIDDLEWARE
-// =============================================================================
 const router = Router();
 
-// Add CORS headers helper
-const addCORS = (res) => {
-  if (res instanceof Response) {
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      res.headers.set(key, value);
-    });
-  }
-  return res;
-};
-
-// Handle CORS preflight requests
-router.options("*", () => handleCORSPreflight());
-
-// =============================================================================
-// INTEGRATE MODULAR ROUTERS
-// =============================================================================
-
-// System routes (health checks, session init, readiness)
-router.all("/api/session-init", systemRouter.fetch);
-router.all("/api/system/*", systemRouter.fetch);
-
-// Logging routes (main logging, latest logs, retrieval meta)
-router.all("/api/log", loggingRouter.fetch);
-router.all("/api/logs/*", loggingRouter.fetch);
-router.all("/api/session-init", loggingRouter.fetch);
-
-// Data operations routes (D1, KV, R2, Vectorize)
-router.all("/api/d1/*", dataOpsRouter.fetch);
-router.all("/api/kv/*", dataOpsRouter.fetch);
-router.all("/api/r2/*", dataOpsRouter.fetch);
-router.all("/api/vectorize/*", dataOpsRouter.fetch);
-
-// Search routes (vector similarity, RAG, content search)
-router.all("/api/search/*", searchRouter.fetch);
-router.all("/api/rag/*", searchRouter.fetch);
-router.all("/api/analytics/*", searchRouter.fetch);
-router.all("/api/export/*", searchRouter.fetch);
-
-// Personal development routes (discovery, wisdom, trust, energy)
-router.all("/api/discovery/*", personalDevRouter.fetch);
-router.all("/api/trust/*", personalDevRouter.fetch);
-router.all("/api/energy/*", personalDevRouter.fetch);
-router.all("/api/somatic/*", personalDevRouter.fetch);
-router.all("/api/patterns/*", personalDevRouter.fetch);
-
-// Utility routes (feedback, insights, monitoring, dreams)
-router.all("/api/feedback", utilityRouter.fetch);
-router.all("/api/insights/*", utilityRouter.fetch);
-router.all("/api/monitoring/*", utilityRouter.fetch);
-router.all("/api/dreams/*", utilityRouter.fetch);
-router.all("/api/conversation/*", utilityRouter.fetch);
-router.all("/api/mood/*", utilityRouter.fetch);
-
-// =============================================================================
-// INSIGHT GENERATION ENDPOINT
-// =============================================================================
-
-// Generate insights from journal entries
-router.post("/api/insight", async (req, env) => {
-  try {
-    const body = await req.json();
-    
-    // Extract current entry from request body
-    const currentEntry = body.currentEntry || body.entry || body;
-    
-    // Retrieve user's history using journal service
-    const historyResult = await journalService.listRecentEntries(env, { 
-      limit: 50, // Get recent 50 entries for pattern analysis
-      prefix: body.prefix || "log_" 
-    });
-    
-    const userHistory = historyResult.success ? historyResult.entries : [];
-    
-    // Generate insight using the insight engine
-    const insight = await generateInsight(currentEntry, userHistory);
-    
-    // Log the action for tracking
-    await logChatGPTAction(env, 'generateJournalInsight', {
-      entryId: currentEntry.id || 'unknown',
-      historyCount: userHistory.length
-    }, { insight });
-    
-    // Return the insight as JSON
-    return addCORS(createSuccessResponse({
-      insight: insight
-    }));
-    
-  } catch (error) {
-    console.error('Error in /api/insight:', error);
-    
-    await logChatGPTAction(env, 'generateJournalInsight', {}, null, error);
-    
-    return addCORS(createErrorResponse({
-      error: 'insight_generation_failed',
-      message: 'Failed to generate insight'
-    }, 500));
-  }
+const coverage = createCoverageTracker({
+  schemaPaths: Object.keys(gptSchema.paths ?? {}),
+  arkPaths: Object.keys(actions.paths ?? {}),
+  arkRouteHints: Object.values(actions['x-ark-metadata']?.routes ?? {}),
 });
 
-// =============================================================================
-// ARK ENDPOINTS (CONSOLIDATED)
-// =============================================================================
+const schemaOperations = buildSchemaOperationLookup();
 
-// ARK logging and retrieval
-router.post("/api/ark/log", async (req, env) => {
-  const result = await arkLog(req, env);
-  return addCORS(result);
-});
-
-router.get("/api/ark/retrieve", async (req, env) => {
-  const result = await arkRetrieve(req, env);
-  return addCORS(result);
-});
-
-router.get("/api/ark/memories", async (req, env) => {
-  const result = await arkMemories(req, env);
-  return addCORS(result);
-});
-
-router.post("/api/ark/vector", async (req, env) => {
-  const result = await arkVector(req, env);
-  return addCORS(result);
-});
-
-router.post("/api/ark/resonance", async (req, env) => {
-  const result = await arkResonance(req, env);
-  return addCORS(result);
-});
-
-router.get("/api/ark/status", async (req, env) => {
-  const result = await arkStatus(req, env);
-  return addCORS(result);
-});
-
-router.post("/api/ark/filter", async (req, env) => {
-  const result = await arkFilter(req, env);
-  return addCORS(result);
-});
-
-router.post("/api/ark/autonomous", async (req, env) => {
-  const result = await arkAutonomous(req, env);
-  return addCORS(result);
-});
-
-router.post("/api/ark/test-ai", async (req, env) => {
-  const result = await arkTestAI(env, req);
-  return addCORS(result);
-});
-
-// =============================================================================
-// ADDITIONAL ROUTER MOUNTS FOR COMPLETE SCHEMA COVERAGE
-// =============================================================================
-
-// Mount missing routers for schema operations
-router.all("/api/media/*", personalDevRouter.fetch);
-router.all("/api/standing-tall/*", personalDevRouter.fetch);
-router.all("/api/creativity/*", personalDevRouter.fetch);
-router.all("/api/abundance/*", personalDevRouter.fetch);
-router.all("/api/transitions/*", personalDevRouter.fetch);
-router.all("/api/ancestry/*", personalDevRouter.fetch);
-router.all("/api/values/*", personalDevRouter.fetch);
-router.all("/api/goals/*", dataOpsRouter.fetch);
-router.all("/api/habits/*", dataOpsRouter.fetch);
-router.all("/api/commitments/*", dataOpsRouter.fetch);
-
-// Legacy endpoints - now handled by modular routers above (being removed)
-
-// Personal development session endpoints (POST handlers)
-
-// Routes now handled by modular routers above
-
-// Personal development session endpoints (POST handlers)
-
-// FALLBACK AND ERROR HANDLING
-// =============================================================================
-
-// Catch-all for unmatched routes
-
-// Analytics insights
-router.get("/api/analytics/insights", async (req, env) => {
-  try {
-    const url = new URL(req.url);
-    const days = parseInt(url.searchParams.get('days') || '30');
-    const type = url.searchParams.get('type') || 'all';
-    
-    const result = {
-      insights: [],
-      patterns: [],
-      recommendations: [],
-      timeframe: `${days} days`,
-      analysis_type: type,
-      generated_at: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'getConversationAnalytics', { days, type }, result);
-    
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'getConversationAnalytics', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-// Export conversation data
-router.post("/api/export/conversation", async (req, env) => {
-  try {
-    const body = await req.json();
-    const format = body.format || 'json';
-    const timeframe = body.timeframe || '30d';
-    
-    const result = {
-      export_id: crypto.randomUUID(),
-      format,
-      timeframe,
-      status: "prepared",
-      download_url: null, // Would be populated in real implementation
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    };
-    
-    await logChatGPTAction(env, 'exportConversationData', body, result);
-    
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'exportConversationData', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-router.all("*", () => {
-  const errorData = {
-    errorId: 'ENDPOINT_NOT_FOUND',
-    userMessage: 'Endpoint not found',
-    technicalMessage: 'The requested API endpoint does not exist',
-    category: 'routing',
-    severity: 'low',
-    additional_info: {
-      available_endpoints: [
-        "/api/session-init",
-        "/api/discovery/generate-inquiry", 
-        "/api/system/health-check",
-        "/api/system/readiness",
-        "/api/log",
-        "/api/logs",
-        "/api/logs/kv-write",
-        "/api/logs/d1-insert", 
-        "/api/logs/promote",
-        "/api/logs/retrieve",
-        "/api/logs/latest",
-        "/api/logs/retrieval-meta",
-        "/api/trust/check-in",
-        "/api/somatic/session",
-        "/api/media/extract-wisdom",
-        "/api/patterns/recognize",
-        "/api/patterns/autonomous-detect",
-        "/api/standing-tall/practice",
-        "/api/wisdom/synthesize",
-        "/api/wisdom/daily-synthesis",
-        "/api/feedback",
-        "/api/dreams/interpret",
-        "/api/energy/optimize",
-        "/api/values/clarify",
-        "/api/creativity/unleash",
-        "/api/abundance/cultivate",
-        "/api/transitions/navigate",
-        "/api/ancestry/heal",
-        "/api/mood/track",
-        "/api/goals/set", 
-        "/api/habits/design",
-        "/api/commitments/create",
-        "/api/commitments/active",
-        "/api/commitments/:id/progress",
-        "/api/ritual/auto-suggest",
-        "/api/contracts/create",
-        "/api/monitoring/metrics",
-        "/api/socratic/question",
-        "/api/coaching/comb-analysis",
-        "/api/r2/put",
-        "/api/r2/get",
-        "/api/kv/log",
-        "/api/kv/get",
-        "/api/d1/query",
-        "/api/vectorize/query",
-        "/api/vectorize/upsert",
-        "/api/ark/log",
-        "/api/ark/retrieve",
-        "/api/ark/memories",
-        "/api/ark/vector",
-        "/api/ark/resonance",
-        "/api/ark/status",
-        "/api/ark/filter",
-        "/api/ark/autonomous"
-      ]
-    }
-  };
-  
-  return addCORS(createErrorResponse(errorData, 404));
-});
-
-// =============================================================================
-// GLOBAL ERROR HANDLER
-// =============================================================================
-
-/**
- * Enhanced global error handler that catches any uncaught exceptions
- * and returns structured JSON error responses
- */
-function createGlobalErrorHandler() {
-  return async (request, env, ctx) => {
-    try {
-      return await router.fetch(request, env, ctx);
-    } catch (error) {
-      // Log the error for debugging
-      console.error('Global error handler caught:', {
-        error: error.message,
-        stack: error.stack,
-        url: request.url,
-        method: request.method,
-        timestamp: new Date().toISOString()
-      });
-
-      // Try to log the error using our logging system
-      try {
-        await logChatGPTAction(env, 'globalErrorHandler', {
-          url: request.url,
-          method: request.method,
-          userAgent: request.headers.get('user-agent')
-        }, null, error);
-      } catch (logError) {
-        console.warn('Failed to log global error:', logError.message);
+function buildSchemaOperationLookup() {
+  const lookup = new Map();
+  for (const [path, methods] of Object.entries(gptSchema.paths ?? {})) {
+    const normalizedPath = normalizePath(path);
+    for (const [method, details] of Object.entries(methods)) {
+      if (details?.operationId) {
+        lookup.set(`${method.toUpperCase()} ${normalizedPath}`, details.operationId);
       }
-
-      // Return structured JSON error response
-      const errorResponse = {
-        error: "Internal server error",
-        message: error.message,
-        status: 500,
-        timestamp: new Date().toISOString(),
-        request_id: crypto.randomUUID()
-      };
-
-      return addCORS(new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      }));
     }
-  };
+  }
+  return lookup;
 }
 
-// =============================================================================
-// WORKER ENTRY POINT
-// =============================================================================
+function normalizePath(path) {
+  if (!path) return '/';
+  let normalized = path.trim();
+  if (!normalized.startsWith('/')) {
+    normalized = `/${normalized}`;
+  }
+  normalized = normalized.replace(/\*$/, '');
+  normalized = normalized.replace(/\/{2,}/g, '/');
+  if (normalized.length > 1 && normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+function createCoverageTracker({ schemaPaths = [], arkPaths = [], arkRouteHints = [] } = {}) {
+  const documented = new Set([
+    ...schemaPaths.map(normalizePath),
+    ...arkPaths.map(normalizePath),
+    ...arkRouteHints.map(normalizePath),
+  ]);
+  const exact = new Set();
+  const wildcardPatterns = new Set();
+  const wildcardPrefixes = new Set();
+
+  function markDocumented(path) {
+    if (!path) return;
+    documented.add(normalizePath(path));
+  }
+
+  function track(path) {
+    if (!path) return;
+    if (path.endsWith('/*')) {
+      const prefix = normalizePath(path.slice(0, -2));
+      wildcardPatterns.add(`${prefix}/*`);
+      wildcardPrefixes.add(`${prefix}/`);
+    } else {
+      exact.add(normalizePath(path));
+    }
+  }
+
+  function isCovered(path) {
+    const normalized = normalizePath(path);
+    if (exact.has(normalized)) {
+      return true;
+    }
+    for (const prefix of wildcardPrefixes) {
+      if (normalized === prefix.slice(0, -1) || normalized.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function report() {
+    const missing = [];
+    for (const path of documented) {
+      if (!isCovered(path)) {
+        missing.push(path);
+      }
+    }
+
+    const extra = [];
+    for (const path of exact) {
+      if (!documented.has(path)) {
+        extra.push(path);
+      }
+    }
+
+    return { missing: missing.sort(), extra: extra.sort() };
+  }
+
+  function available() {
+    const combined = new Set([...documented, ...exact, ...wildcardPatterns]);
+    return [...combined].sort();
+  }
+
+  return { track, markDocumented, report, available };
+}
+
+function applyCors(response, fallbackStatus = 200) {
+  if (response instanceof Response) {
+    const res = new Response(response.body, response);
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      res.headers.set(key, value);
+    }
+    return res;
+  }
+
+  if (response === undefined || response === null) {
+    return new Response(null, { status: fallbackStatus, headers: corsHeaders });
+  }
+
+  const body = typeof response === 'string' ? response : JSON.stringify(response);
+  const headers = new Headers(corsHeaders);
+  if (!headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
+  return new Response(body, { status: fallbackStatus, headers });
+}
+
+async function extractRequestPayload(request) {
+  if (request.method === 'GET' || request.method === 'HEAD') {
+    const url = new URL(request.url);
+    return Object.fromEntries(url.searchParams.entries());
+  }
+
+  try {
+    const clone = request.clone();
+    return await clone.json();
+  } catch {
+    try {
+      const clone = request.clone();
+      const text = await clone.text();
+      return text?.length ? text : null;
+    } catch {
+      return null;
+    }
+  }
+}
+
+async function extractResponsePayload(response) {
+  if (!(response instanceof Response)) {
+    return response;
+  }
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    try {
+      return await response.clone().json();
+    } catch {
+      return null;
+    }
+  }
+  if (contentType.startsWith('text/')) {
+    try {
+      return await response.clone().text();
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function statusFromCategory(category) {
+  const map = {
+    validation: 400,
+    parsing: 400,
+    not_found: 404,
+    auth: 401,
+    rate_limit: 429,
+    timeout: 408,
+    database: 503,
+    network: 503,
+  };
+  return map[category] ?? 500;
+}
+
+function resolveOperationId(method, path, explicit) {
+  if (explicit) {
+    return explicit;
+  }
+  const key = `${method.toUpperCase()} ${normalizePath(path)}`;
+  return schemaOperations.get(key) ?? toCanonical(path.replace(/^\/api\//, ''));
+}
+
+function mountEndpoint({ method, path, handler, operationId }) {
+  const lower = method.toLowerCase();
+  if (typeof router[lower] !== 'function') {
+    throw new Error(`Unsupported HTTP method: ${method}`);
+  }
+
+  router[lower](path, async (request, env, ctx) => {
+    const resolvedOperation = resolveOperationId(method, path, operationId);
+    const requestPayload = await extractRequestPayload(request);
+    try {
+      const result = await handler({ request, env, ctx, input: requestPayload });
+      const response = applyCors(result);
+      const responsePayload = await extractResponsePayload(response);
+      await logChatGPTAction(env, resolvedOperation, requestPayload, responsePayload);
+      return response;
+    } catch (error) {
+      await logChatGPTAction(env, resolvedOperation, requestPayload, null, error);
+      const errorData = await handleError(error, {
+        endpoint: normalizePath(path),
+        method: method.toUpperCase(),
+        requestBody: requestPayload,
+      }, env);
+      const status = statusFromCategory(errorData.category);
+      return applyCors(createErrorResponse(errorData, status), status);
+    }
+  });
+
+  coverage.track(path);
+}
+
+const operationHandlers = {
+  manageCommitment: async ({ env, input }) => {
+    const commitmentId = input?.id ?? `commitment_${crypto.randomUUID()}`;
+    const payload = {
+      id: commitmentId,
+      action: input?.action ?? 'create',
+      commitment: input?.commitment ?? input?.description ?? null,
+      focus_area: input?.focus_area ?? null,
+      due_date: input?.due_date ?? null,
+      created_at: new Date().toISOString(),
+    };
+
+    await writeLog(env, {
+      type: 'manage_commitment',
+      payload,
+      session_id: input?.session_id ?? null,
+      who: input?.who ?? 'system',
+      level: 'info',
+      tags: ['commitment'],
+      textOrVector: payload.commitment ?? 'commitment update',
+    });
+
+    return createSuccessResponse({
+      commitment_id: commitmentId,
+      status: 'recorded',
+      details: payload,
+    }, { sessionId: input?.session_id ?? null });
+  },
+
+  listActiveCommitments: async ({ env }) => {
+    const records = await journalService.listRecentEntries(env, {
+      prefix: 'commitment_',
+      limit: 50,
+    });
+
+    const commitments = records.success
+      ? records.entries.map((entry) => ({
+          id: entry.key,
+          created_at: entry.content?.created_at ?? entry.content?.timestamp ?? null,
+          commitment: entry.content?.commitment ?? entry.content?.detail ?? null,
+          status: entry.content?.status ?? 'active',
+        }))
+      : [];
+
+    return createSuccessResponse({
+      commitments,
+      total: commitments.length,
+      source: records.success ? 'kv' : 'none',
+    });
+  },
+
+  queryD1Database: async ({ request, env }) => d1Exec(request, env),
+
+  storeInKV: async ({ request, env }) => kvLog(request, env),
+
+  upsertVectors: async ({ request, env }) => vectorUpsertRequest(request, env),
+
+  trustCheckIn: async ({ request, env }) => handleTrustCheckIn(request, env),
+
+  somaticHealingSession: async ({ env, input }) => {
+    const healer = new SomaticHealer(env);
+    const result = await healer.generateSession(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  extractMediaWisdom: async ({ env, input }) => {
+    const extractor = new MediaWisdomExtractor(env);
+    const result = await extractor.extractWisdom(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  recognizePatterns: async ({ env, input }) => {
+    const recognizer = new PatternRecognizer(env);
+    const result = await recognizer.analyzePatterns(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  standingTallPractice: async ({ env, input }) => {
+    const coach = new StandingTall(env);
+    const result = await coach.generatePractice(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  synthesizeWisdom: async ({ env, input }) => {
+    const core = new AquilCore(env);
+    await core.initialize();
+    const result = await core.synthesizeWisdom(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  getDailySynthesis: async ({ env }) => {
+    const core = new AquilCore(env);
+    await core.initialize();
+    const synthesis = await core.runDailySynthesis();
+    if (!synthesis) {
+      return createSuccessResponse({
+        message: 'No daily synthesis available yet.',
+      });
+    }
+    return createSuccessResponse(synthesis);
+  },
+
+  getPersonalInsights: async ({ env }) => {
+    const core = new AquilCore(env);
+    await core.initialize();
+    const insights = await core.generateInsights();
+    return createSuccessResponse(insights ?? { insights: [] });
+  },
+
+  generateJournalInsight: async ({ env, input }) => {
+    const currentEntry = input?.currentEntry ?? input?.entry ?? input;
+
+    const historyResult = await journalService.listRecentEntries(env, {
+      limit: 50,
+      prefix: input?.prefix ?? 'log_',
+    });
+    const history = historyResult.success ? historyResult.entries : [];
+    const insight = await generateInsight(currentEntry, history);
+
+    return createWisdomResponse({ insight }, { sessionId: input?.session_id });
+  },
+
+  submitFeedback: async ({ env, input }) => {
+    await writeLog(env, {
+      type: 'feedback',
+      payload: input ?? {},
+      session_id: input?.session_id ?? null,
+      who: input?.who ?? 'participant',
+      level: 'info',
+      tags: ['feedback'],
+      textOrVector: input?.message ?? 'feedback submission',
+    });
+
+    return createSuccessResponse({ acknowledged: true }, {
+      sessionId: input?.session_id ?? null,
+      message: 'Feedback captured. Thank you for sharing.',
+    });
+  },
+
+  generateDiscoveryInquiry: async ({ request, env }) => handleDiscoveryInquiry(request, env),
+
+  generateRitualSuggestion: async ({ request, env }) => handleRitualSuggestion(request, env),
+
+  interpretDream: async ({ env, input }) => {
+    const text = typeof input === 'string' ? input : input?.text ?? input?.dream ?? '';
+    const motifs = input?.motifs ?? [];
+    const interpretation = buildInterpretation(text, motifs);
+    const patterns = maybeRecognizePatterns(text);
+
+    await writeLog(env, {
+      type: 'dream_interpretation',
+      payload: { text: safeTruncated(text, 2000), motifs, interpretation, patterns },
+      session_id: input?.session_id ?? null,
+      who: input?.who ?? 'dreamer',
+      level: 'info',
+      tags: ['dream'],
+      textOrVector: text,
+    });
+
+    return createSuccessResponse({ interpretation, patterns });
+  },
+
+  optimizeEnergy: async ({ env, input }) => {
+    const baseline = Number(input?.current_energy ?? input?.baseline ?? 5);
+    const energy = Math.min(10, Math.max(1, Number.isFinite(baseline) ? baseline : 5));
+    const result = {
+      energy_level: energy,
+      optimization_suggestions: [
+        'Take restorative breaks every 90 minutes',
+        'Practice three rounds of deep breathing',
+        'Stay hydrated throughout the day',
+        'Step outside for natural light when possible',
+      ],
+      personalized_tips: input?.focus === 'evening'
+        ? ['Create a calming pre-sleep ritual', 'Limit screens 60 minutes before rest']
+        : ['Schedule focused work blocks in your peak energy window'],
+      timestamp: new Date().toISOString(),
+    };
+
+    await writeLog(env, {
+      type: 'energy_optimize',
+      payload: { ...result, input },
+      session_id: input?.session_id ?? null,
+      who: input?.who ?? 'system',
+      level: 'info',
+      tags: ['energy'],
+      textOrVector: `energy optimize ${energy}`,
+    });
+
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  clarifyValues: async ({ env, input }) => {
+    const clarifier = new ValuesClarifier(env);
+    const result = await clarifier.clarify(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  unleashCreativity: async ({ env, input }) => {
+    const unleasher = new CreativityUnleasher(env);
+    const result = await unleasher.unleash(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  cultivateAbundance: async ({ env, input }) => {
+    const cultivator = new AbundanceCultivator(env);
+    const result = await cultivator.cultivate(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  navigateTransitions: async ({ env, input }) => {
+    const navigator = new TransitionNavigator(env);
+    const result = await navigator.navigate(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  healAncestry: async ({ env, input }) => {
+    const healer = new AncestryHealer(env);
+    const result = await healer.heal(input ?? {});
+    return createSuccessResponse(result, { sessionId: input?.session_id ?? null });
+  },
+
+  ragMemoryConsolidation: async ({ env, input }) => {
+    const text = input?.query ?? input?.text ?? '';
+    if (!text) {
+      throw new Error('query text is required');
+    }
+
+    const mode = input?.mode ?? 'semantic_recall';
+    const topK = Math.min(Number(input?.topK ?? 5) || 5, 20);
+    const threshold = Number.isFinite(input?.threshold) ? input.threshold : 0.7;
+
+    const result = await queryVector(env, {
+      text,
+      mode,
+      topK,
+      threshold,
+      model: input?.model ?? '@cf/baai/bge-large-en-v1.5',
+    });
+
+    return createSuccessResponse(result);
+  },
+
+  trackMoodAndEmotions: async ({ env, input }) => {
+    const entry = {
+      mood: input?.mood ?? 'neutral',
+      intensity: input?.intensity ?? 'moderate',
+      emotions: input?.emotions ?? [],
+      notes: input?.notes ?? null,
+      timestamp: new Date().toISOString(),
+    };
+
+    await writeLog(env, {
+      type: 'mood_tracking',
+      payload: entry,
+      session_id: input?.session_id ?? null,
+      who: input?.who ?? 'participant',
+      level: 'info',
+      tags: ['mood'],
+      textOrVector: `${entry.mood} ${entry.intensity}`,
+    });
+
+    return createSuccessResponse({ recorded: true, entry });
+  },
+
+  setPersonalGoals: async ({ env, input }) => {
+    const goalId = input?.id ?? `goal_${crypto.randomUUID()}`;
+    const entry = {
+      id: goalId,
+      goal: input?.goal ?? input?.description ?? null,
+      timeframe: input?.timeframe ?? null,
+      created_at: new Date().toISOString(),
+    };
+
+    await writeLog(env, {
+      type: 'goal_setting',
+      payload: entry,
+      session_id: input?.session_id ?? null,
+      who: input?.who ?? 'participant',
+      level: 'info',
+      tags: ['goal'],
+      textOrVector: entry.goal ?? 'goal setting',
+    });
+
+    return createSuccessResponse({ goal_id: goalId, status: 'recorded' });
+  },
+
+  designHabits: async ({ env, input }) => {
+    const habitId = input?.id ?? `habit_${crypto.randomUUID()}`;
+    const entry = {
+      id: habitId,
+      habit: input?.habit ?? input?.description ?? null,
+      cadence: input?.cadence ?? 'daily',
+      created_at: new Date().toISOString(),
+    };
+
+    await writeLog(env, {
+      type: 'habit_design',
+      payload: entry,
+      session_id: input?.session_id ?? null,
+      who: input?.who ?? 'participant',
+      level: 'info',
+      tags: ['habit'],
+      textOrVector: entry.habit ?? 'habit design',
+    });
+
+    return createSuccessResponse({ habit_id: habitId, status: 'recorded' });
+  },
+
+  systemHealthCheck: async ({ request, env }) => handleHealthCheck(request, env),
+
+  logDataOrEvent: async ({ request, env }) => arkHandleLog(request, env),
+
+  retrieveLogsOrDataEntries: async ({ request, env }) => handleRetrieveLogs(request, env),
+};
+
+const SUPPLEMENTAL_ROUTES = [
+  {
+    method: 'GET',
+    path: '/api/session-init',
+    operationId: 'sessionInit',
+    handler: ({ request, env }) => handleSessionInit(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/ritual/auto-suggest',
+    operationId: 'generateRitualSuggestion',
+    handler: ({ request, env }) => handleRitualSuggestion(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/system/health-check',
+    operationId: 'systemHealthCheck',
+    handler: ({ request, env }) => handleHealthCheck(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/system/readiness',
+    operationId: 'systemReadiness',
+    handler: ({ request, env }) => handleReadinessCheck(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/logs/latest',
+    operationId: 'retrieveLatestLogs',
+    handler: async ({ env, input }) => {
+      await ensureSchema(env);
+      const limit = Math.min(Number(input?.limit ?? 25) || 25, 200);
+      const { results } = await env.AQUIL_DB.prepare(
+        'SELECT id, type, detail, timestamp FROM logs ORDER BY timestamp DESC LIMIT ?1',
+      )
+        .bind(limit)
+        .all();
+      return createSuccessResponse({ items: results ?? [] });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/logs/kv-write',
+    operationId: 'storeInKV',
+    handler: async ({ env, input }) => {
+      if (!input || typeof input !== 'object') {
+        throw new Error('Request body is required');
+      }
+      if (input.storedIn && input.storedIn !== 'KV') {
+        throw new Error('storedIn must be KV');
+      }
+
+      const sessionId = input.session_id ?? crypto.randomUUID();
+      const payload = {
+        type: input.type ?? 'kv_log',
+        payload: input.payload ?? input.detail ?? input,
+        session_id: sessionId,
+        who: input.who ?? 'kv_writer',
+        level: input.level ?? 'info',
+        tags: ['kv_write'],
+        stores: ['kv'],
+      };
+
+      const result = await writeLog(env, payload);
+      return createSuccessResponse({ result, session_id: sessionId });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/logs/d1-insert',
+    operationId: 'd1Insert',
+    handler: async ({ env, input }) => {
+      if (!input || typeof input !== 'object') {
+        throw new Error('Request body is required');
+      }
+      if (!UUID_V4.test(input.id ?? '')) {
+        throw new Error('id must be a UUIDv4');
+      }
+      if (!LOG_TYPES.has(input.type)) {
+        throw new Error('Invalid log type');
+      }
+      if (input.storedIn && input.storedIn !== 'D1') {
+        throw new Error('storedIn must be D1');
+      }
+
+      await ensureSchema(env);
+      await env.AQUIL_DB.prepare(
+        'INSERT OR REPLACE INTO logs (id, type, detail, timestamp, storedIn) VALUES (?1, ?2, ?3, ?4, ?5)',
+      )
+        .bind(
+          input.id,
+          input.type,
+          input.detail ?? JSON.stringify(input.payload ?? {}),
+          input.timestamp ?? new Date().toISOString(),
+          'D1',
+        )
+        .run();
+
+      return createSuccessResponse({ inserted: true, id: input.id });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/logs/promote',
+    operationId: 'promoteLog',
+    handler: async ({ env, input }) => {
+      if (!UUID_V4.test(input?.id ?? '')) {
+        throw new Error('id must be a UUIDv4');
+      }
+      await ensureSchema(env);
+      const kvResult = await journalService.getEntryById(env, input.id, { keyPrefix: '' });
+      if (!kvResult.success) {
+        throw new Error('Log not found in KV');
+      }
+      const log = kvResult.data;
+      await env.AQUIL_DB.prepare(
+        'INSERT OR IGNORE INTO logs (id, type, detail, timestamp, storedIn) VALUES (?1, ?2, ?3, ?4, ?5)',
+      )
+        .bind(
+          log.id ?? input.id,
+          log.type ?? 'kv_log',
+          log.detail ?? JSON.stringify(log.content ?? {}),
+          log.timestamp ?? new Date().toISOString(),
+          'D1',
+        )
+        .run();
+
+      return createSuccessResponse({ promoted: true, id: input.id });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/logs/retrieve',
+    operationId: 'retrieveLogsOrDataEntries',
+    handler: ({ request, env }) => handleRetrieveLogs(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/logs/retrieval-meta',
+    operationId: 'updateRetrievalMetadata',
+    handler: async ({ env }) => {
+      await ensureSchema(env);
+      const timestamp = new Date().toISOString();
+      await env.AQUIL_DB.prepare(
+        'UPDATE retrieval_meta SET lastRetrieved = ?1, retrievalCount = retrievalCount + 1 WHERE id = 1',
+      )
+        .bind(timestamp)
+        .run();
+
+      return createSuccessResponse({ ok: true, lastRetrieved: timestamp });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/vectorize/query',
+    operationId: 'vectorQuery',
+    handler: ({ request, env }) => vectorQueryRequest(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/debug/vector-dimensions',
+    operationId: 'vectorDebug',
+    handler: async ({ env }) =>
+      createSuccessResponse({
+        status: 'vector_debug_available',
+        timestamp: new Date().toISOString(),
+        vectorize_binding: env.AQUIL_CONTEXT ? 'available' : 'not_available',
+      }),
+  },
+  {
+    method: 'POST',
+    path: '/api/test/vector-flow',
+    operationId: 'vectorFlowTest',
+    handler: async ({ env }) => {
+      const result = await testVectorFlow(env);
+      return createSuccessResponse({
+        status: 'vector_flow_test_complete',
+        timestamp: new Date().toISOString(),
+        test_results: result,
+      });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/search/logs',
+    operationId: 'searchLogs',
+    handler: async (context) => {
+      const input = context.input ?? {};
+      const query = input.query ?? input.text;
+      if (!query) {
+        throw new Error('query is required');
+      }
+      return operationHandlers.ragMemoryConsolidation({
+        ...context,
+        input: { ...input, text: query, mode: 'semantic_recall' },
+      });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/rag/search',
+    operationId: 'ragSearch',
+    handler: async (context) => {
+      const input = context.input ?? {};
+      const query = input.query ?? input.text;
+      if (!query) {
+        throw new Error('query is required');
+      }
+      return operationHandlers.ragMemoryConsolidation({
+        ...context,
+        input: { ...input, text: query, mode: 'transformative_inquiry' },
+      });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/search/r2',
+    operationId: 'searchR2',
+    handler: async ({ env, input }) => {
+      const query = input?.query;
+      if (!query) {
+        throw new Error('query is required');
+      }
+      const timeframe = input?.timeframe ?? '24h';
+      const result = await progressiveWeaving(env, {
+        timeframe,
+        query,
+        limit: Math.min(Number(input?.limit ?? 10) || 10, 50),
+      });
+      return createSuccessResponse(result);
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/analytics/insights',
+    operationId: 'getConversationAnalytics',
+    handler: async ({ env, input }) => {
+      const timeframe = input?.timeframe ?? 'week';
+      const logs = await readLogs(env, { limit: 200 });
+      const total = logs.kv?.length ?? 0;
+
+      const patterns = [];
+      if (Array.isArray(logs.kv)) {
+        const counts = logs.kv.reduce((acc, log) => {
+          const type = log.type ?? 'unknown';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {});
+        for (const [type, count] of Object.entries(counts)) {
+          if (count >= 3) {
+            patterns.push({ type, count });
+          }
+        }
+      }
+
+      return createSuccessResponse({
+        timeframe,
+        total_logs: total,
+        patterns,
+        generated_at: new Date().toISOString(),
+      });
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/export/conversation',
+    operationId: 'exportConversation',
+    handler: async ({ env, input }) => {
+      const limit = Math.min(Number(input?.limit ?? 500) || 500, 2000);
+      const logs = await readLogs(env, { limit });
+      const exportId = `export_${Date.now()}`;
+
+      await writeLog(env, {
+        type: 'conversation_export',
+        payload: { exportId, limit, filters: input ?? {} },
+        who: 'system',
+        level: 'info',
+        tags: ['export'],
+        textOrVector: `export ${exportId}`,
+      });
+
+      return createSuccessResponse({
+        export_id: exportId,
+        record_count: logs.kv?.length ?? 0,
+        logs,
+      });
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/export/conversation',
+    operationId: 'exportConversationGet',
+    handler: async ({ env, input }) => {
+      const limit = Math.min(Number(input?.limit ?? 200) || 200, 1000);
+      const logs = await readLogs(env, { limit });
+      return createSuccessResponse({
+        export_id: `export_${Date.now()}`,
+        record_count: logs.kv?.length ?? 0,
+        logs,
+      });
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/kv/get',
+    operationId: 'getKVStoredData',
+    handler: ({ request, env }) => kvGet(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/r2/put',
+    operationId: 'putR2Object',
+    handler: ({ request, env }) => r2Put(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/r2/get',
+    operationId: 'getR2Object',
+    handler: ({ request, env }) => r2Get(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/r2/list',
+    operationId: 'listR2Objects',
+    handler: async ({ env, input }) => {
+      const limit = Math.min(Number(input?.limit ?? 20) || 20, 200);
+      const result = await r2List(env, { limit });
+      return createSuccessResponse({ objects: result });
+    },
+  },
+];
+
+const ARK_ROUTES = [
+  {
+    method: 'POST',
+    path: '/api/ark/log',
+    operationId: 'logDataOrEvent',
+    handler: ({ request, env }) => arkLog(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/ark/retrieve',
+    operationId: 'retrieveLogsOrDataEntries',
+    handler: ({ request, env }) => arkRetrieve(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/ark/memories',
+    operationId: 'retrieveLogsOrDataEntries',
+    handler: ({ request, env }) => arkMemories(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/ark/vector',
+    operationId: 'ragMemoryConsolidation',
+    handler: ({ request, env }) => arkVector(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/ark/resonance',
+    operationId: 'ragMemoryConsolidation',
+    handler: ({ request, env }) => arkResonance(request, env),
+  },
+  {
+    method: 'GET',
+    path: '/api/ark/status',
+    operationId: 'systemHealthCheck',
+    handler: ({ request, env }) => arkStatus(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/ark/filter',
+    operationId: 'retrieveLogsOrDataEntries',
+    handler: ({ request, env }) => arkFilter(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/ark/autonomous',
+    operationId: 'logDataOrEvent',
+    handler: ({ request, env }) => arkAutonomous(request, env),
+  },
+  {
+    method: 'POST',
+    path: '/api/ark/test-ai',
+    operationId: 'systemHealthCheck',
+    handler: ({ request, env }) => arkTestAI(env, request),
+  },
+];
+
+function registerSchemaRoutes() {
+  for (const [path, methods] of Object.entries(gptSchema.paths ?? {})) {
+    const normalizedPath = normalizePath(path);
+    coverage.markDocumented(normalizedPath);
+    for (const [method, definition] of Object.entries(methods)) {
+      const operationId = definition?.operationId;
+      const handler = operationHandlers[operationId];
+      if (!handler) {
+        console.warn(
+          `[RouteRegistry] Missing handler for ${method.toUpperCase()} ${normalizedPath} (${operationId})`,
+        );
+        continue;
+      }
+
+      mountEndpoint({
+        method: method.toUpperCase(),
+        path: normalizedPath,
+        handler,
+        operationId,
+      });
+    }
+  }
+}
+
+function registerSupplementalRoutes() {
+  registerRoutes(SUPPLEMENTAL_ROUTES, { document: true });
+}
+
+function registerArkRoutes() {
+  registerRoutes(ARK_ROUTES, { document: true });
+}
+
+function registerRoutes(routes, { document = false } = {}) {
+  for (const route of routes) {
+    if (document) {
+      coverage.markDocumented(route.path);
+    }
+    mountEndpoint(route);
+  }
+}
+
+registerSchemaRoutes();
+registerSupplementalRoutes();
+registerArkRoutes();
+
+router.options('*', () => new Response(null, { status: 204, headers: corsHeaders }));
+
+coverage.markDocumented('/.well-known/ark/actions');
+mountEndpoint({
+  method: 'GET',
+  path: '/.well-known/ark/actions',
+  handler: () =>
+    new Response(JSON.stringify(actions), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }),
+  operationId: 'arkManifest',
+});
+
+coverage.markDocumented('/.well-known/gpt-actions.json');
+mountEndpoint({
+  method: 'GET',
+  path: '/.well-known/gpt-actions.json',
+  handler: () =>
+    new Response(JSON.stringify(gptSchema), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }),
+  operationId: 'gptActionsSchema',
+});
+
+const coverageReport = coverage.report();
+if (coverageReport.missing.length > 0) {
+  console.warn('[RouteCoverage] Missing handlers for documented endpoints:', coverageReport.missing);
+}
+
+async function logChatGPTAction(env, operationId, inputPayload, resultPayload, error = null) {
+  try {
+    const canonical = toCanonical(operationId);
+    const level = error ? 'error' : 'info';
+    const sessionId =
+      inputPayload?.session_id || inputPayload?.sessionId || crypto.randomUUID();
+
+    const payload = {
+      operation: operationId,
+      canonical_operation: canonical,
+      timestamp: new Date().toISOString(),
+      input: sanitizeForLog(inputPayload),
+      ...(error
+        ? { error: { message: error.message, stack: trimStack(error.stack) } }
+        : { result: sanitizeForLog(resultPayload) }),
+    };
+
+    await writeLog(env, {
+      type: canonical,
+      who: 'system',
+      level,
+      session_id: sessionId,
+      tags: [
+        `operation:${canonical}`,
+        'source:gpt',
+        error ? 'status:error' : 'status:success',
+      ],
+      payload,
+      textOrVector: buildEmbeddingText(canonical, inputPayload, error),
+    });
+  } catch (loggingError) {
+    console.warn('[logChatGPTAction] Failed to record action', loggingError);
+  }
+}
+
+function sanitizeForLog(value) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value === 'string') {
+    return value.length > 2000 ? `${value.slice(0, 2000)}…` : value;
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return String(value);
+  }
+}
+
+function trimStack(stack) {
+  if (!stack) return [];
+  return stack.split('\n').slice(0, 5);
+}
+
+function buildEmbeddingText(operation, input, error) {
+  if (error) {
+    return scrubText(`${operation} error: ${error.message}`);
+  }
+
+  const preview = input ? JSON.stringify(sanitizeForLog(input)).slice(0, 300) : 'no payload';
+  return scrubText(`${operation} executed with payload ${preview}`);
+}
+
+function scrubText(text) {
+  if (!text) return '';
+  return text
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[email]')
+    .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[phone]')
+    .replace(/\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, '[card]')
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[ssn]')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+router.all('*', async (request, env) => {
+  const url = new URL(request.url);
+  const notFoundError = new Error(`No handler registered for ${url.pathname}`);
+  notFoundError.code = 'ENDPOINT_NOT_REGISTERED';
+
+  const errorData = await handleError(notFoundError, {
+    endpoint: url.pathname,
+    method: request.method,
+  }, env);
+
+  const coverageSnapshot = coverage.report();
+  const availableEndpoints = coverage.available();
+
+  const body = {
+    success: false,
+    error: {
+      id: errorData.errorId,
+      message: errorData.userMessage,
+      category: 'routing',
+      timestamp: errorData.timestamp,
+    },
+    fallback_guidance: errorData.fallbackGuidance,
+    technical_details: {
+      endpoint: errorData.endpoint,
+      severity: errorData.severity,
+      available_endpoints: availableEndpoints,
+      undocumented_handlers: coverageSnapshot.extra,
+      missing_documented_endpoints: coverageSnapshot.missing,
+    },
+    schema: {
+      gpt_actions_version: gptSchema.info?.version ?? 'unknown',
+      ark_schema_version: actions.info?.version ?? 'unknown',
+      total_documented_endpoints: availableEndpoints.length,
+    },
+  };
+
+  return applyCors(
+    new Response(JSON.stringify(body), {
+      status: 404,
+      headers: { 'content-type': 'application/json' },
+    }),
+    404,
+  );
+});
 
 export default {
   async fetch(request, env, ctx) {
-    const globalHandler = createGlobalErrorHandler();
-    return await globalHandler(request, env, ctx);
+    const response = await router.handle(request, env, ctx);
+    return applyCors(response, 404);
   },
-  
+
   async scheduled(event, env, ctx) {
-    // Handle scheduled autonomous actions
     try {
       await handleScheduledTriggers(env);
     } catch (error) {
       console.error('Scheduled trigger error:', error);
-      
-      // Try to log scheduled errors too
-      try {
-        await logChatGPTAction(env, 'scheduledTriggerError', {
-          event: event.scheduledTime,
-          cron: event.cron
-        }, null, error);
-      } catch (logError) {
-        console.warn('Failed to log scheduled error:', logError.message);
-      }
+      await logChatGPTAction(env, 'scheduledTriggerError', {
+        event: event.scheduledTime,
+        cron: event.cron,
+      }, null, error);
     }
-  }
+  },
 };

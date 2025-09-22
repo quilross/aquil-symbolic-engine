@@ -535,6 +535,82 @@
         }
       }
     },
+    "/api/ritual/auto-suggest": {
+      "post": {
+        "summary": "Generate an adaptive ritual recommendation",
+        "description": "Called when ARK needs to suggest a ritual tailored to the current context, collapse loops, or energy pattern. Utilizes Workers AI with D1 continuity logging.",
+        "operationId": "generateRitualSuggestion",
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "context": {
+                    "type": "object",
+                    "description": "Signals describing the participant's current state, e.g. collapse loops, emotions, or themes"
+                  },
+                  "session_id": {
+                    "type": "string",
+                    "description": "Session identifier used for continuity logging"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ritual suggestion payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "suggestion": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "instructions": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "purpose": { "type": "string" },
+                        "timing": { "type": "string" }
+                      },
+                      "required": ["name", "instructions", "purpose"]
+                    }
+                  },
+                  "required": ["suggestion"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "AI generation failure or downstream logging error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/search/logs": {
       "post": {
         "summary": "Search logs using vector similarity",
@@ -1867,7 +1943,8 @@
       "promote": "/api/logs/promote",
       "retrieve": "/api/logs/retrieve",
       "retrieveLatest": "/api/logs/latest",
-      "retrievalMeta": "/api/logs/retrieval-meta"
+      "retrievalMeta": "/api/logs/retrieval-meta",
+      "ritualAutoSuggest": "/api/ritual/auto-suggest"
     },
     "enums": {
       "logTypes": [

@@ -245,10 +245,18 @@ export const ARK_MANIFEST = [
   }
 ];
 
-// Helper to call Worker AI (supports both env.AI and env.AI_GATEWAY)
+// Helper to call Worker AI (matches wrangler.toml bindings)
 async function aiCall(env, model, messages) {
-  const client = env.AI || env.AI_GATEWAY;
-  if (!client) throw new Error("AI binding not found");
+  const client =
+    env.AQUIL_AI ||
+    env.AI_GATEWAY_PROD ||
+    env.AI ||
+    env.AI_GATEWAY;
+
+  if (!client) {
+    throw new Error("AI binding not found (expected AQUIL_AI or AI_GATEWAY_PROD)");
+  }
+
   return client.run(model, { messages });
 }
 

@@ -21,9 +21,16 @@ export class AquilAI {
       throw new Error("Environment not provided for AI calls");
     }
 
-    const client = this.env.AI || this.env.AI_GATEWAY;
+    const client =
+      this.env?.AQUIL_AI ||
+      this.env?.AI_GATEWAY_PROD ||
+      this.env?.AI ||
+      this.env?.AI_GATEWAY;
+
     if (!client) {
-      throw new Error("AI binding not found - neither env.AI nor env.AI_GATEWAY available");
+      throw new Error(
+        "AI binding not found - expected AQUIL_AI or AI_GATEWAY_PROD per wrangler configuration",
+      );
     }
 
     try {

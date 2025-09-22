@@ -11,6 +11,8 @@ export const OP_CANON = {
   
   // Search and insights operations
   getPersonalInsights: 'getPersonalInsights',
+  generateJournalInsight: 'generateJournalInsight',
+  generateRitualSuggestion: 'generateRitualSuggestion',
   
   // RAG operations
   ragMemoryConsolidation: 'ragMemoryConsolidation',
@@ -67,7 +69,6 @@ export const OP_CANON = {
   // Commitments
   manageCommitment: 'manageCommitment',
   listActiveCommitments: 'listActiveCommitments',
-  updateCommitmentProgress: 'updateCommitmentProgress',
   
   // New operations for complete schema coverage
   trackMoodAndEmotions: 'trackMoodAndEmotions',
@@ -86,13 +87,16 @@ export const OP_ALIASES = {
   'retrieve_recent_session_logs': 'retrieveLogsOrDataEntries', // Map to main log retrieval
   
   // R2 storage operations (map to existing operations)
-  'retrieve_r2_stored_content': 'getPersonalInsights', // R2 content is often insight-related
-  'get_r2_stored_content': 'getPersonalInsights',
-  
-  // Search operations (consolidate into insights)
-  'search_logs': 'getPersonalInsights',
-  'rag_search': 'getPersonalInsights',
-  'search_r2_storage': 'getPersonalInsights',
+  'retrieve_r2_stored_content': 'ragMemoryConsolidation',
+  'get_r2_stored_content': 'ragMemoryConsolidation',
+
+  // Search operations (consolidate into RAG memory retrieval)
+  'search_logs': 'ragMemoryConsolidation',
+  'rag_search': 'ragMemoryConsolidation',
+  'search_r2_storage': 'ragMemoryConsolidation',
+  'searchLogs': 'ragMemoryConsolidation',
+  'ragSearch': 'ragMemoryConsolidation',
+  'searchR2Storage': 'ragMemoryConsolidation',
   
   // RAG operations
   'rag_memory_consolidation': 'ragMemoryConsolidation',
@@ -141,6 +145,8 @@ export const OP_ALIASES = {
   
   // System
   'system_health_check': 'systemHealthCheck',
+  'system_readiness': 'systemHealthCheck',
+  'systemReadiness': 'systemHealthCheck',
   
   // Discovery
   'generate_discovery_inquiry': 'generateDiscoveryInquiry',
@@ -154,7 +160,7 @@ export const OP_ALIASES = {
   
   // Legacy aliases for cleanup
   'memoryRetrieval': 'ragMemoryConsolidation',
-  'searchR2': 'retrieveLogsOrDataEntries',
+  'searchR2': 'ragMemoryConsolidation',
   
   // Additional implementation aliases found in code
   'generateJournalInsight': 'generateJournalInsight',
@@ -195,22 +201,37 @@ export const OP_ALIASES = {
   'kvWrite': 'logDataOrEvent',
   'd1Insert': 'logDataOrEvent',
   'promote': 'logDataOrEvent',
+  'promoteLog': 'logDataOrEvent',
   'retrieve': 'retrieveLogsOrDataEntries',
   'retrieveLatest': 'retrieveLogsOrDataEntries',
+  'retrieveLatestLogs': 'retrieveLogsOrDataEntries',
   'retrievalMeta': 'retrieveLogsOrDataEntries',
+  'updateRetrievalMetadata': 'retrieveLogsOrDataEntries',
+  'retrieveRecentSessionLogs': 'retrieveLogsOrDataEntries',
   
   // Other implementation variants detected by guard
   'comprehensivePersonalDevelopment': 'somaticHealingSession',
   'personalDevelopmentSession': 'somaticHealingSession',
   'getWisdomAndInsights': 'getPersonalInsights',
-  'autoSuggestRitual': 'somaticHealingSession',
+  'autoSuggestRitual': 'generateRitualSuggestion',
+  'ritualAutoSuggest': 'generateRitualSuggestion',
+  'handleRitualSuggestion': 'generateRitualSuggestion',
   'autonomousPatternDetect': 'recognizePatterns',
   'transformation_contract': 'manageCommitment',
   'getMonitoringMetrics': 'systemHealthCheck',
   'socraticQuestions': 'generateDiscoveryInquiry',
   'combBehavioralAnalysis': 'recognizePatterns',
   'getKVStoredData': 'retrieveLogsOrDataEntries',
-  'searchResonance': 'getPersonalInsights',
+  'getR2Object': 'retrieveLogsOrDataEntries',
+  'putR2Object': 'logDataOrEvent',
+  'searchResonance': 'ragMemoryConsolidation',
+  'vectorFlowTest': 'systemHealthCheck',
+  'vector_flow_test': 'systemHealthCheck',
+  'vectorDebug': 'systemHealthCheck',
+  'vector_debug': 'systemHealthCheck',
+  'vectorQuery': 'ragMemoryConsolidation',
+  'vector_query': 'ragMemoryConsolidation',
+  'exportConversationGet': 'retrieveLogsOrDataEntries',
   
   // New operation aliases for complete schema coverage
   'track_mood_and_emotions': 'trackMoodAndEmotions',

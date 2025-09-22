@@ -90,7 +90,7 @@ describe('Vector Logging Integration', () => {
 
     it('should include trace ID in vector metadata', async () => {
       const traceId = 'custom_trace_123';
-      
+
       const result = await writeLog(mockEnv, {
         type: 'test_log',
         payload: { message: 'Test with trace' },
@@ -103,6 +103,50 @@ describe('Vector Logging Integration', () => {
 
       expect(result.vector).toBe('ok');
       expect(result.trace_id).toBe(traceId);
+    });
+
+    it('should derive vector text from payload content when textOrVector is omitted', async () => {
+      const result = await writeLog(mockEnv, {
+        type: 'test_log',
+        payload: { message: 'Auto-derived vector payload' },
+        session_id: 'test-session',
+        who: 'test',
+        level: 'info'
+      });
+
+      expect(result.vector).toBe('ok');
+    });
+
+    it('should skip vector embedding when AI binding is unavailable', async () => {
+      const envWithoutAI = {
+        ...mockEnv,
+        AQUIL_AI: null
+      };
+
+      const result = await writeLog(envWithoutAI, {
+        type: 'test_log',
+        payload: { message: 'Test fallback without AI' },
+        session_id: 'test-session',
+        who: 'test',
+        level: 'info'
+      });
+
+      expect(result.vector).toBe('skipped_missing_ai_binding');
+    });
+
+    it('should skip vector logging when vector store binding is missing', async () => {
+      const envWithoutVector = {
+        ...mockEnv,
+        AQUIL_CONTEXT: null
+      };
+
+      const result = await writeLog(envWithoutVector, {
+        type: 'test_log',
+        payload: { message: 'Test vector store missing' },
+        textOrVector: 'Test text'
+      });
+
+      expect(result.vector).toBe('skipped_missing_vector_store');
     });
 
     it('should handle vector logging errors gracefully', async () => {
