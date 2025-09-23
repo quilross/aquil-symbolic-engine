@@ -795,13 +795,14 @@ router.all("/api/system/*", systemRouter.fetch);
 // Logging routes (main logging, latest logs, retrieval meta)
 router.all("/api/log", loggingRouter.fetch);
 router.all("/api/logs/*", loggingRouter.fetch);
-router.all("/api/session-init", loggingRouter.fetch);
 
 // Data operations routes (D1, KV, R2, Vectorize)
 router.all("/api/d1/*", dataOpsRouter.fetch);
 router.all("/api/kv/*", dataOpsRouter.fetch);
 router.all("/api/r2/*", dataOpsRouter.fetch);
 router.all("/api/vectorize/*", dataOpsRouter.fetch);
+router.all("/api/debug/*", dataOpsRouter.fetch);
+router.all("/api/test/*", dataOpsRouter.fetch);
 
 // Search routes (vector similarity, RAG, content search)
 router.all("/api/search/*", searchRouter.fetch);
@@ -815,6 +816,7 @@ router.all("/api/trust/*", personalDevRouter.fetch);
 router.all("/api/energy/*", personalDevRouter.fetch);
 router.all("/api/somatic/*", personalDevRouter.fetch);
 router.all("/api/patterns/*", personalDevRouter.fetch);
+router.all("/api/wisdom/*", personalDevRouter.fetch);
 
 // Utility routes (feedback, insights, monitoring, dreams)
 router.all("/api/feedback", utilityRouter.fetch);

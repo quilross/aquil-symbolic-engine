@@ -5924,84 +5924,84 @@
       {
         "method": "POST",
         "path": "/api/insight",
-        "lineNumber": 832,
+        "lineNumber": 834,
         "operationId": "generateJournalInsight",
         "context": "============================================\n// INSIGHT GENERATION ENDPOINT\n// =============================================================================\n\n// Generate insights from journal entries\nrouter.post(\"/api/insight\", async (req, env) => {\n  try {\n    const body = await req.json();\n    \n    // Extract current entry from request body\n    const currentEntry = body.currentEntry || body.entry || body;\n    \n    // Retrieve user's history using journal service\n    const historyResult = await"
       },
       {
         "method": "POST",
         "path": "/api/ark/log",
-        "lineNumber": 878,
+        "lineNumber": 880,
         "operationId": null,
         "context": "========================================================\n// ARK ENDPOINTS (CONSOLIDATED)\n// =============================================================================\n\n// ARK logging and retrieval\nrouter.post(\"/api/ark/log\", async (req, env) => {\n  const result = await arkLog(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/retrieve\", async (req, env) => {\n  const result = await arkRetrieve(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/memories\", async (req, env"
       },
       {
         "method": "GET",
         "path": "/api/ark/retrieve",
-        "lineNumber": 883,
+        "lineNumber": 885,
         "operationId": null,
         "context": "===============================================\n\n// ARK logging and retrieval\nrouter.post(\"/api/ark/log\", async (req, env) => {\n  const result = await arkLog(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/retrieve\", async (req, env) => {\n  const result = await arkRetrieve(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/memories\", async (req, env) => {\n  const result = await arkMemories(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/vector\", async ("
       },
       {
         "method": "GET",
         "path": "/api/ark/memories",
-        "lineNumber": 888,
+        "lineNumber": 890,
         "operationId": null,
         "context": "onst result = await arkLog(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/retrieve\", async (req, env) => {\n  const result = await arkRetrieve(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/memories\", async (req, env) => {\n  const result = await arkMemories(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/vector\", async (req, env) => {\n  const result = await arkVector(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/resonance\", async ("
       },
       {
         "method": "POST",
         "path": "/api/ark/vector",
-        "lineNumber": 893,
+        "lineNumber": 895,
         "operationId": null,
         "context": "result = await arkRetrieve(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/memories\", async (req, env) => {\n  const result = await arkMemories(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/vector\", async (req, env) => {\n  const result = await arkVector(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/resonance\", async (req, env) => {\n  const result = await arkResonance(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/status\", async (r"
       },
       {
         "method": "POST",
         "path": "/api/ark/resonance",
-        "lineNumber": 898,
+        "lineNumber": 900,
         "operationId": null,
         "context": "st result = await arkMemories(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/vector\", async (req, env) => {\n  const result = await arkVector(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/resonance\", async (req, env) => {\n  const result = await arkResonance(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/status\", async (req, env) => {\n  const result = await arkStatus(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/filter\", async (r"
       },
       {
         "method": "GET",
         "path": "/api/ark/status",
-        "lineNumber": 903,
+        "lineNumber": 905,
         "operationId": null,
         "context": "esult = await arkVector(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/resonance\", async (req, env) => {\n  const result = await arkResonance(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/status\", async (req, env) => {\n  const result = await arkStatus(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/filter\", async (req, env) => {\n  const result = await arkFilter(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/autonomous\", async (req"
       },
       {
         "method": "POST",
         "path": "/api/ark/filter",
-        "lineNumber": 908,
+        "lineNumber": 910,
         "operationId": null,
         "context": "st result = await arkResonance(req, env);\n  return addCORS(result);\n});\n\nrouter.get(\"/api/ark/status\", async (req, env) => {\n  const result = await arkStatus(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/filter\", async (req, env) => {\n  const result = await arkFilter(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/autonomous\", async (req, env) => {\n  const result = await arkAutonomous(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/test-ai\", asyn"
       },
       {
         "method": "POST",
         "path": "/api/ark/autonomous",
-        "lineNumber": 913,
+        "lineNumber": 915,
         "operationId": null,
         "context": "onst result = await arkStatus(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/filter\", async (req, env) => {\n  const result = await arkFilter(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/autonomous\", async (req, env) => {\n  const result = await arkAutonomous(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/test-ai\", async (req, env) => {\n  const result = await arkTestAI(env, req);\n  return addCORS(result);\n});\n\n// ================================"
       },
       {
         "method": "POST",
         "path": "/api/ark/test-ai",
-        "lineNumber": 918,
+        "lineNumber": 920,
         "operationId": null,
         "context": "ult = await arkFilter(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/autonomous\", async (req, env) => {\n  const result = await arkAutonomous(req, env);\n  return addCORS(result);\n});\n\nrouter.post(\"/api/ark/test-ai\", async (req, env) => {\n  const result = await arkTestAI(env, req);\n  return addCORS(result);\n});\n\n// =============================================================================\n// ADDITIONAL ROUTER MOUNTS FOR COMPLETE SCHEMA COVERAGE\n// =============================="
       },
       {
         "method": "GET",
         "path": "/api/analytics/insights",
-        "lineNumber": 953,
+        "lineNumber": 955,
         "operationId": "getConversationAnalytics",
         "context": "on endpoints (POST handlers)\n\n// FALLBACK AND ERROR HANDLING\n// =============================================================================\n\n// Catch-all for unmatched routes\n\n// Analytics insights\nrouter.get(\"/api/analytics/insights\", async (req, env) => {\n  try {\n    const url = new URL(req.url);\n    const days = parseInt(url.searchParams.get('days') || '30');\n    const type = url.searchParams.get('type') || 'all';\n    \n    const result = {\n      insights: [],\n      patterns: [],\n      recom"
       },
       {
         "method": "POST",
         "path": "/api/export/conversation",
-        "lineNumber": 977,
+        "lineNumber": 979,
         "operationId": "getConversationAnalytics",
         "context": "tch (error) {\n    await logChatGPTAction(env, 'getConversationAnalytics', {}, null, error);\n    return addCORS(createErrorResponse({ error: error.message }, 500));\n  }\n});\n// Export conversation data\nrouter.post(\"/api/export/conversation\", async (req, env) => {\n  try {\n    const body = await req.json();\n    const format = body.format || 'json';\n    const timeframe = body.timeframe || '30d';\n    \n    const result = {\n      export_id: crypto.randomUUID(),\n      format,\n      timeframe,\n      statu"
       }
