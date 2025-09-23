@@ -1,0 +1,32 @@
+{
+  "mainSchema": {
+    "operationCount": 30,
+    "missingDescriptions": [],
+    "missingTriggerPhrases": [],
+    "incompleteResponseSchemas": [],
+    "missingErrorResponses": [],
+    "inconsistentParameters": [],
+    "flagMismatches": []
+  },
+  "loggingSchema": {
+    "operationCount": 14,
+    "schemaAlignmentIssues": [],
+    "missingEndpointDefinitions": [],
+    "inconsistentDataTypes": [],
+    "invalidRequestFormats": []
+  },
+  "implementation": {
+    "missingImports": [],
+    "unimplementedOperations": [],
+    "implementationGaps": [],
+    "configurationIssues": [],
+    "errorHandlingIssues": [
+      "Mismatched try/catch blocks: 16 try, 13 catch"
+    ]
+  },
+  "overall": {
+    "passed": 9,
+    "failed": 0,
+    "warnings": 1
+  }
+}
