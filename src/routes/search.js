@@ -3,12 +3,13 @@
  */
 
 import { Router } from 'itty-router';
+import { z } from 'zod';
 import { queryVector, semanticRecall, transformativeInquiry } from '../actions/vectorize.js';
 import { readLogs } from '../actions/logging.js';
 import { listRecentWithContent } from '../actions/kv.js';
 import { progressiveWeaving } from '../actions/r2.js';
-import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
-import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+import { addCORSToResponse, createSuccessResponse, createErrorResponse } from '../utils/response-helpers.js';
+import { withErrorHandling } from '../utils/error-handler.js';
 import { readJSON } from '../utils/http.js';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
@@ -18,6 +19,69 @@ async function logChatGPTAction(env, operationId, data, result, error = null) {
 }
 
 const searchRouter = Router();
+
+// Schema for /api/rag/memory
+const memoryConsolidationSchema = z.object({
+  sources: z.array(z.enum(["vector", "kv", "r2"])).optional(),
+  timeframe: z.string().optional(),
+  consolidation_depth: z.string().optional(),
+});
+
+searchRouter.post("/api/rag/memory", withErrorHandling(async (req, env) => {
+  const body = await readJSON(req);
+  const validation = memoryConsolidationSchema.safeParse(body);
+  if (!validation.success) {
+    return addCORSToResponse(createErrorResponse(400, "validation_error", validation.error.message));
+  }
+
+  const { sources = ["vector", "kv", "r2"], timeframe = "7d" } = validation.data;
+  const consolidatedMemories = { memories: [], insights: [], patterns: [] };
+
+  // Consolidate from Vectorize
+  if (sources.includes("vector")) {
+    const vectorMemories = await semanticRecall(env, { text: "wisdom insights breakthrough", topK: 10 });
+    consolidatedMemories.memories.push(...(vectorMemories.matches || []));
+  }
+
+  // Consolidate from KV
+  if (sources.includes("kv")) {
+    const kvMemories = await listRecentWithContent(env, { limit: 10, timeframe });
+    consolidatedMemories.memories.push(...(kvMemories.entries || []));
+  }
+
+  // Consolidate from R2
+  if (sources.includes("r2")) {
+    const r2Memories = await progressiveWeaving(env, { timeframe, limit: 10 });
+    consolidatedMemories.memories.push(...(r2Memories.woven_content || []));
+  }
+
+  // Generate insights
+  if (consolidatedMemories.memories.length > 0) {
+    consolidatedMemories.insights = [
+      "Memory consolidation reveals recurring themes in your personal growth",
+      "Pattern recognition across timeframes strengthens wisdom integration",
+    ];
+    consolidatedMemories.patterns = [
+      "Emotional processing cycles",
+      "Learning integration patterns",
+    ];
+  }
+
+  const response = {
+    success: true,
+    consolidation: {
+      ...consolidatedMemories,
+      timeframe,
+      sources,
+      consolidated_at: new Date().toISOString(),
+    },
+    memory_count: consolidatedMemories.memories.length,
+    insight_count: consolidatedMemories.insights.length,
+  };
+
+  await logChatGPTAction(env, 'ragMemoryConsolidation', body, response);
+  return addCORSToResponse(createSuccessResponse(response));
+}));
 
 // Vector similarity search on logs
 searchRouter.post("/api/search/logs", withErrorHandling(async (req, env) => {
@@ -29,10 +93,9 @@ searchRouter.post("/api/search/logs", withErrorHandling(async (req, env) => {
   }
   
   try {
-    // Use semantic recall for log searching
-    const result = await semanticRecall(env, { 
-      text: query, 
-      topK: Math.min(limit, 20) 
+    const result = await semanticRecall(env, {
+      text: query,
+      topK: Math.min(limit, 20)
     });
     
     const response = {
@@ -42,7 +105,6 @@ searchRouter.post("/api/search/logs", withErrorHandling(async (req, env) => {
     };
     
     await logChatGPTAction(env, 'searchLogs', body, response);
-    
     return addCORSToResponse(createSuccessResponse(response));
   } catch (error) {
     await logChatGPTAction(env, 'searchLogs', body, null, error);
@@ -60,17 +122,15 @@ searchRouter.post("/api/rag/search", withErrorHandling(async (req, env) => {
   }
   
   try {
-    // First retrieve similar vectors
-    const vectorResults = await semanticRecall(env, { 
-      text: query, 
-      topK: Math.min(limit, 10) 
+    const vectorResults = await semanticRecall(env, {
+      text: query,
+      topK: Math.min(limit, 10)
     });
     
     let generated = null;
     const relevanceScores = [];
     
     if (includeGeneration && vectorResults.matches?.length > 0) {
-      // Generate insights using the retrieved context
       const contextText = vectorResults.matches
         .map(match => {
           relevanceScores.push(match.score);
@@ -78,7 +138,6 @@ searchRouter.post("/api/rag/search", withErrorHandling(async (req, env) => {
         })
         .join('\n');
       
-      // Simple generation based on context - in a real implementation this would use AI
       generated = `Based on ${vectorResults.matches.length} relevant log entries, here are the key insights for "${query}": ${contextText.substring(0, 500)}...`;
     }
     
@@ -90,89 +149,10 @@ searchRouter.post("/api/rag/search", withErrorHandling(async (req, env) => {
     };
     
     await logChatGPTAction(env, 'ragSearch', body, response);
-    
     return addCORSToResponse(createSuccessResponse(response));
   } catch (error) {
     await logChatGPTAction(env, 'ragSearch', body, null, error);
     return addCORSToResponse(createErrorResponse(500, 'rag_search_error', error.message));
-  }
-}));
-
-// RAG Memory Consolidation - consolidate memories and insights from multiple sources
-searchRouter.post("/api/rag/memory", withErrorHandling(async (req, env) => {
-  const body = await readJSON(req);
-  const { 
-    sources = ['vector', 'kv', 'r2'], 
-    timeframe = '7d',
-    consolidation_depth = 'standard'
-  } = body;
-  
-  try {
-    // Perform memory consolidation across specified sources
-    const consolidatedMemories = {
-      timeframe,
-      sources: sources,
-      consolidation_depth,
-      memories: [],
-      insights: [],
-      patterns: [],
-      consolidated_at: new Date().toISOString()
-    };
-    
-    // Consolidate from vector store if requested
-    if (sources.includes('vector')) {
-      try {
-        const vectorMemories = await semanticRecall(env, { 
-          text: 'wisdom insights breakthrough',
-          topK: 10
-        });
-        consolidatedMemories.memories.push(...(vectorMemories.matches || []));
-      } catch (vectorError) {
-        console.warn('Vector consolidation failed:', vectorError.message);
-      }
-    }
-    
-    // Consolidate from KV store if requested  
-    if (sources.includes('kv')) {
-      try {
-        const kvMemories = await listRecentWithContent(env, { 
-          limit: 10,
-          timeframe
-        });
-        consolidatedMemories.memories.push(...(kvMemories.entries || []));
-      } catch (kvError) {
-        console.warn('KV consolidation failed:', kvError.message);
-      }
-    }
-    
-    // Generate insights from consolidated memories
-    if (consolidatedMemories.memories.length > 0) {
-      consolidatedMemories.insights = [
-        "Memory consolidation reveals recurring themes in your personal growth",
-        "Pattern recognition across timeframes strengthens wisdom integration",
-        "Cross-source memory synthesis enhances insight depth"
-      ];
-      
-      consolidatedMemories.patterns = [
-        "Emotional processing cycles",
-        "Learning integration patterns", 
-        "Trust building progressions"
-      ];
-    }
-    
-    const response = {
-      success: true,
-      consolidation: consolidatedMemories,
-      memory_count: consolidatedMemories.memories.length,
-      insight_count: consolidatedMemories.insights.length
-    };
-    
-    await logChatGPTAction(env, 'ragMemoryConsolidation', body, response);
-    
-    return addCORSToResponse(createSuccessResponse(response));
-  } catch (error) {
-    await logChatGPTAction(env, 'ragMemoryConsolidation', body, null, error);
-    return addCORSToResponse(createErrorResponse(500, 'memory_consolidation_error', error.message));
   }
 }));
 
@@ -186,9 +166,8 @@ searchRouter.post("/api/search/r2", withErrorHandling(async (req, env) => {
   }
   
   try {
-    // Use R2 progressive weaving for content search
     const timeframe = type === 'resonance' ? '7d' : '24h';
-    const result = await progressiveWeaving(env, { 
+    const result = await progressiveWeaving(env, {
       timeframe,
       query,
       limit: Math.min(limit, 20)
@@ -201,7 +180,6 @@ searchRouter.post("/api/search/r2", withErrorHandling(async (req, env) => {
     };
     
     await logChatGPTAction(env, 'searchR2Storage', body, response);
-    
     return addCORSToResponse(createSuccessResponse(response));
   } catch (error) {
     await logChatGPTAction(env, 'searchR2Storage', body, null, error);
@@ -215,10 +193,8 @@ searchRouter.get("/api/analytics/insights", withErrorHandling(async (req, env) =
   const timeframe = url.searchParams.get('timeframe') || 'week';
   
   try {
-    // Get recent logs for analysis
     const logs = await readLogs(env, { limit: 200 });
     
-    // Basic pattern analysis
     const patterns = [];
     const growthIndicators = [];
     const recommendations = [];
@@ -230,7 +206,6 @@ searchRouter.get("/api/analytics/insights", withErrorHandling(async (req, env) =
         logTypes[type] = (logTypes[type] || 0) + 1;
       });
       
-      // Generate patterns from log types
       Object.entries(logTypes).forEach(([type, count]) => {
         if (count > 5) {
           patterns.push(`Frequent ${type} activities (${count} occurrences)`);
@@ -238,7 +213,6 @@ searchRouter.get("/api/analytics/insights", withErrorHandling(async (req, env) =
       });
     }
     
-    // Generate basic insights
     if (patterns.length > 0) {
       growthIndicators.push('Consistent engagement patterns detected');
       recommendations.push('Continue with current activity rhythm');
@@ -257,7 +231,6 @@ searchRouter.get("/api/analytics/insights", withErrorHandling(async (req, env) =
     };
     
     await logChatGPTAction(env, 'getConversationAnalytics', { timeframe }, response);
-    
     return addCORSToResponse(createSuccessResponse(response));
   } catch (error) {
     await logChatGPTAction(env, 'getConversationAnalytics', { timeframe }, null, error);
@@ -271,13 +244,11 @@ searchRouter.post("/api/export/conversation", withErrorHandling(async (req, env)
   const { format = 'json', date_range, include_analytics = true } = body;
   
   try {
-    // Get logs for export
     const logs = await readLogs(env, { limit: 1000 });
     
     const exportId = `export_${Date.now()}`;
     const recordCount = logs.kv?.length || 0;
     
-    // Simple export generation (in a real implementation, this would create actual files)
     const exportData = {
       format,
       data: logs,
@@ -296,7 +267,6 @@ searchRouter.post("/api/export/conversation", withErrorHandling(async (req, env)
     };
     
     await logChatGPTAction(env, 'exportConversationData', body, response);
-    
     return addCORSToResponse(createSuccessResponse(response));
   } catch (error) {
     await logChatGPTAction(env, 'exportConversationData', body, null, error);

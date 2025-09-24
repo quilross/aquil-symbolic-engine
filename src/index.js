@@ -1,7 +1,7 @@
 /**
  * Aquil Production - Main Entry Point (Restructured)
  * Personal AI Wisdom Builder optimized for ChatGPT integration
- * 
+ *
  * This is the primary worker that handles all API requests using modular routing
  */
 
@@ -789,7 +789,6 @@ router.options("*", () => handleCORSPreflight());
 // =============================================================================
 
 // System routes (health checks, session init, readiness)
-router.all("/api/session-init", systemRouter.fetch);
 router.all("/api/system/*", systemRouter.fetch);
 
 // Logging routes (main logging, latest logs, retrieval meta)
@@ -817,6 +816,9 @@ router.all("/api/energy/*", personalDevRouter.fetch);
 router.all("/api/somatic/*", personalDevRouter.fetch);
 router.all("/api/patterns/*", personalDevRouter.fetch);
 router.all("/api/wisdom/*", personalDevRouter.fetch);
+router.all("/api/commitments/*", dataOpsRouter.fetch);
+router.all("/api/media/*", personalDevRouter.fetch);
+router.all("/api/rag/memory", searchRouter.fetch);
 
 // Utility routes (feedback, insights, monitoring, dreams)
 router.all("/api/feedback", utilityRouter.fetch);
@@ -999,152 +1001,39 @@ router.post("/api/export/conversation", async (req, env) => {
     return addCORS(createErrorResponse({ error: error.message }, 500));
   }
 });
+
+// Global 404 handler
 router.all("*", () => {
-  const errorData = {
-    errorId: 'ENDPOINT_NOT_FOUND',
-    userMessage: 'Endpoint not found',
-    technicalMessage: 'The requested API endpoint does not exist',
-    category: 'routing',
-    severity: 'low',
-    additional_info: {
-      available_endpoints: [
-        "/api/session-init",
-        "/api/discovery/generate-inquiry", 
-        "/api/system/health-check",
-        "/api/system/readiness",
-        "/api/log",
-        "/api/logs",
-        "/api/logs/kv-write",
-        "/api/logs/d1-insert", 
-        "/api/logs/promote",
-        "/api/logs/retrieve",
-        "/api/logs/latest",
-        "/api/logs/retrieval-meta",
-        "/api/trust/check-in",
-        "/api/somatic/session",
-        "/api/media/extract-wisdom",
-        "/api/patterns/recognize",
-        "/api/patterns/autonomous-detect",
-        "/api/standing-tall/practice",
-        "/api/wisdom/synthesize",
-        "/api/wisdom/daily-synthesis",
-        "/api/feedback",
-        "/api/dreams/interpret",
-        "/api/energy/optimize",
-        "/api/values/clarify",
-        "/api/creativity/unleash",
-        "/api/abundance/cultivate",
-        "/api/transitions/navigate",
-        "/api/ancestry/heal",
-        "/api/mood/track",
-        "/api/goals/set", 
-        "/api/habits/design",
-        "/api/commitments/create",
-        "/api/commitments/active",
-        "/api/commitments/:id/progress",
-        "/api/ritual/auto-suggest",
-        "/api/contracts/create",
-        "/api/monitoring/metrics",
-        "/api/socratic/question",
-        "/api/coaching/comb-analysis",
-        "/api/r2/put",
-        "/api/r2/get",
-        "/api/kv/log",
-        "/api/kv/get",
-        "/api/d1/query",
-        "/api/vectorize/query",
-        "/api/vectorize/upsert",
-        "/api/ark/log",
-        "/api/ark/retrieve",
-        "/api/ark/memories",
-        "/api/ark/vector",
-        "/api/ark/resonance",
-        "/api/ark/status",
-        "/api/ark/filter",
-        "/api/ark/autonomous"
-      ]
-    }
-  };
-  
-  return addCORS(createErrorResponse(errorData, 404));
+  return new Response(JSON.stringify({
+    error: "ENDPOINT_NOT_FOUND",
+    message: "Endpoint not found",
+    available_endpoints: [
+      "/api/session-init",
+      "/api/log",
+      "/api/commitments/create",
+      "/api/commitments/active",
+      "/api/media/extract-wisdom",
+      "/api/rag/memory",
+      "/api/d1/query",
+      "/api/kv/log",
+      "/api/vectorize/upsert",
+      "/api/trust/check-in",
+      "/api/somatic/session",
+      "/api/search/logs",
+      "/api/rag/search",
+      "/api/analytics/insights",
+    ]
+  }), { status: 404, headers: corsHeaders });
 });
 
-// =============================================================================
-// GLOBAL ERROR HANDLER
-// =============================================================================
-
-/**
- * Enhanced global error handler that catches any uncaught exceptions
- * and returns structured JSON error responses
- */
-function createGlobalErrorHandler() {
-  return async (request, env, ctx) => {
-    try {
-      return await router.fetch(request, env, ctx);
-    } catch (error) {
-      // Log the error for debugging
-      console.error('Global error handler caught:', {
-        error: error.message,
-        stack: error.stack,
-        url: request.url,
-        method: request.method,
-        timestamp: new Date().toISOString()
-      });
-
-      // Try to log the error using our logging system
-      try {
-        await logChatGPTAction(env, 'globalErrorHandler', {
-          url: request.url,
-          method: request.method,
-          userAgent: request.headers.get('user-agent')
-        }, null, error);
-      } catch (logError) {
-        console.warn('Failed to log global error:', logError.message);
-      }
-
-      // Return structured JSON error response
-      const errorResponse = {
-        error: "Internal server error",
-        message: error.message,
-        status: 500,
-        timestamp: new Date().toISOString(),
-        request_id: crypto.randomUUID()
-      };
-
-      return addCORS(new Response(JSON.stringify(errorResponse), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      }));
-    }
-  };
-}
-
-// =============================================================================
-// WORKER ENTRY POINT
-// =============================================================================
-
 export default {
-  async fetch(request, env, ctx) {
-    const globalHandler = createGlobalErrorHandler();
-    return await globalHandler(request, env, ctx);
-  },
-  
-  async scheduled(event, env, ctx) {
-    // Handle scheduled autonomous actions
-    try {
-      await handleScheduledTriggers(env);
-    } catch (error) {
-      console.error('Scheduled trigger error:', error);
-      
-      // Try to log scheduled errors too
-      try {
-        await logChatGPTAction(env, 'scheduledTriggerError', {
-          event: event.scheduledTime,
-          cron: event.cron
-        }, null, error);
-      } catch (logError) {
-        console.warn('Failed to log scheduled error:', logError.message);
-      }
+  fetch: async (req, env) => {
+    // Handle scheduled triggers
+    if (req.cron) {
+      return handleScheduledTriggers(req, env);
     }
+    
+    // Route all other requests through the router
+    return router.handle(req, env).then(addCORS);
   }
 };
