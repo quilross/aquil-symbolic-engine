@@ -3,20 +3,82 @@
  */
 
 import { Router } from 'itty-router';
+import { z } from 'zod';
 import { exec as d1Exec } from '../actions/d1.js';
 import { query as vectorQuery, upsert as vectorUpsert } from '../actions/vectorize.js';
 import { put as r2Put, get as r2Get, listRecent as r2List } from '../actions/r2.js';
 import { log as kvPut, get as kvGet } from '../actions/kv.js';
-import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
+import { addCORSToResponse, createSuccessResponse, createErrorResponse } from '../utils/response-helpers.js';
+import { withErrorHandling } from '../utils/error-handler.js';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
   // Simplified logging for the router - in a real implementation this would do more
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
-import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
 
 const dataOpsRouter = Router();
+
+// Schema for /api/commitments/create
+const commitmentSchema = z.object({
+  action: z.enum(["create", "update"]),
+  commitment: z.string(),
+  timeframe: z.string().optional(),
+  micro_practice: z.boolean().optional(),
+});
+
+dataOpsRouter.post("/api/commitments/create", withErrorHandling(async (req, env) => {
+  const body = await req.json();
+  const validation = commitmentSchema.safeParse(body);
+  if (!validation.success) {
+    return addCORSToResponse(createErrorResponse(400, "validation_error", validation.error.message));
+  }
+
+  const { action, commitment, timeframe, micro_practice } = validation.data;
+  const commitmentId = `commitment_${Date.now()}`;
+
+  try {
+    // Store in D1
+    await env.AQUIL_DB.prepare(
+      `INSERT INTO commitments (id, action, commitment, timeframe, micro_practice, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+    ).bind(commitmentId, action, commitment, timeframe, micro_practice, new Date().toISOString()).run();
+
+    const result = {
+      commitment_id: commitmentId,
+      status: action,
+      commitment_details: { commitment, timeframe, micro_practice },
+      tracking_plan: ["Daily check-ins", "Weekly review"],
+      next_steps: ["Set reminders", "Track progress"],
+      session_id: crypto.randomUUID(),
+    };
+
+    await logChatGPTAction(env, 'manageCommitment', body, result);
+    return addCORSToResponse(createSuccessResponse(result));
+  } catch (e) {
+    return addCORSToResponse(createErrorResponse(500, "database_error", e.message));
+  }
+}));
+
+dataOpsRouter.get("/api/commitments/active", withErrorHandling(async (req, env) => {
+  try {
+    const { results } = await env.AQUIL_DB.prepare(
+      `SELECT * FROM commitments WHERE status = 'active'`
+    ).all();
+
+    const result = {
+      active_commitments: results,
+      completion_summary: { total: results.length, completed: 0 },
+      upcoming_milestones: ["Weekly review", "Monthly reflection"],
+      recommendations: "Focus on consistency",
+      total_count: results.length,
+    };
+
+    await logChatGPTAction(env, 'listActiveCommitments', {}, result);
+    return addCORSToResponse(createSuccessResponse(result));
+  } catch (e) {
+    return addCORSToResponse(createErrorResponse(500, "database_error", e.message));
+  }
+}));
 
 // D1 Database operations
 dataOpsRouter.post("/api/d1/query", withErrorHandling(async (req, env) => {
@@ -31,10 +93,8 @@ dataOpsRouter.post("/api/d1/query", withErrorHandling(async (req, env) => {
 
 // KV Store operations
 dataOpsRouter.post("/api/kv/log", withErrorHandling(async (req, env) => {
-  // Clone request before passing to action to avoid consuming the body twice
   const reqClone = req.clone();
   const result = await kvPut(reqClone, env);
-  // Read body from original for logging
   const body = await req.json().catch(() => ({}));
   
   await logChatGPTAction(env, 'storeInKV', body, result);
@@ -70,7 +130,7 @@ dataOpsRouter.get("/api/r2/get", withErrorHandling(async (req, env) => {
 }));
 
 dataOpsRouter.get("/api/r2/list", withErrorHandling(async (req, env) => {
-  const result = await r2List(env, {}); // Use default parameters
+  const result = await r2List(env, {});
   
   await logChatGPTAction(env, 'listR2Objects', { url: req.url }, result);
   
@@ -79,11 +139,8 @@ dataOpsRouter.get("/api/r2/list", withErrorHandling(async (req, env) => {
 
 // Vectorize operations
 dataOpsRouter.post("/api/vectorize/query", withErrorHandling(async (req, env) => {
-  // Clone the request before passing to action to avoid ReadableStream lock
   const reqClone = req.clone();
   const result = await vectorQuery(reqClone, env);
-  
-  // Read body from original request for logging
   const body = await req.json().catch(() => ({}));
   await logChatGPTAction(env, 'ragMemoryConsolidation', body, result);
   
@@ -91,11 +148,8 @@ dataOpsRouter.post("/api/vectorize/query", withErrorHandling(async (req, env) =>
 }));
 
 dataOpsRouter.post("/api/vectorize/upsert", withErrorHandling(async (req, env) => {
-  // Clone the request before passing to action to avoid ReadableStream lock
   const reqClone = req.clone();
   const result = await vectorUpsert(reqClone, env);
-  
-  // Read body from original request for logging
   const body = await req.json().catch(() => ({}));
   await logChatGPTAction(env, 'upsertVectors', body, result);
   
@@ -127,71 +181,6 @@ dataOpsRouter.post("/api/test/vector-flow", withErrorHandling(async (req, env) =
   } catch (e) {
     return addCORSToResponse(createErrorResponse(500, "vector_flow_test_failed", e.message));
   }
-}));
-
-// Commitments operations
-dataOpsRouter.post("/api/commitments/create", withErrorHandling(async (req, env) => {
-  const body = await req.json();
-  const result = {
-    success: true,
-    commitment_created: true,
-    commitment_id: `commitment_${Date.now()}`,
-    message: "Commitment management system available but not fully implemented",
-    implementation_status: 'mock',
-    mock: true,
-    timestamp: new Date().toISOString()
-  };
-  
-  await logChatGPTAction(env, 'manageCommitment', body, result);
-  return addCORSToResponse(createSuccessResponse(result));
-}));
-
-dataOpsRouter.get("/api/commitments/active", withErrorHandling(async (req, env) => {
-  const result = {
-    success: true,
-    active_commitments: [],
-    message: "Commitment listing system available but not fully implemented",
-    implementation_status: 'mock',
-    mock: true,
-    timestamp: new Date().toISOString()
-  };
-  
-  await logChatGPTAction(env, 'listActiveCommitments', {}, result);
-  return addCORSToResponse(createSuccessResponse(result));
-}));
-
-// Goals operations
-dataOpsRouter.post("/api/goals/set", withErrorHandling(async (req, env) => {
-  const body = await req.json();
-  const result = {
-    success: true,
-    goal_set: true,
-    goal_id: `goal_${Date.now()}`,
-    message: "Goal setting system available but not fully implemented",
-    implementation_status: 'mock',
-    mock: true,
-    timestamp: new Date().toISOString()
-  };
-  
-  await logChatGPTAction(env, 'setPersonalGoals', body, result);
-  return addCORSToResponse(createSuccessResponse(result));
-}));
-
-// Habits operations
-dataOpsRouter.post("/api/habits/design", withErrorHandling(async (req, env) => {
-  const body = await req.json();
-  const result = {
-    success: true,
-    habit_designed: true,
-    habit_id: `habit_${Date.now()}`,
-    message: "Habit design system available but not fully implemented",
-    implementation_status: 'mock',
-    mock: true,
-    timestamp: new Date().toISOString()
-  };
-  
-  await logChatGPTAction(env, 'designHabits', body, result);
-  return addCORSToResponse(createSuccessResponse(result));
 }));
 
 export { dataOpsRouter };
