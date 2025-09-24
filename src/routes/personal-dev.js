@@ -3,16 +3,17 @@
  */
 
 import { Router } from 'itty-router';
+import { z } from 'zod';
 import { handleDiscoveryInquiry } from '../ark/endpoints.js';
 import { runEngine } from '../agent/engine.js';
-import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
+import { addCORSToResponse, createSuccessResponse, createErrorResponse } from '../utils/response-helpers.js';
+import { withErrorHandling } from '../utils/error-handler.js';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
   // Simplified logging for the router - in a real implementation this would do more
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
-import { withErrorHandling } from '../utils/error-handler.js';
 
 // Import the personal development classes
 import { SomaticHealer } from '../src-core-somatic-healer.js';
@@ -29,11 +30,42 @@ import { AncestryHealer } from '../src-core-ancestry-healer.js';
 
 const personalDevRouter = Router();
 
+// Schema for /api/media/extract-wisdom
+const mediaWisdomSchema = z.object({
+  media_type: z.string(),
+  title: z.string(),
+  personal_reaction: z.string(),
+});
+
+personalDevRouter.post("/api/media/extract-wisdom", withErrorHandling(async (req, env) => {
+  const body = await req.json();
+  const validation = mediaWisdomSchema.safeParse(body);
+  if (!validation.success) {
+    return addCORSToResponse(createErrorResponse(400, "validation_error", validation.error.message));
+  }
+
+  const { media_type, title, personal_reaction } = validation.data;
+  const extractor = new MediaWisdomExtractor(env);
+  const result = await extractor.extractWisdom({ media_type, title, personal_reaction });
+
+  // Ensure result matches schema
+  const response = {
+    extracted_wisdom: result.wisdom || "No wisdom extracted",
+    personal_connections: result.connections || [],
+    actionable_takeaways: result.takeaways || [],
+    emotional_resonance: result.resonance || "Neutral",
+    related_themes: result.themes || [],
+  };
+
+  await logChatGPTAction(env, 'extractMediaWisdom', body, response);
+  return addCORSToResponse(createSuccessResponse(response));
+}));
+
 // Discovery inquiry with Behavioral Intelligence Engine
 personalDevRouter.post("/api/discovery/generate-inquiry", withErrorHandling(async (req, env) => {
   const result = await handleDiscoveryInquiry(req, env);
   const data = await result.clone().json();
-  
+
   // Wire conversational engine if enabled
   if (env.ENABLE_CONVERSATIONAL_ENGINE === '1') {
     const body = await req.clone().json();
@@ -42,7 +74,6 @@ personalDevRouter.post("/api/discovery/generate-inquiry", withErrorHandling(asyn
     
     try {
       const probe = await runEngine(env, sessionId, userText);
-      // Blend engine output into existing response fields
       data.voice_used = probe.voice;
       data.press_level = probe.pressLevel;
       if (probe.questions && probe.questions.length > 0) {
@@ -53,12 +84,10 @@ personalDevRouter.post("/api/discovery/generate-inquiry", withErrorHandling(asyn
       }
     } catch (engineError) {
       console.error('Engine integration error:', engineError);
-      // Continue without engine enhancement
     }
   }
-  
+
   await logChatGPTAction(env, 'generateInquiry', {}, data);
-  
   return addCORSToResponse(result);
 }));
 
@@ -79,16 +108,6 @@ personalDevRouter.post("/api/somatic/session", withErrorHandling(async (req, env
   const result = await somaticHealer.processSession(body);
   
   await logChatGPTAction(env, 'somaticHealingSession', body, result);
-  return addCORSToResponse(createSuccessResponse(result));
-}));
-
-// Media wisdom extraction
-personalDevRouter.post("/api/media/extract-wisdom", withErrorHandling(async (req, env) => {
-  const body = await req.json();
-  const extractor = new MediaWisdomExtractor(env);
-  const result = await extractor.extractWisdom(body);
-  
-  await logChatGPTAction(env, 'extractWisdom', body, result);
   return addCORSToResponse(createSuccessResponse(result));
 }));
 
@@ -131,11 +150,9 @@ personalDevRouter.get("/api/wisdom/daily-synthesis", withErrorHandling(async (re
   return addCORSToResponse(createSuccessResponse(result));
 }));
 
-// Energy optimization - simplified implementation
+// Energy optimization
 personalDevRouter.post("/api/energy/optimize", withErrorHandling(async (req, env) => {
   const body = await req.json();
-  
-  // Simplified energy optimization logic
   const result = {
     energy_level: body.current_energy || 5,
     optimization_suggestions: [
