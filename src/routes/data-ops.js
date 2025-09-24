@@ -8,13 +8,22 @@ import { query as vectorQuery, upsert as vectorUpsert } from '../actions/vectori
 import { put as r2Put, get as r2Get, listRecent as r2List } from '../actions/r2.js';
 import { log as kvPut, get as kvGet } from '../actions/kv.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
+import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+import { z } from 'zod';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
   // Simplified logging for the router - in a real implementation this would do more
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
-import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+
+// Schema validation for commitments
+const commitmentSchema = z.object({
+  action: z.enum(["create", "update"]),
+  commitment: z.string().min(1),
+  timeframe: z.string().optional(),
+  micro_practice: z.boolean().optional(),
+});
 
 const dataOpsRouter = Router();
 
@@ -132,32 +141,100 @@ dataOpsRouter.post("/api/test/vector-flow", withErrorHandling(async (req, env) =
 // Commitments operations
 dataOpsRouter.post("/api/commitments/create", withErrorHandling(async (req, env) => {
   const body = await req.json();
-  const result = {
-    success: true,
-    commitment_created: true,
-    commitment_id: `commitment_${Date.now()}`,
-    message: "Commitment management system available but not fully implemented",
-    implementation_status: 'mock',
-    mock: true,
-    timestamp: new Date().toISOString()
-  };
+  const validation = commitmentSchema.safeParse(body);
   
-  await logChatGPTAction(env, 'manageCommitment', body, result);
-  return addCORSToResponse(createSuccessResponse(result));
+  if (!validation.success) {
+    return addCORSToResponse(createErrorResponse(400, "validation_error", validation.error.message));
+  }
+
+  const { action, commitment, timeframe, micro_practice } = validation.data;
+  const commitmentId = `commitment_${Date.now()}`;
+
+  try {
+    // Ensure the commitments table exists, create if not
+    await env.AQUIL_DB.prepare(`
+      CREATE TABLE IF NOT EXISTS commitments (
+        id TEXT PRIMARY KEY,
+        action TEXT NOT NULL,
+        commitment TEXT NOT NULL,
+        timeframe TEXT,
+        micro_practice BOOLEAN DEFAULT FALSE,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    // Insert the commitment
+    await env.AQUIL_DB.prepare(`
+      INSERT INTO commitments (id, action, commitment, timeframe, micro_practice, status, created_at, updated_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, 'active', ?6, ?7)
+    `).bind(
+      commitmentId, 
+      action, 
+      commitment, 
+      timeframe || null, 
+      micro_practice || false,
+      new Date().toISOString(),
+      new Date().toISOString()
+    ).run();
+
+    const result = {
+      commitment_id: commitmentId,
+      status: action === "create" ? "created" : "updated",
+      commitment_details: { 
+        commitment, 
+        timeframe: timeframe || null, 
+        micro_practice: micro_practice || false 
+      },
+      tracking_plan: ["Daily check-ins", "Weekly review"],
+      next_steps: ["Set reminders", "Track progress"],
+      session_id: crypto.randomUUID(),
+    };
+
+    await logChatGPTAction(env, 'manageCommitment', body, result);
+    return addCORSToResponse(createSuccessResponse(result));
+  } catch (error) {
+    return addCORSToResponse(createErrorResponse(500, "database_error", error.message));
+  }
 }));
 
 dataOpsRouter.get("/api/commitments/active", withErrorHandling(async (req, env) => {
-  const result = {
-    success: true,
-    active_commitments: [],
-    message: "Commitment listing system available but not fully implemented",
-    implementation_status: 'mock',
-    mock: true,
-    timestamp: new Date().toISOString()
-  };
-  
-  await logChatGPTAction(env, 'listActiveCommitments', {}, result);
-  return addCORSToResponse(createSuccessResponse(result));
+  try {
+    // Ensure the table exists first
+    await env.AQUIL_DB.prepare(`
+      CREATE TABLE IF NOT EXISTS commitments (
+        id TEXT PRIMARY KEY,
+        action TEXT NOT NULL,
+        commitment TEXT NOT NULL,
+        timeframe TEXT,
+        micro_practice BOOLEAN DEFAULT FALSE,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    const { results } = await env.AQUIL_DB.prepare(`
+      SELECT * FROM commitments WHERE status = 'active' ORDER BY created_at DESC
+    `).all();
+
+    const result = {
+      active_commitments: results,
+      completion_summary: { 
+        total: results.length, 
+        completed: results.filter(c => c.status === 'completed').length 
+      },
+      upcoming_milestones: ["Weekly review", "Monthly reflection"],
+      recommendations: results.length > 0 ? "Focus on consistency" : "Consider creating your first commitment",
+      total_count: results.length,
+    };
+
+    await logChatGPTAction(env, 'listActiveCommitments', {}, result);
+    return addCORSToResponse(createSuccessResponse(result));
+  } catch (error) {
+    return addCORSToResponse(createErrorResponse(500, "database_error", error.message));
+  }
 }));
 
 // Goals operations
