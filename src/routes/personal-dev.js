@@ -6,13 +6,14 @@ import { Router } from 'itty-router';
 import { handleDiscoveryInquiry } from '../ark/endpoints.js';
 import { runEngine } from '../agent/engine.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
+import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+import { z } from 'zod';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
   // Simplified logging for the router - in a real implementation this would do more
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
-import { withErrorHandling } from '../utils/error-handler.js';
 
 // Import the personal development classes
 import { SomaticHealer } from '../src-core-somatic-healer.js';
@@ -26,6 +27,13 @@ import { CreativityUnleasher } from '../src-core-creativity-unleasher.js';
 import { AbundanceCultivator } from '../src-core-abundance-cultivator.js';
 import { TransitionNavigator } from '../src-core-transition-navigator.js';
 import { AncestryHealer } from '../src-core-ancestry-healer.js';
+
+// Schema validation for media wisdom extraction
+const mediaWisdomSchema = z.object({
+  media_type: z.string().min(1),
+  title: z.string().min(1),
+  personal_reaction: z.string().min(1),
+});
 
 const personalDevRouter = Router();
 
@@ -85,11 +93,41 @@ personalDevRouter.post("/api/somatic/session", withErrorHandling(async (req, env
 // Media wisdom extraction
 personalDevRouter.post("/api/media/extract-wisdom", withErrorHandling(async (req, env) => {
   const body = await req.json();
-  const extractor = new MediaWisdomExtractor(env);
-  const result = await extractor.extractWisdom(body);
+  const validation = mediaWisdomSchema.safeParse(body);
   
-  await logChatGPTAction(env, 'extractWisdom', body, result);
-  return addCORSToResponse(createSuccessResponse(result));
+  if (!validation.success) {
+    return addCORSToResponse(createErrorResponse(400, "validation_error", validation.error.message));
+  }
+
+  const { media_type, title, personal_reaction } = validation.data;
+  
+  try {
+    const extractor = new MediaWisdomExtractor(env);
+    const result = await extractor.extractWisdom({ media_type, title, personal_reaction });
+
+    // Ensure result matches the schema format
+    const response = {
+      extracted_wisdom: result.extracted_wisdom || "No wisdom extracted",
+      personal_connections: Array.isArray(result.trust_building_connections) 
+        ? result.trust_building_connections 
+        : [result.trust_building_connections || "No connections identified"].flat(),
+      actionable_takeaways: Array.isArray(result.actionable_insights) 
+        ? result.actionable_insights 
+        : [result.actionable_insights || "No takeaways identified"].flat(),
+      emotional_resonance: result.wisdom_analysis?.emotions || "Neutral",
+      related_themes: Array.isArray(result.wisdom_analysis?.growth_themes) 
+        ? result.wisdom_analysis.growth_themes 
+        : [result.wisdom_analysis?.growth_themes || "General growth"].flat(),
+      session_id: crypto.randomUUID(),
+      media_type: media_type,
+    };
+
+    await logChatGPTAction(env, 'extractMediaWisdom', body, response);
+    return addCORSToResponse(createSuccessResponse(response));
+  } catch (error) {
+    await logChatGPTAction(env, 'extractMediaWisdom', body, null, error);
+    return addCORSToResponse(createErrorResponse(500, "extraction_error", error.message));
+  }
 }));
 
 // Pattern recognition

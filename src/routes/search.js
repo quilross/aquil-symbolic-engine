@@ -10,12 +10,21 @@ import { progressiveWeaving } from '../actions/r2.js';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
 import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
 import { readJSON } from '../utils/http.js';
+import { z } from 'zod';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
   // Simplified logging for the router - in a real implementation this would do more
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
+
+// Schema validation for RAG memory storage
+const ragMemorySchema = z.object({
+  content: z.string().min(1),
+  type: z.enum(["insight", "pattern", "wisdom", "reflection"]),
+  metadata: z.object({}).optional(),
+  importance: z.number().int().min(1).max(10).optional().default(5),
+});
 
 const searchRouter = Router();
 
@@ -98,81 +107,64 @@ searchRouter.post("/api/rag/search", withErrorHandling(async (req, env) => {
   }
 }));
 
-// RAG Memory Consolidation - consolidate memories and insights from multiple sources
+// RAG Memory Storage - store content for future retrieval and learning
 searchRouter.post("/api/rag/memory", withErrorHandling(async (req, env) => {
   const body = await readJSON(req);
-  const { 
-    sources = ['vector', 'kv', 'r2'], 
-    timeframe = '7d',
-    consolidation_depth = 'standard'
-  } = body;
+  const validation = ragMemorySchema.safeParse(body);
+  
+  if (!validation.success) {
+    return addCORSToResponse(createErrorResponse(400, "validation_error", validation.error.message));
+  }
+
+  const { content, type, metadata, importance } = validation.data;
+  const memoryId = `memory_${Date.now()}`;
   
   try {
-    // Perform memory consolidation across specified sources
-    const consolidatedMemories = {
-      timeframe,
-      sources: sources,
-      consolidation_depth,
-      memories: [],
-      insights: [],
-      patterns: [],
-      consolidated_at: new Date().toISOString()
+    // Store in KV
+    const kvKey = `rag_memory_${memoryId}`;
+    const memoryData = {
+      id: memoryId,
+      content,
+      type,
+      metadata: metadata || {},
+      importance,
+      stored_at: new Date().toISOString(),
     };
     
-    // Consolidate from vector store if requested
-    if (sources.includes('vector')) {
+    await env.AQUIL_MEMORIES.put(kvKey, JSON.stringify(memoryData));
+
+    // Create vector embedding for semantic search
+    let embeddingCreated = false;
+    if (env.AQUIL_CONTEXT) {
       try {
-        const vectorMemories = await semanticRecall(env, { 
-          text: 'wisdom insights breakthrough',
-          topK: 10
-        });
-        consolidatedMemories.memories.push(...(vectorMemories.matches || []));
+        await env.AQUIL_CONTEXT.upsert([{
+          id: memoryId,
+          values: [], // Vectorize will generate embedding from metadata.text
+          metadata: {
+            text: content,
+            type,
+            importance,
+            stored_at: new Date().toISOString(),
+            source: 'rag_memory'
+          }
+        }]);
+        embeddingCreated = true;
       } catch (vectorError) {
-        console.warn('Vector consolidation failed:', vectorError.message);
+        console.warn('Vector embedding creation failed:', vectorError.message);
       }
     }
-    
-    // Consolidate from KV store if requested  
-    if (sources.includes('kv')) {
-      try {
-        const kvMemories = await listRecentWithContent(env, { 
-          limit: 10,
-          timeframe
-        });
-        consolidatedMemories.memories.push(...(kvMemories.entries || []));
-      } catch (kvError) {
-        console.warn('KV consolidation failed:', kvError.message);
-      }
-    }
-    
-    // Generate insights from consolidated memories
-    if (consolidatedMemories.memories.length > 0) {
-      consolidatedMemories.insights = [
-        "Memory consolidation reveals recurring themes in your personal growth",
-        "Pattern recognition across timeframes strengthens wisdom integration",
-        "Cross-source memory synthesis enhances insight depth"
-      ];
-      
-      consolidatedMemories.patterns = [
-        "Emotional processing cycles",
-        "Learning integration patterns", 
-        "Trust building progressions"
-      ];
-    }
-    
-    const response = {
-      success: true,
-      consolidation: consolidatedMemories,
-      memory_count: consolidatedMemories.memories.length,
-      insight_count: consolidatedMemories.insights.length
+
+    const result = {
+      stored: true,
+      memory_id: memoryId,
+      embedding_created: embeddingCreated,
     };
-    
-    await logChatGPTAction(env, 'ragMemoryConsolidation', body, response);
-    
-    return addCORSToResponse(createSuccessResponse(response));
+
+    await logChatGPTAction(env, 'ragMemoryConsolidation', body, result);
+    return addCORSToResponse(createSuccessResponse(result));
   } catch (error) {
     await logChatGPTAction(env, 'ragMemoryConsolidation', body, null, error);
-    return addCORSToResponse(createErrorResponse(500, 'memory_consolidation_error', error.message));
+    return addCORSToResponse(createErrorResponse(500, 'memory_storage_error', error.message));
   }
 }));
 
