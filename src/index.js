@@ -30,6 +30,7 @@ import {
   arkAutonomous,
   arkTestAI
 } from "./ark/ark-endpoints.js";
+
 // Behavioral engine
 import { runEngine } from "./agent/engine.js";
 
@@ -70,12 +71,38 @@ import { AquilCore } from "./src-core-aquil-core.js";
 
 import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
 
-// Import actions metadata for validation constants
-import actions from '../config/ark.actions.logging.json' with { type: 'json' };
+// FIXED: Use config loader instead of experimental JSON import
+import { getArkConfig, getRoutes, getValidationConstants } from './config-loader.js';
 import { LOG_TYPES, STORED_IN, UUID_V4, MAX_DETAIL, ensureSchema } from './utils/logging-validation.js';
 
-// Pull routes from JSON (validation constants sourced from shared util)
-const Routes = actions['x-ark-metadata'].routes
+// Configuration will be loaded dynamically
+let Routes = {};
+let actions = {};
+
+// Initialize configuration on startup
+async function initializeConfig() {
+  try {
+    actions = await getArkConfig();
+    Routes = await getRoutes();
+    const constants = await getValidationConstants();
+    
+    // Update logging validation constants if needed
+    if (constants.LOG_TYPES && constants.LOG_TYPES.size > 0) {
+      // Constants are already imported and used by logging-validation.js
+    }
+  } catch (error) {
+    console.warn('Config initialization failed, using defaults:', error.message);
+    // Fallback routes
+    Routes = {
+      kvWrite: '/api/logs/kv-write',
+      d1Insert: '/api/logs/d1-insert',
+      promote: '/api/logs/promote',
+      retrieve: '/api/logs/retrieve',
+      retrieveLatest: '/api/logs/latest',
+      retrievalMeta: '/api/logs/retrieval-meta'
+    };
+  }
+}
 
 // ISO 8601 checker (lightweight; keeps your current semantics)
 function isIso(ts) {
@@ -104,111 +131,6 @@ function validateLog(payload) {
   if (!STORED_IN.has(storedIn)) return `storedIn must be one of ${[...STORED_IN].join(',')}`
   return null
 }
-
-async function handleKvWrite(env, req) {
-  const { addEntry } = await import('./journalService.js');
-  
-  const body = await readJson(req)
-  const err = validateLog(body)
-  if (err) return json({ ok: false, error: err }, { status: 400 })
-  if (body.storedIn !== 'KV') return json({ ok: false, error: 'storedIn must be KV' }, { status: 400 })
-  
-  const result = await addEntry(env, body);
-  if (result.success) {
-    return json({ ok: true, key: result.key, id: result.id })
-  } else {
-    return json({ ok: false, error: result.error }, { status: 500 })
-  }
-}
-
-async function handleD1Insert(env, req) {
-  await ensureSchema(env)
-  const body = await readJson(req)
-  const err = validateLog(body)
-  if (err) return json({ ok: false, error: err }, { status: 400 })
-  if (body.storedIn !== 'D1') return json({ ok: false, error: 'storedIn must be D1' }, { status: 400 })
-  await env.AQUIL_DB.prepare(
-    'INSERT INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(body.id, body.type, body.detail ?? null, body.timestamp, 'D1').run()
-  return json({ ok: true, rowId: 1, id: body.id })
-}
-
-async function handlePromote(env, req) {
-  await ensureSchema(env)
-  const { getEntryById } = await import('./journalService.js');
-  
-  const body = await readJson(req)
-  const id = body?.id
-  if (!id || !UUID_V4.test(id)) return json({ ok: false, error: 'invalid id' }, { status: 400 })
-  
-  const result = await getEntryById(env, id);
-  if (!result.success) {
-    return json({ ok: false, error: 'not found in KV' }, { status: 404 })
-  }
-  
-  const log = result.data;
-  const err = validateLog(log)
-  if (err) return json({ ok: false, error: `invalid KV log: ${err}` }, { status: 400 })
-  
-  await env.AQUIL_DB.prepare(
-    'INSERT OR IGNORE INTO logs (id,type,detail,timestamp,storedIn) VALUES (?1,?2,?3,?4,?5)'
-  ).bind(log.id, log.type, log.detail ?? null, log.timestamp, 'D1').run()
-  return json({ ok: true, promotedId: id })
-}
-
-async function handleRetrieve(env, req) {
-  await ensureSchema(env)
-  const q = await readJson(req) || {}
-  const { source = 'any', types, from, to, limit = 100, afterId, order = 'desc' } = q
-
-  if (types && (!Array.isArray(types) || types.some(t => !LOG_TYPES.has(t)))) {
-    return json({ ok: false, error: 'invalid types' }, { status: 400 })
-  }
-  if (from && !isIso(from)) return json({ ok: false, error: 'invalid from' }, { status: 400 })
-  if (to && !isIso(to)) return json({ ok: false, error: 'invalid to' }, { status: 400 })
-  const lim = Math.max(1, Math.min(Number(limit) || 100, 500))
-  const ord = order === 'asc' ? 'ASC' : 'DESC'
-
-  const clauses = []
-  const params = []
-  if (types?.length) { clauses.push(`type IN (${types.map(() => '?').join(',')})`); params.push(...types) }
-  if (from) { clauses.push('timestamp >= ?'); params.push(from) }
-  if (to)   { clauses.push('timestamp <= ?'); params.push(to) }
-  if (afterId) { clauses.push('id > ?'); params.push(afterId) }
-  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
-  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ${where} ORDER BY timestamp ${ord} LIMIT ?`
-  params.push(lim)
-  const res = await env.AQUIL_DB.prepare(sql).bind(...params).all()
-  let items = res.results || []
-
-  return json({ ok: true, items })
-}
-
-async function handleRetrieveLatest(env, req) {
-  await ensureSchema(env)
-  const url = new URL(req.url)
-  const n = Number(url.searchParams.get('limit') || '25')
-  const limit = Math.max(1, Math.min(isFinite(n) ? n : 25, 200))
-  const sql = `SELECT id,type,detail,timestamp,storedIn FROM logs ORDER BY timestamp DESC LIMIT ?`
-  const res = await env.AQUIL_DB.prepare(sql).bind(limit).all()
-  return json({ ok: true, items: res.results || [] })
-}
-
-async function handleRetrievalMeta(env, req) {
-  await ensureSchema(env)
-  let ts
-  try { ts = (await req.json())?.timestamp } catch {}
-  const timestamp = (ts && isIso(ts)) ? ts : new Date().toISOString()
-  await env.AQUIL_DB.prepare(
-    'UPDATE retrieval_meta SET lastRetrieved=?1, retrievalCount=retrievalCount+1 WHERE id=1'
-  ).bind(timestamp).run()
-  const res = await env.AQUIL_DB.prepare(
-    'SELECT lastRetrieved, retrievalCount FROM retrieval_meta WHERE id=1'
-  ).all()
-  const row = (res.results && res.results[0]) || { lastRetrieved: null, retrievalCount: 0 }
-  return json(row)
-}
-// === END EXTRACTION PATCH ===
 
 // Utilities
 import { toCanonical } from "./ops/operation-aliases.js";
@@ -576,197 +498,6 @@ function generateArtifactForAction(operationId, result) {
 }
 
 // =============================================================================
-// PERSONAL DEVELOPMENT SESSION PROCESSORS
-// =============================================================================
-
-// Individual session processors (used by dedicated router endpoints)
-async function processGratitudeSession(content, sessionId, env) {
-  const gratitudeItems = content.gratitude_items || [];
-  return {
-    session_type: 'gratitude',
-    insights: [
-      `Grateful for ${gratitudeItems.length} aspects of life`,
-      "Gratitude shifts perspective toward abundance",
-      "Regular practice strengthens appreciation"
-    ],
-    practices: [
-      "Three daily gratitudes",
-      "Gratitude journaling",
-      "Appreciation meditation"
-    ],
-    next_steps: [
-      "Notice small daily gifts",
-      "Express gratitude to others",
-      "Feel gratitude in your body"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processHealingSession(content, sessionId, env) {
-  const emotions = content.emotions_present || [];
-  return {
-    session_type: 'healing',
-    insights: [
-      `Processing ${emotions.length} emotional states`,
-      "Healing happens in layers",
-      "Emotions carry important messages"
-    ],
-    practices: [
-      "Emotional check-ins",
-      "Feeling body awareness",
-      "Compassionate self-talk"
-    ],
-    next_steps: [
-      "Honor your emotional truth",
-      "Seek support when needed",
-      "Trust the healing process"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processIntuitionSession(content, sessionId, env) {
-  return {
-    session_type: 'intuition',
-    insights: [
-      "Your intuition is always available",
-      "Body wisdom precedes mental analysis",
-      "Trust develops through practice"
-    ],
-    practices: [
-      "Daily intuition check-ins",
-      "Body scanning",
-      "Decision meditation"
-    ],
-    next_steps: [
-      "Notice first impressions",
-      "Track intuitive hits",
-      "Honor subtle guidance"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processPurposeSession(content, sessionId, env) {
-  return {
-    session_type: 'purpose',
-    insights: [
-      "Purpose emerges through living",
-      "Values provide direction",
-      "Meaning is created, not found"
-    ],
-    practices: [
-      "Values clarification",
-      "Purpose journaling",
-      "Meaningful action steps"
-    ],
-    next_steps: [
-      "Align actions with values",
-      "Notice what energizes you",
-      "Contribute to something larger"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processRelationshipSession(content, sessionId, env) {
-  return {
-    session_type: 'relationships',
-    insights: [
-      "Connection requires vulnerability",
-      "Growth happens in relationship",
-      "Boundaries create safety"
-    ],
-    practices: [
-      "Active listening",
-      "Honest communication",
-      "Empathy building"
-    ],
-    next_steps: [
-      "Practice presence",
-      "Share authentically",
-      "Honor differences"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processShadowSession(content, sessionId, env) {
-  return {
-    session_type: 'shadow',
-    insights: [
-      "Shadow contains rejected parts",
-      "Integration creates wholeness",
-      "Triggers reveal shadow aspects"
-    ],
-    practices: [
-      "Shadow dialogue",
-      "Trigger exploration",
-      "Self-compassion work"
-    ],
-    next_steps: [
-      "Notice strong reactions",
-      "Explore projections",
-      "Embrace all parts of self"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processSocraticSession(content, sessionId, env) {
-  return {
-    session_type: 'socratic',
-    insights: [
-      "Questions reveal deeper truth",
-      "Assumptions shape perception",
-      "Inquiry opens possibilities"
-    ],
-    practices: [
-      "Question assumptions",
-      "Explore contradictions",
-      "Seek multiple perspectives"
-    ],
-    next_steps: [
-      "Ask 'What if?' questions",
-      "Challenge beliefs",
-      "Stay curious"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-async function processRitualSession(content, sessionId, env) {
-  return {
-    session_type: 'ritual',
-    insights: [
-      "Rituals create sacred time",
-      "Intention shapes practice",
-      "Consistency builds power"
-    ],
-    practices: [
-      "Morning ritual design",
-      "Transition ceremonies",
-      "Evening reflection"
-    ],
-    next_steps: [
-      "Create simple daily ritual",
-      "Honor life transitions",
-      "Practice with intention"
-    ],
-    session_id: sessionId,
-    timestamp: new Date().toISOString()
-  };
-}
-
-// =============================================================================
 // ROUTER SETUP WITH ERROR HANDLING MIDDLEWARE
 // =============================================================================
 const router = Router();
@@ -938,132 +669,14 @@ router.all("/api/goals/*", dataOpsRouter.fetch);
 router.all("/api/habits/*", dataOpsRouter.fetch);
 router.all("/api/commitments/*", dataOpsRouter.fetch);
 
-// Legacy endpoints - now handled by modular routers above (being removed)
-
-// Personal development session endpoints (POST handlers)
-
-// Routes now handled by modular routers above
-
-// Personal development session endpoints (POST handlers)
-
-// FALLBACK AND ERROR HANDLING
-// =============================================================================
-
-// Catch-all for unmatched routes
-
-// Analytics insights
-router.get("/api/analytics/insights", async (req, env) => {
-  try {
-    const url = new URL(req.url);
-    const days = parseInt(url.searchParams.get('days') || '30');
-    const type = url.searchParams.get('type') || 'all';
-    
-    const result = {
-      insights: [],
-      patterns: [],
-      recommendations: [],
-      timeframe: `${days} days`,
-      analysis_type: type,
-      generated_at: new Date().toISOString()
-    };
-    
-    await logChatGPTAction(env, 'getConversationAnalytics', { days, type }, result);
-    
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'getConversationAnalytics', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
-// Export conversation data
-router.post("/api/export/conversation", async (req, env) => {
-  try {
-    const body = await req.json();
-    const format = body.format || 'json';
-    const timeframe = body.timeframe || '30d';
-    
-    const result = {
-      export_id: crypto.randomUUID(),
-      format,
-      timeframe,
-      status: "prepared",
-      download_url: null, // Would be populated in real implementation
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    };
-    
-    await logChatGPTAction(env, 'exportConversationData', body, result);
-    
-    return addCORS(createWisdomResponse(result));
-  } catch (error) {
-    await logChatGPTAction(env, 'exportConversationData', {}, null, error);
-    return addCORS(createErrorResponse({ error: error.message }, 500));
-  }
-});
+// Fallback endpoint
 router.all("*", () => {
   const errorData = {
     errorId: 'ENDPOINT_NOT_FOUND',
     userMessage: 'Endpoint not found',
     technicalMessage: 'The requested API endpoint does not exist',
     category: 'routing',
-    severity: 'low',
-    additional_info: {
-      available_endpoints: [
-        "/api/session-init",
-        "/api/discovery/generate-inquiry", 
-        "/api/system/health-check",
-        "/api/system/readiness",
-        "/api/log",
-        "/api/logs",
-        "/api/logs/kv-write",
-        "/api/logs/d1-insert", 
-        "/api/logs/promote",
-        "/api/logs/retrieve",
-        "/api/logs/latest",
-        "/api/logs/retrieval-meta",
-        "/api/trust/check-in",
-        "/api/somatic/session",
-        "/api/media/extract-wisdom",
-        "/api/patterns/recognize",
-        "/api/patterns/autonomous-detect",
-        "/api/standing-tall/practice",
-        "/api/wisdom/synthesize",
-        "/api/wisdom/daily-synthesis",
-        "/api/feedback",
-        "/api/dreams/interpret",
-        "/api/energy/optimize",
-        "/api/values/clarify",
-        "/api/creativity/unleash",
-        "/api/abundance/cultivate",
-        "/api/transitions/navigate",
-        "/api/ancestry/heal",
-        "/api/mood/track",
-        "/api/goals/set", 
-        "/api/habits/design",
-        "/api/commitments/create",
-        "/api/commitments/active",
-        "/api/commitments/:id/progress",
-        "/api/ritual/auto-suggest",
-        "/api/contracts/create",
-        "/api/monitoring/metrics",
-        "/api/socratic/question",
-        "/api/coaching/comb-analysis",
-        "/api/r2/put",
-        "/api/r2/get",
-        "/api/kv/log",
-        "/api/kv/get",
-        "/api/d1/query",
-        "/api/vectorize/query",
-        "/api/vectorize/upsert",
-        "/api/ark/log",
-        "/api/ark/retrieve",
-        "/api/ark/memories",
-        "/api/ark/vector",
-        "/api/ark/resonance",
-        "/api/ark/status",
-        "/api/ark/filter",
-        "/api/ark/autonomous"
-      ]
-    }
+    severity: 'low'
   };
   
   return addCORS(createErrorResponse(errorData, 404));
@@ -1080,6 +693,11 @@ router.all("*", () => {
 function createGlobalErrorHandler() {
   return async (request, env, ctx) => {
     try {
+      // Initialize config on first request
+      if (!Routes || Object.keys(Routes).length === 0) {
+        await initializeConfig();
+      }
+      
       return await router.fetch(request, env, ctx);
     } catch (error) {
       // Log the error for debugging
