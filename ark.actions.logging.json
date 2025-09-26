@@ -1,0 +1,114 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ark Logging Actions",
+    "description": "Logging and retrieval actions for Ark conversation continuity",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://logging.signal-q.me",
+      "description": "Ark Logging Service"
+    }
+  ],
+  "paths": {
+    "/api/log": {
+      "post": {
+        "summary": "Log conversation events",
+        "description": "Log conversation events and insights for continuity",
+        "operationId": "logEvent",
+        "x-openai-isConsequential": true,
+        "x-openai-autonomous": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "default": "chat_message",
+                    "description": "Event type"
+                  },
+                  "who": {
+                    "type": "string",
+                    "default": "user",
+                    "description": "Who generated this event"
+                  },
+                  "level": {
+                    "type": "string",
+                    "default": "info",
+                    "description": "Importance level"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "description": "Event data"
+                  }
+                },
+                "required": ["payload"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event logged successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logged": {"type": "boolean"},
+                    "log_id": {"type": "string"},
+                    "timestamp": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "summary": "Retrieve conversation history",
+        "description": "Retrieve recent conversation logs for context",
+        "operationId": "retrieveLogs",
+        "x-openai-autonomous": true,
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of entries to retrieve",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation logs retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logs": {
+                      "type": "array",
+                      "items": {"type": "object"}
+                    },
+                    "context_summary": {"type": "string"},
+                    "total_entries": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
