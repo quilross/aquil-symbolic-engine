@@ -4,14 +4,23 @@
 
 import { Router } from 'itty-router';
 import { addCORSToResponse, createSuccessResponse } from '../utils/response-helpers.js';
+import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
+import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from '../utils/dream-interpreter.js';
+
+// Import the missing endpoint handlers
+import {
+  handleRitualAutoSuggest,
+  handleCreateContract,
+  handleSocraticQuestion,
+  handleCoachingCombAnalysis,
+  handleCommitmentProgress
+} from './endpoint-fixes.js';
 
 // Create a simple logChatGPTAction function since it's not exported from actions
 async function logChatGPTAction(env, operationId, data, result, error = null) {
   // Simplified logging for the router - in a real implementation this would do more
   console.log(`[ChatGPT Action] ${operationId}`, { data, result, error });
 }
-import { withErrorHandling, createErrorResponse } from '../utils/error-handler.js';
-import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from '../utils/dream-interpreter.js';
 
 const utilityRouter = Router();
 
@@ -188,6 +197,56 @@ utilityRouter.get("/api/export/conversation", withErrorHandling(async (req, env)
   await logChatGPTAction(env, 'exportConversation', { sessionId, format }, conversation);
   
   return addCORSToResponse(createSuccessResponse(conversation));
+}));
+
+// Ritual auto-suggestion endpoint
+utilityRouter.post("/api/ritual/auto-suggest", withErrorHandling(async (req, env) => {
+  const result = await handleRitualAutoSuggest(req, env);
+  return addCORSToResponse(result);
+}));
+
+// Contract creation endpoint
+utilityRouter.post("/api/contracts/create", withErrorHandling(async (req, env) => {
+  const result = await handleCreateContract(req, env);
+  return addCORSToResponse(result);
+}));
+
+// Socratic questioning endpoint
+utilityRouter.post("/api/socratic/question", withErrorHandling(async (req, env) => {
+  const result = await handleSocraticQuestion(req, env);
+  return addCORSToResponse(result);
+}));
+
+// Coaching comb analysis endpoint
+utilityRouter.post("/api/coaching/comb-analysis", withErrorHandling(async (req, env) => {
+  const result = await handleCoachingCombAnalysis(req, env);
+  return addCORSToResponse(result);
+}));
+
+// Commitment progress tracking endpoint
+utilityRouter.get("/api/commitments/:id/progress", withErrorHandling(async (req, env) => {
+  const result = await handleCommitmentProgress(req, env);
+  return addCORSToResponse(result);
+}));
+
+// Conversation context management
+utilityRouter.get("/api/conversation/context", withErrorHandling(async (req, env) => {
+  const url = new URL(req.url);
+  const sessionId = url.searchParams.get('session_id');
+  
+  const context = {
+    session_id: sessionId || crypto.randomUUID(),
+    context_summary: "Active conversation context available",
+    themes: ["personal_growth", "self_discovery", "wisdom_cultivation"],
+    recent_topics: ["trust_building", "somatic_awareness", "pattern_recognition"],
+    engagement_level: "high",
+    session_duration: "ongoing",
+    timestamp: new Date().toISOString()
+  };
+  
+  await logChatGPTAction(env, 'getConversationContext', { sessionId }, context);
+  
+  return addCORSToResponse(createSuccessResponse(context));
 }));
 
 // Helper functions for dream interpretation
