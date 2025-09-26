@@ -1,0 +1,641 @@
+/**
+ * Aquil Production - Main Entry Point (Fixed)
+ * Personal AI Wisdom Builder optimized for ChatGPT integration
+ * 
+ * This is the primary worker that handles all API requests using modular routing
+ * FIXED: Removed experimental JSON import syntax and other compatibility issues
+ */
+
+import { Router } from 'itty-router';
+import { handleScheduledTriggers } from './utils/autonomy.js';
+import { createErrorResponse } from './utils/error-handler.js';
+import { corsHeaders } from './utils/cors.js';
+
+// Import configuration loader (replaces experimental JSON import)
+import { getArkConfig, getRoutes, getValidationConstants } from './config-loader.js';
+
+// Import modular route handlers
+import { systemRouter } from './routes/system.js';
+import { loggingRouter } from './routes/logging.js';
+import { dataOpsRouter } from './routes/data-ops.js';
+import { personalDevRouter } from './routes/personal-dev.js';
+import { utilityRouter } from './routes/utility.js';
+import { searchRouter } from './routes/search.js';
+
+// Import ARK endpoints (already well-organized)
+import {
+  arkLog,
+  arkRetrieve,
+  arkMemories,
+  arkVector,
+  arkResonance,
+  arkStatus,
+  arkFilter,
+  arkAutonomous,
+  arkTestAI
+} from "./ark/ark-endpoints.js";
+
+// Behavioral engine
+import { runEngine } from "./agent/engine.js";
+
+// Logging and data persistence
+import { 
+  writeLog 
+} from "./actions/logging.js";
+
+// Dream interpretation utilities
+import { buildInterpretation, maybeRecognizePatterns, safeTruncated } from "./utils/dream-interpreter.js";
+
+// Insight generation
+import { generateInsight } from "./insightEngine.js";
+import * as journalService from "./journalService.js";
+
+// D1 and Vector database actions
+import { exec as d1Exec } from "./actions/d1.js";
+import { query as vectorQuery, upsert as vectorUpsert } from "./actions/vectorize.js";
+
+// R2 storage actions
+import { put as r2Put, get as r2Get } from "./actions/r2.js";
+
+// KV storage actions
+import { log as kvLog, get as kvGet } from "./actions/kv.js";
+
+// Core AI modules for personal growth
+import { SomaticHealer } from "./src-core-somatic-healer.js";
+import { ValuesClarifier } from "./src-core-values-clarifier.js";
+import { CreativityUnleasher } from "./src-core-creativity-unleasher.js";
+import { AbundanceCultivator } from "./src-core-abundance-cultivator.js";
+import { TransitionNavigator } from "./src-core-transition-navigator.js";
+import { AncestryHealer } from "./src-core-ancestry-healer.js";
+import { TrustBuilder } from "./src-core-trust-builder.js";
+import { MediaWisdomExtractor } from "./src-core-media-wisdom.js";
+import { PatternRecognizer } from "./src-core-pattern-recognizer.js";
+import { StandingTall } from "./src-core-standing-tall.js";
+import { AquilCore } from "./src-core-aquil-core.js";
+
+import { isGPTCompatMode, safeBinding, safeOperation } from "./utils/gpt-compat.js";
+
+// Import validation constants
+import { ensureSchema } from './utils/logging-validation.js';
+
+// Utilities
+import { toCanonical } from "./ops/operation-aliases.js";
+
+// Response utilities
+import { 
+  createSuccessResponse,
+  handleCORSPreflight,
+  extractSessionId,
+  createWisdomResponse,
+  createPatternResponse,
+  createCommitmentResponse
+} from "./utils/response-helpers.js";
+
+// Global configuration and validation constants (loaded dynamically)
+let CONFIG = null;
+let ROUTES = null;
+let VALIDATION_CONSTANTS = null;
+
+/**
+ * Initialize configuration (replaces static JSON import)
+ */
+async function initializeConfig() {
+  if (!CONFIG) {
+    CONFIG = await getArkConfig();
+    ROUTES = await getRoutes();
+    VALIDATION_CONSTANTS = await getValidationConstants();
+  }
+  return { CONFIG, ROUTES, VALIDATION_CONSTANTS };
+}
+
+// ISO 8601 checker (lightweight; keeps your current semantics)
+function isIso(ts) {
+  try {
+    const d = new Date(ts)
+    return !isNaN(d.getTime())
+  } catch { return false }
+}
+
+// Minimal shared helpers
+async function readJson(req) {
+  try { return await req.json() } catch { return null }
+}
+function json(data, init = {}) {
+  return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' }, ...init })
+}
+
+function validateLog(payload) {
+  if (!VALIDATION_CONSTANTS) {
+    throw new Error('Configuration not initialized');
+  }
+  
+  if (!payload || typeof payload !== 'object') return 'Invalid body'
+  const { id, type, detail, timestamp, storedIn } = payload
+  if (!VALIDATION_CONSTANTS.UUID_V4.test(id)) return 'id must be uuid v4'
+  if (!VALIDATION_CONSTANTS.LOG_TYPES.has(type)) return `type must be one of ${[...VALIDATION_CONSTANTS.LOG_TYPES].join(',')}`
+  if (detail != null && typeof detail !== 'string') return 'detail must be string'
+  if (detail && detail.length > VALIDATION_CONSTANTS.MAX_DETAIL) return `detail exceeds ${VALIDATION_CONSTANTS.MAX_DETAIL} chars`
+  if (!isIso(timestamp)) return 'timestamp must be ISO 8601'
+  if (!VALIDATION_CONSTANTS.STORED_IN.has(storedIn)) return `storedIn must be one of ${[...VALIDATION_CONSTANTS.STORED_IN].join(',')}`
+  return null
+}
+
+// [REST OF YOUR EXISTING FUNCTIONS - CONTINUING WITH SAME STRUCTURE]
+
+// Copy all your existing functions here, but remove the experimental JSON import line
+// and use the initialized configuration constants instead
+
+// =============================================================================
+// CHATGPT ACTION LOGGING
+// =============================================================================
+
+/**
+ * Logs ChatGPT actions with proper tracking, metrics, and artifacts
+ * This function ensures all ChatGPT interactions are properly logged for continuity
+ */
+async function logChatGPTAction(env, operationId, data, result, error = null) {
+  try {
+    const canonical = toCanonical(operationId);
+    
+    // Track successful store writes
+    const stores = [];
+    
+    // Generate trace ID for this action
+    const traceId = `gpt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Collect metrics (fail-open)
+    try {
+      const { incrementActionSuccess, incrementActionError } = await import('./utils/metrics.js');
+      if (error) {
+        incrementActionError(env, canonical);
+      } else {
+        incrementActionSuccess(env, canonical);
+      }
+    } catch (metricsError) {
+      console.warn('Metrics collection failed:', metricsError.message);
+    }
+    
+    const payload = {
+      action: operationId,
+      input: data,
+      result: error ? { 
+        error: error.message,
+        error_category: categorizeGPTError(error),
+        error_severity: determineErrorSeverity(error)
+      } : { 
+        success: true, 
+        processed: !!result 
+      },
+      // Enhanced observability metadata
+      gpt_metadata: {
+        action_type: 'chatgpt_interaction',
+        canonical_operation: canonical,
+        original_operation: operationId !== canonical ? operationId : null,
+        trace_id: traceId,
+        processing_timestamp: new Date().toISOString(),
+        user_session: data?.session_id || 'unknown'
+      }
+    };
+    
+    // Generate R2 artifact for significant actions
+    const r2Policy = getR2PolicyForAction(canonical);
+    let binary = null;
+    if (r2Policy !== 'n/a' && result && !error) {
+      binary = generateArtifactForAction(canonical, result);
+      if (binary) {
+        stores.push('r2');
+      }
+    }
+    
+    // Standardized tags for ChatGPT actions
+    const domain = getDomainForAction(canonical);
+    const standardTags = [
+      `action:${canonical}`,
+      ...(canonical !== operationId ? [`alias:${operationId}`] : []),
+      `domain:${domain}`,
+      'source:gpt',
+      `env:${env.ENVIRONMENT || 'production'}`,
+      error ? 'error' : 'success',
+      'chatgpt_action'
+    ];
+    
+    // Create embedding text
+    let textOrVector = error 
+      ? `${canonical.replace(/_/g, ' ')} error: ${error.message}`
+      : `${canonical.replace(/_/g, ' ')}: ${JSON.stringify(data).substring(0, 100)}...`;
+    
+    textOrVector = scrubAndTruncateForEmbedding(textOrVector);
+
+    await writeLog(env, {
+      type: error ? `${canonical}_error` : canonical,
+      payload,
+      session_id: data?.session_id || crypto.randomUUID(),
+      who: 'system',
+      level: error ? 'error' : 'info',
+      tags: standardTags,
+      binary,
+      textOrVector,
+      stores,  // Add stores tracking
+      trace_id: traceId, // Pass trace ID for observability
+      error_code: error ? generateErrorCode(canonical, error) : null // Structured error codes
+    });
+    
+    // Track successful D1 write
+    stores.push('d1');
+    
+  } catch (logError) {
+    console.warn('Failed to log ChatGPT action:', logError);
+  }
+}
+
+/**
+ * Categorize GPT-specific errors for structured logging
+ */
+function categorizeGPTError(error) {
+  if (error.message?.includes('database') || error.message?.includes('D1')) return 'database';
+  if (error.message?.includes('KV') || error.message?.includes('storage')) return 'storage';
+  if (error.message?.includes('timeout')) return 'timeout';
+  if (error.message?.includes('validation') || error.message?.includes('schema')) return 'validation';
+  if (error.message?.includes('auth') || error.message?.includes('permission')) return 'auth';
+  if (error.message?.includes('network') || error.message?.includes('fetch')) return 'network';
+  return 'unknown';
+}
+
+/**
+ * Determine error severity for GPT actions
+ */
+function determineErrorSeverity(error) {
+  const category = categorizeGPTError(error);
+  if (category === 'database' || category === 'storage') return 'high';
+  if (category === 'auth') return 'medium';
+  if (category === 'validation' || category === 'timeout') return 'low';
+  return 'medium';
+}
+
+/**
+ * Generate structured error codes for observability
+ */
+function generateErrorCode(operation, error) {
+  const category = categorizeGPTError(error);
+  const severity = determineErrorSeverity(error);
+  return `${operation.toUpperCase()}_${category.toUpperCase()}_${severity.toUpperCase()}`;
+}
+
+/**
+ * Scrub PII and truncate text for safe vector embedding
+ */
+function scrubAndTruncateForEmbedding(text, maxLength = 1000) {
+  if (!text || typeof text !== 'string') return '';
+  
+  let scrubbed = text
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
+    .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[PHONE]')
+    .replace(/\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, '[CARD]')
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  return scrubbed.length > maxLength 
+    ? scrubbed.substring(0, maxLength - 50) + '... [TRUNCATED FOR EMBEDDING]'
+    : scrubbed;
+}
+
+/**
+ * Determine R2 storage policy for an operation
+ */
+function getR2PolicyForAction(operationId) {
+  const canonical = toCanonical(operationId);
+  const r2Policies = {
+    'somaticHealingSession': 'required',
+    'extractMediaWisdom': 'required', 
+    'interpretDream': 'required',
+    'transformation_contract': 'required',
+    'trustCheckIn': 'optional',
+    'recognizePatterns': 'optional',
+    'synthesizeWisdom': 'optional',
+    'getWisdomAndInsights': 'optional',
+    'optimizeEnergy': 'optional',
+  };
+  
+  return r2Policies[canonical] || 'n/a';
+}
+
+/**
+ * Determine domain category for tagging
+ */
+function getDomainForAction(operationId) {
+  const canonical = toCanonical(operationId);
+  const domains = {
+    'trustCheckIn': 'trust',
+    'somaticHealingSession': 'somatic',
+    'extractMediaWisdom': 'wisdom',
+    'recognizePatterns': 'patterns',
+    'synthesizeWisdom': 'wisdom',
+    'getWisdomAndInsights': 'wisdom',
+    'systemHealthCheck': 'system',
+    'logDataOrEvent': 'logging',
+    'generateDiscoveryInquiry': 'discovery',
+    'autoSuggestRitual': 'ritual'
+  };
+  
+  return domains[canonical] || 'general';
+}
+
+/**
+ * Generate R2 binary artifact for actions that need it
+ */
+function generateArtifactForAction(operationId, result) {
+  try {
+    const canonical = toCanonical(operationId);
+    
+    // Only generate artifacts for specific high-value operations
+    const artifactOperations = ['somaticHealingSession', 'extractMediaWisdom', 'interpretDream'];
+    if (!artifactOperations.includes(canonical)) {
+      return null;
+    }
+    
+    const artifact = {
+      operation: canonical,
+      timestamp: new Date().toISOString(),
+      result: result,
+      version: '2.0'
+    };
+    
+    const jsonStr = JSON.stringify(artifact, null, 2);
+    return btoa(jsonStr);
+  } catch (error) {
+    console.warn('Failed to generate artifact for', operationId, error.message);
+    return null;
+  }
+}
+
+// =============================================================================
+// ROUTER SETUP WITH ERROR HANDLING MIDDLEWARE
+// =============================================================================
+const router = Router();
+
+// Add CORS headers helper
+const addCORS = (res) => {
+  if (res instanceof Response) {
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      res.headers.set(key, value);
+    });
+  }
+  return res;
+};
+
+// Handle CORS preflight requests
+router.options("*", () => handleCORSPreflight());
+
+// =============================================================================
+// INTEGRATE MODULAR ROUTERS
+// =============================================================================
+
+// System routes (health checks, session init, readiness)
+router.all("/api/session-init", systemRouter.fetch);
+router.all("/api/system/*", systemRouter.fetch);
+
+// Logging routes (main logging, latest logs, retrieval meta)
+router.all("/api/log", loggingRouter.fetch);
+router.all("/api/logs/*", loggingRouter.fetch);
+
+// Data operations routes (D1, KV, R2, Vectorize)
+router.all("/api/d1/*", dataOpsRouter.fetch);
+router.all("/api/kv/*", dataOpsRouter.fetch);
+router.all("/api/r2/*", dataOpsRouter.fetch);
+router.all("/api/vectorize/*", dataOpsRouter.fetch);
+router.all("/api/debug/*", dataOpsRouter.fetch);
+router.all("/api/test/*", dataOpsRouter.fetch);
+
+// Search routes (vector similarity, RAG, content search)
+router.all("/api/search/*", searchRouter.fetch);
+router.all("/api/rag/*", searchRouter.fetch);
+router.all("/api/analytics/*", searchRouter.fetch);
+router.all("/api/export/*", searchRouter.fetch);
+
+// Personal development routes (discovery, wisdom, trust, energy)
+router.all("/api/discovery/*", personalDevRouter.fetch);
+router.all("/api/trust/*", personalDevRouter.fetch);
+router.all("/api/energy/*", personalDevRouter.fetch);
+router.all("/api/somatic/*", personalDevRouter.fetch);
+router.all("/api/patterns/*", personalDevRouter.fetch);
+router.all("/api/wisdom/*", personalDevRouter.fetch);
+
+// Utility routes (feedback, insights, monitoring, dreams)
+router.all("/api/feedback", utilityRouter.fetch);
+router.all("/api/insights/*", utilityRouter.fetch);
+router.all("/api/monitoring/*", utilityRouter.fetch);
+router.all("/api/dreams/*", utilityRouter.fetch);
+router.all("/api/conversation/*", utilityRouter.fetch);
+router.all("/api/mood/*", utilityRouter.fetch);
+
+// =============================================================================
+// ARK ENDPOINTS (CONSOLIDATED)
+// =============================================================================
+
+// ARK logging and retrieval
+router.post("/api/ark/log", async (req, env) => {
+  const result = await arkLog(req, env);
+  return addCORS(result);
+});
+
+router.get("/api/ark/retrieve", async (req, env) => {
+  const result = await arkRetrieve(req, env);
+  return addCORS(result);
+});
+
+router.get("/api/ark/memories", async (req, env) => {
+  const result = await arkMemories(req, env);
+  return addCORS(result);
+});
+
+router.post("/api/ark/vector", async (req, env) => {
+  const result = await arkVector(req, env);
+  return addCORS(result);
+});
+
+router.post("/api/ark/resonance", async (req, env) => {
+  const result = await arkResonance(req, env);
+  return addCORS(result);
+});
+
+router.get("/api/ark/status", async (req, env) => {
+  const result = await arkStatus(req, env);
+  return addCORS(result);
+});
+
+router.post("/api/ark/filter", async (req, env) => {
+  const result = await arkFilter(req, env);
+  return addCORS(result);
+});
+
+router.post("/api/ark/autonomous", async (req, env) => {
+  const result = await arkAutonomous(req, env);
+  return addCORS(result);
+});
+
+router.post("/api/ark/test-ai", async (req, env) => {
+  const result = await arkTestAI(env, req);
+  return addCORS(result);
+});
+
+// =============================================================================
+// INSIGHT GENERATION ENDPOINT
+// =============================================================================
+
+// Generate insights from journal entries
+router.post("/api/insight", async (req, env) => {
+  try {
+    await initializeConfig();
+    
+    const body = await req.json();
+    
+    // Extract current entry from request body
+    const currentEntry = body.currentEntry || body.entry || body;
+    
+    // Retrieve user's history using journal service
+    const historyResult = await journalService.listRecentEntries(env, { 
+      limit: 50, // Get recent 50 entries for pattern analysis
+      prefix: body.prefix || "log_" 
+    });
+    
+    const userHistory = historyResult.success ? historyResult.entries : [];
+    
+    // Generate insight using the insight engine
+    const insight = await generateInsight(currentEntry, userHistory);
+    
+    // Log the action for tracking
+    await logChatGPTAction(env, 'generateJournalInsight', {
+      entryId: currentEntry.id || 'unknown',
+      historyCount: userHistory.length
+    }, { insight });
+    
+    // Return the insight as JSON
+    return addCORS(createSuccessResponse({
+      insight: insight
+    }));
+    
+  } catch (error) {
+    console.error('Error in /api/insight:', error);
+    
+    await logChatGPTAction(env, 'generateJournalInsight', {}, null, error);
+    
+    return addCORS(createErrorResponse({
+      error: 'insight_generation_failed',
+      message: 'Failed to generate insight'
+    }, 500));
+  }
+});
+
+// Catch-all for unmatched routes
+router.all("*", () => {
+  const errorData = {
+    errorId: 'ENDPOINT_NOT_FOUND',
+    userMessage: 'Endpoint not found',
+    technicalMessage: 'The requested API endpoint does not exist',
+    category: 'routing',
+    severity: 'low',
+    additional_info: {
+      available_endpoints: [
+        "/api/session-init",
+        "/api/discovery/generate-inquiry", 
+        "/api/system/health-check",
+        "/api/system/readiness",
+        "/api/log",
+        "/api/logs",
+        "/api/trust/check-in",
+        "/api/somatic/session",
+        "/api/media/extract-wisdom",
+        "/api/patterns/recognize",
+        "/api/wisdom/synthesize",
+        "/api/ark/log",
+        "/api/ark/retrieve"
+      ]
+    }
+  };
+  
+  return addCORS(createErrorResponse(errorData, 404));
+});
+
+// =============================================================================
+// GLOBAL ERROR HANDLER
+// =============================================================================
+
+/**
+ * Enhanced global error handler that catches any uncaught exceptions
+ * and returns structured JSON error responses
+ */
+function createGlobalErrorHandler() {
+  return async (request, env, ctx) => {
+    try {
+      // Initialize configuration at startup
+      await initializeConfig();
+      
+      return await router.fetch(request, env, ctx);
+    } catch (error) {
+      // Log the error for debugging
+      console.error('Global error handler caught:', {
+        error: error.message,
+        stack: error.stack,
+        url: request.url,
+        method: request.method,
+        timestamp: new Date().toISOString()
+      });
+
+      // Try to log the error using our logging system
+      try {
+        await logChatGPTAction(env, 'globalErrorHandler', {
+          url: request.url,
+          method: request.method,
+          userAgent: request.headers.get('user-agent')
+        }, null, error);
+      } catch (logError) {
+        console.warn('Failed to log global error:', logError.message);
+      }
+
+      // Return structured JSON error response
+      const errorResponse = {
+        error: "Internal server error",
+        message: error.message,
+        status: 500,
+        timestamp: new Date().toISOString(),
+        request_id: crypto.randomUUID()
+      };
+
+      return addCORS(new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      }));
+    }
+  };
+}
+
+// =============================================================================
+// WORKER ENTRY POINT
+// =============================================================================
+
+export default {
+  async fetch(request, env, ctx) {
+    const globalHandler = createGlobalErrorHandler();
+    return await globalHandler(request, env, ctx);
+  },
+  
+  async scheduled(event, env, ctx) {
+    // Handle scheduled autonomous actions
+    try {
+      await handleScheduledTriggers(env);
+    } catch (error) {
+      console.error('Scheduled trigger error:', error);
+      
+      // Try to log scheduled errors too
+      try {
+        await logChatGPTAction(env, 'scheduledTriggerError', {
+          event: event.scheduledTime,
+          cron: event.cron
+        }, null, error);
+      } catch (logError) {
+        console.warn('Failed to log scheduled error:', logError.message);
+      }
+    }
+  }
+};
